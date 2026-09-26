@@ -22,9 +22,17 @@ ui.marcarTactil(tactil);
 ui.iniciarSelectorIdioma();
 // Textos del JS en el idioma de la página: en /en/tour/ y /fr/tour/ su diccionario llega por la red (i18n.js). La
 // carga del modelo no lo espera; mientras tanto la barra avanza con el texto del HTML, que el build ya tradujo, y
-// todo lo que se escribe después (errores, «Listo», luces, plano, pistas) espera `listo`.
+// todo lo que se escribe después («Listo», luces, plano, pistas) espera `listo`. Los errores no: salen al instante
+// (sin red, `listo` tarda hasta 5 s) y se vuelven a escribir cuando llega el diccionario (ver mostrarError).
 let textosListos = false;
 listo.then(() => { textosListos = true; });
+
+/** Escribe el error `clave` enseguida con t(), que ya tiene el respaldo en español, y otra vez cuando `listo` se
+ *  cumple, por si mientras tanto llegó el diccionario del idioma de la página. */
+function mostrarError(clave) {
+  ui.marcarError(t(clave));
+  if (!textosListos) listo.then(() => ui.marcarError(t(clave)));
+}
 if (debug) ui.mostrarDepuracion();
 
 // ---------------------------------------------------------------------------------------------- escena
@@ -102,8 +110,7 @@ async function iniciar() {
     D = await carga.cargarColisiones();
   } catch (e) {
     console.error(e);
-    await listo;
-    ui.marcarError(t("js.tour.error.colisiones"));
+    mostrarError("js.tour.error.colisiones");
     return;
   }
   const variante = carga.esTactilOPantallaChica() ? "depto_movil.gltf" : "depto.gltf";
@@ -113,8 +120,7 @@ async function iniciar() {
       textosListos ? t("js.tour.carga.modelo", { porcentaje: Math.round(f * 100) }) : null));
   } catch (e) {
     console.error(e);
-    await listo;
-    ui.marcarError(t("js.tour.error.modelo"));
+    mostrarError("js.tour.error.modelo");
     return;
   }
   await listo;                       // antes de escribir textos y de nombrar grupos de luz y recintos

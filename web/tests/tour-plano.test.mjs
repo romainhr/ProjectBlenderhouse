@@ -12,7 +12,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
-  ANCHO_ETIQUETA, SEPARACION_ETIQUETAS, TAM_MIN, transformacionPlano, ubicarEtiquetas,
+  ANCHO_ETIQUETA, SEPARACION_ETIQUETAS, TAM_MIN, fuenteEtiqueta, remedirConLaFuente, transformacionPlano, ubicarEtiquetas,
 } from "../src/tour/js/minimapa.js";
 
 const leerJSON = (ruta) => JSON.parse(readFileSync(new URL(ruta, import.meta.url), "utf8"));
@@ -85,4 +85,25 @@ test("plano: dos etiquetas con el mismo centro quedan una debajo de la otra, a l
   assert.equal(a.y, 200);
   assert.ok(b.caja.y0 >= a.caja.y1 + SEPARACION_ETIQUETAS || b.caja.y1 <= a.caja.y0 - SEPARACION_ETIQUETAS);
   assert.ok(Math.abs(b.y - 200) <= a.caja.y1 - a.caja.y0 + SEPARACION_ETIQUETAS + 1);
+});
+
+test("plano: cuando llega Public Sans (o termina otra carga de letras) se vuelven a medir las etiquetas", async () => {
+  let cumplir;
+  const pedidas = [], oyentes = {};
+  const fuentes = {
+    load: (f) => { pedidas.push(f); return new Promise((ok) => { cumplir = ok; }); },
+    addEventListener: (tipo, fn) => { oyentes[tipo] = fn; },
+  };
+  const M = { etiquetas: [{ texto: "medida con la letra de respaldo" }], ultX: 1 };
+  remedirConLaFuente(M, fuentes);
+  assert.deepEqual(pedidas, [fuenteEtiqueta(16)]);
+  assert.match(pedidas[0], /^500 16px "Public Sans"/);        // la misma letra con que se miden y dibujan
+  assert.ok(M.etiquetas, "no se descarta antes de que llegue");
+  cumplir();
+  await new Promise((ok) => setTimeout(ok, 0));
+  assert.deepEqual([M.etiquetas, M.ultX], [null, null]);       // se vuelven a medir y se fuerza el redibujo
+  M.etiquetas = []; M.ultX = 1;
+  oyentes.loadingdone();
+  assert.deepEqual([M.etiquetas, M.ultX], [null, null]);
+  remedirConLaFuente(M, undefined);                            // sin FontFaceSet (Node) no falla
 });

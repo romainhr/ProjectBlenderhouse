@@ -4,7 +4,7 @@
 // El locale de la página sale de idioma.js y no de i18n.js: este módulo no escribe textos del diccionario, así que
 // no pide ninguno por la red ni espera nada para poner los precios (ADR 0007, decisión 2).
 import { TARIFA, clp } from "./reserva-logica.js";
-import { IDIOMAS, LOCALE } from "./idioma.js";
+import { LOCALE, escucharSelectorIdioma } from "./idioma.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 document.documentElement.classList.add("js");        // el CSS muestra lo que sólo tiene sentido con JS (.progreso)
@@ -25,17 +25,11 @@ if (boton && panel) {
   });
 }
 
-// Selector de idioma: <a data-i18n-alternar="es|en|fr">, con el href que le pone web/build.py. Al elegir, antes de
-// que el enlace navegue, se guarda la cookie nf_lang: en Netlify reemplaza la detección por el idioma del navegador
-// (ADR 0007, decisión 4), así quien eligió español se queda en español aunque su navegador pida inglés. También con
-// el clic central (abre otra pestaña). El tour no carga este módulo: hace lo mismo en web/src/tour/js/interfaz.js.
-const guardarIdioma = (e) => {
-  if (e.type === "auxclick" && e.button !== 1) return;
-  const idioma = e.target.closest?.("a[data-i18n-alternar]")?.getAttribute("data-i18n-alternar");
-  if (IDIOMAS.includes(idioma)) document.cookie = `nf_lang=${idioma}; path=/; max-age=31536000; SameSite=Lax; Secure`;
-};
-document.addEventListener("click", guardarIdioma);
-document.addEventListener("auxclick", guardarIdioma);
+// Selector de idioma: <a data-i18n-alternar="es|en|fr">, con el href que le pone web/build.py. Al elegir (clic, clic
+// central o menú contextual), antes de que el enlace navegue, idioma.js guarda la cookie nf_lang: así quien eligió
+// español se queda en español aunque su navegador pida inglés (ADR 0007, decisión 4). El tour no carga este módulo:
+// llama a la misma función desde web/src/tour/js/interfaz.js.
+escucharSelectorIdioma(document);
 
 // aparición al entrar en pantalla. El contenido nunca queda oculto (RA-16): sin JS, sin IntersectionObserver o sin
 // desplazarse se ve igual. Sólo se anima (.visible) lo que entra desde abajo después de la carga; lo que ya estaba en

@@ -15,7 +15,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { MOTIVO_CAMINO, MOTIVO_HOJA, etiquetaAccion } from "../src/tour/js/interaccion.js";
 import { textoInterruptor } from "../src/tour/js/luces.js";
 import { claveDeTexto, etiquetaGrupo, nombrePieza, nombreRecinto, traduccion } from "../src/tour/js/textos.js";
-import { cookieIdioma, iniciarSelectorIdioma } from "../src/tour/js/interfaz.js";
+import { iniciarSelectorIdioma } from "../src/tour/js/interfaz.js";
+import { cookieIdioma } from "../src/js/idioma.js";
 import { t } from "../src/js/i18n.js";
 import { conGlobales, respuesta, sinComentarios } from "./copia-sitio.mjs";
 
@@ -76,6 +77,18 @@ test("claveDeTexto: minúsculas, sin tildes y con «_» (la misma regla para tod
   assert.equal(claveDeTexto("Cajón 1 profundo de la cocina"), "cajon_1_profundo_de_la_cocina");
   assert.equal(claveDeTexto("Puerta del mueble alto (platos)"), "puerta_del_mueble_alto_platos");
   assert.equal(claveDeTexto("  Baño  "), "bano");
+});
+
+test("claveDeTexto: quita toda marca combinante (\\p{M}), no sólo las del bloque U+0300–U+036F", () => {
+  assert.equal(claveDeTexto("Ñandú Über Ça"), "nandu_uber_ca");
+  assert.equal(claveDeTexto("Cafe\u0301"), "cafe");                    // ya descompuesto: e + acento agudo
+  assert.equal(claveDeTexto("a\u1ab0b\u20ddc\ufe20"), "abc");          // marcas de otros bloques
+  // y el código no escribe caracteres combinantes a mano (no se ven y se rompen al copiar)
+  for (const carpeta of [join(SRC, "js"), join(SRC, "tour", "js")]) {
+    for (const archivo of readdirSync(carpeta).filter((a) => a.endsWith(".js"))) {
+      assert.doesNotMatch(readFileSync(join(carpeta, archivo), "utf8"), /\p{M}/u, `${archivo}: carácter combinante literal`);
+    }
+  }
 });
 
 test("en español las pistas son las mismas que antes de pasar a t()", () => {
@@ -186,8 +199,19 @@ test("iniciarSelectorIdioma: el clic en un enlace del selector guarda la cookie 
   assert.equal(doc.cookie, "");
   doc.disparar("click", "fr");
   assert.equal(doc.cookie, "nf_lang=fr; path=/; max-age=31536000; SameSite=Lax; Secure");
-  doc.disparar("auxclick", "en", { button: 2 });         // el botón derecho no elige
+  doc.disparar("auxclick", "en", { button: 2 });         // el botón derecho no elige por auxclick…
   assert.match(doc.cookie, /^nf_lang=fr;/);
   doc.disparar("auxclick", "en", { button: 1 });         // el central (abre otra pestaña) sí
   assert.match(doc.cookie, /^nf_lang=en;/);
+  doc.disparar("contextmenu", "es", { button: 2 });      // …sino por el menú contextual («Abrir en una pestaña nueva»)
+  assert.match(doc.cookie, /^nf_lang=es;/);
+  doc.disparar("contextmenu", undefined, { button: 2 }); // el menú contextual fuera del selector no toca nada
+  assert.match(doc.cookie, /^nf_lang=es;/);
+});
+
+test("main.js: los errores de carga salen al instante (no esperan `listo`) y se reescriben cuando llega el diccionario", () => {
+  const fuente = sinComentarios(readFileSync(join(SRC, "tour", "js", "main.js"), "utf8"));
+  assert.doesNotMatch(fuente, /await listo;\s*ui\.marcarError/, "sin red, `listo` tarda hasta 5 s");
+  assert.equal([...fuente.matchAll(/ui\.marcarError\(/g)].length, 2, "sólo mostrarError llama a marcarError");
+  for (const clave of ["js.tour.error.colisiones", "js.tour.error.modelo"]) assert.ok(fuente.includes(`mostrarError("${clave}")`), clave);
 });

@@ -28,12 +28,26 @@ export function transformacionPlano(D, W, H) {
   return { s, a: (x, z) => [ox + (z - u0) * s, oy + (-x - v0) * s] };
 }
 
+/** Letra de las etiquetas del plano: la Public Sans 500 de la interfaz (web/src/css/tokens.css). */
+export const fuenteEtiqueta = (tam) => `500 ${tam}px "Public Sans", sans-serif`;
+
+/** Vuelve a medir las etiquetas de `M` cuando la letra del plano esté cargada. El lienzo no la pide: si el plano se
+ *  midiera antes de que llegue, measureText usaría la de respaldo y la disposición quedaría con esos anchos. Por eso
+ *  se pide con fonts.load() y, cuando llega (o termina cualquier otra carga de letras, loadingdone), se descarta la
+ *  disposición y se fuerza un redibujo (ultX = null). Sin `fuentes` (Node, navegadores sin FontFaceSet) no hace nada. */
+export function remedirConLaFuente(M, fuentes = globalThis.document?.fonts) {
+  if (!fuentes || typeof fuentes.load !== "function") return;
+  const rehacer = () => { M.etiquetas = null; M.ultX = null; };
+  fuentes.load(fuenteEtiqueta(16)).then(rehacer, () => {});
+  fuentes.addEventListener?.("loadingdone", rehacer);
+}
+
 export function prepararMinimapa(canvas, D) {
   const W = canvas.width, H = canvas.height;
   const { s, a } = transformacionPlano(D, W, H);
   const estilo = getComputedStyle(document.documentElement);
   const leer = (n, resp) => estilo.getPropertyValue(n).trim() || resp;
-  return {
+  const M = {
     ctx: canvas.getContext("2d"), W, H, s, a,
     colores: {
       papel: leer("--papel", "#F7F4EF"), tinta: leer("--tinta", "#1E1C19"),
@@ -42,6 +56,8 @@ export function prepararMinimapa(canvas, D) {
     ultX: null, ultZ: null, ultYaw: null,
     etiquetas: null,                 // [{ lineas, x, y, tam, font }] de los recintos (etiquetasRecintos)
   };
+  remedirConLaFuente(M);
+  return M;
 }
 
 /** Caja de `ancho` × `alto` px centrada en (x, y); dos cajas se pisan si quedan a menos de `sep` px. */
@@ -88,16 +104,16 @@ export function ubicarEtiquetas(etiquetas, medir, { W, H, base = Math.round(W / 
   });
 }
 
-// Etiquetas de los recintos con la tipografía del plano, medidas la primera vez que se dibujan.
+// Etiquetas de los recintos con la tipografía del plano, medidas la primera vez que se dibujan y otra vez cuando llega
+// la letra (remedirConLaFuente).
 function etiquetasRecintos(M, D) {
   const { ctx, W, H, a } = M;
-  const fuente = (tam) => `500 ${tam}px "Public Sans", sans-serif`;
-  const medir = (texto, tam) => { ctx.font = fuente(tam); return ctx.measureText(texto).width; };
+  const medir = (texto, tam) => { ctx.font = fuenteEtiqueta(tam); return ctx.measureText(texto).width; };
   const lista = Object.entries(D.recintos || {}).map(([k, p]) => {
     const [x, y] = a(p[0], p[1]);
     return { texto: nombreRecinto(k, D.recintos_etiquetas), x, y };
   });
-  return ubicarEtiquetas(lista, medir, { W, H }).map((e) => ({ ...e, font: fuente(e.tam) }));
+  return ubicarEtiquetas(lista, medir, { W, H }).map((e) => ({ ...e, font: fuenteEtiqueta(e.tam) }));
 }
 
 export function dibujarMinimapa(M, D, moviles, yo, forzar) {

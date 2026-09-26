@@ -153,13 +153,13 @@ a:not(.boton):focus-visible, summary:focus-visible { border-radius: 4px; }
   .barra .idiomas { display: flex; gap: 2px; margin-left: 24px; padding-left: 18px; border-left: 1px solid var(--linea); }
   .menu a { white-space: nowrap; }
 }
-/* con el selector, desde 1000 px la bajada de la marca pisa el menú hasta cierto ancho, distinto en cada idioma; ahí se
-   oculta, y reaparece cuando le quedan al menos 32 px (el espacio entre los enlaces del menú). Medido en reserva.html:
-   «Arriendo turístico» pisaba 103 px a 1000 px y deja 34 px a 1140 px; «Location saisonnière», 78 px y 35 px a
-   1115 px; «Vacation rental» cabe a 1000 px y deja 34 px a 1030 px. */
-@media (min-width: 1000px) and (max-width: 1139px) { :lang(es) .barra .marca small { display: none; } }
-@media (min-width: 1000px) and (max-width: 1119px) { :lang(fr) .barra .marca small { display: none; } }
-@media (min-width: 1000px) and (max-width: 1029px) { :lang(en) .barra .marca small { display: none; } }
+/* Bajada de la marca sin cortes medidos por idioma: .marca parte en dos filas cuando la bajada no cabe junto al nombre
+   (flex-wrap) y el alto de una fila recorta la segunda (overflow: hidden). Así se oculta cuando pisaría el menú y
+   reaparece cuando cabe, mida lo que mida en cada idioma. La segunda fila empieza en el borde inferior: 12 px de
+   padding + la fila del nombre + 12 px de gap. Desde 1000 px, margin-right deja al menos 32 px (16 + el gap de 16 de
+   .contenedor, el espacio entre los enlaces del menú) entre la bajada y el menú. */
+.barra .marca { flex-wrap: wrap; height: calc(var(--t-marca) + 24px); overflow: hidden; }
+@media (min-width: 1000px) { .barra .marca { margin-right: 16px; } }
 .barra.sobre-hero .idiomas { border-left-color: rgba(255, 255, 255, .4); }
 .barra.sobre-hero .idiomas a { color: rgba(255, 255, 255, .85); }
 .barra.sobre-hero .idiomas a:hover, .barra.sobre-hero .idiomas a[aria-current] { color: #fff; }
