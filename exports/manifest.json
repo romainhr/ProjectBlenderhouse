@@ -1,32 +1,32 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 16443668,
-    "md5": "b632e53db81ed546b63f2215388fbbaa",
+    "bytes": 16354332,
+    "md5": "c8db789b5ce69f9a9a00a59ad789b93b",
     "web": {
       "carpeta": "web",
-      "archivos": 54,
-      "bytes": 18317262,
+      "archivos": 53,
+      "bytes": 18270347,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 50759,
-      "estaticos": 833,
+      "bytes": 52312,
+      "estaticos": 844,
       "moviles": 33,
-      "luces": 18,
-      "grupos_luz": 14,
-      "interruptores": 27
+      "luces": 19,
+      "grupos_luz": 15,
+      "interruptores": 29
     },
     "fecha": "2026-09-26",
     "fase": "06",
     "sellos": {
       "01": "de20a5bc79fb",
-      "02": "b3dc3936366e",
-      "03": "f6af5532090a",
-      "04": "1d5c76e93898",
-      "05": "de4e10ceac76",
-      "06": "d1f18820144f"
+      "02": "daaee164b2dd",
+      "03": "fcf0b224a134",
+      "04": "222ba6b49d41",
+      "05": "9449da310590",
+      "06": "df5bd9673663"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -47,12 +47,13 @@
         2.55
       ]
     },
-    "mallas": 407,
-    "triangulos": 182292,
+    "mallas": 410,
+    "triangulos": 189240,
     "materiales": [
       "Depto_Mat_Acero",
       "Depto_Mat_AceroInox",
       "Depto_Mat_AceroNegro",
+      "Depto_Mat_AceroPintado",
       "Depto_Mat_Alfombra",
       "Depto_Mat_Alimento",
       "Depto_Mat_Arte1",

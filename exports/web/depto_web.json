@@ -103,20 +103,12 @@
    "bytes": 641756
   },
   {
-   "uri": "tex/oak_veneer_01_rough_1k.jpg",
-   "bytes": 213475
-  },
-  {
    "uri": "tex/acero_pavonado_nor_gl_1k.jpg",
    "bytes": 36758
   },
   {
    "uri": "tex/acero_pavonado_diff_1k.jpg",
    "bytes": 78997
-  },
-  {
-   "uri": "tex/acero_pavonado_rough_1k.jpg",
-   "bytes": 96321
   },
   {
    "uri": "tex/lana_nor_gl_1k.jpg",
@@ -133,6 +125,10 @@
   {
    "uri": "tex/rough_linen_rough_1k.jpg",
    "bytes": 271046
+  },
+  {
+   "uri": "tex/acero_pavonado_rough_1k.jpg",
+   "bytes": 96321
   },
   {
    "uri": "tex/cuero_nor_gl_1k.jpg",
@@ -203,5 +199,5 @@
    "bytes": 460509
   }
  ],
- "total_bytes": 18317262
+ "total_bytes": 18270347
 }
