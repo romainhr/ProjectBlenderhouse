@@ -1,4 +1,4 @@
-/* El visor del tour (exports/depto_tour.html, el mismo de la página publicada) con los colores del sitio LOFT 2D2B.
+/* El visor del tour (exports/depto_tour.html, el de la página publicada en claude.ai) con los colores del sitio Project-roomVR.
    web/build.py lo enlaza después de los estilos del visor; :not(#_) sube la especificidad sobre los temas del visor. */
 :root:not(#_) {
   color-scheme: dark;
