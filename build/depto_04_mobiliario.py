@@ -423,7 +423,9 @@ def cocina(c):
     c.poner("Cocina_Riel", "adorno", riel, *R_["xy"], H, "S")          # "S": el riel (x local) corre según x
     marcar_ampolletas(riel, POTENCIA["foco_cocina"], radio=0.02, grupo="cocina_techo", cono=CONO_FOCO)
     led = c.mundo(luz_bajo_altos, "Cocina_LuzBajoAltos", "adorno")
-    marcar_ampolletas(led, POTENCIA["bajo_altos"], radio=0.03, grupo="cocina_techo", cono=CONO_LINEAL)
+    # radio de 4 mm: la luz queda 8,5 mm bajo el piso de los altos; con el radio de 0,03 de las demás, sus sombras
+    # suaves partían de dentro del mueble y la vajilla se veía iluminada desde abajo, a través del tablero
+    marcar_ampolletas(led, POTENCIA["bajo_altos"], radio=0.004, grupo="cocina_techo", cono=CONO_LINEAL)
 
 
 def luz_bajo_altos(col, prefijo):
