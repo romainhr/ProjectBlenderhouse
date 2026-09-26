@@ -125,3 +125,24 @@ Decisiones:
 6. **Diseño:** la mesa bistró del balcón pasa a acero pintado al horno (`Depto_Mat_AceroPintado`, dieléctrico; 75
    materiales), porque con acero pavonado el colgante no dejaba charco en la cubierta. El tercer foco del riel del
    hall ilumina la puerta de entrada en vez del reloj.
+
+## Adenda 07c (2026-09-26): respetar el plano
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), constructor del bloque 07c. **Revisor humano:** Romain Ange,
+  pendiente.
+
+Decisiones:
+
+1. **El plano manda sobre la decoración v2 en la cocina:** vuelven los muebles altos del tramo norte (discontinua
+   `ALTOS_Y`, de T3 a la esquina, sobre el anafe) y se quitan las repisas abiertas y la campana de chimenea de
+   `docs/deco-industrial.md`. La campana pasa a ser telescópica, integrada en el módulo de 0,60 m sobre el anafe
+   (su cara inferior queda a 0,59 m del vidrio; el valor que piden los fabricantes no está verificado).
+2. **Regla de bisagras de mueble** (contrato, sección 1): el eje de giro va en la arista de la cara vista y la bisagra
+   del lado sin muro, torre ni esquina; dos hojas vecinas no comparten la junta de la bisagra. Lo prueba la fase 6
+   (`prueba_aperturas`), que abre cada móvil como lo permite el contrato. Es un cambio del modelo, no del esquema
+   (sigue `"contrato": "2.1"`): cambian el `posicion`/`cajas_locales` de las hojas y los nombres de las hojas altas
+   (`Depto_Mueble_Cocina_PuertaAlta{N1..N3,E1..E3}` en vez de `PuertaAlta1..4`).
+3. **Nevera medida en el plano:** 0,656 m de ancho y el frente en la discontinua; el fondo sigue inferido (0,58 m).
+   La bisagra pasa al norte para que la hoja abierta no ocupe la boca entre el hall y la cocina, y sale de la lista de
+   excepciones de la prueba de recorrido.
+4. **Tope de la puerta de entrada a 84°:** a 90° entraba en el reloj del hall.

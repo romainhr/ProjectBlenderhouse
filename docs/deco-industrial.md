@@ -163,7 +163,9 @@ que habían quedado sin lugar. Mismas convenciones que arriba.
 - **Hall**: banca y perchero (0,66 y 0,60 de ancho) en el muro oeste (tabique del nicho de lavadora, 0,71 de
   largo); riel de focos en el cielo en lugar del colgante de domo, que quedaba sobre la cámara del hall y la
   encandilaba; felpudo **afuera**, en el palier, porque la hoja de entrada barre el piso del hall.
-- **Cocina**: barra de utensilios bajo la repisa izquierda del tramo norte (eje a 1,30).
+- **Cocina**: barra de utensilios bajo el mueble alto izquierdo del tramo norte (eje a 1,30). Corrección 07c: el
+  tramo norte vuelve a tener muebles altos, como marca el plano, y ya no lleva `repisa_abierta` ni `set_repisa` (quedan
+  en el catálogo; ADR 0004, adenda 07c).
 - **Baños**: toallero de 0,40 en el frente de cada vanitorio, bajo el lavabo (eje a 0,62). Los baños no tienen un
   muro libre de 0,50 para la escalera de toallas: `escalera_toallas` queda sólo en la vitrina.
 - **Dormitorio 2**: apliques de brazo sobre los dos veladores (en vez de la lámpara de mesa) y un jarrón.
