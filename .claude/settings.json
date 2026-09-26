@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push origin main*)",
+      "Bash(git push origin HEAD:main*)",
+      "Bash(git push origin +main*)",
+      "Bash(git push -u origin main*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(gh pr merge --admin*)",
+      "Bash(python3 web/desplegar.py*)",
+      "Bash(python web/desplegar.py*)",
+      "Bash(python3 desplegar.py*)",
+      "Bash(python desplegar.py*)"
+    ]
+  }
+}
