@@ -124,8 +124,19 @@ export function marcarMiraActiva(activa) { $("#mira").classList.toggle("activa",
 export function mostrarMira() { $("#mira").hidden = false; }
 export function mostrarPista(texto) { const p = $("#pista"); p.textContent = texto; p.hidden = false; }
 export function ocultarPista() { $("#pista").hidden = true; }
-export function mostrarChip(texto, x, y) {
-  const p = $("#chip-tactil"); p.textContent = texto; p.style.left = `${x}px`; p.style.top = `${y}px`; p.hidden = false;
+export const MARGEN_CHIP_PX = 10;   // igual que max-width: calc(100vw - 20px) de #chip-tactil en tour.css
+
+/** `left` del chip (su centro, por el translate(-50%) de tour.css) para que un chip de `ancho` px quede entero dentro
+ *  de una vista de `anchoVista` px, lo más cerca posible de la x del toque. */
+export function centroChip(x, ancho, anchoVista, margen = MARGEN_CHIP_PX) {
+  const min = ancho / 2 + margen, max = anchoVista - ancho / 2 - margen;
+  if (max < min) return anchoVista / 2;
+  return Math.min(Math.max(x, min), max);
+}
+export function mostrarChip(texto, x, y, anchoVista = window.innerWidth) {
+  const p = $("#chip-tactil");
+  p.textContent = texto; p.hidden = false;       // visible antes de medir: con hidden, offsetWidth es 0
+  p.style.left = `${centroChip(x, p.offsetWidth, anchoVista)}px`; p.style.top = `${y}px`;
 }
 export function ocultarChip() { $("#chip-tactil").hidden = true; }
 let avisoHasta = 0;

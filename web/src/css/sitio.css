@@ -153,9 +153,13 @@ a:not(.boton):focus-visible, summary:focus-visible { border-radius: 4px; }
   .barra .idiomas { display: flex; gap: 2px; margin-left: 24px; padding-left: 18px; border-left: 1px solid var(--linea); }
   .menu a { white-space: nowrap; }
 }
-/* con el selector, de 1000 a 1199 px no caben la bajada de la marca y el menú en francés o español (medido: «Location
-   saisonnière» pisaba el menú a 1000 px); desde 1200 px sí */
-@media (min-width: 1000px) and (max-width: 1199px) { .barra .marca small { display: none; } }
+/* con el selector, desde 1000 px la bajada de la marca pisa el menú hasta cierto ancho, distinto en cada idioma; ahí se
+   oculta, y reaparece cuando le quedan al menos 32 px (el espacio entre los enlaces del menú). Medido en reserva.html:
+   «Arriendo turístico» pisaba 103 px a 1000 px y deja 34 px a 1140 px; «Location saisonnière», 78 px y 35 px a
+   1115 px; «Vacation rental» cabe a 1000 px y deja 34 px a 1030 px. */
+@media (min-width: 1000px) and (max-width: 1139px) { :lang(es) .barra .marca small { display: none; } }
+@media (min-width: 1000px) and (max-width: 1119px) { :lang(fr) .barra .marca small { display: none; } }
+@media (min-width: 1000px) and (max-width: 1029px) { :lang(en) .barra .marca small { display: none; } }
 .barra.sobre-hero .idiomas { border-left-color: rgba(255, 255, 255, .4); }
 .barra.sobre-hero .idiomas a { color: rgba(255, 255, 255, .85); }
 .barra.sobre-hero .idiomas a:hover, .barra.sobre-hero .idiomas a[aria-current] { color: #fff; }
@@ -227,6 +231,12 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
    colgando bajo 560 px y de 760 a 999 px, así que los mismos cortes rigen en esos anchos */
 @media (max-width: 559px) { :lang(fr) .sep.corte-2 { display: block; height: 0; overflow: hidden; } }
 @media (min-width: 760px) and (max-width: 999px) { :lang(fr) .sep.corte-1 { display: block; height: 0; overflow: hidden; } }
+/* en los teléfonos más angostos «balcon» / «balcony» ya no cabe en la primera línea y el punto después de baños quedaba
+   colgando (medido: en francés hasta 358 px, en inglés hasta 340 px, en español sólo bajo 310 px). Ahí la primera
+   línea es sólo «2 chambres» y la segunda «2 salles de bains · balcon». */
+@media (max-width: 309px) { .sep.corte-0 { display: block; height: 0; overflow: hidden; } }
+@media (max-width: 349px) { :lang(en) .sep.corte-0 { display: block; height: 0; overflow: hidden; } }
+@media (max-width: 369px) { :lang(fr) .sep.corte-0 { display: block; height: 0; overflow: hidden; } }
 @media (min-width: 700px) { .sep { margin-inline: 12px; } }
 @media (min-width: 1000px) { .datos .contenedor { min-height: 72px; padding: 20px 0; line-height: 32px; } }
 
@@ -436,6 +446,11 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 .barra-movil .precio > span.vacio { font-weight: 500; font-size: 20px; }
 .barra-movil .precio small { display: block; margin-top: 2px; font: 500 var(--t-meta)/1.4 var(--f-texto); color: var(--tinta-2); }
 .barra-movil .boton { flex: none; }
+/* en francés «Choisissez vos dates» y «Envoyer» no caben juntos bajo 360 px (medido a 320 px: se pisaban 20 px) */
+@media (max-width: 359px) {
+  :lang(fr) .barra-movil .precio > span.vacio { font-size: 18px; }
+  :lang(fr) .barra-movil .boton { padding-inline: 20px; }
+}
 body.con-barra-movil { --pie-extra: calc(72px + env(safe-area-inset-bottom, 0px)); }
 body.con-barra-movil:has(> .barra-movil[hidden]) { --pie-extra: 0px; }        /* reserva después del éxito */
 @media (max-width: 999px) {

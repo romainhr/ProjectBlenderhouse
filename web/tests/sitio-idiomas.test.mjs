@@ -121,6 +121,13 @@ test("diccionarios: donde el español dice «ejemplo», el inglés dice «exampl
   }
 });
 
+test("francés: «à titre d'exemple» o «(exemple)», nunca «d'exemple» como adjetivo («tarifs d'exemple» es un calco)", () => {
+  for (const [k, v] of Object.entries(DICCIONARIOS.fr)) {
+    if (k.startsWith("js.reserva.") || k.startsWith("js.contenido.")) continue;   // textos de otra sesión
+    assert.doesNotMatch(v, /(?<!à titre )d['’]exemple/u, `fr: ${k}: «${v}»`);
+  }
+});
+
 test("diccionarios: sin «loft», sin marcado HTML y con las mismas claves en los tres idiomas", () => {
   for (const [idioma, d] of Object.entries(DICCIONARIOS)) {
     assert.deepEqual(Object.keys(d).sort(), [...claves].sort(), `${idioma}.json: faltan o sobran claves`);

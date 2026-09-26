@@ -17,12 +17,16 @@
 <header id="barra-superior">
   <a class="volver panel" href="../"><span aria-hidden="true">←</span> <span data-i18n="tour.volver">Volver al sitio</span></a>
   <p id="nombre-lugar" class="panel">Project-roomVR</p>
-  <nav class="idiomas panel" aria-label="Idioma" data-i18n-attr="aria-label:tour.idioma">
-    <a data-i18n-alternar="es"><span aria-hidden="true">ES</span><span class="visually-hidden">Español</span></a>
-    <a data-i18n-alternar="en"><span aria-hidden="true">EN</span><span class="visually-hidden">English</span></a>
-    <a data-i18n-alternar="fr"><span aria-hidden="true">FR</span><span class="visually-hidden">Français</span></a>
-  </nav>
-  <a class="btn-reservar panel" href="../reserva.html" data-i18n="tour.reservar">Reservar</a>
+  <!-- el selector cuelga a la izquierda de «Reservar» fuera del flujo: así la pastilla del nombre queda centrada entre
+       «Volver» y «Reservar», como antes del selector -->
+  <div class="barra-derecha">
+    <nav class="idiomas panel" aria-label="Idioma" data-i18n-attr="aria-label:tour.idioma">
+      <a data-i18n-alternar="es"><span aria-hidden="true">ES</span><span class="visually-hidden">Español</span></a>
+      <a data-i18n-alternar="en"><span aria-hidden="true">EN</span><span class="visually-hidden">English</span></a>
+      <a data-i18n-alternar="fr"><span aria-hidden="true">FR</span><span class="visually-hidden">Français</span></a>
+    </nav>
+    <a class="btn-reservar panel" href="../reserva.html" data-i18n="tour.reservar">Reservar</a>
+  </div>
 </header>
 
 <nav id="botonera" class="panel" aria-label="Herramientas del recorrido" data-i18n-attr="aria-label:tour.herramientas">
