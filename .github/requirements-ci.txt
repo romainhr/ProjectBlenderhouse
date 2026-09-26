@@ -1,0 +1,3 @@
+# Dependencias de Python del CI (.github/workflows/). El sitio y las comprobaciones sólo necesitan Pillow.
+# Versión fija para que el CI sea reproducible; se sube a mano, por PR.
+pillow==12.3.0

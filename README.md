@@ -53,14 +53,51 @@ Genera `front/right/back/top/iso/iso_wire.png`, una hoja de contacto `contact.pn
 ## Estructura
 
 ```
-ref/        fotos de entrada (no se suben a ningún servicio sin tu autorización)
-build/      scripts bpy por fase + .blend maestro
-review/     renders de revisión por fase
-exports/    GLB/FBX finales + manifiestos
-tools/      utilidades (render_review.py)
+ref/        entradas (en git sólo ref/plano/; las fotos no se suben a ningún servicio sin tu autorización)
+build/      scripts bpy por fase (el .blend maestro se regenera, no está en git)
+review/     renders de revisión por fase (no está en git)
+exports/    GLB finales, manifiestos y exports/web/ (el modelo que usa el sitio)
+tools/      utilidades (render_review.py, compare_plan.py, ...)
+web/        sitio LOFT 2D2B: src/, build.py, desplegar.py, tests/, supabase/
+assets/     texturas y HDRI (CC0 de Poly Haven y propias)
+archivo/    versiones anteriores del modelo
 docs/       SETUP.md, adr/
-.claude/    skill del proyecto
+.github/    CI y despliegue (GitHub Actions)
+.claude/    skill del proyecto, reglas deny y worktrees de cada sesión
 ```
+
+## Cómo contribuir
+
+Todo cambio pasa por GitHub (`romainhr/ProjectBlenderhouse`, privado): rama, PR, CI en verde y fusión en `main`, que publica el sitio. Las reglas completas, que siguen también las sesiones de Claude, están en [CLAUDE.md](CLAUDE.md) (sección «Trabajo con git y GitHub»), y la decisión en [ADR 0005](docs/adr/0005-git-github-pipeline.md).
+
+1. Crea un worktree propio desde `main`, en vez de trabajar en la carpeta principal:
+
+   ```bash
+   git worktree add .claude/worktrees/mi-cambio -b web/mi-cambio origin/main
+   ```
+
+2. Antes de subir, corre lo mismo que el CI:
+
+   ```bash
+   cd web && npm test
+   ```
+
+   ```bash
+   python3 -m unittest discover -s web/tests -p 'test_*.py'
+   ```
+
+   ```bash
+   python3 web/build.py
+   ```
+
+   Las pruebas SQL (`web/supabase/tests/`) necesitan Docker; en esta máquina corren sólo en el CI.
+
+3. Commit, push de la rama y PR con `gh pr create`. La plantilla está en `.github/pull_request_template.md`.
+4. El workflow «CI y despliegue» corre cinco verificaciones: «Sin secretos versionados», «Pruebas», «Pruebas SQL», «Build del sitio» y, sólo en `main`, «Desplegar en Netlify». El artefacto `sitio-dist` de cada corrida es la vista previa del sitio.
+5. Con todo en verde, fusiona con `gh pr merge <n> --squash` (GitHub borra la rama remota; no uses `--delete-branch`, que falla dentro de un worktree porque `main` está tomada por la carpeta principal). Al entrar en `main`, el job de despliegue publica https://loft-2d2b.netlify.app. Nadie publica a mano.
+
+- **Pipeline de Blender:** en GitHub, Actions → «Pipeline de Blender» → Run workflow. Es manual y pesado; entrega el maestro, los exports y los renders como artefacto.
+- **Secretos:** `NETLIFY_TOKEN`, `SUPABASE_URL` y `SUPABASE_CLAVE_PUBLICA` van en Settings → Secrets and variables → Actions. Los carga el dueño del repositorio.
 
 ## Fuentes consultadas
 
