@@ -21,7 +21,8 @@
 1. **Repositorio:**
    - git con la rama `main`, en el repositorio privado `romainhr/ProjectBlenderhouse`;
    - la autenticación usa la sesión de `gh` que ya existía en la máquina, sin claves SSH ni tokens nuevos.
-   - La instantánea inicial se tomó cuando las sesiones avisaron que estaban en un punto estable. Las rutas del portal de gestión, todavía en construcción, quedaron fuera y entran por su propia PR.
+   - La instantánea inicial (commit `979572f`, 04:29) se tomó por orden del usuario, sin esperar el aviso de la sesión de Blender. Ningún archivo versionable había cambiado en los 20 minutos anteriores; esa sesión sólo escribía renders en `review/`, que no se versiona.
+   - Las rutas del portal de gestión, todavía en construcción, quedaron fuera por acuerdo con su sesión y entran por su propia PR.
 2. **Qué se versiona** (`.gitignore`):
    - **Sí:** fuentes, scripts, documentos y ADR; `assets/` (texturas CC0 de Poly Haven y texturas propias generadas por código); `exports/web/` y `web/renders_png/`, que son entradas de `web/build.py` y el CI las necesita; y `ref/plano/`, entrada de la fase 1.
    - **No:** `review/` (238 MB de renders regenerables), `web/dist/` (salida del build) y los GLB de validación de la fase 6.
@@ -38,7 +39,7 @@
    - **Build del sitio:** `python3 web/build.py` con Pillow fija (`.github/requirements-ci.txt`). Sube `web/dist` como artefacto, que sirve de vista previa descargable.
    - Un push a una rama sin PR no dispara el CI. Así se evita correr todo dos veces por cada push a una PR.
 5. **Despliegue:**
-   - El job `desplegar` corre sólo en `main`, después de los otros tres, y publica exactamente el `web/dist` que pasó el build, con `python3 web/desplegar.py --sitio loft-2d2b`.
+   - El job `desplegar` corre sólo en `main`, después de los otros cuatro, y publica exactamente el `web/dist` que pasó el build, con `python3 web/desplegar.py --sitio loft-2d2b`.
    - En `main`, el build exige `SUPABASE_URL` y `SUPABASE_CLAVE_PUBLICA`, para no publicar un sitio con las reservas desconectadas.
    - Los tres secretos (`NETLIFY_TOKEN`, `SUPABASE_URL`, `SUPABASE_CLAVE_PUBLICA`) los crea el usuario en GitHub. La clave de Supabase es la publicable, pública por diseño con RLS.
 6. **Pipeline de Blender** (`.github/workflows/blender.yml`):
@@ -91,3 +92,13 @@
 - **Crecimiento de la historia:** los binarios versionados (unos 17 MB de `exports/web`, 17 MB de `web/renders_png` y 24 MB de texturas) la hacen crecer en cada regeneración. Si el repositorio se acerca a 1 GB, se evalúa LFS o generar esos archivos en el CI.
 - **Pruebas SQL:** corren contra el Postgres y el Storage que trae el CLI, que pueden diferir en versión del proyecto real. Una migración que pasa en el CI todavía se aplica a mano en producción.
 - **Lo que el CI no cubre:** el pipeline de Blender en cada PR y las pruebas del sitio en un navegador.
+
+## Adenda: protección de `main` (2026-09-26)
+
+- **Modelo de IA utilizado:** Claude Opus 5.5. **Revisor humano:** Romain Ange, que aprobó intentar la configuración.
+- GitHub rechazó las dos vías con HTTP 403 («Upgrade to GitHub Pro or make this repository public to enable this feature»): la protección de rama (`PUT /branches/main/protection`) y un ruleset (`POST /rulesets`). El plan gratuito no las ofrece en repositorios privados.
+- Lo que sí rige:
+  - la regla de `CLAUDE.md` para todas las sesiones;
+  - las reglas deny de `.claude/settings.json`;
+  - el propio CI: en `main`, el job de despliegue vuelve a correr todas las verificaciones y no publica si alguna falla. Una fusión en rojo ensuciaría la historia de `main`, pero no llegaría a producción.
+- Para tener protección real: pasar a GitHub Pro o hacer público el repositorio. El JSON de la protección (PR obligatoria, las cuatro verificaciones, sin push forzado ni borrado, también para administradores) está listo para aplicarlo con `gh api`.
