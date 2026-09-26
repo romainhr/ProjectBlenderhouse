@@ -75,9 +75,18 @@ def en_franja(z0, z1):
     return z1 > R.Z_PASO and z0 < R.Z_CABEZA
 
 
+def descendientes(o):
+    """Hijos, nietos, etc. (el contenido teñido de una pieza móvil cuelga de su contenido liso: fase 07b). Todos
+    comparten el origen del móvil, así que sus coordenadas locales son las del marco del móvil."""
+    out = []
+    for h in o.children:
+        out += [h, *descendientes(h)]
+    return out
+
+
 def colisiones(root):
     moviles_ob = [o for o in exportables(root) if "puerta" in o or "recorrido_m" in o]
-    excluir = set(moviles_ob) | {h for o in moviles_ob for h in o.children}
+    excluir = set(moviles_ob) | {h for o in moviles_ob for h in descendientes(o)}
     estaticos = []
     fuentes = [o for o in root.all_objects if o.type == "MESH" and not o.name.startswith("Depto_Ref")
                and ((not o.hide_render and o.get("colision") is not False) or o.get("colision") is True)]
@@ -92,7 +101,7 @@ def colisiones(root):
     for o in moviles_ob:
         cajas = []
         # marco local del nodo (sin su giro); los hijos (manillas, vidrio de la corredera) tienen el mismo origen
-        for isla in [i for ob in (o, *o.children) for i in G.islas_locales(ob)]:
+        for isla in [i for ob in (o, *descendientes(o)) for i in G.islas_locales(ob)]:
             x0, x1, y0, y1, z0, z1 = G.aabb(isla)
             if en_franja(z0, z1):
                 cajas.append([r4(x0), r4(x1), r4(-y1), r4(-y0)])
@@ -245,7 +254,7 @@ def prueba_transformacion(datos):
     for m in datos["moviles"]:
         ob = bpy.data.objects[m["nodo"]]
         esperado = []
-        for isla in [i for o in (ob, *ob.children) for i in G.islas_mundo(o)]:
+        for isla in [i for o in (ob, *descendientes(ob)) for i in G.islas_mundo(o)]:
             x0, x1, y0, y1, z0, z1 = G.aabb(isla)
             if en_franja(z0, z1):
                 esperado.append((x0, x1, -y1, -y0))

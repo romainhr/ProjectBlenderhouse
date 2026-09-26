@@ -60,26 +60,27 @@ TEXTURA_MAT = {
     "Depto_Mat_Textil": ("rough_linen", dict(color=False, rugosidad=True, normal=0.6)),
     "Depto_Mat_Cobertor": ("rough_linen", dict(color=False, rugosidad=True, normal=1.0)),
     "Depto_Mat_Alfombra": ("yute", dict(color=True, rugosidad=True, normal=1.0)),
-    # Ropa de los clósets: mismas texturas de tela del depto, sólo el relieve (el tinte lo da el color base).
-    "Depto_Mat_RopaCrudo": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaAzul": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaGris": ("lana", dict(color=False, rugosidad=True, normal=0.8)),
-    "Depto_Mat_RopaVino": ("lana", dict(color=False, rugosidad=True, normal=0.8)),
-    "Depto_Mat_RopaVerde": ("poly_wool_herringbone", dict(color=False, rugosidad=True, normal=0.6)),
-    "Depto_Mat_RopaCarbon": ("poly_wool_herringbone", dict(color=False, rugosidad=True, normal=0.6)),
-    "Depto_Mat_RopaDoblada1": ("lana", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaDoblada2": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaBlanco": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaCeleste": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaDenim": ("rough_linen", dict(color=False, rugosidad=True, normal=0.7)),
-    "Depto_Mat_RopaCamel": ("poly_wool_herringbone", dict(color=False, rugosidad=True, normal=0.6)),
-    "Depto_Mat_RopaNegro": ("lana", dict(color=False, rugosidad=True, normal=0.6)),
+    # Interiores de clósets (fase 07b): sólo el relieve de las telas del depto; el color va por vértice.
+    "Depto_Mat_Tela": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    "Depto_Mat_TelaGruesa": ("lana", dict(color=False, rugosidad=True, normal=0.8)),
+    "Depto_Mat_Calzado": ("cuero", dict(color=False, rugosidad=True, normal=0.6)),
     # cuadros: lámina con UV 0-1 propia
     "Depto_Mat_Arte1": ("arte_1", dict(color=True, rugosidad=False, normal=None, uv01=True)),
     "Depto_Mat_Arte2": ("arte_2", dict(color=True, rugosidad=False, normal=None, uv01=True)),
     "Depto_Mat_Arte3": ("arte_3", dict(color=True, rugosidad=False, normal=None, uv01=True)),
 }
-NODOS_GLTF = {"OUTPUT_MATERIAL", "BSDF_PRINCIPLED", "TEX_IMAGE", "NORMAL_MAP", "MAPPING", "TEX_COORD"}
+NODOS_GLTF = {"OUTPUT_MATERIAL", "BSDF_PRINCIPLED", "TEX_IMAGE", "NORMAL_MAP", "MAPPING", "TEX_COORD", "VERTEX_COLOR"}
+# Materiales teñidos por vértice (fase 07b): el color base sale del atributo "Col" de la malla (glTF: COLOR_0 por el
+# color base blanco). Ver build/deco_interiores.py (TINTES).
+COLOR_VERTICE = {"Depto_Mat_Tela", "Depto_Mat_TelaGruesa", "Depto_Mat_Calzado", "Depto_Mat_Suela", "Depto_Mat_Alimento"}
+
+
+def _color_vertice(mat):
+    nt = mat.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    vc = nt.nodes.new("ShaderNodeVertexColor")
+    vc.layer_name = "Col"
+    nt.links.new(vc.outputs["Color"], bsdf.inputs["Base Color"])
 
 
 def _manifiestos():
@@ -128,12 +129,12 @@ def _imagen(ruta, no_color):
 def aplicar(nombre):
     """Material en su versión con textura (idempotente). Devuelve True si quedó con textura."""
     mat = G.material(nombre)                          # base: color, rugosidad, metálico, alfa, emisión
-    if nombre not in TEXTURA_MAT:
+    t = textura(TEXTURA_MAT[nombre][0]) if nombre in TEXTURA_MAT else None
+    if t is None:
+        if nombre in COLOR_VERTICE:
+            _color_vertice(mat)
         return False
     tid, op = TEXTURA_MAT[nombre]
-    t = textura(tid)
-    if t is None:
-        return False
     nt = mat.node_tree
     viejo = nt.nodes["Principled BSDF"]
     base = {k: tuple(viejo.inputs[k].default_value) if hasattr(viejo.inputs[k].default_value, "__len__")
@@ -173,6 +174,8 @@ def aplicar(nombre):
         nm.inputs["Strength"].default_value = op["normal"]
         nt.links.new(nodo(t["normal"], True).outputs["Color"], nm.inputs["Color"])
         nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    if nombre in COLOR_VERTICE:
+        _color_vertice(mat)
     mat["textura"] = tid
     mat["escala_mapping"] = list(esc)
     return True

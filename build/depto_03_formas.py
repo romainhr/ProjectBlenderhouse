@@ -220,6 +220,8 @@ NEVERA_CAJON_VERDURA_ALTO = 0.16         # supuesto: cajón de verduras (no inte
 NEVERA_BALCON_ALTO = 0.09                # supuesto: balcones de la contrapuerta
 NEVERA_BALCONES_Z = (0.22, 0.72)         # diseño: balcón bajo (botellas altas, 0,41 m libres) y alto (salsas)
 NEVERA_LACTEOS_Z = 1.02                  # diseño: compartimento de lácteos con tapa, arriba en la contrapuerta
+TAPA_AZUL = ("Depto_Mat_Alimento", "Depto_Mat_RopaAzul")          # tapas y bandejas de plástico teñidas
+TAPA_CELESTE = ("Depto_Mat_Alimento", "Depto_Mat_RopaCeleste")
 
 # ---------------------------------------------------------------------------
 # Nicho de lavadora: frente plegable cerrado (el arco del plano) y dintel sobre la puerta.
@@ -735,7 +737,7 @@ def closets(col):
         _caja_uv(inte, a_px, 0.0, E, 0.0, D, E, z_techo_bot)                                 # costados
         _caja_uv(inte, a_px, W - E, W, 0.0, D, E, z_techo_bot)
         rng = random.Random(zlib.crc32(cid.encode()) + 2026)
-        cont = DI.Malla()                                        # contenido suelto de la celda (un objeto)
+        cont = DI.Mallas()                                       # contenido suelto de la celda
         barras = []
         if cid.endswith("Norte"):
             alt = CLOSET_ALTURAS[did]
@@ -753,7 +755,7 @@ def closets(col):
             z_m = zr + E
             DI.caja_guardado(cont, 0.24, D / 2, z_m, 0.36, 0.34, 0.22, "Depto_Mat_RopaCrudo", "Depto_Mat_RopaCrudo")
             DI.pila_doblada(cont, W - 0.22, D / 2 - 0.02, z_m, 0.36, 0.34, 3,
-                            ("Depto_Mat_Manta", "Depto_Mat_Lana"), rng, alto_capa=0.06)
+                            ("Depto_Mat_RopaCarbon", "Depto_Mat_RopaCrudo", "Depto_Mat_RopaGris"), rng, alto_capa=0.06)
             # piso: zapatos en fila, puntas hacia el frente
             zs = CLOSET_ZAPATOS[cid]
             paso_u = (W - 2 * E - 0.06) / len(zs)
@@ -780,7 +782,7 @@ def closets(col):
                     uc - px(0.06), uc + px(0.06), ya, ya + s * px(0.002), z1c - 0.030, z1c - 0.018
                 ).crear(col, origen=ref_c, padre=ob_c)
                 # contenido del cajón (hijo: sale con él): calcetines arriba, poleras dobladas en los demás
-                dm = DI.Malla()
+                dm = DI.Mallas()
                 u_in0, u_in1 = E + 0.003 + 0.015, u_div0 - 0.003 - 0.015
                 v_in0, v_in1 = Dr - prof + 0.015, Dr - 0.015
                 zp = z_c + 0.015
@@ -839,10 +841,7 @@ def closets(col):
                 DI.caja_guardado(cont, (ui0 + ui1) / 2, Dr * 0.5, z_top, min(0.30, ui1 - ui0 - 0.04), 0.32,
                                  min(0.22, z_techo_bot - z_top - 0.03), "Depto_Mat_RopaGris", "Depto_Mat_RopaCarbon")
         inte.crear(col)["colision"] = False
-        if not cont.vacia():
-            cont.crear(col, f"Depto_Closet_{cid}_Contenido", marco, angulo=50.0)["colision"] = False
-        else:
-            cont.bm.free()
+        cont.crear(col, f"Depto_Closet_{cid}_Contenido", marco, angulo=50.0, props={"colision": False})
         # Colisión de la celda: una caja oculta en vez de las islas de cada prenda (el visor sólo necesita saber
         # que no se entra al clóset), con las hojas como móviles delante.
         cb = Pieza(f"Depto_Col_Closet_{cid}", "Depto_Mat_Colision")
@@ -1093,7 +1092,7 @@ def nevera(col):
                   Vector((*P.a_blender(forro_w1, DOOR_Y0 + 1.0), 0.0)) - Vector((*P.a_blender(forro_w1, DOOR_Y0), 0.0)),
                   Vector((*P.a_blender(forro_w1 + 1.0, DOOR_Y0), 0.0)) - Vector((*P.a_blender(forro_w1, DOOR_Y0), 0.0)))
     ancho_p = (DOOR_Y1 - DOOR_Y0) * S
-    botellas = DI.Malla()
+    botellas = DI.Mallas()
     for k, (zb, items) in enumerate(((DOOR_Z0 + NEVERA_BALCONES_Z[0], "bajo"), (DOOR_Z0 + NEVERA_BALCONES_Z[1], "alto"))):
         bal = Pieza(f"Depto_Cocina_NeveraBalcon{k + 1}", "Depto_Mat_MuebleBlanco")
         ua, ub = DOOR_Y0 + px(0.015), DOOR_Y1 - px(0.015)
@@ -1104,9 +1103,9 @@ def nevera(col):
         bal.crear(col, origen=piv_p, padre=puerta)
         z0b = zb + 0.006
         if items == "bajo":      # leche, jugo, agua y una botella de vino (vidrio verde oscuro: opaco)
-            for u, r, alto, liq, tapa in ((0.085, 0.036, 0.30, "Depto_Mat_Ceramica", "Depto_Mat_RopaAzul"),
+            for u, r, alto, liq, tapa in ((0.085, 0.036, 0.30, "Depto_Mat_Ceramica", TAPA_AZUL),
                                           (0.200, 0.034, 0.28, "Depto_Mat_ComidaNaranja", "Depto_Mat_MuebleBlanco"),
-                                          (0.315, 0.036, 0.31, None, "Depto_Mat_RopaCeleste")):
+                                          (0.315, 0.036, 0.31, None, TAPA_CELESTE)):
                 DI.botella(botellas, u, 0.05, z0b, r, alto, "Depto_Mat_Vidrio", liq, llenado=0.85, tapa_mat=tapa)
             DI.botella(botellas, ancho_p - 0.085, 0.05, z0b, 0.037, 0.32, "Depto_Mat_GresNegro", cuello=0.36,
                        tapa_mat="Depto_Mat_Acero")
@@ -1155,7 +1154,7 @@ def nevera(col):
                   Vector((*P.a_blender(fx1 - lf, fy0 + lf + 1.0), 0.0)) - Vector((*P.a_blender(fx1 - lf, fy0 + lf), 0.0)),
                   Vector((*P.a_blender(fx1 - lf - 1.0, fy0 + lf), 0.0)) - Vector((*P.a_blender(fx1 - lf, fy0 + lf), 0.0)))
     ancho_f, hondo_f = (fy1 - fy0 - 2 * lf) * S, (fx1 - fx0 - 2 * lf) * S
-    cong = DI.Malla()
+    cong = DI.Mallas()
     z0f = zf + 0.004
     for q, (uc, vc) in enumerate(((0.08, 0.09), (0.205, 0.10))):                             # potes de helado
         with cong.parte("Depto_Mat_Ceramica", suave=True) as bm:
@@ -1168,7 +1167,7 @@ def nevera(col):
         B_.caja(bm, 0.03, 0.30, hondo_f - 0.20, hondo_f - 0.02, z0f, z0f + 0.035)
         B_.caja(bm, 0.05, 0.28, hondo_f - 0.19, hondo_f - 0.03, z0f + 0.035, z0f + 0.075)
     for q in range(2):                                                                       # cubeteras
-        with cong.parte("Depto_Mat_RopaCeleste") as bm:
+        with cong.parte(TAPA_CELESTE) as bm:
             B_.caja(bm, 0.30 + 0.095 * q, 0.39 + 0.095 * q, hondo_f - 0.24, hondo_f - 0.02, z0f, z0f + 0.03)
     cong.crear(col, "Depto_Cocina_NeveraCongelados", mf, origen=ref_f, padre=freezer)
 
@@ -1200,7 +1199,7 @@ def nevera(col):
         xa - px(0.015), xa, ya, yb, z_cv0, z_cv1).crear(col)
     Pieza("Depto_Cocina_NeveraCajonVerduraTapa", "Depto_Mat_Vidrio").caja(
         xa - px(0.015), xb, ya, yb, z_cv1, z_cv1 + NEVERA_ESTANTE_ESP).crear(col)
-    ali = DI.Malla()
+    ali = DI.Mallas()
     # dentro del cajón de verduras: lechuga, tomates, pimentones y zanahorias
     zc0 = z_cv0 + 0.006
     DI.fruta(ali, ui0 + 0.12, vi0 + 0.18, zc0, 0.072, "Depto_Mat_ComidaVerde", aplastar=0.78)       # lechuga
@@ -1224,7 +1223,7 @@ def nevera(col):
         with ali.parte("Depto_Mat_ComidaRoja") as bm:
             B_.cilindro(bm, u_y, v_y, zt + 0.075, zt + 0.078, 0.026, seg=12)
     DI.caja_guardado(ali, ui0 + 0.42, vi0 + 0.12, zt, 0.16, 0.12, 0.08, "Depto_Mat_VidrioEsmerilado",
-                     "Depto_Mat_RopaAzul", tapa=0.018)
+                     TAPA_AZUL, tapa=0.018)
     # estante 1: cartón de huevos, fuente con fruta y táper
     z1 = z_div_top + NEVERA_ESTANTES_Z[0] + NEVERA_ESTANTE_ESP
     with ali.parte("Depto_Mat_Papel", suave=True) as bm:                                      # cartón de huevos
@@ -1237,10 +1236,10 @@ def nevera(col):
                            (0.0, 0.04, "Depto_Mat_ComidaNaranja", 0.038)):
         DI.fruta(ali, uf + du, vf + dv, z1 + 0.012, r, mat, aplastar=0.95)
     DI.caja_guardado(ali, ui0 + 0.13, vi0 + 0.10, z1, 0.18, 0.13, 0.09, "Depto_Mat_VidrioEsmerilado",
-                     "Depto_Mat_RopaCeleste", tapa=0.02)
+                     TAPA_CELESTE, tapa=0.02)
     # estante 2: leche y jugo en cartón, frascos y una botella al fondo
     z2 = z_div_top + NEVERA_ESTANTES_Z[1] + NEVERA_ESTANTE_ESP
-    DI.carton(ali, ui0 + 0.06, vi1 - 0.07, z2, 0.07, 0.07, 0.20, "Depto_Mat_Papel", "Depto_Mat_RopaAzul", giro=4)
+    DI.carton(ali, ui0 + 0.06, vi1 - 0.07, z2, 0.07, 0.07, 0.20, "Depto_Mat_Papel", TAPA_AZUL, giro=4)
     DI.carton(ali, ui0 + 0.15, vi1 - 0.08, z2, 0.07, 0.07, 0.20, "Depto_Mat_ComidaNaranja", "Depto_Mat_MuebleBlanco",
               giro=-3)
     DI.frasco(ali, ui0 + 0.26, vi1 - 0.06, z2, 0.036, 0.12, "Depto_Mat_Vidrio", "Depto_Mat_ComidaRoja",

@@ -31,6 +31,37 @@ import depto_geom as G
 
 TAU = 2 * math.pi
 
+# Tintes por vértice (sRGB, diseño). Ropa, zapatos, cajas de tela y alimentos usan pocos materiales base (Tela,
+# TelaGruesa, Calzado, Suela, Alimento) y llevan su color en el atributo de color "Col" de la malla (COLOR_0 en
+# glTF, que three.js multiplica por el color base): el visor fusiona las mallas por material, así que cada tinte
+# como material propio costaba una llamada de dibujo más en casi todas las vistas.
+TINTES = {
+    "Depto_Mat_RopaCrudo": (0.82, 0.78, 0.68), "Depto_Mat_RopaAzul": (0.33, 0.38, 0.46),
+    "Depto_Mat_RopaGris": (0.55, 0.53, 0.50), "Depto_Mat_RopaVino": (0.42, 0.22, 0.24),
+    "Depto_Mat_RopaVerde": (0.33, 0.36, 0.28), "Depto_Mat_RopaCarbon": (0.20, 0.20, 0.21),
+    "Depto_Mat_RopaBlanco": (0.88, 0.87, 0.84), "Depto_Mat_RopaCeleste": (0.60, 0.68, 0.76),
+    "Depto_Mat_RopaDenim": (0.22, 0.29, 0.42), "Depto_Mat_RopaCamel": (0.63, 0.48, 0.33),
+    "Depto_Mat_RopaNegro": (0.08, 0.08, 0.09), "Depto_Mat_CajaZapatos": (0.80, 0.74, 0.62),
+    "Depto_Mat_Cuero": (0.54, 0.29, 0.16), "Depto_Mat_Zapato": (0.30, 0.24, 0.20),
+    "Depto_Mat_SuelaClara": (0.86, 0.85, 0.81), "Depto_Mat_CableTela": (0.07, 0.07, 0.07),
+    "Depto_Mat_ComidaVerde": (0.36, 0.55, 0.22), "Depto_Mat_ComidaRoja": (0.68, 0.12, 0.08),
+    "Depto_Mat_ComidaNaranja": (0.90, 0.46, 0.10), "Depto_Mat_ComidaAmarilla": (0.93, 0.78, 0.36),
+}
+TELA, TELA_GRUESA, CALZADO, SUELA, ALIMENTO = ("Depto_Mat_Tela", "Depto_Mat_TelaGruesa", "Depto_Mat_Calzado",
+                                               "Depto_Mat_Suela", "Depto_Mat_Alimento")
+# un nombre de tinte suelto se resuelve a este material base; para otro, pasar (material base, tinte)
+TINTE_BASE = {k: (ALIMENTO if k.startswith("Depto_Mat_Comida") else TELA) for k in TINTES
+              if k.startswith(("Depto_Mat_Ropa", "Depto_Mat_Comida")) or k == "Depto_Mat_CajaZapatos"}
+
+
+def resolver(material):
+    """-> (material base, tinte sRGB o None)."""
+    if isinstance(material, tuple):
+        return material[0], TINTES[material[1]]
+    if material in TINTE_BASE:
+        return TINTE_BASE[material], TINTES[material]
+    return material, None
+
 
 # ================================================================ marco y malla con varios materiales
 class Marco:
@@ -52,6 +83,7 @@ class Malla:
     def __init__(self):
         self.bm = bmesh.new()
         self.mats = []
+        self.tintes = {}                    # cara -> tinte sRGB
 
     def indice(self, material):
         if material not in self.mats:
@@ -60,13 +92,16 @@ class Malla:
 
     @contextmanager
     def parte(self, material, matriz=None, suave=False):
-        idx = self.indice(material)
+        base, tinte = resolver(material)
+        idx = self.indice(base)
         antes_v, antes_f = set(self.bm.verts), set(self.bm.faces)
         yield self.bm
         for f in self.bm.faces:
             if f not in antes_f:
                 f.material_index = idx
                 f.smooth = suave
+                if tinte is not None:
+                    self.tintes[f] = tinte
         if matriz is not None:
             bmesh.ops.transform(self.bm, matrix=matriz, verts=[v for v in self.bm.verts if v not in antes_v])
 
@@ -78,6 +113,15 @@ class Malla:
         objeto. origen: punto de mundo del origen del objeto (con padre: el mismo origen del padre, que debe estar
         en su posición de reposo, sin giro)."""
         bm = self.bm
+        if self.tintes:
+            # todo o nada: una malla con partes sin teñir sumaría en el visor una variante "con color por vértice"
+            # de esos materiales (y su llamada de dibujo); Mallas separa lo teñido de lo liso
+            assert len(self.tintes) == len(bm.faces), f"{nombre}: caras teñidas y sin teñir en la misma malla"
+            capa = bm.loops.layers.float_color.new("Col")
+            for f, c in self.tintes.items():
+                rgba = (*(G.srgb_a_lineal(x) for x in c), 1.0)
+                for lp in f.loops:
+                    lp[capa] = rgba
         bmesh.ops.transform(bm, matrix=marco.M, verts=bm.verts)
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         G.uv_mundo(bm)
@@ -99,6 +143,42 @@ class Malla:
         for k, v in (props or {}).items():
             ob[k] = v
         col.objects.link(ob)
+        return ob
+
+
+class Mallas:
+    """Par de Malla: lo liso y lo teñido por vértice, que `parte` reparte solo según el material. `crear` hace la
+    lisa y la teñida como hija suya (mismo origen): así la prueba de interferencias de la fase 3 no compara, por
+    ejemplo, la botella con su líquido o la percha con la prenda."""
+
+    def __init__(self):
+        self.lisa, self.tenida = Malla(), Malla()
+
+    def parte(self, material, matriz=None, suave=False):
+        return (self.tenida if resolver(material)[1] is not None else self.lisa).parte(material, matriz, suave)
+
+    def vacia(self):
+        return self.lisa.vacia() and self.tenida.vacia()
+
+    def marca(self):
+        return set(self.lisa.bm.verts), set(self.tenida.bm.verts)
+
+    def transformar_desde(self, marca, M):
+        for m, antes in ((self.lisa, marca[0]), (self.tenida, marca[1])):
+            bmesh.ops.transform(m.bm, matrix=M, verts=[v for v in m.bm.verts if v not in antes])
+
+    def crear(self, col, nombre, marco, origen=None, padre=None, props=None, angulo=40.0):
+        ob = None
+        if not self.lisa.vacia():
+            ob = self.lisa.crear(col, nombre, marco, origen, padre, props, angulo)
+        else:
+            self.lisa.bm.free()
+        if not self.tenida.vacia():
+            ob2 = self.tenida.crear(col, f"{nombre}_Color" if ob else nombre, marco, origen, ob or padre, props,
+                                    angulo)
+            ob = ob or ob2
+        else:
+            self.tenida.bm.free()
         return ob
 
 
@@ -296,11 +376,15 @@ def manga(bm, s, w, z_hombro_, largo, ru, rv, rng):
     bm.faces.new(anillos[-1])
 
 
-def prenda(m, tipo, material, rng, largo=None):
-    """Losa de la prenda en su sistema (eje de la barra en el origen), con mangas si las tiene."""
+GRUESAS = ("sueter", "poleron", "chaqueta", "abrigo")       # tejido de lana o paño: TelaGruesa
+
+
+def prenda(m, tipo, tinte, rng, largo=None):
+    """Cuerpo de la prenda en su sistema (eje de la barra en el origen), con mangas si las tiene; `tinte`: nombre
+    de TINTES."""
     w, L, t, tb = PRENDAS[tipo]
     t *= rng.uniform(0.9, 1.12)
-    with m.parte(material, suave=True) as bm:
+    with m.parte((TELA_GRUESA if tipo in GRUESAS else TELA, tinte), suave=True) as bm:
         cuerpo_prenda(bm, tipo, largo, t, rng)
         if tipo in MANGAS:
             lm, ru, rv = MANGAS[tipo]
@@ -319,7 +403,7 @@ def barra_colgar(col, nombre, marco, u0, u1, v, z, prendas, semilla, percha_mat=
     más el barrido del giro más una holgura; si no caben, se descartan las últimas. Devuelve (objeto, n_prendas,
     ocupación de la barra)."""
     rng = random.Random(semilla)
-    m = Malla()
+    m = Mallas()
     with m.parte(barra_mat, suave=True) as bm:
         cilindro_eje(bm, (u0, v, z), (u1, v, z), r_barra, seg=12)
         for ue, s in ((u0, 1), (u1, -1)):                              # soportes: roseta y copa abierta arriba
@@ -349,25 +433,27 @@ def barra_colgar(col, nombre, marco, u0, u1, v, z, prendas, semilla, percha_mat=
         w = PRENDAS[tipo][0]
         media = 0.19 if tipo == "pantalon" else min(0.205, w - 0.016)
         dv = rng.uniform(-0.008, 0.008)
-        antes = set(m.bm.verts)
+        antes = m.marca()
         percha(m, tipo, percha_mat, gancho_mat, media, r_barra, pantalon=(tipo == "pantalon"))
         prenda(m, tipo, mat, rng, largo)
-        bmesh.ops.transform(m.bm, matrix=_M(u_ini + uc, v + dv, z, giro), verts=[x for x in m.bm.verts if x not in antes])
-    ob = m.crear(col, nombre, marco, angulo=50.0)
+        m.transformar_desde(antes, _M(u_ini + uc, v + dv, z, giro))
+    ob = m.crear(col, nombre, marco, angulo=50.0, props={"colision": False})
     return ob, len(colocadas), round(ocupado / (u1 - u0), 3)
 
 
 # ================================================================ ropa doblada, zapatos, cajas
-def pila_doblada(m, u_c, v_c, z0, ancho, hondo, capas, materiales, rng, alto_capa=0.052):
+def pila_doblada(m, u_c, v_c, z0, ancho, hondo, capas, materiales, rng, alto_capa=0.052, gruesa=None):
     """Pila de prendas dobladas: capas redondeadas (el doblez al frente), cada una algo corrida y de tamaño
-    levemente distinto, con el material elegido entre `materiales`. Devuelve el z de arriba."""
+    levemente distinto, con el tinte elegido entre `materiales` (nombres de TINTES). gruesa: TelaGruesa (suéteres,
+    mantas); por defecto, si las capas son altas. Devuelve el z de arriba."""
+    base = TELA_GRUESA if (gruesa if gruesa is not None else alto_capa >= 0.055) else TELA
     z = z0
     for k in range(capas):
         h = alto_capa * rng.uniform(0.82, 1.15)
         a = ancho * rng.uniform(0.94, 1.0)
         d = hondo * rng.uniform(0.95, 1.0)
         du, dv = rng.uniform(-0.008, 0.008), rng.uniform(-0.006, 0.006)
-        with m.parte(rng.choice(materiales), suave=True) as bm:
+        with m.parte((base, rng.choice(materiales)), suave=True) as bm:
             B.caja_redondeada(bm, u_c + du - a / 2, u_c + du + a / 2, v_c + dv - d / 2, v_c + dv + d / 2, z, z + h,
                               min(0.018, h * 0.42), segmentos=1)
         z += h
@@ -390,13 +476,14 @@ def _perfil_zapato(tipo):
 
 
 def zapato(m, tipo, mat_capellada, mat_suela, M):
-    """Un zapato: suela (planta extruida) y capellada (loft de secciones redondeadas). Sistema: x hacia la punta,
-    y a lo ancho, z arriba; apoyado en z = 0 con el talón en x = 0. M: matriz al marco del mueble."""
+    """Un zapato: suela (planta extruida) y capellada (loft de secciones redondeadas), teñidas con los nombres de
+    TINTES `mat_capellada` y `mat_suela`. Sistema: x hacia la punta, y a lo ancho, z arriba; apoyado en z = 0 con
+    el talón en x = 0. M: matriz al marco del mueble."""
     L, s, est = _perfil_zapato(tipo)
     planta = [(x, b + 0.003) for x, b, _ in est] + [(x, -(b + 0.003)) for x, b, _ in reversed(est)]
-    with m.parte(mat_suela, M) as bm:
+    with m.parte((SUELA, mat_suela), M) as bm:
         extruir_poligono(bm, planta, 0.0, s)
-    with m.parte(mat_capellada, M, suave=True) as bm:
+    with m.parte((CALZADO, mat_capellada), M, suave=True) as bm:
         anillos = []
         for x, b, h in est:
             sec = [(-b, 0.0), (-b, 0.45 * h), (-0.72 * b, 0.86 * h), (0.0, h), (0.72 * b, 0.86 * h), (b, 0.45 * h),
@@ -411,7 +498,7 @@ def zapato(m, tipo, mat_capellada, mat_suela, M):
     if tipo != "bota":
         # boca del zapato: óvalo oscuro (el forro) pegado 1 mm sobre la capellada, entre el talón y el medio pie
         x0b, x1b = est[0][0] + 0.014, est[2][0] + 0.03
-        with m.parte("Depto_Mat_CableTela", M) as bm:
+        with m.parte((SUELA, "Depto_Mat_CableTela"), M) as bm:
             pts = []
             for i in range(12):
                 x = x0b + (x1b - x0b) * (0.5 + 0.5 * math.cos(TAU * i / 12))

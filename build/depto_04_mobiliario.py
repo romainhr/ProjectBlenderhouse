@@ -267,7 +267,7 @@ def living(c):
     base_y = MURO_SOFA - (0.03 + ahi.x) / S                           # a 3 cm del tabique (tras girar, x local -> y)
     c.poner("Living_LamparaArco", "adorno", arco, base_x, base_y, 0.0, "O")
     marcar_ampolletas(arco, POTENCIA["arco"], grupo="living_lampara_pie")
-    clicable(arco, "living_lampara_pie", ("_Base", "_Tubo", "_Pantalla"))
+    clicable(arco, "living_lampara_pie", ("_Tubo", "_Pantalla"))       # cuerpo y pantalla (la base se fusiona)
     lat = c.construir(LV.mesa_lateral, "Living_MesaLateral")
     llo, lhi = c.caja_local(lat)
     c.poner("Living_MesaLateral", "solido", lat, base_x, base_y - (ahi.x + 0.05 + lhi.y) / S - 0.0, 0.0, "N")

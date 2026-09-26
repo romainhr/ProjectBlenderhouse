@@ -179,29 +179,13 @@ MATERIALES = {
     "Depto_Mat_Arte1": ((0.80, 0.78, 0.72), 0.80, 0.0, 1.0),
     "Depto_Mat_Arte2": ((0.80, 0.78, 0.72), 0.80, 0.0, 1.0),
     "Depto_Mat_Arte3": ((0.80, 0.78, 0.72), 0.80, 0.0, 1.0),
-    # Ropa de los clósets (fase "07 detalle interactivo"): mismas texturas de tela ya usadas en el depto
-    # (sólo el relieve: color=False en deco_paleta.TEXTURA_MAT), con tintes sobrios y variados por prenda.
-    "Depto_Mat_RopaCrudo": ((0.82, 0.78, 0.68), 0.85, 0.0, 1.0),     # rough_linen: camisa cruda
-    "Depto_Mat_RopaAzul": ((0.33, 0.38, 0.46), 0.85, 0.0, 1.0),      # rough_linen: camisa azul grisáceo
-    "Depto_Mat_RopaGris": ((0.55, 0.53, 0.50), 0.90, 0.0, 1.0),      # lana: vestido/suéter gris cálido
-    "Depto_Mat_RopaVino": ((0.42, 0.22, 0.24), 0.90, 0.0, 1.0),      # lana: vestido vino apagado
-    "Depto_Mat_RopaVerde": ((0.33, 0.36, 0.28), 0.80, 0.0, 1.0),     # poly_wool_herringbone: chaqueta verde oliva
-    "Depto_Mat_RopaCarbon": ((0.20, 0.20, 0.21), 0.80, 0.0, 1.0),    # poly_wool_herringbone: chaqueta carbón
-    "Depto_Mat_RopaDoblada1": ((0.70, 0.66, 0.58), 0.90, 0.0, 1.0),  # lana: pilas de ropa doblada
-    "Depto_Mat_RopaDoblada2": ((0.38, 0.40, 0.42), 0.90, 0.0, 1.0),
-    "Depto_Mat_CajaZapatos": ((0.80, 0.74, 0.62), 0.85, 0.0, 1.0),   # cartón de las cajas de zapatos
-    "Depto_Mat_Zapato": ((0.30, 0.24, 0.20), 0.55, 0.0, 1.0),
-    # Fase 07b (clósets y nevera, build/deco_interiores.py): más tintes de ropa, suela clara y alimentos.
-    "Depto_Mat_RopaBlanco": ((0.88, 0.87, 0.84), 0.85, 0.0, 1.0),    # rough_linen: camisa blanca
-    "Depto_Mat_RopaCeleste": ((0.60, 0.68, 0.76), 0.85, 0.0, 1.0),   # rough_linen: camisa celeste
-    "Depto_Mat_RopaDenim": ((0.22, 0.29, 0.42), 0.85, 0.0, 1.0),     # rough_linen: mezclilla índigo
-    "Depto_Mat_RopaCamel": ((0.63, 0.48, 0.33), 0.90, 0.0, 1.0),     # poly_wool_herringbone: abrigo camel
-    "Depto_Mat_RopaNegro": ((0.08, 0.08, 0.09), 0.85, 0.0, 1.0),     # lana: vestido, polera y zapatos negros
-    "Depto_Mat_SuelaClara": ((0.86, 0.85, 0.81), 0.75, 0.0, 1.0),    # goma de zapatillas
-    "Depto_Mat_ComidaVerde": ((0.36, 0.55, 0.22), 0.55, 0.0, 1.0),   # lechuga, manzana verde, arvejas
-    "Depto_Mat_ComidaRoja": ((0.68, 0.12, 0.08), 0.35, 0.0, 1.0),    # tomate, manzana, kétchup, mermelada
-    "Depto_Mat_ComidaNaranja": ((0.90, 0.46, 0.10), 0.45, 0.0, 1.0), # zanahoria, naranja, jugo
-    "Depto_Mat_ComidaAmarilla": ((0.93, 0.78, 0.36), 0.55, 0.0, 1.0),  # queso, mantequilla, mostaza, pimentón
+    # Interiores de clósets y nevera (fase 07b, build/deco_interiores.py): materiales base blancos; el color de cada
+    # prenda, zapato, caja o alimento va por vértice (atributo "Col", COLOR_0 en glTF) y la fase 5 lo conecta.
+    "Depto_Mat_Tela": ((1.0, 1.0, 1.0), 0.85, 0.0, 1.0),             # rough_linen: camisas, poleras, pantalones, cajas
+    "Depto_Mat_TelaGruesa": ((1.0, 1.0, 1.0), 0.92, 0.0, 1.0),       # lana: suéteres, polerones, chaquetas, abrigos
+    "Depto_Mat_Calzado": ((1.0, 1.0, 1.0), 0.50, 0.0, 1.0),          # cuero: capelladas
+    "Depto_Mat_Suela": ((1.0, 1.0, 1.0), 0.75, 0.0, 1.0),            # goma de suelas y forro de la boca
+    "Depto_Mat_Alimento": ((1.0, 1.0, 1.0), 0.45, 0.0, 1.0),         # fruta, verdura, salsas, tapas de plástico
 }
 
 

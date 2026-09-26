@@ -918,7 +918,7 @@ INTERRUPTOR = dict(ancho=0.08, alto=0.12, espesor=0.012, r_canto=0.0025, tornill
 
 
 def interruptor(col, nombre, n_teclas=1):
-    """Placa de interruptor de muro de acero negro mate con dos tornillos vistos y `n_teclas` teclas de balancín
+    """Placa de interruptor de muro de acero negro mate con dos tornillos pavonados y `n_teclas` teclas de balancín
     de latón envejecido (1 o 2), estilo industrial. Mural: espalda en y = 0, frente hacia −Y, centro de la placa en el
     origen (x = z = 0). Cada tecla es un objeto hijo de la placa, sin giro propio y con el origen en su eje de
     giro (horizontal, paralelo al muro, a la altura del centro de la tecla y sobre la cara de la placa): el visor
@@ -929,7 +929,7 @@ def interruptor(col, nombre, n_teclas=1):
     placa = _Malla()
     with placa.parte(NEGRO, suave=True) as bm:
         B.caja_redondeada(bm, -a, a, -e, 0.0, -h, h, I["r_canto"], segmentos=1)
-    with placa.parte("Depto_Mat_Acero", suave=True) as bm:                      # tornillos de cabeza redonda
+    with placa.parte(NEGRO, suave=True) as bm:              # tornillos pavonados (un solo material: 1 llamada de dibujo)
         for z in (-I["tornillo_z"], I["tornillo_z"]):
             _torno_eje(bm, [(0.0, 0.0), (0.0032, 0.0), (0.0027, 0.0010), (0.0, 0.0015)], (0.0, -e, z), (0, -1, 0), 8)
     ob_placa = placa.crear(col, nombre, angulo=50)

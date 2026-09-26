@@ -65,7 +65,7 @@ Propiedad de Blender `grupo_luz` (texto o lista separada por comas) en cualquier
 Se exporta como `interruptores: [{"nodo", "grupos": [...], "tecla": nombre o null}]`. Los `extras` del nodo repiten `grupo_luz` para que el raycast lo reconozca sin buscar en la lista.
 
 Detalle (fase 07b):
-- Placa de 0,08 × 0,12 × 0,012 m de acero negro mate con dos tornillos vistos; teclas de balancín de latón
+- Placa de 0,08 × 0,12 × 0,012 m de acero negro mate con dos tornillos pavonados; teclas de balancín de latón
   envejecido. Centro a 1,10 m, canto a 0,10 m del marco, del lado de la manilla y dentro del recinto. Sin colisión
   (`colision: false`): 12 mm de muro no deben angostar los pasos del recorrido.
 - Teclas hijas de la placa, sin giro propio y con el origen en su eje de giro (horizontal, paralelo al muro, sobre
@@ -89,7 +89,7 @@ Detalle (fase 07b):
 | `Depto_Interruptor_Dorm2` | `dorm2_techo`, `paso_d2` | dentro del dormitorio |
 | `Depto_Interruptor_Bano1`, `_Bano2` | `bano1`, `bano2` | dentro del baño, en el tabique de la puerta |
 
-Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Base,Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa_{Cuerpo,Pantalla}`
+Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa_{Cuerpo,Pantalla}`
 y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
 
 ## 4. Exterior
