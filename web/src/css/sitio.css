@@ -156,10 +156,13 @@ a:not(.boton):focus-visible, summary:focus-visible { border-radius: 4px; }
 /* Bajada de la marca sin cortes medidos por idioma: .marca parte en dos filas cuando la bajada no cabe junto al nombre
    (flex-wrap) y el alto de una fila recorta la segunda (overflow: hidden). Así se oculta cuando pisaría el menú y
    reaparece cuando cabe, mida lo que mida en cada idioma. La segunda fila empieza en el borde inferior: 12 px de
-   padding + la fila del nombre + 12 px de gap. Desde 1000 px, margin-right deja al menos 32 px (16 + el gap de 16 de
-   .contenedor, el espacio entre los enlaces del menú) entre la bajada y el menú. */
-.barra .marca { flex-wrap: wrap; height: calc(var(--t-marca) + 24px); overflow: hidden; }
-@media (min-width: 1000px) { .barra .marca { margin-right: 16px; } }
+   padding + la fila del nombre + 12 px de gap. min-width: min-content impide que .marca se encoja por debajo del
+   nombre (con min-width: 0 y overflow: hidden, en español entre 1000 y 1024 px se recortaba «Project-roomVR»); si la
+   fila no cabe, sobresale hacia el margen lateral como antes. Desde 1000 px, el margin-right de la bajada (no de
+   .marca, para no ensanchar el mínimo) deja al menos 32 px (16 + el gap de 16 de .contenedor, el espacio entre los
+   enlaces del menú) entre la bajada y el menú. */
+.barra .marca { flex-wrap: wrap; height: calc(var(--t-marca) + 24px); overflow: hidden; min-width: min-content; }
+@media (min-width: 1000px) { .barra .marca small { margin-right: 16px; } }
 .barra.sobre-hero .idiomas { border-left-color: rgba(255, 255, 255, .4); }
 .barra.sobre-hero .idiomas a { color: rgba(255, 255, 255, .85); }
 .barra.sobre-hero .idiomas a:hover, .barra.sobre-hero .idiomas a[aria-current] { color: #fff; }
