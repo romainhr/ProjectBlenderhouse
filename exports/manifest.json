@@ -1,21 +1,21 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 16870928,
-    "md5": "472e4a2652a43c24a1f2571484bc5456",
+    "bytes": 16843680,
+    "md5": "9da1044ac890e16683c3ebf53aa4614b",
     "web": {
       "carpeta": "web",
       "archivos": 55,
-      "bytes": 18890147,
+      "bytes": 18862223,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 55567,
-      "estaticos": 856,
-      "moviles": 37,
-      "luces": 23,
-      "grupos_luz": 15,
+      "bytes": 57102,
+      "estaticos": 854,
+      "moviles": 39,
+      "luces": 24,
+      "grupos_luz": 16,
       "interruptores": 29
     },
     "fecha": "2026-09-26",
@@ -23,10 +23,10 @@
     "sellos": {
       "01": "de20a5bc79fb",
       "02": "18dc6d29c5b1",
-      "03": "0d0b6e26e187",
-      "04": "b16092cd3828",
-      "05": "b1e7ccd3c1fa",
-      "06": "f33a3cfcaa7d"
+      "03": "a010728158c8",
+      "04": "b1848392b38c",
+      "05": "012a8c9fa544",
+      "06": "be96d71adb7b"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -47,8 +47,8 @@
         2.55
       ]
     },
-    "mallas": 410,
-    "triangulos": 188594,
+    "mallas": 411,
+    "triangulos": 188478,
     "materiales": [
       "Depto_Mat_Acero",
       "Depto_Mat_AceroInox",
@@ -253,10 +253,14 @@
         "Nicho_LV": false
       },
       "aperturas": {
-        "moviles": 37,
-        "estaticos": 1888,
-        "pares_abiertos": 132,
-        "max_mm": 0.0
+        "moviles": 39,
+        "estaticos": 1883,
+        "pares_abiertos": 167,
+        "max_mm": 0.0,
+        "giros": {
+          "pasos": 1008,
+          "max_mm": 0.0
+        }
       },
       "nevera_abierta": {
         "distancia_boca_m": 0.527,
@@ -265,7 +269,7 @@
           386.7
         ],
         "y_px": [
-          257.1,
+          255.5,
           270.9
         ]
       },

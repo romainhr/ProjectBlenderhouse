@@ -76,7 +76,7 @@
   },
   {
    "uri": "tex/concreto_encofrado_diff_1k.jpg",
-   "bytes": 195582
+   "bytes": 168172
   },
   {
    "uri": "tex/concreto_encofrado_rough_1k.jpg",
@@ -160,7 +160,7 @@
   },
   {
    "uri": "tex/acero_cepillado_rough_1k.jpg",
-   "bytes": 61135
+   "bytes": 61674
   },
   {
    "uri": "tex/roble_ahumado_nor_gl_1k.jpg",
@@ -207,5 +207,5 @@
    "bytes": 460509
   }
  ],
- "total_bytes": 18890147
+ "total_bytes": 18862223
 }
