@@ -1,13 +1,23 @@
-/* Project-roomVR: tokens del sistema ("luz de tarde"): claro, cálido, editorial. Los usa sitio.css y, por separado,
-   el visor 3D (mismos nombres de variable), así que este archivo sólo trae variables y tipografía, sin selectores
-   de componentes. Fuentes autoalojadas (Google Fonts, subconjunto latin: cubre tildes y ñ, Unicode U+0000–00FF). */
+/* Project-roomVR: tokens del sistema v4 («editorial cálido», web/diseno/DESIGN-v4.md y ESPEC-v4.md §1). Los usa
+   sitio.css y, por separado, el visor 3D y el portal (mismos nombres de variable), así que este archivo sólo trae
+   variables y tipografía, sin selectores de componentes. Fuentes autoalojadas desde Google Fonts (licencia OFL),
+   subconjunto latin: cubre tildes, ñ, ¿ ¡ « » y ² (Unicode U+0000–00FF) y el signo menos «−» (U+2212, verificado en los
+   cinco archivos). «→» (U+2192) y «≈» (U+2248) no vienen en estos woff2: se dibujan con la fuente del sistema. */
 @font-face {
-  font-family: "Newsreader";
+  font-family: "Fraunces";
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400 600;
   font-display: swap;
-  src: url("../fonts/newsreader-500.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122;
+  src: url("../fonts/fraunces-var.woff2") format("woff2");             /* variable: ejes opsz 9–144 y wght */
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: italic;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("../fonts/fraunces-var-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
 }
 @font-face {
   font-family: "Public Sans";
@@ -15,7 +25,7 @@
   font-weight: 400;
   font-display: swap;
   src: url("../fonts/public-sans-400.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
 }
 @font-face {
   font-family: "Public Sans";
@@ -23,7 +33,7 @@
   font-weight: 500;
   font-display: swap;
   src: url("../fonts/public-sans-500.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
 }
 @font-face {
   font-family: "Public Sans";
@@ -31,23 +41,34 @@
   font-weight: 600;
   font-display: swap;
   src: url("../fonts/public-sans-600.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212;
 }
 
+/* Contrastes (WCAG 2.x, ESPEC-v4 §1.1): tinta/papel 15,2:1; tinta-2/papel 6,3:1 y /arena 5,6:1; blanco/terracota
+   6,0:1; terracota/papel 5,3:1; papel/terracota-osc 7,7:1; oliva/papel 5,05:1; papel/carbón 14,1:1. La línea
+   (1,28:1) es sólo decorativa: nunca es el borde de un control. */
 :root {
-  --papel: #F7F4EF;
-  --papel-2: #EFEAE2;
-  --tarjeta: #FFFFFF;
-  --tinta: #1E1C19;
-  --tinta-2: #5E5850;
-  --linea: #E2DBD0;
-  --acento: #A8481F;
-  --acento-2: #8E3C19;
-  --salvia: #5D6B55;
-  --error: #B3261E;
+  --papel: #F6F1EA;
+  --arena: #EDE3D6;
+  --papel-2: var(--arena);
+  --tarjeta: #FBF8F3;
+  --tinta: #1F1B17;
+  --tinta-2: #5F574E;
+  --linea: #E0D6C8;
+  --terracota: #A4471E;
+  --terracota-osc: #7F3515;
+  --terracota-suave: #F2DDD2;
+  --acento: var(--terracota);
+  --acento-2: var(--terracota-osc);
+  --oliva: #5E6B52;
+  --salvia: var(--oliva);
+  --carbon: #26221E;
+  --error: var(--terracota-osc);
   --radio: 10px;
+  --radio-img: 12px;
+  --sombra-1: 0 1px 2px rgba(31, 27, 23, .06);
   --sombra: 0 1px 2px rgba(30, 28, 25, .06), 0 8px 24px rgba(30, 28, 25, .06);
-  --f-titulo: "Newsreader", "Iowan Old Style", "Georgia", serif;
+  --f-titulo: "Fraunces", "Iowan Old Style", Georgia, serif;
   --f-texto: "Public Sans", system-ui, -apple-system, sans-serif;
   color-scheme: light;
 }

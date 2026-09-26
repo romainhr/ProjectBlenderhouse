@@ -124,6 +124,19 @@ export function grillaMes(anio, mes) {
   return semanas;
 }
 
+export const CELDA_MIN = 48;          // px: área táctil mínima de un día (DESIGN-v4, WCAG 2.5.5)
+export const SEPARACION_MESES = 32;   // px: column-gap de #meses (sitio.css)
+
+/** Meses que caben lado a lado en `ancho` px: 2 si caben dos semanas de 7 × CELDA_MIN más la separación, si no 1. */
+export function mesesPorPagina(ancho) {
+  return ancho >= 2 * 7 * CELDA_MIN + SEPARACION_MESES ? 2 : 1;
+}
+
+/** ¿Se puede avanzar un mes? La última página alcanzable es la que contiene `hasta` (ISO). `mes` va de 0 a 11. */
+export function hayMesSiguiente(anio, mes, porPagina, hasta) {
+  return Date.UTC(anio, mes + porPagina, 1) <= desdeIso(hasta).getTime();
+}
+
 const RE_CORREO = /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i;
 const RE_FONO = /^[0-9 +().-]{6,20}$/;
 

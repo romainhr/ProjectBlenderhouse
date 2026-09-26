@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Project-roomVR — Arriendo turístico</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&amp;family=Public+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+    /* Reset & CSS Custom Properties */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --color-paper: #F6F1EA;
+      --color-sand: #EDE3D6;
+      --color-ink: #1F1B17;
+      --color-secondary-ink: #5F574E;
+      --color-hairline: #E0D6C8;
+      --color-terracotta: #A4471E;
+      --color-dark-terracotta: #7F3515;
+      --color-olive: #5E6B52;
+      --color-charcoal: #26221E;
+      --radius-cards: 12px;
+      --radius-buttons: 10px;
+      --font-display: 'Fraunces', serif;
+      --font-body: 'Public Sans', sans-serif;
+    }
+
+    body {
+      background-color: var(--color-paper);
+      color: var(--color-ink);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      width: 100%;
+      max-width: 390px;
+      margin: 0 auto;
+      overflow-x: hidden;
+      position: relative;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .brand-wordmark {
+      white-space: nowrap !important;
+      display: inline-block;
+    }
+
+    /* Typography helper */
+    h1, h2, h3, .serif-font {
+      font-family: var(--font-display);
+      font-optical-sizing: auto;
+      font-weight: 400;
+      line-height: 1.15;
+    }
+
+    .serif-italic {
+      font-style: italic;
+    }
+
+    /* 1. HEADER (compact 60px, transparent over hero) */
+    .site-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      color: #FFFFFF;
+    }
+
+    .site-header .brand-title {
+      font-family: var(--font-display);
+      font-size: 21px;
+      font-weight: 500;
+      line-height: 1.1;
+      color: #FFFFFF;
+      letter-spacing: -0.01em;
+    }
+
+    .site-header .brand-subtitle {
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.85);
+      line-height: 1.2;
+    }
+
+    .menu-button {
+      width: 44px;
+      height: 44px;
+      background: transparent;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      color: #FFFFFF;
+      padding: 0;
+    }
+
+    .menu-button span {
+      display: block;
+      width: 22px;
+      height: 2px;
+      background-color: #FFFFFF;
+      border-radius: 1px;
+    }
+
+    /* 2. HERO (edge to edge, 82vh tall) */
+    .hero-section {
+      position: relative;
+      width: 100%;
+      height: 82vh;
+      min-height: 540px;
+      background-color: var(--color-charcoal);
+      overflow: hidden;
+    }
+
+    .hero-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 60% center;
+      display: block;
+    }
+
+    .hero-gradient {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(20, 16, 12, 0.82) 0%, rgba(20, 16, 12, 0.65) 30%, rgba(20, 16, 12, 0) 60%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px 16px;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .hero-h1 {
+      font-size: 44px;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      color: #FFFFFF;
+      line-height: 1.08;
+      max-width: 358px;
+    }
+
+    .hero-italic-subtitle {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-style: italic;
+      color: #FFFFFF;
+      line-height: 1.2;
+    }
+
+    .hero-desc {
+      font-size: 16px;
+      color: rgba(255, 255, 255, 0.92);
+      line-height: 1.45;
+      margin-bottom: 6px;
+    }
+
+    .btn-terracotta-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      background-color: var(--color-terracotta);
+      color: #FFFFFF;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: var(--radius-buttons);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(31, 27, 23, 0.12);
+      transition: background-color 0.2s ease;
+    }
+
+    .btn-terracotta-primary:active {
+      background-color: var(--color-dark-terracotta);
+    }
+
+    .hero-link-dates {
+      color: #FFFFFF;
+      font-size: 15px;
+      text-decoration: underline;
+      text-align: center;
+      display: block;
+      margin-top: 4px;
+      padding: 6px 0;
+    }
+
+    /* 3. FACTS LINE */
+    .facts-section {
+      background-color: var(--color-paper);
+      padding: 24px 16px;
+      border-top: 1px solid var(--color-hairline);
+      border-bottom: 1px solid var(--color-hairline);
+      text-align: center;
+    }
+
+    .facts-text {
+      font-size: 15px;
+      color: var(--color-secondary-ink);
+      line-height: 1.6;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+
+    .facts-number {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 22px;
+      color: var(--color-terracotta);
+      font-weight: 500;
+      display: inline-block;
+      vertical-align: baseline;
+      padding: 0 1px;
+    }
+
+    /* 4. ESPACIOS (paper) */
+    .espacios-section {
+      background-color: var(--color-paper);
+      padding: 48px 0 40px;
+    }
+
+    .section-header-padded {
+      padding: 0 16px;
+      margin-bottom: 24px;
+    }
+
+    .title-large-48 {
+      font-size: 48px;
+      color: var(--color-ink);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+      font-size: 16px;
+      color: var(--color-secondary-ink);
+      line-height: 1.5;
+    }
+
+    /* Carousel with scroll snap */
+    .carousel-container {
+      width: 100%;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      gap: 12px;
+      padding: 4px 16px 16px 16px;
+      scrollbar-width: none;
+    }
+
+    .carousel-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .carousel-card {
+      flex: 0 0 82%;
+      scroll-snap-align: start;
+      scroll-snap-stop: normal;
+    }
+
+    .card-media {
+      width: 100%;
+      aspect-ratio: 4 / 5;
+      border-radius: var(--radius-cards);
+      overflow: hidden;
+      background-color: #E6DFD5;
+      box-shadow: 0 1px 3px rgba(31, 27, 23, 0.08);
+      margin-bottom: 12px;
+    }
+
+    .card-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 1 !important;
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--color-ink);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .card-desc {
+      font-size: 15px;
+      color: var(--color-secondary-ink);
+      line-height: 1.45;
+    }
+
+    /* Progress bar */
+    .carousel-progress-track {
+      width: calc(100% - 32px);
+      margin: 8px 16px 40px;
+      height: 2px;
+      background-color: var(--color-hairline);
+      position: relative;
+      border-radius: 1px;
+    }
+
+    .carousel-progress-fill {
+      width: 25%;
+      height: 100%;
+      background-color: var(--color-terracotta);
+      border-radius: 1px;
+      transition: transform 0.2s ease, width 0.2s ease;
+    }
+
+    /* Pull quote */
+    .pull-quote-wrapper {
+      padding: 16px 16px 8px;
+    }
+
+    .pull-quote-rule {
+      width: 40px;
+      height: 2px;
+      background-color: var(--color-dark-terracotta);
+      margin-bottom: 20px;
+    }
+
+    .pull-quote-text {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 30px;
+      line-height: 1.25;
+      color: var(--color-dark-terracotta);
+      letter-spacing: -0.01em;
+    }
+
+    /* 5. MATERIALES (SAND band) */
+    .materiales-section {
+      background-color: var(--color-sand);
+      padding: 48px 0;
+      border-top: 1px solid var(--color-hairline);
+      border-bottom: 1px solid var(--color-hairline);
+    }
+
+    .title-large-40 {
+      font-size: 40px;
+      color: var(--color-ink);
+      line-height: 1.1;
+      letter-spacing: -0.015em;
+      margin-bottom: 12px;
+    }
+
+    .swatches-scroll-row {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding: 4px 16px 8px 16px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .swatches-scroll-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .swatch-item {
+      flex: 0 0 120px;
+      scroll-snap-align: start;
+    }
+
+    .swatch-thumb {
+      width: 120px;
+      height: 120px;
+      border-radius: var(--radius-cards);
+      overflow: hidden;
+      background-color: #D8CEBE;
+      box-shadow: 0 1px 2px rgba(31, 27, 23, 0.08);
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .swatch-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(3);
+      display: block;
+      opacity: 1 !important;
+    }
+
+    /* Transform origins for specific crops */
+    .swatch-crop-brick {
+      transform-origin: 85% 40% !important;
+    }
+
+    .swatch-crop-concrete {
+      transform-origin: 50% 5% !important;
+    }
+
+    .swatch-crop-oak {
+      transform-origin: 75% 88% !important;
+    }
+
+    .swatch-crop-leather {
+      transform-origin: 62% 68% !important;
+    }
+
+    .swatch-crop-steel {
+      transform-origin: 50% 60% !important;
+    }
+
+    .swatch-name {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--color-ink);
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
+
+    .swatch-place {
+      font-size: 13px;
+      color: var(--color-secondary-ink);
+      line-height: 1.3;
+    }
+
+    /* 6. RECORRIDO 3D (CHARCOAL block) */
+    .recorrido-section {
+      background-color: var(--color-charcoal);
+      color: var(--color-paper);
+      padding: 48px 16px 44px;
+    }
+
+    .recorrido-section h2 {
+      font-size: 44px;
+      color: var(--color-paper);
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+      margin-bottom: 12px;
+    }
+
+    .recorrido-desc {
+      font-size: 16px;
+      color: rgba(246, 241, 234, 0.88);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .maqueta-container {
+      width: 100%;
+      border-radius: var(--radius-cards);
+      overflow: hidden;
+      margin-bottom: 24px;
+      background-color: #171513;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .maqueta-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      opacity: 1 !important;
+    }
+
+    .recorrido-lines {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 24px;
+    }
+
+    .recorrido-row {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(224, 214, 200, 0.18);
+      font-size: 15px;
+      color: rgba(246, 241, 234, 0.9);
+      line-height: 1.45;
+    }
+
+    .recorrido-row:first-child {
+      border-top: 1px solid rgba(224, 214, 200, 0.18);
+    }
+
+    .recorrido-row strong {
+      color: #FFFFFF;
+      font-weight: 500;
+    }
+
+    .recorrido-note {
+      font-size: 13px;
+      color: rgba(246, 241, 234, 0.65);
+      line-height: 1.45;
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    /* 7. LO QUE HAY (paper) */
+    .lo-que-hay-section {
+      background-color: var(--color-paper);
+      padding: 48px 16px 44px;
+    }
+
+    .amenities-list {
+      display: flex;
+      flex-direction: column;
+      margin-top: 20px;
+    }
+
+    .amenity-row {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--color-hairline);
+    }
+
+    .amenity-row:first-child {
+      border-top: 1px solid var(--color-hairline);
+    }
+
+    .amenity-title {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--color-ink);
+      line-height: 1.25;
+      margin-bottom: 3px;
+    }
+
+    .amenity-detail {
+      font-size: 14px;
+      color: var(--color-secondary-ink);
+      line-height: 1.4;
+    }
+
+    /* 8. TARIFAS (DARK TERRACOTTA band #7F3515) */
+    .tarifas-section {
+      background-color: var(--color-dark-terracotta);
+      color: var(--color-paper);
+      padding: 48px 16px 44px;
+    }
+
+    .tarifas-section h2 {
+      font-size: 44px;
+      color: var(--color-paper);
+      line-height: 1.08;
+      letter-spacing: -0.015em;
+      margin-bottom: 16px;
+    }
+
+    .price-display {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .price-main {
+      font-family: var(--font-display);
+      font-size: 44px;
+      color: var(--color-paper);
+      line-height: 1;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    .price-sub {
+      font-size: 15px;
+      color: rgba(246, 241, 234, 0.85);
+    }
+
+    .tarifas-intro {
+      font-size: 16px;
+      color: rgba(246, 241, 234, 0.92);
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .tarifas-table {
+      margin-bottom: 24px;
+    }
+
+    .tarifa-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid rgba(246, 241, 234, 0.22);
+      font-size: 15px;
+    }
+
+    .tarifa-row:first-child {
+      border-top: 1px solid rgba(246, 241, 234, 0.22);
+    }
+
+    .tarifa-label {
+      color: rgba(246, 241, 234, 0.88);
+    }
+
+    .tarifa-val {
+      color: #FFFFFF;
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .btn-paper-light {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      background-color: var(--color-paper);
+      color: var(--color-ink);
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: var(--radius-buttons);
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    /* 9. PREGUNTAS (paper) */
+    .preguntas-section {
+      background-color: var(--color-paper);
+      padding: 48px 16px 44px;
+    }
+
+    .accordion-list {
+      margin-top: 20px;
+    }
+
+    .accordion-item {
+      border-bottom: 1px solid var(--color-hairline);
+    }
+
+    .accordion-item:first-child {
+      border-top: 1px solid var(--color-hairline);
+    }
+
+    .accordion-button {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 18px 0;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      gap: 12px;
+      color: var(--color-ink);
+    }
+
+    .accordion-question {
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .accordion-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .accordion-icon::before,
+    .accordion-icon::after {
+      content: '';
+      position: absolute;
+      background-color: var(--color-terracotta);
+      border-radius: 1px;
+    }
+
+    .accordion-icon::before {
+      width: 14px;
+      height: 2px;
+    }
+
+    .accordion-icon::after {
+      width: 2px;
+      height: 14px;
+      transition: transform 0.2s ease;
+    }
+
+    .accordion-item.active .accordion-icon::after {
+      transform: scaleY(0);
+    }
+
+    .accordion-content {
+      padding: 0 0 18px 0;
+      font-size: 15px;
+      color: var(--color-secondary-ink);
+      line-height: 1.55;
+    }
+
+    .accordion-item:not(.active) .accordion-content {
+      display: none;
+    }
+
+    /* 10. FOOTER (sand) */
+    .site-footer {
+      background-color: var(--color-sand);
+      padding: 40px 16px 120px 16px; /* 88px extra padding for sticky bar */
+      border-top: 1px solid var(--color-hairline);
+    }
+
+    .footer-wordmark {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--color-ink);
+      margin-bottom: 8px;
+    }
+
+    .footer-note {
+      font-size: 13px;
+      color: var(--color-secondary-ink);
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .footer-legal {
+      font-size: 13px;
+      color: var(--color-secondary-ink);
+    }
+
+    /* 11. FIXED BOTTOM BAR */
+    .fixed-bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 390px;
+      background-color: var(--color-paper);
+      border-top: 1px solid var(--color-hairline);
+      padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      box-shadow: 0 -2px 10px rgba(31, 27, 23, 0.05);
+    }
+
+    .bar-price-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bar-price {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--color-ink);
+      line-height: 1.1;
+    }
+
+    .bar-label {
+      font-size: 12px;
+      color: var(--color-secondary-ink);
+      line-height: 1.2;
+    }
+
+    .bar-cta-btn {
+      min-height: 48px;
+      background-color: var(--color-terracotta);
+      color: #FFFFFF;
+      font-family: var(--font-body);
+      font-size: 16px;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: var(--radius-buttons);
+      border: none;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<!-- 1. HEADER compact (60px), transparent over hero -->
+<header class="site-header">
+<div>
+<div class="brand-title"><span class="brand-wordmark">Project-roomVR</span></div>
+<div class="brand-subtitle">Arriendo turístico</div>
+</div>
+<button aria-label="Abrir menú" class="menu-button">
+<span></span>
+<span></span>
+<span></span>
+</button>
+</header>
+<!-- 2. HERO full-bleed, edge to edge, 82vh tall -->
+<section class="hero-section">
+<img alt="Living del departamento con muro de ladrillo, ventanal y luz natural" class="hero-img" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="hero-gradient"></div>
+<div class="hero-content">
+<h1 class="hero-h1"><span class="brand-wordmark">Project-roomVR</span></h1>
+<div class="hero-italic-subtitle">Ladrillo, roble y luz cálida.</div>
+<p class="hero-desc">Departamento de dos dormitorios con balcón. Recórrelo en 3D antes de reservar.</p>
+<a class="btn-terracotta-primary" href="#recorrido">Recorrer en 3D</a>
+<a class="hero-link-dates" href="#tarifas">Ver fechas</a>
+</div>
+</section>
+<!-- 3. FACTS LINE on paper, hairlines above and below -->
+<section class="facts-section">
+<p class="facts-text">
+<span class="facts-number">2</span> dormitorios · <span class="facts-number">2</span> baños · balcón · hasta <span class="facts-number">4</span> huéspedes · ≈ <span class="facts-number">54</span> m² construidos
+    </p>
+</section>
+<!-- 4. ESPACIOS (paper) -->
+<section class="espacios-section">
+<div class="section-header-padded">
+<h2 class="title-large-48">Espacios</h2>
+<p class="section-subtitle">Un living-cocina integrado entre dos dormitorios, cada uno con su baño cerca y closet corredero.</p>
+</div>
+<!-- Carousel with scroll-snap -->
+<div class="carousel-container" id="espaciosCarousel">
+<!-- Living -->
+<article class="carousel-card">
+<div class="card-media">
+<img alt="Living con sofá de cuero y mueble de roble" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<h3 class="card-title">Living</h3>
+<p class="card-desc">Muro de ladrillo, mueble de TV flotante de roble, sofá de cuero y lámpara de arco.</p>
+</article>
+<!-- Cocina -->
+<article class="carousel-card">
+<div class="card-media">
+<img alt="Cocina en L con frentes carbón" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<h3 class="card-title">Cocina</h3>
+<p class="card-desc">En L, con frentes carbón, cubierta de concreto y repisas abiertas de roble.</p>
+</article>
+<!-- Dormitorio 1 -->
+<article class="carousel-card">
+<div class="card-media">
+<img alt="Dormitorio principal con cama king" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<h3 class="card-title">Dormitorio 1</h3>
+<p class="card-desc">Cama king con cabecero tapizado y closet corredero.</p>
+</article>
+<!-- Dormitorio 2 -->
+<article class="carousel-card">
+<div class="card-media">
+<img alt="Segundo dormitorio con cama king y cabecero de cuero" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<h3 class="card-title">Dormitorio 2</h3>
+<p class="card-desc">Cama king con cabecero de cuero y apliques para leer.</p>
+</article>
+<!-- Dos baños -->
+<article class="carousel-card">
+<div class="card-media">
+<img alt="Baño con tina y mampara" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<h3 class="card-title">Dos baños</h3>
+<p class="card-desc">Tina con ducha y mampara, lavabo de concreto y espejo redondo.</p>
+</article>
+<!-- Balcón -->
+<article class="carousel-card">
+<div class="card-media">
+<img alt="Balcón con mesa bistró y plantas" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<h3 class="card-title">Balcón</h3>
+<p class="card-desc">Mesa bistró de acero y dos sillas plegables de roble.</p>
+</article>
+<!-- Recibidor -->
+<article class="carousel-card">
+<div class="card-media">
+<img alt="Recibidor de entrada con perchero" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<h3 class="card-title">Recibidor</h3>
+<p class="card-desc">Banca con repisa para zapatos y perchero de cañería negra.</p>
+</article>
+</div>
+<!-- Thin carousel progress indicator -->
+<div class="carousel-progress-track">
+<div class="carousel-progress-fill" id="carouselFill"></div>
+</div>
+<!-- Pull Quote -->
+<div class="pull-quote-wrapper">
+<div class="pull-quote-rule"></div>
+<p class="pull-quote-text">«Ladrillo, concreto y roble: materiales nobles, sin nada de más.»</p>
+</div>
+</section>
+<!-- 5. MATERIALES, full-width SAND band -->
+<section class="materiales-section">
+<div class="section-header-padded">
+<h2 class="title-large-40">Materiales</h2>
+<p class="section-subtitle">Las mismas texturas del modelo 3D que ves en las imágenes y en el recorrido.</p>
+</div>
+<div class="swatches-scroll-row">
+<!-- 1: Ladrillo a la vista -->
+<div class="swatch-item">
+<div class="swatch-thumb">
+<img alt="Textura de ladrillo a la vista" class="swatch-crop-brick" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="swatch-name">Ladrillo a la vista</div>
+<div class="swatch-place">Muro del living</div>
+</div>
+<!-- 2: Concreto visto -->
+<div class="swatch-item">
+<div class="swatch-thumb">
+<img alt="Textura de concreto visto" class="swatch-crop-concrete" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="swatch-name">Concreto visto</div>
+<div class="swatch-place">Cielo raso</div>
+</div>
+<!-- 3: Tablas de roble -->
+<div class="swatch-item">
+<div class="swatch-thumb">
+<img alt="Textura de tablas de roble" class="swatch-crop-oak" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="swatch-name">Tablas de roble</div>
+<div class="swatch-place">Mueble de TV</div>
+</div>
+<!-- 4: Cuero coñac -->
+<div class="swatch-item">
+<div class="swatch-thumb">
+<img alt="Textura de cuero coñac" class="swatch-crop-leather" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="swatch-name">Cuero coñac</div>
+<div class="swatch-place">Sofá</div>
+</div>
+<!-- 5: Acero negro -->
+<div class="swatch-item">
+<div class="swatch-thumb">
+<img alt="Textura de acero negro" class="swatch-crop-steel" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="swatch-name">Acero negro</div>
+<div class="swatch-place">Mesa bistró</div>
+</div>
+</div>
+</section>
+<!-- 6. RECORRIDO 3D, dark charcoal section -->
+<section class="recorrido-section" id="recorrido">
+<h2>Recorrido 3D</h2>
+<p class="recorrido-desc">Camina por el departamento en primera persona, en el computador o en el teléfono.</p>
+<div class="maqueta-container">
+<img alt="Maqueta 3D del departamento con distribución completa" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="recorrido-lines">
+<div class="recorrido-row">
+<strong>En teléfono</strong> — se camina y se mira arrastrando la pantalla.
+      </div>
+<div class="recorrido-row">
+<strong>En computador</strong> — teclado para caminar y ratón para mirar.
+      </div>
+<div class="recorrido-row">
+<strong>Puertas y ventanal</strong> — se abren con un toque.
+      </div>
+</div>
+<a class="btn-terracotta-primary" href="#">Entrar al recorrido</a>
+<p class="recorrido-note">Modelo hecho desde el plano, sin cotas: alturas y terminaciones son una propuesta de decoración.</p>
+</section>
+<!-- 7. LO QUE HAY (paper) -->
+<section class="lo-que-hay-section">
+<h2 class="title-large-40">Lo que hay</h2>
+<div class="amenities-list">
+<div class="amenity-row">
+<h3 class="amenity-title">Cocina equipada</h3>
+<p class="amenity-detail">Anafe, campana, horno y refrigerador.</p>
+</div>
+<div class="amenity-row">
+<h3 class="amenity-title">Lavadora</h3>
+<p class="amenity-detail">En un nicho con puerta plegable.</p>
+</div>
+<div class="amenity-row">
+<h3 class="amenity-title">TV de 55"</h3>
+<p class="amenity-detail">Sobre el mueble flotante del living.</p>
+</div>
+<div class="amenity-row">
+<h3 class="amenity-title">Dos baños</h3>
+<p class="amenity-detail">Tina con ducha y mampara en cada uno.</p>
+</div>
+<div class="amenity-row">
+<h3 class="amenity-title">Closets</h3>
+<p class="amenity-detail">Correderos, en los dos dormitorios.</p>
+</div>
+<div class="amenity-row">
+<h3 class="amenity-title">Balcón</h3>
+<p class="amenity-detail">Mesa bistró y dos sillas.</p>
+</div>
+<div class="amenity-row">
+<h3 class="amenity-title">Wi-Fi</h3>
+<p class="amenity-detail">ejemplo</p>
+</div>
+<div class="amenity-row">
+<h3 class="amenity-title">Ropa de cama</h3>
+<p class="amenity-detail">Sábanas y toallas: ejemplo.</p>
+</div>
+</div>
+</section>
+<!-- 8. TARIFAS, dark terracotta band #7F3515 -->
+<section class="tarifas-section" id="tarifas">
+<h2>Tarifas</h2>
+<div class="price-display">
+<div class="price-main">CLP 58.000</div>
+<div class="price-sub">/ noche · ejemplo</div>
+</div>
+<p class="tarifas-intro">Envías una solicitud con tus fechas y te respondemos por correo. No se cobra nada en línea.</p>
+<div class="tarifas-table">
+<div class="tarifa-row">
+<span class="tarifa-label">Noche (ejemplo)</span>
+<span class="tarifa-val">CLP 58.000</span>
+</div>
+<div class="tarifa-row">
+<span class="tarifa-label">Limpieza, una vez (ejemplo)</span>
+<span class="tarifa-val">CLP 15.000</span>
+</div>
+<div class="tarifa-row">
+<span class="tarifa-label">Estadía</span>
+<span class="tarifa-val">de 2 a 30 noches</span>
+</div>
+<div class="tarifa-row">
+<span class="tarifa-label">Huéspedes</span>
+<span class="tarifa-val">hasta 4</span>
+</div>
+<div class="tarifa-row">
+<span class="tarifa-label">Llegada / salida (ejemplo)</span>
+<span class="tarifa-val">desde 15:00 / hasta 11:00</span>
+</div>
+<div class="tarifa-row">
+<span class="tarifa-label">Pago</span>
+<span class="tarifa-val">se acuerda al confirmar</span>
+</div>
+</div>
+<a class="btn-paper-light" href="#">Ver fechas disponibles</a>
+</section>
+<!-- 9. PREGUNTAS (paper) -->
+<section class="preguntas-section">
+<h2 class="title-large-40">Preguntas</h2>
+<div class="accordion-list">
+<!-- Item 1 (open by default) -->
+<div class="accordion-item active">
+<button class="accordion-button" onclick="toggleAccordion(this)">
+<span class="accordion-question">¿Las imágenes son fotos del departamento?</span>
+<span class="accordion-icon"></span>
+</button>
+<div class="accordion-content">
+          No. Son renders de un modelo 3D construido desde el plano de arquitectura, que no trae cotas: las alturas, los muebles y las terminaciones son una propuesta de decoración.
+        </div>
+</div>
+<!-- Item 2 -->
+<div class="accordion-item">
+<button class="accordion-button" onclick="toggleAccordion(this)">
+<span class="accordion-question">¿Cómo se confirma una reserva?</span>
+<span class="accordion-icon"></span>
+</button>
+<div class="accordion-content">
+          Revisamos las fechas de tu solicitud y te enviamos la confirmación con los detalles y el acuerdo de pago directamente por correo.
+        </div>
+</div>
+<!-- Item 3 -->
+<div class="accordion-item">
+<button class="accordion-button" onclick="toggleAccordion(this)">
+<span class="accordion-question">¿Se paga en línea?</span>
+<span class="accordion-icon"></span>
+</button>
+<div class="accordion-content">
+          No se cobra nada en la web. El pago y las condiciones se acuerdan directamente una vez confirmada la disponibilidad.
+        </div>
+</div>
+<!-- Item 4 -->
+<div class="accordion-item">
+<button class="accordion-button" onclick="toggleAccordion(this)">
+<span class="accordion-question">¿Dónde está?</span>
+<span class="accordion-icon"></span>
+</button>
+<div class="accordion-content">
+          La dirección exacta y las instrucciones de llegada se comparten al confirmar la reserva.
+        </div>
+</div>
+<!-- Item 5 -->
+<div class="accordion-item">
+<button class="accordion-button" onclick="toggleAccordion(this)">
+<span class="accordion-question">¿El tour funciona en el teléfono?</span>
+<span class="accordion-icon"></span>
+</button>
+<div class="accordion-content">
+          Sí, puedes recorrer todo el departamento arrastrando la pantalla con gestos táctiles para mirar y avanzar por cada espacio.
+        </div>
+</div>
+<!-- Item 6 -->
+<div class="accordion-item">
+<button class="accordion-button" onclick="toggleAccordion(this)">
+<span class="accordion-question">¿Qué hacen con mis datos?</span>
+<span class="accordion-icon"></span>
+</button>
+<div class="accordion-content">
+          Tus datos se usan únicamente para responder a tu consulta y gestionar tu estadía con total privacidad.
+        </div>
+</div>
+</div>
+</section>
+<!-- 10. FOOTER sand -->
+<footer class="site-footer">
+<div class="footer-wordmark"><span class="brand-wordmark">Project-roomVR</span></div>
+<p class="footer-note">Imágenes renderizadas desde un modelo 3D · tarifas de ejemplo</p>
+<p class="footer-legal">© 2026 <span class="brand-wordmark">Project-roomVR</span> · Privacidad</p>
+</footer>
+<!-- 11. FIXED BOTTOM BAR -->
+<aside class="fixed-bottom-bar">
+<div class="bar-price-col">
+<div class="bar-price">CLP 58.000</div>
+<div class="bar-label">/ noche · ejemplo</div>
+</div>
+<a class="bar-cta-btn" href="#tarifas">Reservar</a>
+</aside>
+<script>
+    function toggleAccordion(btn) {
+      const item = btn.closest('.accordion-item');
+      item.classList.toggle('active');
+    }
+
+    // Carousel progress indicator calculation
+    const carousel = document.getElementById('espaciosCarousel');
+    const fill = document.getElementById('carouselFill');
+    if (carousel && fill) {
+      carousel.addEventListener('scroll', () => {
+        const maxScroll = carousel.scrollWidth - carousel.clientWidth;
+        if (maxScroll > 0) {
+          const ratio = carousel.scrollLeft / maxScroll;
+          // fill translates smoothly along track
+          const maxTranslate = 300; // percent of bar width
+          fill.style.transform = `translateX(${ratio * 300}%)`;
+        }
+      });
+    }
+  </script>
+</body>
+</html>
