@@ -1,11 +1,17 @@
 // Contenido editable del sitio público: textos, precios y fotos que el propietario cambia desde el portal de gestión.
 //
 // Uso en cada página: <script type="module" src="js/contenido-publico.js"></script>
-//   * [data-contenido="clave"]  -> textContent con el valor de public.contenido (tipo «precio»: formato CLP es-CL).
+//   * [data-contenido="clave"]  -> textContent con el texto de public.contenido en el idioma de la página (IDIOMA de
+//                                  i18n.js): columna valor en español, valor_en en inglés y valor_fr en francés. Si la
+//                                  del idioma viene vacía o no existe (antes de la migración que las agrega), queda el
+//                                  texto estático, que el build ya tradujo. Tipo «precio»: siempre la columna valor (el
+//                                  monto no depende del idioma), escrito en CLP con el LOCALE del idioma.
 //   * [data-precio="noche"|"limpieza"] (los que ya rellena sitio.js con TARIFA) -> el precio editado, si lo hay
-//                                  (claves tarifa.noche y tarifa.limpieza de la semilla de 0003_gestion.sql). Además
-//                                  fija esas tarifas en reserva-logica.js (fijarTarifas), para que el total estimado
-//                                  se calcule con los mismos precios que muestra la tabla.
+//                                  (claves tarifa.noche y tarifa.limpieza de la semilla de 0003_gestion.sql). Si hay
+//                                  alguno editado, se reescriben todas las tarifas con el LOCALE del idioma (la no
+//                                  editada, con su valor de ejemplo), así la tabla no mezcla formatos. Además fija
+//                                  esas tarifas en reserva-logica.js (fijarTarifas), para que el total estimado se
+//                                  calcule con los mismos precios que muestra la tabla.
 //   * [data-fotos="espacio"]    -> la primera foto visible de ese espacio reemplaza la imagen principal (el primer
 //                                  <img>): conserva width, height, las clases y la carga diferida, usa el alt de la
 //                                  foto y pone la URL de la foto en el srcset del <img> (si lo tenía) y en cada
@@ -17,9 +23,12 @@
 // Si falta la configuración (js/config.js lo genera web/build.py), si las tablas no existen todavía (migración 0003)
 // o si la red falla o tarda más de TIEMPO_MAX_MS, no se toca nada: quedan el texto y las imágenes estáticas del HTML.
 // Lee sólo con la clave PÚBLICA (GET, sin sesión). Todo lo que viene de la base se inserta con textContent o con
-// atributos (setAttribute), nunca con innerHTML.
+// atributos (setAttribute), nunca con innerHTML. Los textos propios del módulo (alt de respaldo y etiquetas de las
+// miniaturas) salen de t() de i18n.js: claves js.contenido.* de web/src/i18n/*.json. Se resuelven al aplicar, no al
+// leer la base: las lecturas no esperan al diccionario del idioma (ver el final del archivo).
 // La lógica sin red está separada en funciones puras (pruebas: web/tests/contenido-publico.test.mjs, `npm test`).
 import { PRECIO_MAX, TARIFA, clp, fijarTarifas } from "./reserva-logica.js";
+import { IDIOMA, IDIOMAS, listo, localeDe, t } from "./i18n.js";
 
 // Supuesto: 4 s bastan para dos lecturas pequeñas; pasado ese plazo se queda el contenido estático (sin reintentos).
 export const TIEMPO_MAX_MS = 4000;
@@ -28,8 +37,11 @@ export const TIEMPO_MAX_MS = 4000;
 export const BUCKET_FOTOS = "fotos";
 // Claves de public.contenido con las tarifas (valor: pesos chilenos enteros, sólo dígitos).
 export const CLAVES_TARIFA = Object.freeze({ noche: "tarifa.noche", limpieza: "tarifa.limpieza" });  // 0003_gestion.sql, semilla de public.contenido
+// Columna de public.contenido con el texto de cada idioma. valor_en y valor_fr las agrega una migración posterior a la
+// 0004; mientras no existan, la lectura con select=* simplemente no las trae.
+export const CAMPOS_VALOR = Object.freeze({ es: "valor", en: "valor_en", fr: "valor_fr" });
 // Supuesto: texto alternativo si el propietario no escribió uno (mejor que dejar la foto sin descripción).
-export const ALT_GENERICO = "Foto del departamento";
+export const CLAVE_ALT_GENERICO = "js.contenido.alt_generico";
 // Supuesto: máximo de miniaturas por galería (evita cargar decenas de imágenes en el teléfono).
 export const MAX_MINIATURAS = 12;
 
@@ -43,15 +55,23 @@ const CAMINO_PUBLICO = `/storage/v1/object/public/${BUCKET_FOTOS}/`;
 
 // ---------------------------------------------------------------- lógica pura (sin DOM ni red)
 
-/** Filas de public.contenido -> Map clave -> { valor, tipo }. Descarta filas mal formadas. */
+/** Texto alternativo de respaldo en el idioma de la página. */
+export function altGenerico() {
+  return t(CLAVE_ALT_GENERICO);
+}
+
+const esValor = (v) => typeof v === "string" || (typeof v === "number" && Number.isFinite(v));
+
+/** Filas de public.contenido -> Map clave -> { valor, tipo, valor_en?, valor_fr? }. Descarta filas mal formadas (sin
+ *  clave válida o sin `valor`, que es obligatorio en la tabla); las traducciones van sólo si son texto o número. */
 export function indexarContenido(filas) {
   const mapa = new Map();
   if (!Array.isArray(filas)) return mapa;
   for (const f of filas) {
-    if (!f || typeof f.clave !== "string" || !RE_CLAVE.test(f.clave)) continue;
-    const v = f.valor;
-    if (typeof v !== "string" && !(typeof v === "number" && Number.isFinite(v))) continue;
-    mapa.set(f.clave, { valor: v, tipo: typeof f.tipo === "string" ? f.tipo : "texto" });
+    if (!f || typeof f.clave !== "string" || !RE_CLAVE.test(f.clave) || !esValor(f.valor)) continue;
+    const entrada = { valor: f.valor, tipo: typeof f.tipo === "string" ? f.tipo : "texto" };
+    for (const campo of [CAMPOS_VALOR.en, CAMPOS_VALOR.fr]) if (esValor(f[campo])) entrada[campo] = f[campo];
+    mapa.set(f.clave, entrada);
   }
   return mapa;
 }
@@ -62,14 +82,19 @@ export function precioValido(valor) {
   return Number.isSafeInteger(n) && n >= 0 && n <= PRECIO_MAX ? n : null;
 }
 
-/** Texto a mostrar para una entrada de contenido, o null si hay que dejar el estático (vacía o precio inválido). */
-export function textoContenido(entrada) {
+/** Texto a mostrar para una entrada de contenido en `idioma`, o null si hay que dejar el estático: el del idioma vacío
+ *  o sin columna (nunca se cae al español en una página en otro idioma) o un precio inválido. Un precio usa `valor`
+ *  y el formato del idioma (CLP 65.000, CLP 65,000, CLP 65 000). */
+export function textoContenido(entrada, idioma = IDIOMA) {
   if (!entrada) return null;
   if (entrada.tipo === "precio") {
     const n = precioValido(entrada.valor);
-    return n === null ? null : clp(n);
+    return n === null ? null : clp(n, localeDe(idioma));
   }
-  const s = String(entrada.valor);
+  const campo = IDIOMAS.includes(idioma) ? CAMPOS_VALOR[idioma] : CAMPOS_VALOR.es;
+  const v = entrada[campo];
+  if (!esValor(v)) return null;
+  const s = String(v);
   return s.trim() ? s : null;
 }
 
@@ -131,7 +156,9 @@ export function urlFotoValida(url, base) {
   return urlPublica(origen, ruta) === url;
 }
 
-/** Filas de public.fotos -> Map espacio -> [{ url, alt, orden }] en orden ascendente. Descarta filas mal formadas. */
+/** Filas de public.fotos -> Map espacio -> [{ url, alt, orden }] en orden ascendente. Descarta filas mal formadas.
+ *  Sin alt escrito por el propietario, `alt` queda "": el de respaldo (altGenerico) se pone al aplicar, en el idioma
+ *  que ya tenga t() entonces. */
 export function indexarFotos(filas, base) {
   const mapa = new Map();
   if (!Array.isArray(filas)) return mapa;
@@ -139,7 +166,7 @@ export function indexarFotos(filas, base) {
     if (!f || typeof f.espacio !== "string" || !RE_ESPACIO.test(f.espacio)) return;
     const url = urlPublica(base, f.ruta);
     if (!url) return;
-    const alt = typeof f.alt === "string" && f.alt.trim() ? f.alt.trim() : ALT_GENERICO;
+    const alt = typeof f.alt === "string" ? f.alt.trim() : "";
     const orden = Number.isFinite(f.orden) ? f.orden : Number.MAX_SAFE_INTEGER;
     if (!mapa.has(f.espacio)) mapa.set(f.espacio, []);
     mapa.get(f.espacio).push({ url, alt, orden, i });
@@ -162,22 +189,25 @@ export function cabecerasPublicas(clave) {
 
 const TARIFA_DE_CLAVE = new Map(Object.entries(CLAVES_TARIFA).map(([k, clave]) => [clave, k]));
 
-/** [data-contenido] y [data-precio] -> textContent. Devuelve cuántos elementos cambió. */
-export function aplicarContenido(raiz, contenido) {
+/** [data-contenido] y [data-precio] -> textContent en `idioma` (por defecto, el de la página). Devuelve cuántos
+ *  elementos cambió. Sin tarifas editadas, los precios quedan como los escribió sitio.js. Con alguna editada, todas
+ *  las tarifas se escriben con el locale del idioma (la no editada, con su valor de ejemplo de TARIFA): si no, en
+ *  /en/ se veían «CLP 70,000» (editada) y «CLP 15.000» (la de sitio.js) en la misma tabla (hallazgo JS-4). */
+export function aplicarContenido(raiz, contenido, idioma = IDIOMA) {
   if (!(contenido instanceof Map) || !contenido.size) return 0;
-  // sólo los precios que el propietario editó: el otro queda con el ejemplo que escribió sitio.js
-  const editados = tarifasEditadas(contenido);
+  const locale = localeDe(idioma);
+  const precios = tarifasDe(contenido);             // null si ninguna está editada (la noche > 0, como en tarifasDe)
   let n = 0;
   for (const el of raiz.querySelectorAll("[data-contenido]")) {
     const clave = el.getAttribute("data-contenido");
-    const k = TARIFA_DE_CLAVE.get(clave);           // una tarifa sigue la misma regla que [data-precio] (noche > 0)
-    const texto = k ? (editados[k] === undefined ? null : clp(editados[k])) : textoContenido(contenido.get(clave));
+    const k = TARIFA_DE_CLAVE.get(clave);           // una tarifa sigue la misma regla que [data-precio]
+    const texto = k ? (precios ? clp(precios[k], locale) : null) : textoContenido(contenido.get(clave), idioma);
     if (texto !== null) { el.textContent = texto; n++; }
   }
-  if (editados.noche !== undefined || editados.limpieza !== undefined) {
+  if (precios) {
     for (const el of raiz.querySelectorAll("[data-precio]")) {
-      const v = editados[el.getAttribute("data-precio")];
-      if (v !== undefined) { el.textContent = clp(v); n++; }
+      const k = el.getAttribute("data-precio");
+      if (Object.hasOwn(CLAVES_TARIFA, k)) { el.textContent = clp(precios[k], locale); n++; }
     }
   }
   return n;
@@ -248,7 +278,7 @@ function crearMiniaturas(doc, img, o, principal, resto) {
   const lista = doc.createElement("ul");
   lista.className = "miniaturas";
   lista.setAttribute("data-miniaturas", "");
-  lista.setAttribute("aria-label", "Más fotos de este espacio");
+  lista.setAttribute("aria-label", t("js.contenido.mas_fotos"));
   const estado = { principal };
   for (const inicial of resto.slice(0, MAX_MINIATURAS)) {
     let actual = inicial;
@@ -261,7 +291,7 @@ function crearMiniaturas(doc, img, o, principal, resto) {
     mini.setAttribute("decoding", "async");
     const pintar = () => {
       mini.setAttribute("src", actual.url);
-      boton.setAttribute("aria-label", `Ver foto: ${actual.alt}`);
+      boton.setAttribute("aria-label", t("js.contenido.ver_foto", { alt: actual.alt }));
     };
     pintar();
     mini.addEventListener("error", () => li.remove());
@@ -282,7 +312,7 @@ function crearMiniaturas(doc, img, o, principal, resto) {
 function fotosAceptables(lista, base) {
   if (!Array.isArray(lista)) return [];
   return lista.filter((f) => f && urlFotoValida(f.url, base))
-    .map((f) => ({ url: f.url, alt: typeof f.alt === "string" && f.alt.trim() ? f.alt.trim() : ALT_GENERICO }));
+    .map((f) => ({ url: f.url, alt: typeof f.alt === "string" && f.alt.trim() ? f.alt.trim() : altGenerico() }));
 }
 
 /** [data-fotos] -> foto principal y, con data-galeria, miniaturas. Devuelve cuántos contenedores cambió.
@@ -307,10 +337,11 @@ export function aplicarFotos(raiz, fotos, { doc = raiz.ownerDocument || raiz, ba
   return n;
 }
 
-/** Aplica todo lo leído. `d` es lo que devuelve obtenerDatos (o null: no hace nada). */
-export function aplicar(raiz, d) {
+/** Aplica todo lo leído en `idioma` (por defecto, el de la página). `d` es lo que devuelve obtenerDatos (o null: no
+ *  hace nada). */
+export function aplicar(raiz, d, idioma = IDIOMA) {
   if (!d) return { textos: 0, fotos: 0 };
-  return { textos: aplicarContenido(raiz, d.contenido), fotos: aplicarFotos(raiz, d.fotos, { base: d.base }) };
+  return { textos: aplicarContenido(raiz, d.contenido, idioma), fotos: aplicarFotos(raiz, d.fotos, { base: d.base }) };
 }
 
 // ---------------------------------------------------------------- red (una lectura por página, sin reintentos)
@@ -332,7 +363,9 @@ export async function leerFilas(base, clave, ruta, { fetch: f = globalThis.fetch
   }
 }
 
-export const RUTA_CONTENIDO = "contenido?select=clave,valor,tipo";
+// select=* y no la lista de columnas: funciona antes y después de la migración que agrega valor_en y valor_fr (pedir
+// una columna que no existe haría fallar la lectura entera). La tabla es de lectura pública (contenido_publico_lee).
+export const RUTA_CONTENIDO = "contenido?select=*";
 export const RUTA_FOTOS = "fotos?select=espacio,ruta,alt,orden&visible=eq.true&order=orden.asc";
 
 /** Configuración pública -> { contenido: Map, fotos: Map, base } (vacíos si algo falla), o null sin configuración
@@ -373,13 +406,17 @@ export async function tarifas() {
   return d ? tarifasDe(d.contenido) : null;
 }
 
-// Al cargarse en una página (no en Node): aplicar cuando llegue la respuesta. Sin await de nivel superior, para no
-// demorar a los módulos que importan tarifas(). Las tarifas se fijan antes de pintar, para que el total estimado que
-// calcule después cualquier página (sitio.js, reserva.js) use los mismos precios que la tabla.
+// Al cargarse en una página (no en Node): las lecturas de la base empiezan enseguida y se aplican cuando lleguen. Ni
+// este módulo ni i18n.js tienen await de nivel superior: importarlos no espera ninguna red, así las lecturas no van
+// detrás del diccionario del idioma y reserva.js, que importa tarifas(), no se demora por este módulo (hallazgo JS-3).
+// Las tarifas se fijan apenas llegan, para que el total estimado que calcule cualquier página (reserva.js) use los
+// mismos precios que la tabla. Los textos se aplican después de `listo` de i18n.js: los propios del módulo (alt de
+// respaldo, etiquetas de las miniaturas) ya están en el idioma de la página.
 if (typeof document !== "undefined") {
-  datos().then((d) => {
-    const t = d ? tarifasDe(d.contenido) : null;
-    if (t) fijarTarifas(t);
+  datos().then(async (d) => {
+    const precios = d ? tarifasDe(d.contenido) : null;
+    if (precios) fijarTarifas(precios);
+    await listo;
     aplicar(document, d);
   }).catch(() => {});
 }

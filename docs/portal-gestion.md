@@ -1,6 +1,6 @@
 # Portal de gestión: puesta en marcha en Supabase
 
-Con el portal, el propietario inicia sesión y puede editar los textos del sitio, subir u ocultar fotos y manejar las reservas: confirmarlas, rechazarlas, anotarlas o borrarlas. Esta guía prepara la base de datos. La interfaz del portal va aparte.
+Con el portal, el propietario inicia sesión y puede editar los textos del sitio en español, inglés y francés, subir u ocultar fotos y manejar las reservas: confirmarlas, rechazarlas, anotarlas o borrarlas. Esta guía prepara la base de datos y explica cómo se editan las traducciones (paso 7). El portal mismo sigue sólo en español.
 
 Todos los pasos se hacen en el panel de Supabase del proyecto: **SQL Editor** para el SQL y **Authentication** para las cuentas. Claude no aplica migraciones, no crea cuentas y no maneja contraseñas.
 
@@ -9,6 +9,7 @@ Todos los pasos se hacen en el panel de Supabase del proyecto: **SQL Editor** pa
 - La 0003 no está aplicada: `contenido` y `es_propietario` no existen.
 - El registro público está **abierto** (`disable_signup: false`); el paso 3 lo cierra antes de crear la cuenta. La confirmación por correo está activa y las sesiones anónimas, desactivadas.
 - La 0002 está aplicada: la función del día de la propiedad es interna y el rol público no la ve (es lo esperado). La 0004 le cambia el nombre, porque el departamento no es un loft.
+- La 0005 (traducciones de los textos) es posterior a ese sondeo: no está aplicada.
 
 ## 1. Revisar la 0002
 
@@ -21,7 +22,7 @@ select to_regprocedure('public.hoy_loft()') is not null or to_regprocedure('publ
 - Si da `false`, pega el contenido de `web/supabase/migrations/0002_hoy_propiedad.sql` y ejecútalo (**Run**).
 - Las pruebas de reservas (`reservas_test.sql`) se corren después de la 0004 (paso 2, punto 3): usan el nombre nuevo de la función.
 
-## 2. Aplicar la 0003 y probarla
+## 2. Aplicar las migraciones 0003 a 0005 y probarlas
 
 1. Pega el contenido de `web/supabase/migrations/0003_gestion.sql` y ejecútalo.
    - El panel puede advertir que hay operaciones destructivas. Son los `drop policy/trigger if exists` que recrean los objetos de esta misma migración: confirma.
@@ -31,6 +32,12 @@ select to_regprocedure('public.hoy_loft()') is not null or to_regprocedure('publ
    - Un aviso «S5, S6 o A13 omitida» no es un error: el proyecto bloquea el borrado por SQL en Storage, y el portal borra por la Storage API.
    - Si una prueba falla, copia el mensaje: empieza con su código (A, N, P, S, E o F).
 3. Pega y ejecuta `web/supabase/migrations/0004_renombrar_hoy.sql` (renombra la función del día a `hoy_propiedad()`: la propiedad no es un loft). Después ejecuta `web/supabase/tests/reservas_test.sql`: el resultado debe ser `PRUEBAS_OK`.
+4. Pega y ejecuta `web/supabase/migrations/0005_contenido_idiomas.sql`. Agrega a `contenido` las columnas `valor_en` y `valor_fr` para las traducciones al inglés y al francés.
+   - Requiere la 0003; si falta, se detiene con el mensaje «0005 requiere la 0003_gestion.sql».
+   - Va en una transacción y se puede volver a ejecutar. No trae textos: las traducciones empiezan vacías (`null`), así que el sitio en inglés y en francés sigue mostrando el texto fijo de cada página hasta que las edites (ver «Ojo con el texto fijo», en el paso 7).
+   - No cambia quién puede qué: el público las lee, sólo el propietario las edita y la clave pública no escribe. Vuelve a declarar los mismos privilegios de la 0003 sobre `contenido`.
+   - Después ejecuta `web/supabase/tests/idiomas_test.sql`. El resultado debe ser `PRUEBAS_IDIOMAS_OK`. Usa filas y usuarios inventados y deshace todo al final. Un aviso «P2b omitida» no es un error: significa que no había ningún texto anterior a la prueba con el cual comprobar la fecha de edición. Si una prueba falla, el mensaje empieza con su código (E, A, N, P o F).
+   - Mientras no la apliques, el portal lo avisa en **Textos** y deja editar sólo el español (paso 7).
 
 ## 3. Cerrar el registro público
 
@@ -90,7 +97,7 @@ La tabla `propietarios` sólo se edita desde el panel: nadie, ni el propio propi
 
 | | Público (sin sesión) | Cuenta sin rol | Propietario |
 |---|---|---|---|
-| Ver textos (`contenido`) | sí | sí | sí, y editar, crear o borrar |
+| Ver textos (`contenido`), con sus traducciones | sí | sí | sí, y editar, crear o borrar |
 | Ver fotos (`fotos`) | sólo visibles | sólo visibles | todas, y editar, crear o borrar |
 | Archivos del bucket `fotos` | descarga por URL pública | descarga por URL pública | subir, reemplazar, mover, borrar y listar |
 | Reservas | sólo fechas ocupadas y enviar solicitud | lo mismo que el público | ver todo, borrar y cambiar **sólo** `estado` y `nota_interna` |
@@ -98,9 +105,48 @@ La tabla `propietarios` sólo se edita desde el panel: nadie, ni el propio propi
 
 El propietario no puede cambiar los datos del huésped ni las fechas de una reserva. Para otras fechas, rechaza la reserva y se envía una solicitud nueva.
 
-## 7. Claves de contenido para el sitio
+## 7. Textos en tres idiomas
 
-Para el sitio público, cada elemento editable lleva `data-contenido="clave"` y conserva en el HTML el texto actual, que queda como respaldo si la base no responde. El script lee `GET <SUPABASE_URL>/rest/v1/contenido?select=clave,valor,tipo`, con la cabecera `apikey` pública, y reemplaza el texto **siempre con `textContent`**, nunca con `innerHTML`.
+El sitio público está en español (`/`), inglés (`/en/`) y francés (`/fr/`). Cada texto editable tiene tres columnas en `public.contenido`:
+
+| Columna | Idioma | ¿Obligatoria? | Si está vacía (`null`) |
+|---|---|---|---|
+| `valor` | español | sí | no puede estar vacía |
+| `valor_en` | inglés | no | el sitio en inglés muestra el texto fijo de la página (su traducción de `web/src/i18n/en.json` o, mientras la página no esté traducida, el original en español) |
+| `valor_fr` | francés | no | el sitio en francés muestra el texto fijo de la página (su traducción de `web/src/i18n/fr.json` o, mientras la página no esté traducida, el original en español) |
+
+Los precios (`tarifa.noche`, `tarifa.limpieza`) no se traducen: el monto es el mismo en los tres idiomas y la base rechaza un precio con `valor_en` o `valor_fr`.
+
+**Cómo se editan, en el portal:**
+
+1. Entra a **Textos**. Cada texto muestra tres campos: **Español (obligatorio)**, **Inglés (opcional)** y **Francés (opcional)**. En una pantalla ancha van lado a lado; en el teléfono, uno bajo otro. Los precios tienen un solo campo.
+2. Escribe la traducción. Para volver al texto fijo de la página, deja el campo vacío: el portal guarda `null`, nunca un texto en blanco.
+3. Pulsa **Guardar** en esa fila. Se guardan juntos sólo los idiomas que cambiaste en esa fila: los que no tocaste no se reenvían, así no se pisa lo que se haya guardado entretanto en otra pestaña, en el teléfono o en el SQL Editor. Si un campo no cumple las reglas, no se guarda nada de la fila y el campo con problemas lo indica. Si dos personas cambian el mismo idioma de la misma fila, queda el último que guardó.
+4. Recarga la página del sitio en ese idioma para ver el cambio.
+
+Reglas, las mismas que el español: no en blanco y hasta 4000 caracteres. En los textos de una línea se juntan los espacios repetidos; en los párrafos se conservan los saltos de línea.
+
+**Ojo con el texto fijo:** es el que trae el HTML de cada página. En `/en/` y `/fr/` es la traducción que pone el build desde `web/src/i18n/en.json` y `fr.json`, pero sólo en las páginas marcadas con `data-i18n`. Ese marcado y sus traducciones llegan en una PR posterior del sitio: mientras una página no lo tenga, su texto fijo en `/en/` y `/fr/` es el original en español (el build lo avisa con `AVISO_I18N`). Además, la traducción fija corresponde al texto original: si cambias el español y dejas vacío el inglés, el sitio en inglés sigue diciendo lo de antes. Para que los tres idiomas digan lo mismo, escribe también el inglés y el francés.
+
+**Si falta la 0005:** el portal lo detecta porque la base responde que `valor_en` no existe. Entonces:
+
+- avisa en **Textos** que falta aplicar la migración;
+- muestra sólo el campo en español y lo sigue guardando;
+- el sitio en inglés y en francés muestra el texto fijo de cada página (ver «Ojo con el texto fijo»).
+
+Después de aplicarla (paso 2, punto 4), pulsa **Actualizar** en **Textos** y aparecen los tres campos.
+
+Para probarlo sin Supabase, abre el portal en un host local con `?simulado=1`: trae traducciones de ejemplo. Con `?simulado=1&sin-idiomas=1`, imita una base sin la 0005.
+
+## 8. Claves de contenido para el sitio
+
+Para el sitio público, cada elemento editable lleva `data-contenido="clave"` y conserva en el HTML el texto actual, que queda como respaldo si la base no responde. El script lee `GET <SUPABASE_URL>/rest/v1/contenido` con la cabecera `apikey` pública y reemplaza el texto **siempre con `textContent`**, nunca con `innerHTML`.
+
+Contrato para las páginas en otro idioma (lo implementa `web/src/js/contenido-publico.js`, en la PR del sitio en tres idiomas):
+
+- En `/en/` se usa `valor_en` y en `/fr/`, `valor_fr`, si traen texto. Si son `null`, o si la columna todavía no existe, queda el texto estático de la página: el que tradujo el build si la página está marcada con `data-i18n`, o el original en español si todavía no lo está (el marcado llega en una PR posterior; ver «Ojo con el texto fijo», en el paso 7). Una página en inglés o en francés nunca muestra el `valor` editado en español.
+- Los precios usan siempre `valor`, con el formato de números del idioma.
+- Pedir `valor_en` o `valor_fr` por nombre en `select=` antes de aplicar la 0005 da un error 400 de columna inexistente (código `42703`). Por eso el portal vuelve a leer sin ellas y el sitio no debe depender de que existan.
 
 | Clave | Tipo | Grupo | Dónde va hoy (`web/src/index.html`) |
 |---|---|---|---|
@@ -130,7 +176,7 @@ Las fotos se leen con `GET <SUPABASE_URL>/rest/v1/fotos?select=espacio,ruta,alt,
 - **Espacios:** `living`, `cocina`, `dorm1`, `dorm2`, `banos`, `balcon` y `recibidor`, los mismos que ofrece el portal (`ESPACIOS` en `web/src/admin/js/logica-fotos.js`). Un espacio sin filas sigue mostrando las imágenes de `web/src/img/`. Para sumar otro, por ejemplo una foto de portada, hay que agregarlo a `ESPACIOS` y poner el `data-fotos` correspondiente en el HTML.
 - **Nombre de archivo:** una carpeta opcional y un nombre en minúsculas, con extensión `jpg`, `jpeg`, `png` o `webp`. Por ejemplo, `living/20260926-a1b2c3d4.webp`, que es el formato que genera el portal. Máximo 5 MB, y nada de SVG. Un nombre que no cumple la regla se rechaza al subir.
 
-## 8. Cuidados
+## 9. Cuidados
 
 - **Ocultar no es borrar:** con `visible = false`, la foto sale del sitio, pero el archivo sigue accesible para quien tenga la URL. Para retirarlo, bórralo desde el portal o desde **Storage**.
 - **Borrar archivos:** hazlo por el portal o el panel, nunca con `delete` en SQL. Si no, el archivo queda huérfano en el almacenamiento.

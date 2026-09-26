@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { crearApi, COLUMNAS_RESERVA } from "../src/admin/js/api.js";
+import { crearApi, COLUMNAS_CONTENIDO, COLUMNAS_CONTENIDO_BASE, COLUMNAS_RESERVA } from "../src/admin/js/api.js";
 import { codigoConocido, mensajeError } from "../src/admin/js/errores.js";
 import {
   CLAVE_ALMACEN, debeRefrescar, leerSesion, msHastaRefresco, normalizarSesion,
@@ -354,7 +354,8 @@ test("API contenido y fotos: rutas, filtros y sólo los campos permitidos", asyn
     { estado: 404, json: { code: "PGRST202", message: "Could not find the function public.es_propietario" } },
   ]);
   await api.contenido.guardar("tarifa.noche", "60000");
-  assert.equal(ultima().url, `${URL_SB}/rest/v1/contenido?clave=eq.tarifa.noche&select=clave,valor,tipo,etiqueta,grupo,orden,actualizado`);
+  assert.equal(ultima().url,
+    `${URL_SB}/rest/v1/contenido?clave=eq.tarifa.noche&select=clave,valor,valor_en,valor_fr,tipo,etiqueta,grupo,orden,actualizado`);
   assert.deepEqual(JSON.parse(ultima().cuerpo), { valor: "60000" });
   const n = fetch.llamadas.length;
   await assert.rejects(api.contenido.guardar("x&clave=neq.y", "1"), (e) => e.codigo === "id_invalido");
@@ -424,4 +425,81 @@ test("http: después de leer el cuerpo no queda el temporizador del abort pendie
   assert.deepEqual(await cliente.rest("/reservas"), [{ id: 1 }]);
   t.mock.timers.tick(ESPERA_MS * 2);
   assert.equal(senal.aborted, false, "el temporizador se quitó al terminar la lectura");
+});
+
+// ---------------------------------------------------------------------------------------------- idiomas (0005)
+const ORDEN_CONTENIDO = "order=grupo.asc,orden.asc,clave.asc";
+const FALTA_COLUMNA = { estado: 400, json: { code: "42703", details: null, hint: null, message: "column contenido.valor_en does not exist" } };
+
+test("API contenido: listar pide las traducciones y, con la 0005 aplicada, informa idiomas: true", async () => {
+  const filas = [{ clave: "hero.bajada", valor: "Hola", valor_en: "Hello", valor_fr: null, tipo: "parrafo" }];
+  const { api, fetch } = await apiCon([{ json: filas }]);
+  assert.deepEqual(await api.contenido.listar(), { filas, idiomas: true });
+  assert.equal(fetch.llamadas.at(-1).url, `${URL_SB}/rest/v1/contenido?select=${COLUMNAS_CONTENIDO}&${ORDEN_CONTENIDO}`);
+  assert.ok(COLUMNAS_CONTENIDO.includes("valor_en") && COLUMNAS_CONTENIDO.includes("valor_fr"));
+  assert.ok(!COLUMNAS_CONTENIDO_BASE.includes("valor_"), "la lectura de respaldo es la de la 0003");
+});
+
+test("API contenido: sin la 0005 (columna inexistente) vuelve a leer sólo el español e informa idiomas: false", async () => {
+  for (const falta of [FALTA_COLUMNA,
+    { estado: 400, json: { code: "PGRST204", message: "Could not find the 'valor_en' column of 'contenido' in the schema cache" } },
+    { estado: 400, json: { message: "column contenido.valor_fr does not exist" } }]) {
+    const filas = [{ clave: "hero.bajada", valor: "Hola", tipo: "parrafo" }];
+    const { api, fetch } = await apiCon([falta, { json: filas }]);
+    assert.deepEqual(await api.contenido.listar(), { filas, idiomas: false });
+    const [primera, segunda] = fetch.llamadas.slice(-2);
+    assert.match(primera.url, /select=clave,valor,valor_en,valor_fr,/);
+    assert.equal(segunda.url, `${URL_SB}/rest/v1/contenido?select=${COLUMNAS_CONTENIDO_BASE}&${ORDEN_CONTENIDO}`);
+    assert.equal(segunda.metodo, "GET");
+  }
+});
+
+test("API contenido: si tampoco hay tabla (falta la 0003) o el error es otro, no se disfraza de «falta la 0005»", async () => {
+  const sinTabla = { estado: 404, json: { code: "PGRST205", message: "Could not find the table 'public.contenido' in the schema cache" } };
+  const a = await apiCon([FALTA_COLUMNA, sinTabla]);
+  await assert.rejects(a.api.contenido.listar(), (e) => codigoConocido(e) === "falta_migracion" && /0003/.test(mensajeError(e)));
+
+  const b = await apiCon([{ estado: 500, json: { code: "XX000", message: "fallo interno" } }]);
+  const n = b.fetch.llamadas.length;
+  await assert.rejects(b.api.contenido.listar(), (e) => e.estado === 500);
+  assert.equal(b.fetch.llamadas.length, n + 1, "un error que no es de columna no se reintenta");
+
+  const c = await apiCon([sinTabla]);
+  await assert.rejects(c.api.contenido.listar(), (e) => codigoConocido(e) === "falta_migracion");
+  assert.equal(c.fetch.llamadas.length, 2, "login y una sola lectura");
+});
+
+test("API contenido: guardar manda los tres valores de la fila (null = sin traducción) y sólo esas columnas", async () => {
+  const fila = { clave: "hero.bajada", valor: "Hola", valor_en: "Hello", valor_fr: null };
+  const { api, ultima } = await apiCon([{ json: [fila] }, { json: [fila] }]);
+  assert.deepEqual(await api.contenido.guardar("hero.bajada",
+    { valor: "Hola", valor_en: "Hello", valor_fr: null, tipo: "precio", clave: "otra", actualizado: "2000-01-01" }), fila);
+  assert.equal(ultima().metodo, "PATCH");
+  assert.equal(ultima().url, `${URL_SB}/rest/v1/contenido?clave=eq.hero.bajada&select=${COLUMNAS_CONTENIDO}`);
+  assert.deepEqual(JSON.parse(ultima().cuerpo), { valor: "Hola", valor_en: "Hello", valor_fr: null },
+    "ni tipo, ni clave, ni la fecha: sólo los textos");
+  assert.equal(ultima().cabeceras.Prefer, "return=representation");
+
+  await api.contenido.guardar("hero.bajada", { valor: "Hola", valor_en: "Hello", valor_fr: "Bonjour" }, { idiomas: false });
+  assert.equal(ultima().url, `${URL_SB}/rest/v1/contenido?clave=eq.hero.bajada&select=${COLUMNAS_CONTENIDO_BASE}`,
+    "sin la 0005 no pide columnas que no existen");
+  assert.deepEqual(JSON.parse(ultima().cuerpo), { valor: "Hola" }, "sin la 0005 sólo se guarda el español");
+});
+
+test("API contenido: guardar sin nada que guardar no llama; si la base no tiene las traducciones, «falta_idiomas»", async () => {
+  const { api, fetch } = await apiCon([FALTA_COLUMNA, { json: [] }]);
+  const n = fetch.llamadas.length;
+  await assert.rejects(api.contenido.guardar("hero.bajada", { tipo: "texto" }), (e) => e.codigo === "respuesta_invalida");
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor_en: "Hello" }, { idiomas: false }),
+    (e) => e.codigo === "respuesta_invalida", "sin la 0005, una traducción sola no es un cambio");
+  assert.equal(fetch.llamadas.length, n);
+
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor: "Hola", valor_en: "Hello", valor_fr: null }), (e) => {
+    assert.equal(e.codigo, "falta_idiomas");
+    assert.match(mensajeError(e), /0005_contenido_idiomas\.sql/);
+    assert.match(mensajeError(e), /español/);
+    return true;
+  });
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor: "Hola" }), (e) => codigoConocido(e) === "sin_filas",
+    "0 filas (RLS) sigue siendo «sin_filas»");
 });

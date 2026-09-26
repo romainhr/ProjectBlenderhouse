@@ -32,3 +32,15 @@ export function decidirModo({ hostname, search = "", config }) {
   if (configValida(config)) return "real";
   return "sin_configurar";
 }
+
+/**
+ * Sólo en modo simulado: ?sin-idiomas=1 imita una base sin la migración 0005 (sin valor_en ni valor_fr), para ver en
+ * el navegador cómo avisa el portal y que el español se sigue pudiendo editar.
+ */
+export function pideSinIdiomas(search = "") {
+  try {
+    return new URLSearchParams(search).get("sin-idiomas") === "1";
+  } catch {
+    return false;
+  }
+}

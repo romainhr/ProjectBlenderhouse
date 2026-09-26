@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title data-i18n="inicio.titulo">Inicio · Sitio de prueba</title>
+<meta name="description" content="Página de prueba de los idiomas del build." data-i18n-attr="content:inicio.descripcion">
+<meta property="og:image" content="img/portada.svg">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="preload" as="image" href="img/portada.svg" imagesrcset="img/portada.svg 800w, img/portada.svg?v=2 1600w">
+<link rel="stylesheet" href="css/sitio.css">
+<script type="module" src="js/sitio.js"></script>
+</head>
+<body>
+<!-- Un comentario con <p data-i18n="clave.inexistente">texto</p> no cuenta. -->
+<nav class="idiomas" aria-label="Idioma"><a data-i18n-alternar="es">ES</a> <a data-i18n-alternar="en">EN</a> <a data-i18n-alternar="fr">FR</a></nav>
+<h1 data-i18n="inicio.h1">Bienvenida</h1>
+<p data-i18n="inicio.bajada">
+  Ladrillo, roble
+  y luz cálida.
+</p>
+<p><a href="reserva.html#calendario" data-i18n="comun.reservar">Reservar</a> · <a href="tour/">Recorrido 3D</a> · <a href="./#arriba">Arriba</a></p>
+<picture><source type="image/svg+xml" srcset="img/portada.svg 1x, img/portada.svg 2x"><img src="img/portada.svg" alt="Living con muro de ladrillo" data-i18n-attr="alt:inicio.foto"></picture>
+<p><a href="admin/">Portal</a> <a href="i18n/es.json">JSON</a> <a href="https://example.invalid/fuera">Fuera</a> <a href="mailto:reservas@example.invalid">Correo</a></p>
+</body>
+</html>

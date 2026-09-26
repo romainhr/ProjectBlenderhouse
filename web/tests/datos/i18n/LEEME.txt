@@ -1,0 +1,3 @@
+Sitio mínimo para las pruebas de idiomas de web/build.py (web/tests/test_build.py, clase SitioEnTresIdiomas).
+Imita a web/src: páginas en español en la raíz, tour/index.html con rutas relativas a su carpeta, 404.html con
+rutas desde la raíz (Netlify la sirve en cualquier ruta) y admin/, que queda sólo en español.

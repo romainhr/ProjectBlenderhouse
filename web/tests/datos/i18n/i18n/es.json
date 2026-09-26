@@ -1,0 +1,18 @@
+{
+  "inicio.titulo": "Inicio · Sitio de prueba",
+  "inicio.descripcion": "Página de prueba de los idiomas del build.",
+  "inicio.h1": "Bienvenida",
+  "inicio.bajada": "Ladrillo, roble y luz cálida.",
+  "inicio.foto": "Living con muro de ladrillo",
+  "comun.reservar": "Reservar",
+  "comun.inicio": "Inicio",
+  "reserva.titulo": "Reserva · Sitio de prueba",
+  "reserva.mes_siguiente": "Mes siguiente",
+  "error.titulo": "No encontrado · Sitio de prueba",
+  "error.h1": "Página no encontrada",
+  "error.volver": "Volver al inicio",
+  "tour.titulo": "Tour 3D · Sitio de prueba",
+  "tour.volver": "Volver al sitio",
+  "tour.vista": "Vista 3D del departamento",
+  "js.reserva.enviando": "Enviando…"
+}

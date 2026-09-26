@@ -1,0 +1,18 @@
+{
+  "inicio.titulo": "Accueil · Site de test",
+  "inicio.descripcion": "Page de test des langues du build.",
+  "inicio.h1": "Bienvenue",
+  "inicio.bajada": "Brique, chêne et lumière chaude.",
+  "inicio.foto": "Séjour avec un mur de brique",
+  "comun.reservar": "Réserver",
+  "comun.inicio": "Accueil",
+  "reserva.titulo": "Réservation · Site de test",
+  "reserva.mes_siguiente": "Mois suivant",
+  "error.titulo": "Introuvable · Site de test",
+  "error.h1": "Page introuvable",
+  "error.volver": "Retour à l'accueil",
+  "tour.titulo": "Visite 3D · Site de test",
+  "tour.volver": "Retour au site",
+  "tour.vista": "Vue 3D de l'appartement",
+  "js.reserva.enviando": "Envoi…"
+}
