@@ -706,9 +706,9 @@ def tex_acero_cepillado(L, s):
     fino = L.ruido(s(), 0.004, 0.00025, p=0.3, estira=420, angulo=90.0)     # rayado del cepillo: ~0,25 mm de ancho
     medio = L.ruido(s(), 0.010, 0.0007, p=0.5, estira=260, angulo=90.0)     # pasadas algo más anchas, igual de rectas
     nube = L.ruido(s(), 0.12, 0.04, p=1.2)                                  # variación de brillo de la chapa, muy suave
-    c = por_px(col("#C3C7CB"), 1 + 0.028 * fino + 0.016 * medio + 0.008 * nube)
+    c = por_px(col("#C3C7CB"), 1 + 0.014 * fino + 0.008 * medio + 0.006 * nube)
     c = ajustar_media(c, col("#C3C7CB"))
-    rug = 0.30 + 0.020 * fino + 0.012 * medio + 0.010 * nube
+    rug = 0.30 + 0.016 * fino + 0.010 * medio + 0.010 * nube
     h = 0.000005 * fino + 0.000003 * medio
     return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.25, 0.35))
 

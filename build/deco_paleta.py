@@ -55,7 +55,8 @@ TEXTURA_MAT = {
     "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=False, normal=0.3)),
     # Corrección 07c: textura rehecha (vetas rectas muy finas, contraste bajo, gris frío) con sus tres mapas; en la 07b
     # sólo iba el normal, porque las vetas anchas del color y la rugosidad se leían como madera clara veteada.
-    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=True, rugosidad=True, normal=0.5)),
+    # Normal a 0,25: con 0,5 las vetas se leían como franjas a 1-2 m (review/07c_plano, primera tanda).
+    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=True, rugosidad=True, normal=0.25)),
     "Depto_Mat_CubiertaConcreto": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_CubiertaBano": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_Concreto": ("microcemento", dict(color=True, rugosidad=True, normal=0.6, escala_m=0.8)),
