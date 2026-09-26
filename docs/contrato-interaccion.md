@@ -27,8 +27,8 @@ Reglas del modelo:
   la nevera el eje de giro va en la arista de la cara vista (la que mira hacia donde abre), como una bisagra de
   cazoleta, y la bisagra va del lado que no tiene muro, torre ni esquina. La fase 6 prueba que ninguna hoja ni cajón,
   abierto en el estado que permite este contrato (con las hojas de su `depende_de` corridas y las demás como en el
-  modelo), entre más de 1 mm en una caja estática o en otro móvil, y que dos hojas de mueble abiertas a la vez no se
-  crucen (`prueba_aperturas` en `build/depto_06_exportar.py`).
+  modelo), entre más de 1 mm en una caja estática o en otro móvil, y que dos hojas de mueble, o una hoja y un cajón del
+  mismo recinto, abiertos a la vez no se crucen (`prueba_aperturas` en `build/depto_06_exportar.py`).
 - Cajones detrás de correderas (corrección 07b): un móvil con `depende_de` sólo se abre si esas hojas están corridas
   del todo y cualquier otra hoja que lo nombre en `bloquea` está cerrada (en un clóset de dos hojas, la B corrida tapa
   la columna de cajones). Antes de mover una hoja con `bloquea`, el visor cierra los cajones abiertos que tapa y la
