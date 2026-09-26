@@ -47,9 +47,11 @@ Cada luz puntual trae además `grupo` (id de `grupos_luz`), `color` [r, g, b] li
 - 2700 K en general; cocina y baños a 3000 K.
 - Luces con pantalla (domos de techo, lámpara de arco, colgante del balcón y focos del riel): `cono_deg`
   (semiángulo, 60° en domos y 35° en focos) y `direccion` (vector glTF del eje; hacia abajo en los domos). El
-  visor, que no calcula sombras, las arma como un foco con el 85 % de la intensidad más una puntual con el 15 %;
-  sin eso el cielo sobre un domo cerrado recibía ~20 veces la luz del piso. Las jaulas, el velador y los apliques
-  no traen cono. En Blender todas son puntuales (la pantalla hace la sombra).
+  visor, que no calcula sombras, las arma como un foco (SpotLight) con toda la intensidad; sin eso el cielo sobre un
+  domo cerrado recibía ~20 veces la luz del piso. Hasta la ronda 2 de la corrección 07b llevaban además una puntual
+  con el 15 % para el rebote en el cielo: se quitó porque cada luz cuesta ~1,3-1,7 ms por cuadro en una GPU
+  integrada (ADR 0004, adenda de la ronda 2). Las jaulas, los veladores y los apliques no traen cono. En Blender
+  todas son puntuales (la pantalla hace la sombra).
 - El visor clona el material emisivo de cada `ampolleta` para que cada grupo se apague por separado, y dibuja las
   ampolletas como nodos sueltos (fuera de la fusión estática).
 - **Momento del día:** al aplicar un momento, cada grupo queda encendido sólo si el momento prende las luces

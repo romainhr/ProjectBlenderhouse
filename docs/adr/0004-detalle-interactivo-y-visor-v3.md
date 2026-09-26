@@ -59,7 +59,9 @@ Decisiones:
 
 Consecuencias: 180 064 triángulos visibles (tope 200 000), 73 materiales (antes 78), GLB de 16,3 MB (antes 15,9);
 descarga del tour con WebP 9,6 MB en escritorio y 7,1 MB en teléfono (antes 7,5 y 5,0: la geometría nueva va en
-las dos). 18 luces en el visor (antes 15). Llamadas de dibujo medidas con `?debug` a 1280 px: vista inicial del
+las dos). 18 luces en el modelo (17 puntuales y el sol; antes 15) [corrección de la ronda 2: en el visor eran 26
+luces de three.js desde la ronda 1 (17 PointLight, 8 SpotLight y el sol) más el ambiente; ahora 19 más el
+ambiente: 18 lámparas, 8 de ellas SpotLight, y el sol]. Llamadas de dibujo medidas con `?debug` a 1280 px: vista inicial del
 hall 119, living 93, cocina 92, dormitorio 56, paso 48 (antes de los tintes y la caché de vidrios eran 152, 117,
 117, 65 y 54; el informe del visor v3, sin el contenido de esta fase, daba 48 a 95). Lo que queda por encima es
 sobre todo interruptores y lámparas clicables (nodos sueltos, ~17 en la vista del hall) y cajones de otros
@@ -92,3 +94,34 @@ Decisiones (cambian el contrato de interacción, que pasa a la versión 2.1):
 6. **Renders de revisión de día** con el HDRI de Poly Haven (`kloofendal_48d_partly_cloudy_puresky`) desaturado, luz
    rebotada horneada también de día, sondas planas en los espejos y un cubemap por baño (`tools/render_07b.py`). Son
    supuestos de revisión y no van al GLB.
+
+## Adenda 07b, corrección de la ronda 2 (2026-09-26)
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector de la fase 07b (ronda 2). **Revisor humano:**
+  Romain Ange, pendiente.
+
+Decisiones:
+
+1. **Dos lámparas de velador en el dormitorio principal:** el grupo `dorm1_velador` se reemplaza por
+   `dorm1_velador_izq` y `dorm1_velador_der` (mirando la cabecera desde los pies de la cama, como en el segundo
+   dormitorio), y los nodos pasan a `Depto_Mueble_D1_LamparaMesa{O,E}_*`. Es un cambio de ids del contrato: un visor
+   con estado guardado por id de grupo lo pierde para ese grupo.
+2. **`"contrato": "2.1"`** en `depto_colisiones.json`; `"version"` sigue en 2 y es la versión mayor.
+3. **Materiales del GLB:** el roble de puertas y clósets pierde el mapa de rugosidad (0,55 constante) y la melamina
+   blanca sube de 0,35 a 0,55 de rugosidad. El Specular se deja en 0,5 a propósito: otro valor exporta
+   `KHR_materials_specular` y three.js convierte el material en `MeshPhysicalMaterial`, más caro por fragmento.
+4. **Render de revisión** (`tools/render_07b.py`, no va al GLB ni al visor): vidrio propio (Transparent + Glossy por
+   Fresnel, sin caras traseras ni sombra), un cubemap por recinto, suelo neutro oscuro bajo el horizonte del mundo, luz
+   rebotada horneada con las lámparas de la vista también de día (cada horneado tarda 4-6 min en esta CPU, así que
+   las vistas comparten horneado) y adaptación cromática parcial de la cámara (ASC-CDL en el compositor) en las vistas
+   con lámparas. El color de las luces no cambia: sigue en 2700 K y 3000 K.
+5. **Visor: un solo foco por domo o foco del riel**, sin la puntual complementaria del 15 % (decisión 4 de la
+   ronda 1). Medido con `window.__tour.medirCuadro()` (nuevo, sólo con `?debug`), de noche a 1280 × 800 en la vista
+   inicial, en una Intel HD Graphics 4000: 27 luces, 48 ms por cuadro; 19 luces, 37,5 ms; sólo el sol, 15 ms. En
+   otra sesión, con otra vista, 62,8 contra 49,4 ms, y dejando sólo las luces más cercanas a la cámara: 11 luces
+   35,8 ms y 7 luces 28,8 ms. El cielo de la vista inicial baja ~13 % de luminancia. Falta medir en un teléfono. El
+   paso siguiente, si hace falta, es un conjunto fijo de ~10 luces que se reasignan a las del recinto actual y los
+   contiguos al cambiar de recinto: con un número fijo de luces three.js no recompila los shaders.
+6. **Diseño:** la mesa bistró del balcón pasa a acero pintado al horno (`Depto_Mat_AceroPintado`, dieléctrico; 75
+   materiales), porque con acero pavonado el colgante no dejaba charco en la cubierta. El tercer foco del riel del
+   hall ilumina la puerta de entrada en vez del reloj.
