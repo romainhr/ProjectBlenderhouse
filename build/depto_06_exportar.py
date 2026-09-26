@@ -53,6 +53,8 @@ MANIFIESTO = os.path.join(EXPORTS, "manifest.json")
 TEX_MANIFIESTO = os.path.join(RAIZ, "assets", "texturas", "polyhaven", "manifest.json")
 RADIO = 0.20                          # compuerta 0 / ADR 0002: radio de la cámara del tour con el mobiliario
 OJO = 1.60                            # altura de los ojos (la de las cámaras de revisión)
+CONTRATO = "2.1"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
+                                      # sigue siendo la mayor (2), por compatibilidad del visor
 INICIO, MIRAR = "Hall", (190, 250)    # crítico de recorrido, fase 3: hall con 0,45 m de holgura, hacia el living
 DETRAS_DE_PUERTA = {"Dorm1", "Dorm2", "Bano1", "Bano2", "Paso_D1", "Paso_D2", "Balcon"}
 
@@ -75,9 +77,18 @@ def en_franja(z0, z1):
     return z1 > R.Z_PASO and z0 < R.Z_CABEZA
 
 
+def descendientes(o):
+    """Hijos, nietos, etc. (el contenido teñido de una pieza móvil cuelga de su contenido liso: fase 07b). Todos
+    comparten el origen del móvil, así que sus coordenadas locales son las del marco del móvil."""
+    out = []
+    for h in o.children:
+        out += [h, *descendientes(h)]
+    return out
+
+
 def colisiones(root):
     moviles_ob = [o for o in exportables(root) if "puerta" in o or "recorrido_m" in o]
-    excluir = set(moviles_ob) | {h for o in moviles_ob for h in o.children}
+    excluir = set(moviles_ob) | {h for o in moviles_ob for h in descendientes(o)}
     estaticos = []
     fuentes = [o for o in root.all_objects if o.type == "MESH" and not o.name.startswith("Depto_Ref")
                and ((not o.hide_render and o.get("colision") is not False) or o.get("colision") is True)]
@@ -92,7 +103,7 @@ def colisiones(root):
     for o in moviles_ob:
         cajas = []
         # marco local del nodo (sin su giro); los hijos (manillas, vidrio de la corredera) tienen el mismo origen
-        for isla in [i for ob in (o, *o.children) for i in G.islas_locales(ob)]:
+        for isla in [i for ob in (o, *descendientes(o)) for i in G.islas_locales(ob)]:
             x0, x1, y0, y1, z0, z1 = G.aabb(isla)
             if en_franja(z0, z1):
                 cajas.append([r4(x0), r4(x1), r4(-y1), r4(-y0)])
@@ -110,23 +121,85 @@ def colisiones(root):
         m["clase"] = o.get("clase", "puerta" if "puerta" in o else "corredera")
         m["etiqueta"] = o.get("etiqueta", "")
         m["recinto"] = o.get("recinto", "")
+        # Contrato v2, sección 1 (corrección 07b): cajones detrás de una corredera. depende_de = hoja que debe estar
+        # corrida para abrir el cajón; bloquea = cajones que la hoja cierra antes de moverse.
+        for k in ("depende_de", "bloquea"):
+            if k in o:
+                m[k] = [n for n in str(o[k]).split(",") if n]
         m["hijos"] = [h.name for h in o.children]
         moviles.append(m)
     return estaticos, moviles
 
 
 def luces():
+    """Luces de la fase 5. Contrato v2, sección 2: cada puntual trae su grupo, su color lineal y el nodo emisivo
+    (ampolleta) que la representa."""
     out = []
     for o in bpy.data.objects:
         if o.type == "LIGHT" and o.name.startswith("Depto_Luz_"):
             if o.data.type == "POINT":
-                out.append({"nombre": o.name, "tipo": "puntual", "posicion": [r4(c) for c in gl(o.location)],
-                            "potencia_w": o.data.energy})
+                luz = {"nombre": o.name, "tipo": "puntual", "posicion": [r4(c) for c in gl(o.location)],
+                       "potencia_w": o.data.energy, "grupo": o.get("grupo", ""),
+                       "color": [r4(c) for c in o.data.color], "ampolleta": o.get("ampolleta", "")}
+                if "cono_deg" in o:              # contrato v2.1: luz que deja salir un domo o un foco (visor)
+                    luz.update(cono_deg=r4(o["cono_deg"]), direccion=[r4(c) for c in gl(Vector(o["direccion"]))])
+                out.append(luz)
             elif o.data.type == "SUN":
                 d = o.matrix_world.to_3x3() @ Vector((0, 0, -1))
                 out.append({"nombre": o.name, "tipo": "sol", "direccion": [r4(c) for c in gl(d)],
                             "intensidad": o.data.energy})
     return out
+
+
+def interruptores(objs):
+    """Contrato v2, sección 3: un registro por placa (con sus grupos; tecla = la suya si es simple, null si es doble),
+    uno por tecla (su grupo) y uno por pieza de lámpara clicable (pantalla o cuerpo, sin tecla)."""
+    out = []
+    nombres = {o.name for o in objs}
+    for o in sorted(objs, key=lambda o: o.name):
+        if "grupo_luz" not in o:
+            continue
+        grupos = [g for g in str(o["grupo_luz"]).split(",") if g]
+        if o.name.startswith("Depto_Interruptor_") and o.parent is None:
+            teclas = sorted(h.name for h in o.children if h.name.endswith("_Tecla") and h.name in nombres)
+            out.append({"nodo": o.name, "grupos": grupos, "tecla": teclas[0] if len(teclas) == 1 else None})
+        elif o.name.endswith("_Tecla"):
+            out.append({"nodo": o.name, "grupos": grupos, "tecla": o.name})
+        else:
+            out.append({"nodo": o.name, "grupos": grupos, "tecla": None})
+    return out
+
+
+def prueba_luces(datos, objs):
+    """Grupos, luces e interruptores coherentes entre sí y con los nodos del GLB."""
+    fallos = []
+    ids = [g["id"] for g in datos["grupos_luz"]]
+    nombres = {o.name for o in objs}
+    puntuales = [l for l in datos["luces"] if l["tipo"] == "puntual"]
+    for l in puntuales:
+        if l["grupo"] not in ids:
+            fallos.append(f"{l['nombre']}: grupo {l['grupo']!r} no está en grupos_luz")
+        if l["ampolleta"] not in nombres:
+            fallos.append(f"{l['nombre']}: la ampolleta {l['ampolleta']!r} no es un nodo exportado")
+    for g in ids:
+        if not any(l["grupo"] == g for l in puntuales):
+            fallos.append(f"grupo {g} sin luces")
+        if not any(g in i["grupos"] for i in datos["interruptores"]):
+            fallos.append(f"grupo {g} sin interruptor ni lámpara")
+    for i in datos["interruptores"]:
+        if i["nodo"] not in nombres:
+            fallos.append(f"interruptor {i['nodo']} no es un nodo exportado")
+        if i["tecla"] and i["tecla"] not in nombres:
+            fallos.append(f"interruptor {i['nodo']}: tecla {i['tecla']} no exportada")
+        if any(g not in ids for g in i["grupos"]):
+            fallos.append(f"interruptor {i['nodo']}: grupos desconocidos {i['grupos']}")
+    sin_luz = [r for r in R.PUNTOS if not any(g["recinto"] == r for g in datos["grupos_luz"])]
+    if sin_luz:
+        fallos.append(f"recintos sin grupo de luz: {sin_luz}")
+    faltan = [r for r in {**R.PUNTOS, **R.INFORMATIVOS} if r not in datos["recintos_etiquetas"]]
+    if faltan:
+        fallos.append(f"recintos sin etiqueta: {faltan}")
+    return fallos
 
 
 def punto_gl(p):
@@ -191,7 +264,7 @@ def prueba_transformacion(datos):
     for m in datos["moviles"]:
         ob = bpy.data.objects[m["nodo"]]
         esperado = []
-        for isla in [i for o in (ob, *ob.children) for i in G.islas_mundo(o)]:
+        for isla in [i for o in (ob, *descendientes(ob)) for i in G.islas_mundo(o)]:
             x0, x1, y0, y1, z0, z1 = G.aabb(isla)
             if en_franja(z0, z1):
                 esperado.append((x0, x1, -y1, -y0))
@@ -219,8 +292,18 @@ def prueba_muebles(datos):
     """Los móviles de clase cajón, clóset, nevera y mueble no deben romper el recorrido: se prueban cerrados (ya
     lo cubre `cerradas`, más abajo, para los que dan a un recinto detrás de puerta) y, uno por vez con los demás
     tal cual, que al abrirse no dejen inalcanzable el recinto donde están. Si alguno lo hace, hay que reducirle
-    el recorrido o el ángulo, o excluirlo en EXCLUIR_ABIERTO con un comentario que explique por qué."""
+    el recorrido o el ángulo, o excluirlo en EXCLUIR_ABIERTO con un comentario que explique por qué. También:
+    depende_de y bloquea sólo nombran móviles exportados y son recíprocos (cajón -> hoja que lo bloquea)."""
     fallos = []
+    por_nodo = {m["nodo"]: m for m in datos["moviles"]}
+    for m in datos["moviles"]:
+        for k in ("depende_de", "bloquea"):
+            for n in m.get(k, []):
+                if n not in por_nodo:
+                    fallos.append(f"{m['nodo']}: {k} nombra {n}, que no es un móvil exportado")
+        for n in m.get("depende_de", []):
+            if n in por_nodo and m["nodo"] not in por_nodo[n].get("bloquea", []):
+                fallos.append(f"{m['nodo']} depende de {n}, pero {n} no lo bloquea")
     for m in datos["moviles"]:
         if m.get("clase") not in CLASES_MUEBLE or m["nodo"] in EXCLUIR_ABIERTO:
             continue
@@ -326,14 +409,20 @@ def main():
     bpy.context.view_layer.update()
     objs = exportables(root)
     estaticos, moviles = colisiones(root)
+    grupos = json.loads(scene.get("depto_grupos_luz", "[]"))
     datos = {
-        "version": 1, "unidades": "m", "ejes": "glTF: Y arriba; el balcón (frente) hacia -Z; cajas [xmin, xmax, zmin, zmax]",
+        "version": 2, "contrato": CONTRATO, "unidades": "m", "ejes": "glTF: Y arriba; el balcón (frente) hacia -Z; cajas [xmin, xmax, zmin, zmax]",
         "radio": RADIO, "franja_y": [R.Z_PASO, R.Z_CABEZA], "ojo": OJO,
         "inicio": {"posicion": punto_gl(R.PUNTOS[INICIO]), "mirar": punto_gl(MIRAR)},
         "recintos": {n: punto_gl(p) for n, p in R.PUNTOS.items()},
         "estaticos": estaticos, "moviles": moviles, "luces": luces(),
+        "grupos_luz": [{k: g[k] for k in ("id", "etiqueta", "recinto", "encendido", "kelvin") if k in g}
+                       for g in grupos],
+        "interruptores": interruptores(objs),
+        "recintos_etiquetas": json.loads(scene.get("depto_recintos_etiquetas", "{}")),
     }
     fallos, informe = pruebas(datos)
+    fallos += prueba_luces(datos, objs)
     for f in fallos:
         print("FALLA", f)
     if fallos:
@@ -372,7 +461,9 @@ def main():
         "web": {"carpeta": "web", "archivos": 4 + len(indice["imagenes"]), "bytes": indice["total_bytes"],
                 "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"},
         "colisiones": {"archivo": "depto_colisiones.json", "bytes": os.path.getsize(COLISIONES),
-                       "estaticos": len(estaticos), "moviles": len(moviles)},
+                       "estaticos": len(estaticos), "moviles": len(moviles),
+                       "luces": len(datos["luces"]), "grupos_luz": len(datos["grupos_luz"]),
+                       "interruptores": len(datos["interruptores"])},
         "fecha": datetime.date.today().isoformat(), "fase": "06",
         "sellos": {**{f: scene.get(SE.clave(f)) for f in ("01", "02", "03", "04", "05")}, "06": SE.sello("06")},
         "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
@@ -392,7 +483,9 @@ def main():
     with open(MANIFIESTO, "w") as fh:
         json.dump(man, fh, indent=2, ensure_ascii=False)
     print(f"CHECK fase 6: {len(objs)} mallas, {tris} triángulos, {len(mats)} materiales; GLB {tam / 1e6:.2f} MB; "
-          f"colisiones {len(estaticos)} estáticas + {len(moviles)} móviles; recorrido: 10/10, cerrado y palier OK; "
+          f"colisiones {len(estaticos)} estáticas + {len(moviles)} móviles; {len(datos['luces'])} luces en "
+          f"{len(datos['grupos_luz'])} grupos, {len(datos['interruptores'])} interruptores; "
+          f"recorrido: 10/10, cerrado y palier OK; "
           f"web {indice['total_bytes'] / 1e6:.1f} MB en {4 + len(indice['imagenes'])} archivos")
     print(f"FASE_OK Depto_06_exportar {len(objs)} {tris} sello={SE.sello('06')}")
 

@@ -42,7 +42,8 @@ las pocas piezas de acento (dos cuadros, libros, cerámica de gres).
   (MATERIALES) y qué textura usa cada uno en `build/deco_paleta.py`. Si falta un material, se agrega en el propio
   módulo con `depto_geom.MATERIALES.setdefault(nombre, ...)` y se informa. No editar `depto_geom.py`.
 - Sin booleanos (lentos y frágiles en headless). Subdivisión sólo con `deco_base.aplicar_subdivision` y a nivel ≤ 2.
-- Presupuesto: la escena entera debe quedar bajo 150 000 triángulos. Cada pieza trae su tope abajo.
+- Presupuesto: la escena entera debe quedar bajo 200 000 triángulos (`depto_geom.TOPE_TRIANGULOS`, ADR 0004, decisión 4;
+  antes 150 000). Cada pieza trae su tope abajo.
 - No se modelan orgánicos detallados (plantas, personas): regla de CLAUDE.md.
 - Revisión: `blender -b --python-exit-code 1 --python tools/preview_pieza.py -- --modulo <módulo> --funcion <pieza>
   --out review/deco/piezas [--args '{...}'] [--texturas]` renderiza dos vistas (3/4 y lateral) en Eevee y escribe

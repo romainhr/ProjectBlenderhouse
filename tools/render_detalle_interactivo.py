@@ -78,8 +78,8 @@ def camara_closet(scene, nombre, cid, base_cam):
     cam = bpy.data.objects.new(nombre, cd)
     scene.collection.objects.link(cam)
     cam.location = base_cam.matrix_world.translation
-    d = (objetivo - cam.location).normalized()
-    cam.rotation_euler = (-d).to_track_quat("-Z", "Y").to_euler()
+    d = (objetivo - cam.location).normalized()   # de la cámara al objetivo (a diferencia de preview_pieza.py,
+    cam.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()   # aquí no hay que invertirlo)
     return cam
 
 

@@ -1,6 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deducirGrupos, nombreAmpolleta, colorLinealAHex, NOMBRES_RECINTO } from "../src/tour/js/luces.js";
+import {
+  deducirGrupos, nombreAmpolleta, colorLinealAHex, NOMBRES_RECINTO, interruptorEncendido, ordenarInterruptores,
+  estadoGruposParaMomento, textoInterruptor, KELVIN_2700,
+} from "../src/tour/js/luces.js";
+import { MOMENTOS, MOMENTO_POR_DEFECTO } from "../src/tour/js/cielo.js";
 
 const recintos = { Living: [0, 0], Dorm1: [5, 0] };
 
@@ -9,7 +13,7 @@ test("nombreAmpolleta: quita el prefijo Depto_Luz_", () => {
   assert.equal(nombreAmpolleta("SinPrefijo"), "SinPrefijo");
 });
 
-test("colorLinealAHex: 2700 K lineal da un naranja cálido, blanco y negro en los extremos", () => {
+test("colorLinealAHex: codifica a sRGB; blanco y negro en los extremos", () => {
   assert.equal(colorLinealAHex([1, 0.72, 0.42]).toLowerCase(), "#ffddad");
   assert.equal(colorLinealAHex([1, 1, 1]), "#ffffff");
   assert.equal(colorLinealAHex([0, 0, 0]), "#000000");
@@ -47,4 +51,65 @@ test("deducirGrupos: varias luces del mismo recinto comparten un solo grupo", ()
   ];
   const { grupos } = deducirGrupos({ luces, recintos });
   assert.equal(grupos.length, 1);
+});
+
+test("interruptorEncendido: encendido si alguno de sus grupos lo está (el estado sale de los grupos)", () => {
+  const gruposLuz = new Map([["living_techo", { encendido: true }], ["balcon", { encendido: false }]]);
+  assert.equal(interruptorEncendido(["living_techo", "balcon"], gruposLuz), true);
+  assert.equal(interruptorEncendido(["balcon"], gruposLuz), false);
+  assert.equal(interruptorEncendido(["no_existe"], gruposLuz), false);
+  gruposLuz.get("living_techo").encendido = false;
+  assert.equal(interruptorEncendido(["living_techo", "balcon"], gruposLuz), false);
+});
+
+test("ordenarInterruptores: las teclas con registro propio van antes que placas y lámparas", () => {
+  const lista = [
+    { nodo: "Depto_Interruptor_Dorm1", grupos: ["dorm1_techo", "paso_d1"], tecla: null },
+    { nodo: "Depto_Mueble_D1_LamparaMesa_Pantalla", grupos: ["dorm1_velador"], tecla: null },
+    { nodo: "Depto_Interruptor_Dorm1_1_Tecla", grupos: ["dorm1_techo"], tecla: "Depto_Interruptor_Dorm1_1_Tecla" },
+    { nodo: "Depto_Interruptor_Hall", grupos: ["hall_techo"], tecla: "Depto_Interruptor_Hall_Tecla" },
+    { nodo: "Depto_Interruptor_Dorm1_2_Tecla", grupos: ["paso_d1"], tecla: "Depto_Interruptor_Dorm1_2_Tecla" },
+  ];
+  const orden = ordenarInterruptores(lista).map((i) => i.nodo);
+  assert.deepEqual(orden.slice(0, 2), ["Depto_Interruptor_Dorm1_1_Tecla", "Depto_Interruptor_Dorm1_2_Tecla"]);
+  assert.equal(orden.length, lista.length);
+  // una placa simple (tecla distinta de su nodo) no cuenta como tecla
+  assert.ok(orden.indexOf("Depto_Interruptor_Hall") >= 2);
+});
+
+test("KELVIN_2700 es lineal: codificado a sRGB da ≈ (255, 174, 89), no el (255, 221, 173) de ~4200 K", () => {
+  assert.equal(colorLinealAHex(KELVIN_2700).toLowerCase(), "#ffae59");
+});
+
+const GRUPOS = [
+  { id: "living_techo", encendido: true }, { id: "living_lampara_pie", encendido: false },
+  { id: "dorm1_velador", encendido: false }, { id: "dorm2_aplique_izq", encendido: false },
+  { id: "dorm2_aplique_der", encendido: false }, { id: "bano1", encendido: true },
+];
+
+test("estadoGruposParaMomento: tarde y noche respetan grupos_luz[].encendido; el día apaga todo", () => {
+  for (const momento of ["tarde", "noche"]) {
+    const e = estadoGruposParaMomento(GRUPOS, MOMENTOS[momento].lucesEncendidas);
+    assert.equal(e.get("living_techo"), true, momento);
+    assert.equal(e.get("bano1"), true, momento);
+    for (const id of ["living_lampara_pie", "dorm1_velador", "dorm2_aplique_izq", "dorm2_aplique_der"]) {
+      assert.equal(e.get(id), false, `${momento}: ${id} debe nacer apagado`);
+    }
+  }
+  const dia = estadoGruposParaMomento(GRUPOS, MOMENTOS.dia.lucesEncendidas);
+  assert.ok([...dia.values()].every((v) => v === false));
+  assert.equal(MOMENTOS[MOMENTO_POR_DEFECTO].lucesEncendidas, true); // el momento inicial prende los techos
+});
+
+test("estadoGruposParaMomento: usa encendidoInicial (autor) aunque el usuario haya cambiado encendido", () => {
+  const e = estadoGruposParaMomento([{ id: "dorm1_velador", encendido: true, encendidoInicial: false }], true);
+  assert.equal(e.get("dorm1_velador"), false);
+});
+
+test("textoInterruptor: la pista nombra el grupo; la placa doble une las dos etiquetas", () => {
+  const g = new Map([["living_techo", { etiqueta: "Living · techo" }], ["balcon", { etiqueta: "Balcón · colgante del comedor" }]]);
+  assert.equal(textoInterruptor(["living_techo"], g, false), "Encender Living · techo");
+  assert.equal(textoInterruptor(["balcon"], g, true), "Apagar Balcón · colgante del comedor");
+  assert.equal(textoInterruptor(["living_techo", "balcon"], g, true), "Apagar Living · techo y Balcón · colgante del comedor");
+  assert.equal(textoInterruptor(["no_existe"], g, false), "Encender la luz");
 });

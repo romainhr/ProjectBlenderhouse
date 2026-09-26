@@ -15,6 +15,7 @@ exportador glTF de Blender 3.6 traduce; la escala real va en el nodo Mapping (KH
 el cielo son para la revisión en Blender; el visor recibe la posición y potencia de las luces por
 exports/depto_colisiones.json. Las pruebas lo verifican antes de guardar.
 """
+import json
 import math
 import os
 import sys
@@ -25,20 +26,41 @@ from mathutils import Vector
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RAIZ, "build"))
 import deco_paleta as PAL  # noqa: E402
+import depto_color as DC  # noqa: E402
 import depto_geom as G  # noqa: E402
 # Los módulos de piezas registran sus materiales propios (MATERIALES.setdefault) al importarse.
 import deco_cocina_bano, deco_comedor, deco_dormitorio, deco_hall, deco_living, deco_objetos  # noqa: E402,F401
 import depto_sellos as SE  # noqa: E402
 
 COLS = ("Depto_Luces",)
-LUZ_COLOR = (1.0, 0.80, 0.60)      # supuesto: ampolleta cálida de filamento (≈2700 K)
+LUZ_COLOR = DC.kelvin_a_lineal(2700)   # 2700 K lineal (contrato v2, sección 2): respaldo si el grupo no trae color
 LUZ_RADIO = 0.03                   # radio de la fuente (sombras suaves)
+AMPOLLETA_SIN_SOMBRA = ("Depto_Mat_Bombilla", "Depto_Mat_VidrioBombilla")
+LUZ_CLIP_SOMBRA = 0.005            # m: inicio del mapa de sombras de cada luz (Eevee usa 0,05 por defecto: dentro de
+                                   # las pantallas cerradas, el tapón a ~5 cm de la ampolleta no hacía sombra)
 SOL = dict(elevacion=35.0, azimut=-25.0, energia=3.0)   # supuesto: sol desde el lado del balcón (+Y), 25° al -X
 CIELO_FUERZA = 0.25
+TOPE_TRIANGULOS = G.TOPE_TRIANGULOS
 SUELO_COLOR = (0.34, 0.34, 0.32)   # bajo el horizonte el cielo Nishita es negro: vidrios y espejos lo reflejaban
 
 
-def luces(col, root):
+def direccion_luz(o):
+    """Eje de la luz que deja salir una pantalla (Blender, mundo): hacia abajo en los domos (ampolleta de revolución,
+    sus normales se anulan); en un foco, la normal de su disco emisivo más grande, orientada hacia abajo."""
+    mw = o.matrix_world.to_3x3()
+    suma = sum((f.normal * f.area for f in o.data.polygons), Vector())
+    total = sum(f.area for f in o.data.polygons)
+    if total <= 0 or suma.length < 0.5 * total:          # superficie de revolución (ampolleta): sin eje propio
+        return Vector((0.0, 0.0, -1.0))
+    n = (mw @ suma).normalized()                          # disco plano (foco): su normal
+    if abs(n.z) < 0.2:
+        return Vector((0.0, 0.0, -1.0))
+    return n if n.z < 0 else -n
+
+
+def luces(col, root, grupos):
+    """Una luz puntual por ampolleta marcada en la fase 4, con el color de su grupo (2700 K o 3000 K) y las
+    propiedades `ampolleta` y `grupo` que exporta la fase 6."""
     n = 0
     for o in list(root.all_objects):     # copia: se agregan luces a una colección hija mientras se recorre
         w = o.get("luz_w")
@@ -48,11 +70,17 @@ def luces(col, root):
         centro = sum(pts, Vector()) / len(pts)
         ld = bpy.data.lights.new(f"Depto_Luz_{o.name}", "POINT")
         ld.energy = float(w)
-        ld.color = LUZ_COLOR
+        g = grupos.get(o.get("luz_grupo"), {})
+        ld.color = tuple(g.get("color", LUZ_COLOR))
         ld.shadow_soft_size = float(o.get("luz_radio", LUZ_RADIO))   # la fase 4 lo achica dentro de los focos
+        ld.shadow_buffer_clip_start = LUZ_CLIP_SOMBRA
         ob = bpy.data.objects.new(f"Depto_Luz_{o.name}", ld)
         ob.location = centro
         ob["ampolleta"] = o.name
+        ob["grupo"] = o.get("luz_grupo", "")
+        if o.get("luz_cono_deg"):
+            ob["cono_deg"] = float(o["luz_cono_deg"])
+            ob["direccion"] = list(direccion_luz(o))
         col.objects.link(ob)
         n += 1
     el, az = math.radians(SOL["elevacion"]), math.radians(SOL["azimut"])
@@ -101,7 +129,7 @@ def eevee(scene):
     ee = scene.eevee
     ee.taa_render_samples = 32
     ee.use_gtao = True
-    ee.gtao_distance = 0.5
+    ee.gtao_distance = 0.2               # 0,5 dejaba un halo oscuro alrededor de los florones del cielo
     ee.use_ssr = True
     ee.use_soft_shadows = True
     ee.use_bloom = True                  # halo suave de las ampolletas encendidas
@@ -141,7 +169,7 @@ def pruebas(root):
     for o in vis:
         o.data.calc_loop_triangles()
         total += len(o.data.loop_triangles)
-    if total > 150_000:
+    if total > TOPE_TRIANGULOS:
         fallos.append(f"presupuesto de triángulos excedido: {total}")
     return fallos, usados, total
 
@@ -154,10 +182,19 @@ def main():
     bpy.context.view_layer.update()
     usados = sorted({m.name for o in visibles(root) for m in o.data.materials if m})
     con_textura = [n for n in usados if PAL.aplicar(n)]
-    hacia_sol, n_luces = luces(cols["Depto_Luces"], root)
+    # La ampolleta (filamento emisivo y vidrio) no hace sombra a la luz que la representa: con el mapa de sombras
+    # desde 5 mm (LUZ_CLIP_SOMBRA), una ampolleta cerrada alrededor de su luz la apagaba (velador de D1).
+    for n in AMPOLLETA_SIN_SOMBRA:
+        if bpy.data.materials.get(n):
+            bpy.data.materials[n].shadow_method = "NONE"
+    grupos = {g["id"]: g for g in json.loads(scene.get("depto_grupos_luz", "[]"))}
+    hacia_sol, n_luces = luces(cols["Depto_Luces"], root, grupos)
     mundo(scene, hacia_sol)
     eevee(scene)
     fallos, mats, total = pruebas(root)
+    sin_grupo = [o.name for o in cols["Depto_Luces"].objects if o.data.type == "POINT" and o.get("grupo") not in grupos]
+    if sin_grupo:
+        fallos.append(f"luces sin grupo de luz de la fase 4: {sin_grupo}")
     for f in fallos:
         print("FALLA", f)
     if fallos:

@@ -562,20 +562,26 @@ def aplique_brazo(col, prefijo, brazo1=0.28, brazo2=0.26, angulo1=50.0, angulo2=
 
 
 # ================================================================ conducto eléctrico visto
+CONDUCTO_CAJA = dict(radio=0.040, fondo=0.046, boca=0.012)   # diseño: caja de derivación redonda de fundición
+
+
 def conducto(col, prefijo, puntos=((-0.45, -0.014, 0.10), (0.25, -0.014, 0.10), (0.25, -0.014, 0.65),
                                    (0.25, -0.014, 1.15), (0.70, -0.014, 1.15)),
              cajas=(0, 2), normal_muro=(0.0, 1.0, 0.0), radio=0.010, radio_curva=0.05, paso_abrazaderas=0.8,
-             material=NEGRO):
+             material=NEGRO, ramales=None):
     """Tubo metálico de Ø 20 mm por el eje `puntos` (locales, se usan tal cual), con curvas de radio `radio_curva`,
     cajas de derivación redondas de fundición (Ø 0,08 × 0,046, tapa con buña y dos tornillos, bocas roscadas
     donde entra el tubo) en los índices de `cajas`, abrazaderas omega sobre el muro cada `paso_abrazaderas` y
     copla en los extremos libres. `normal_muro` apunta del tubo al muro; el eje queda a radio + 4 mm del muro
-    (por defecto el muro está en y = 0). ≤ 300 triángulos por tramo."""
+    (por defecto el muro está en y = 0). `ramales` = {índice de caja: (puntos,)}: bocas extra de esa caja hacia
+    otros conductos (derivación en T; el otro conducto termina en la boca, a radio + boca del centro de la caja).
+    ≤ 300 triángulos por tramo."""
     P = [Vector(p) for p in puntos]
     nm = Vector(normal_muro).normalized()
     sep = radio + 0.004                                  # eje del tubo al muro (abrazadera con separador)
     cajas = sorted({i % len(P) for i in cajas})
-    RB, DB, LB = 0.040, 0.046, 0.012                    # caja: radio, fondo y largo de boca (diseño)
+    RB, DB, LB = CONDUCTO_CAJA["radio"], CONDUCTO_CAJA["fondo"], CONDUCTO_CAJA["boca"]   # caja (diseño)
+    ramales = {i % len(P): [Vector(q) for q in qs] for i, qs in (ramales or {}).items()}
     rh = radio + 0.0035
     m = _Malla()
 
@@ -639,7 +645,7 @@ def conducto(col, prefijo, puntos=((-0.45, -0.014, 0.10), (0.25, -0.014, 0.10), 
                         (RB + 0.0006, DB - 0.0052), (RB - 0.0024, DB), (0.0, DB + 0.0008)], 20)
             for x in (-(RB - 0.011), RB - 0.011):          # tornillos hexagonales de la tapa
                 B.cilindro(bm, x, 0.0, DB - 0.0005, DB + 0.0022, 0.0032, seg=6)
-            for q in vecinos:                            # bocas donde entra el tubo
+            for q in vecinos + ramales.get(i, []):       # bocas donde entra el tubo
                 e_loc = R3.transposed() @ en_plano(q - P[i])
                 c0 = e_loc * (RB - 0.004) + Vector((0, 0, sep))
                 c1 = e_loc * (RB + LB) + Vector((0, 0, sep))
@@ -908,3 +914,63 @@ def reloj_pared(col, prefijo, diametro=0.40, hora=(10, 10, 36), cristal=True):
     objs = [caja.crear(col, f"{prefijo}_Caja", angulo=50), marcas.crear(col, f"{prefijo}_Marcas", recalc=False),
             vid.crear(col, f"{prefijo}_Cristal")]
     return [o for o in objs if o]
+
+
+# ================================================================ interruptor de muro (fase 07b)
+TECLA = LATON            # teclas de latón envejecido: contrastan con la placa negra y el visor las ve girar
+INTERRUPTOR = dict(ancho=0.08, alto=0.12, espesor=0.012,     # contrato de interacción, sección 3 (encargo 07b)
+                   r_canto=0.0025, tornillo_z=0.047,           # diseño: canto redondeado y tornillos de la placa
+                   tecla_alto=0.056, tecla_saliente=0.008,     # diseño: balancín de interruptor de tecla estándar
+                   tecla_ancho_1=0.034, tecla_ancho_2=0.026, tecla_sep=0.006,   # diseño: placa simple y doble
+                   tecla_hundida=0.0045,     # espalda de la tecla dentro de la placa: ≥ (alto/2)·sen 8° = 3,9 mm
+                                             # para que al inclinarse ±8° no quede rendija (corrección 07b)
+                   caja_ancho=0.085, caja_alto=0.125)          # diseño: caja de superficie de acero (conducto visto)
+
+
+def interruptor(col, nombre, n_teclas=1, caja=0.0):
+    """Placa de interruptor de muro de acero negro mate con dos tornillos pavonados y `n_teclas` teclas de balancín
+    de latón envejecido (1 o 2), estilo industrial. Mural: espalda en y = 0, frente hacia −Y, centro de la placa en el
+    origen (x = z = 0). Cada tecla es un objeto hijo de la placa, sin giro propio y con el origen en su eje de
+    giro (horizontal, paralelo al muro, a la altura del centro de la tecla y sobre la cara de la placa): el visor
+    la inclina ±8° girándola en su X local. Nombres: la placa `nombre`; las teclas `nombre`_Tecla (una) o
+    `nombre`_1_Tecla y `nombre`_2_Tecla (izquierda y derecha mirando la placa). `caja` > 0: la placa va sobre una
+    caja de superficie de ese fondo (m), parte de la misma malla, y placa y teclas avanzan lo mismo (la espalda de la
+    caja queda en y = 0). ≤ 320 triángulos."""
+    I = INTERRUPTOR
+    a, h, e = I["ancho"] / 2, I["alto"] / 2, I["espesor"]
+    placa = _Malla()
+    with placa.parte(NEGRO, suave=True) as bm:
+        if caja > 0:
+            ca, ch = I["caja_ancho"] / 2, I["caja_alto"] / 2
+            B.caja_redondeada(bm, -ca, ca, -caja, 0.0, -ch, ch, 0.004, segmentos=1)
+        B.caja_redondeada(bm, -a, a, -caja - e, -caja, -h, h, I["r_canto"], segmentos=1)
+    with placa.parte(NEGRO, suave=True) as bm:              # tornillos pavonados (un solo material: 1 llamada de dibujo)
+        for z in (-I["tornillo_z"], I["tornillo_z"]):
+            _torno_eje(bm, [(0.0, 0.0), (0.0032, 0.0), (0.0027, 0.0010), (0.0, 0.0015)], (0.0, -caja - e, z),
+                       (0, -1, 0), 8)
+    ob_placa = placa.crear(col, nombre, angulo=50)
+    ancho_t = I["tecla_ancho_1"] if n_teclas == 1 else I["tecla_ancho_2"]
+    xs = [0.0] if n_teclas == 1 else [-(ancho_t + I["tecla_sep"]) / 2, (ancho_t + I["tecla_sep"]) / 2]
+    teclas = []
+    for i, xc in enumerate(xs):
+        t = _Malla()
+        with t.parte(TECLA, suave=True) as bm:
+            # balancín: perfil (y, z) con una arista suave al centro (el frente baja 1,5 mm hacia arriba y abajo),
+            # extruido a lo ancho; la espalda entra tecla_hundida en la placa para que no quede luz al inclinarse
+            sa, ht, hu = I["tecla_saliente"], I["tecla_alto"] / 2, I["tecla_hundida"]
+            perfil = [(hu, -ht), (-(sa - 0.0015), -ht), (-(sa - 0.0005), -ht * 0.55), (-sa, 0.0),
+                      (-(sa - 0.0005), ht * 0.55), (-(sa - 0.0015), ht), (hu, ht)]
+            izq = [bm.verts.new((-ancho_t / 2, y, z)) for y, z in perfil]
+            der = [bm.verts.new((ancho_t / 2, y, z)) for y, z in perfil]
+            bm.faces.new(izq)
+            bm.faces.new(list(reversed(der)))
+            n = len(perfil)
+            for k in range(n):
+                j = (k + 1) % n
+                bm.faces.new((izq[k], der[k], der[j], izq[j]))
+        nt = f"{nombre}_Tecla" if n_teclas == 1 else f"{nombre}_{i + 1}_Tecla"
+        ob = t.crear(col, nt, angulo=50)
+        ob.parent = ob_placa
+        ob.location = (xc, -caja - e, 0.0)               # eje de giro: sobre la cara de la placa
+        teclas.append(ob)
+    return [ob_placa] + teclas

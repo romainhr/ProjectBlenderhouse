@@ -1,0 +1,757 @@
+"""Contenido de clósets y nevera (fase "07 detalle interactivo", parte 07b): ropa colgada en perchas, ropa
+doblada, zapatos, cajas de guardado, maleta y alimentos. Lo usa build/depto_03_formas.py (closets() y nevera()).
+
+Todo se arma con bmesh en un marco local métrico (u, v, z) que `Marco` lleva al mundo de Blender: u a lo largo
+del mueble (la barra de colgar, el ancho de la nevera), v del fondo hacia el frente y z hacia arriba. Así las
+medidas se escriben en metros y no en px del plano. Sin booleanos ni subdivisión; determinista (random.Random
+con semilla fija); API de bpy 3.6.
+
+Criterios (diseño, no salen del plano; docs/noche-2026-09-26.md, entrada 07b):
+- Las prendas cuelgan perpendiculares a la barra, como en un clóset real: de frente se ven de canto, una junto
+  a otra. Cada prenda es una superficie cerrada con la silueta de la prenda (camisa, polera, suéter, polerón,
+  chaqueta, abrigo, vestido, pantalón doblado en una percha de pantalón): más gruesa al centro que en los cantos,
+  con pliegues que se marcan hacia el ruedo y mangas que cuelgan de los hombros.
+- La percha (madera o alambre) queda dentro de los hombros de la prenda y el gancho abraza la barra. La barra,
+  las perchas y las prendas de una barra son un solo objeto con varios materiales: se tocan por diseño, y la
+  prueba de interferencias de la fase 3 (islas de objetos distintos) se sigue aplicando contra puertas, fondo,
+  costados y repisas.
+- La separación entre prendas sale de su espesor real más el barrido de su giro (±1,5°), así ninguna prenda
+  atraviesa a la vecina; la densidad (70-90 % de la barra) es la de un clóset en uso, no la de una vitrina.
+"""
+import math
+import random
+from contextlib import contextmanager
+
+import bmesh
+import bpy
+from mathutils import Matrix, Vector
+
+import deco_base as B
+import depto_geom as G
+
+TAU = 2 * math.pi
+
+# Tintes por vértice (sRGB, diseño). Ropa, zapatos, cajas de tela y alimentos usan pocos materiales base (Tela,
+# TelaGruesa, Calzado, Suela, Alimento) y llevan su color en el atributo de color "Col" de la malla (COLOR_0 en
+# glTF, que three.js multiplica por el color base): el visor fusiona las mallas por material, así que cada tinte
+# como material propio costaba una llamada de dibujo más en casi todas las vistas.
+TINTES = {
+    "Depto_Mat_RopaCrudo": (0.82, 0.78, 0.68), "Depto_Mat_RopaAzul": (0.33, 0.38, 0.46),
+    "Depto_Mat_RopaGris": (0.55, 0.53, 0.50), "Depto_Mat_RopaVino": (0.42, 0.22, 0.24),
+    "Depto_Mat_RopaVerde": (0.33, 0.36, 0.28), "Depto_Mat_RopaCarbon": (0.20, 0.20, 0.21),
+    "Depto_Mat_RopaBlanco": (0.88, 0.87, 0.84), "Depto_Mat_RopaCeleste": (0.60, 0.68, 0.76),
+    "Depto_Mat_RopaDenim": (0.22, 0.29, 0.42), "Depto_Mat_RopaCamel": (0.63, 0.48, 0.33),
+    "Depto_Mat_RopaNegro": (0.08, 0.08, 0.09), "Depto_Mat_CajaZapatos": (0.80, 0.74, 0.62),
+    "Depto_Mat_RopaSalvia": (0.50, 0.55, 0.40), "Depto_Mat_RopaGrisClaro": (0.74, 0.74, 0.72),   # zapatillas de D2
+    "Depto_Mat_Cuero": (0.54, 0.29, 0.16), "Depto_Mat_Zapato": (0.30, 0.24, 0.20),
+    "Depto_Mat_SuelaClara": (0.86, 0.85, 0.81), "Depto_Mat_CableTela": (0.07, 0.07, 0.07),
+    "Depto_Mat_ComidaVerde": (0.36, 0.55, 0.22), "Depto_Mat_ComidaRoja": (0.68, 0.12, 0.08),
+    "Depto_Mat_ComidaNaranja": (0.90, 0.46, 0.10), "Depto_Mat_ComidaAmarilla": (0.93, 0.78, 0.36),
+}
+TELA, TELA_GRUESA, CALZADO, SUELA, ALIMENTO = ("Depto_Mat_Tela", "Depto_Mat_TelaGruesa", "Depto_Mat_Calzado",
+                                               "Depto_Mat_Suela", "Depto_Mat_Alimento")
+# un nombre de tinte suelto se resuelve a este material base; para otro, pasar (material base, tinte)
+TINTE_BASE = {k: (ALIMENTO if k.startswith("Depto_Mat_Comida") else TELA) for k in TINTES
+              if k.startswith(("Depto_Mat_Ropa", "Depto_Mat_Comida")) or k == "Depto_Mat_CajaZapatos"}
+
+
+def resolver(material):
+    """-> (material base, tinte sRGB o None)."""
+    if isinstance(material, tuple):
+        return material[0], TINTES[material[1]]
+    if material in TINTE_BASE:
+        return TINTE_BASE[material], TINTES[material]
+    return material, None
+
+
+# ================================================================ marco y malla con varios materiales
+class Marco:
+    """Marco local métrico -> mundo: p = origen + u·U + v·V + z·Z (U y V horizontales y ortogonales)."""
+
+    def __init__(self, origen, U, V):
+        self.O, self.U, self.V = Vector(origen), Vector(U).normalized(), Vector(V).normalized()
+        o, u, v = self.O, self.U, self.V
+        self.M = Matrix(((u.x, v.x, 0.0, o.x), (u.y, v.y, 0.0, o.y), (u.z, v.z, 1.0, o.z), (0.0, 0.0, 0.0, 1.0)))
+
+    def p(self, u, v, z):
+        return self.O + self.U * u + self.V * v + Vector((0.0, 0.0, z))
+
+
+class Malla:
+    """bmesh con lista de materiales. `parte(material, matriz)` asigna el material a lo que se construya dentro y
+    le aplica la matriz (del sistema de la pieza al marco del mueble)."""
+
+    def __init__(self):
+        self.bm = bmesh.new()
+        self.mats = []
+        self.tintes = {}                    # cara -> tinte sRGB
+
+    def indice(self, material):
+        if material not in self.mats:
+            self.mats.append(material)
+        return self.mats.index(material)
+
+    @contextmanager
+    def parte(self, material, matriz=None, suave=False):
+        base, tinte = resolver(material)
+        idx = self.indice(base)
+        antes_v, antes_f = set(self.bm.verts), set(self.bm.faces)
+        yield self.bm
+        for f in self.bm.faces:
+            if f not in antes_f:
+                f.material_index = idx
+                f.smooth = suave
+                if tinte is not None:
+                    self.tintes[f] = tinte
+        if matriz is not None:
+            bmesh.ops.transform(self.bm, matrix=matriz, verts=[v for v in self.bm.verts if v not in antes_v])
+
+    def vacia(self):
+        return not self.bm.faces
+
+    def crear(self, col, nombre, marco, origen=None, padre=None, props=None, angulo=40.0):
+        """Lleva la malla del marco local al mundo, calcula UV de mundo (metros, como el resto del depto) y crea el
+        objeto. origen: punto de mundo del origen del objeto (con padre: el mismo origen del padre, que debe estar
+        en su posición de reposo, sin giro)."""
+        bm = self.bm
+        if self.tintes:
+            # todo o nada: una malla con partes sin teñir sumaría en el visor una variante "con color por vértice"
+            # de esos materiales (y su llamada de dibujo); Mallas separa lo teñido de lo liso
+            assert len(self.tintes) == len(bm.faces), f"{nombre}: caras teñidas y sin teñir en la misma malla"
+            capa = bm.loops.layers.float_color.new("Col")
+            for f, c in self.tintes.items():
+                rgba = (*(G.srgb_a_lineal(x) for x in c), 1.0)
+                for lp in f.loops:
+                    lp[capa] = rgba
+        bmesh.ops.transform(bm, matrix=marco.M, verts=bm.verts)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        G.uv_mundo(bm)
+        if origen is not None:
+            bmesh.ops.translate(bm, vec=-Vector(origen), verts=bm.verts)
+        me = bpy.data.meshes.new(nombre)
+        bm.to_mesh(me)
+        bm.free()
+        if any(p.use_smooth for p in me.polygons):
+            me.use_auto_smooth = True
+            me.auto_smooth_angle = math.radians(angulo)
+        for m in self.mats:
+            me.materials.append(G.material(m))
+        ob = bpy.data.objects.new(nombre, me)
+        if origen is not None and padre is None:
+            ob.location = origen
+        if padre is not None:
+            ob.parent = padre                  # matrix_parent_inverse = identidad: local relativo al padre
+        for k, v in (props or {}).items():
+            ob[k] = v
+        col.objects.link(ob)
+        return ob
+
+
+class Mallas:
+    """Par de Malla: lo liso y lo teñido por vértice, que `parte` reparte solo según el material. `crear` hace la
+    lisa y la teñida como hija suya (mismo origen): así la prueba de interferencias de la fase 3 no compara, por
+    ejemplo, la botella con su líquido o la percha con la prenda."""
+
+    def __init__(self):
+        self.lisa, self.tenida = Malla(), Malla()
+
+    def parte(self, material, matriz=None, suave=False):
+        return (self.tenida if resolver(material)[1] is not None else self.lisa).parte(material, matriz, suave)
+
+    def vacia(self):
+        return self.lisa.vacia() and self.tenida.vacia()
+
+    def marca(self):
+        return set(self.lisa.bm.verts), set(self.tenida.bm.verts)
+
+    def transformar_desde(self, marca, M):
+        for m, antes in ((self.lisa, marca[0]), (self.tenida, marca[1])):
+            bmesh.ops.transform(m.bm, matrix=M, verts=[v for v in m.bm.verts if v not in antes])
+
+    def crear(self, col, nombre, marco, origen=None, padre=None, props=None, angulo=40.0):
+        ob = None
+        if not self.lisa.vacia():
+            ob = self.lisa.crear(col, nombre, marco, origen, padre, props, angulo)
+        else:
+            self.lisa.bm.free()
+        if not self.tenida.vacia():
+            ob2 = self.tenida.crear(col, f"{nombre}_Color" if ob else nombre, marco, origen, ob or padre, props,
+                                    angulo)
+            ob = ob or ob2
+        else:
+            self.tenida.bm.free()
+        return ob
+
+
+def _M(u=0.0, v=0.0, z=0.0, giro=0.0):
+    """Traslación (u, v, z) con giro en grados alrededor de Z."""
+    return Matrix.Translation((u, v, z)) @ Matrix.Rotation(math.radians(giro), 4, "Z")
+
+
+def _ccw(poli):
+    a = sum(p[0] * q[1] - q[0] * p[1] for p, q in zip(poli, poli[1:] + poli[:1]))
+    return poli if a > 0 else list(reversed(poli))
+
+
+def extruir_poligono(bm, poli, z0, z1):
+    """Prisma vertical de base poli [(x, y)] (se ordena CCW) entre z0 y z1."""
+    poli = _ccw([tuple(p) for p in poli])
+    a = [bm.verts.new((x, y, z0)) for x, y in poli]
+    b = [bm.verts.new((x, y, z1)) for x, y in poli]
+    bm.faces.new(list(reversed(a)))
+    bm.faces.new(b)
+    n = len(poli)
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new((a[i], a[j], b[j], b[i]))
+
+
+def esfera(bm, centro, r, escala=(1.0, 1.0, 1.0), subdiv=2):
+    """Icoesfera suave (80 caras con subdiv=2; 1 es el icosaedro de 20), escalada por eje."""
+    M = Matrix.Translation(Vector(centro)) @ Matrix.Diagonal((*escala, 1.0))
+    res = bmesh.ops.create_icosphere(bm, subdivisions=subdiv, radius=r, matrix=M)
+    return res["verts"]
+
+
+def cilindro_eje(bm, p0, p1, r, seg=10, tapas=True):
+    return B.tubo(bm, [Vector(p0), Vector(p1)], r, seg=seg, tapas=tapas)
+
+
+# ================================================================ ropa colgada
+# Perchas (diseño): hombros de madera 10 × 22 mm o de alambre Ø 4 mm. El eje de la barra es z = 0 del sistema de
+# la prenda; el gancho la abraza con 3 mm de holgura.
+PERCHA = dict(z_cuello=-0.050, caida_hombro=0.055, alto_madera=0.022, espesor_madera=0.010, r_alambre=0.0022,
+              r_gancho=0.0021)
+
+
+def z_hombro(v, media):
+    """Eje de los hombros de la percha a la distancia v del centro (media = media anchura de la percha)."""
+    return PERCHA["z_cuello"] - PERCHA["caida_hombro"] * (min(abs(v), media * 1.15) / media) ** 1.6
+
+
+# tipo: (media anchura de hombros, largo desde el cuello, espesor al centro, espesor del canto). Diseño: talla M de
+# mercado (camisa de ~0,45 m de hombros, para una percha estándar de 0,41-0,45 m); espesores de la prenda colgada
+# con su caída, no medidos. El espesor del canto es el diámetro del doblez redondeado en los costados de la sección
+# (cuerpo_prenda).
+PRENDAS = {
+    "camisa": (0.225, 0.76, 0.024, 0.017),
+    "polera": (0.235, 0.68, 0.018, 0.016),
+    "sueter": (0.225, 0.64, 0.050, 0.020),
+    "poleron": (0.235, 0.66, 0.060, 0.022),
+    "chaqueta": (0.235, 0.74, 0.064, 0.024),
+    "abrigo": (0.240, 1.00, 0.078, 0.026),
+    "vestido": (0.190, 1.02, 0.028, 0.017),
+    "pantalon": (0.170, 0.58, 0.036, 0.020),       # doblado sobre la barra de una percha de pantalón
+}
+
+
+RUEDO = {"vestido": 0.05, "abrigo": 0.01, "camisa": -0.012, "polera": -0.02, "sueter": -0.035, "poleron": -0.03,
+         "chaqueta": -0.008}      # ancho del ruedo respecto de los hombros (diseño)
+
+
+def cuerpo_prenda(bm, tipo, largo, t, rng, n=20, niveles=7):
+    """Cuerpo de la prenda colgada como superficie cerrada: secciones horizontales desde la línea de hombros (que
+    sigue la percha 6 mm por encima) hasta el ruedo curvo. Cada sección es una lente de espesor `t` al centro con
+    pliegues que se marcan hacia abajo, como la tela que cae, y cantos (v = ±ancho) redondeados del espesor del canto
+    de PRENDAS (el doblez de la tela en la costura lateral). z = 0 en el eje de la barra; la prenda en el plano v-z,
+    el espesor en u.
+
+    Sección (corrección 07b, ronda 2): suma de Minkowski aproximada de una elipse de semiejes (ancho − r, t/2 − r) y
+    un círculo de radio r = canto/2, tomado en la normal de la elipse. La versión anterior (superelipse de exponente
+    0,5) era casi una caja: el canto que se ve de frente en el clóset era una cara plana del espesor completo y las
+    prendas gruesas se leían como tablones. Muestreo angular más denso cerca de los cantos, donde gira la normal."""
+    w, L, _, tb = PRENDAS[tipo]
+    L = largo or L
+    h2 = PERCHA["alto_madera"] / 2
+    if tipo == "pantalon":
+        zb = -0.140                                                     # barra de la percha de pantalón
+
+        def z_top(v):
+            return zb + 0.013
+        bot, curva = zb - L, 0.0
+        anchos = [(0.0, w), (0.08, w + 0.004), (1.0, w - 0.018)]
+    else:
+        media = min(0.205, w - 0.016)
+        cuello = 0.055 if tipo in ("poleron", "sueter") else 0.045
+        zc = PERCHA["z_cuello"] + h2 + 0.004
+
+        def z_top(v):
+            return min(zc, z_hombro(min(abs(v), w), media) + h2 + 0.006) if abs(v) > cuello else zc
+        bot, curva = PERCHA["z_cuello"] - L, 0.012 + rng.uniform(0.0, 0.008)
+        axila = (0.30 if tipo == "vestido" else 0.18) / L
+        lado = w + (0.004 if tipo in ("camisa", "chaqueta", "abrigo") else -0.004)
+        anchos = [(0.0, w), (axila, lado), (1.0 - 0.05 / L, w + RUEDO[tipo] + 0.004), (1.0, w + RUEDO[tipo] - 0.012)]
+
+    def ancho(f):
+        for (f0, a0), (f1, a1) in zip(anchos[:-1], anchos[1:]):
+            if f <= f1:
+                return a0 + (a1 - a0) * (f - f0) / max(f1 - f0, 1e-9)
+        return anchos[-1][1]
+    W1 = ancho(1.0)
+    # pantalones: el ruedo cae algo inclinado (una pierna más larga que la otra al doblarse sobre la barra)
+    inclina = rng.uniform(-0.018, 0.018) if tipo == "pantalon" else 0.0
+
+    def z_bot(v):
+        return bot - curva * max(0.0, 1.0 - (v / W1) ** 2) + inclina * v / W1
+    k, fase = rng.choice((3, 4, 5)), rng.uniform(0.0, TAU)
+    # ángulos de la sección: parámetro uniforme deformado para juntar muestras en los cantos (th = 0 y π)
+    ths = [TAU * i / n - 0.22 * math.sin(2 * TAU * i / n) for i in range(n)]
+    anillos = []
+    for q in range(niveles):
+        f = q / (niveles - 1)
+        W = ancho(f)
+        Tf = t * (0.85 + 0.25 * math.sin(math.pi * min(1.0, f * 1.6)))    # algo más llena en el pecho
+        A = 0.06 + 0.30 * f                                                # pliegues más marcados abajo
+        r = min(0.5 * tb * (0.9 + 0.2 * f), 0.45 * Tf)                     # radio del canto (algo más lleno abajo)
+        ea, eb = W - r, max(0.5 * Tf - r, 0.001)                           # semiejes de la elipse interior
+        anillo = []
+        for th in ths:
+            c, s_ = math.cos(th), math.sin(th)
+            phi = math.atan2(ea * s_, eb * c)                              # dirección de la normal de la elipse
+            v = ea * c + r * math.cos(phi)
+            z = z_top(v) + f * (z_bot(v) - z_top(v))
+            u = (eb * s_ + r * math.sin(phi)) * (1.0 + A * math.sin(k * th + fase))
+            anillo.append(bm.verts.new((u, v, z)))
+        anillos.append(anillo)
+    for a, b in zip(anillos[:-1], anillos[1:]):
+        for i in range(n):
+            j = (i + 1) % n
+            bm.faces.new((a[i], a[j], b[j], b[i]))
+    bm.faces.new(anillos[0])
+    bm.faces.new(list(reversed(anillos[-1])))
+
+
+def percha(m, tipo, material, mat_gancho, media, r_barra, pantalon=False):
+    """Percha en el sistema de la prenda (eje de la barra en el origen, prenda en el plano v-z)."""
+    P = PERCHA
+    madera = material != "alambre"
+    mat = material if madera else "Depto_Mat_MetalNegroMate"
+    n = 7
+    pts = [Vector((0.0, v, z_hombro(v, media))) for v in (media * (2 * k / (n - 1) - 1) for k in range(n))]
+    with m.parte(mat, suave=not madera) as bm:
+        if madera:
+            h, t = P["alto_madera"] / 2, P["espesor_madera"] / 2
+            anillos = []
+            for p in pts:
+                anillos.append([bm.verts.new(p + Vector(d)) for d in ((t, 0, h), (-t, 0, h), (-t, 0, -h), (t, 0, -h))])
+            for a, b in zip(anillos[:-1], anillos[1:]):
+                for k in range(4):
+                    j = (k + 1) % 4
+                    bm.faces.new((a[k], a[j], b[j], b[k]))
+            bm.faces.new(list(reversed(anillos[0])))
+            bm.faces.new(anillos[-1])
+            if pantalon:
+                zb = -0.140
+                B.caja(bm, -t, t, -media, media, zb - 0.006, zb + 0.006)                     # barra de abajo
+                for s_, p in ((-1, pts[0]), (1, pts[-1])):                                  # brazos laterales
+                    B.caja(bm, -t, t, s_ * media - 0.004, s_ * media + 0.004, zb - 0.006, p.z)
+        else:
+            B.tubo(bm, pts, P["r_alambre"], seg=5, radio_curva=0.0)
+            if pantalon:
+                zb = -0.140
+                B.tubo(bm, [pts[0], Vector((0.0, -media, zb)), Vector((0.0, media, zb)), pts[-1]], P["r_alambre"],
+                       seg=5, radio_curva=0.01)
+    # gancho: sube del cuello, rodea la barra por arriba y termina en punta
+    rb = r_barra + P["r_gancho"] + 0.0005                 # apoyado en la barra
+    z0 = pts[n // 2].z + (P["alto_madera"] / 2 if madera else 0.0)
+    camino = [Vector((0.0, 0.0, z0 - 0.002)), Vector((0.0, 0.004, z0 + 0.012)), Vector((0.0, rb, -0.004))]
+    camino += [Vector((0.0, rb * math.cos(math.radians(a)), rb * math.sin(math.radians(a)))) for a in (0, 50, 95, 140)]
+    camino += [Vector((0.0, -rb * 1.02, -0.010))]
+    with m.parte(mat_gancho, suave=True) as bm:
+        B.tubo(bm, camino, P["r_gancho"], seg=5, radio_curva=0.0)
+
+
+# Mangas (diseño): largo desde el hombro y radios de la sección elíptica (u = espesor, v = ancho) en el hombro.
+MANGAS = {"camisa": (0.60, 0.019, 0.042), "chaqueta": (0.60, 0.030, 0.052), "abrigo": (0.64, 0.034, 0.056),
+          "sueter": (0.56, 0.028, 0.048), "poleron": (0.56, 0.032, 0.052), "polera": (0.19, 0.016, 0.055)}
+
+
+def espesor_efectivo(tipo):
+    """Espesor de la prenda en la barra (u), contando las mangas: define la separación entre perchas."""
+    t = PRENDAS[tipo][2]
+    return max(t, 2 * MANGAS[tipo][1] + 0.004) if tipo in MANGAS else t
+
+
+def manga(bm, s, w, z_hombro_, largo, ru, rv, rng):
+    """Manga colgando del hombro por el costado s (±1) del cuerpo: tubo de sección elíptica que se angosta hacia
+    el puño y se mete apenas hacia el cuerpo; su borde exterior no pasa del ancho de la prenda."""
+    fr = (0.0, 0.25, 0.62, 1.0)
+    ks = (1.0, 0.92, 0.80, 0.70)
+    pts = [Vector((rng.uniform(-0.002, 0.002), s * (w - rv * k - 0.004 - 0.018 * f), z_hombro_ - 0.012 - largo * f))
+           for f, k in zip(fr, ks)]
+    n = 8
+    anillos = []
+    for p, k in zip(pts, ks):
+        anillos.append([bm.verts.new(p + Vector((ru * k * math.cos(TAU * i / n), rv * k * math.sin(TAU * i / n),
+                                                 0.0))) for i in range(n)])
+    for a, b in zip(anillos[:-1], anillos[1:]):
+        for i in range(n):
+            j = (i + 1) % n
+            bm.faces.new((a[i], a[j], b[j], b[i]))
+    bm.faces.new(list(reversed(anillos[0])))
+    bm.faces.new(anillos[-1])
+
+
+GRUESAS = ("sueter", "poleron", "chaqueta", "abrigo")       # tejido de lana o paño: TelaGruesa
+
+
+def prenda(m, tipo, tinte, rng, largo=None):
+    """Cuerpo de la prenda en su sistema (eje de la barra en el origen), con mangas si las tiene; `tinte`: nombre
+    de TINTES."""
+    w, L, t, tb = PRENDAS[tipo]
+    t *= rng.uniform(0.9, 1.12)
+    with m.parte((TELA_GRUESA if tipo in GRUESAS else TELA, tinte), suave=True) as bm:
+        cuerpo_prenda(bm, tipo, largo, t, rng)
+        if tipo in MANGAS:
+            lm, ru, rv = MANGAS[tipo]
+            media = min(0.205, w - 0.016)
+            zs = z_hombro(w, media) + PERCHA["alto_madera"] / 2 + 0.006
+            for s in (-1, 1):
+                manga(bm, s, w, zs, lm * rng.uniform(0.96, 1.03), ru * rng.uniform(0.95, 1.08), rv, rng)
+    return t
+
+
+def barra_colgar(col, nombre, marco, u0, u1, v, z, prendas, semilla, percha_mat="Depto_Mat_FrenteCloset",
+                 gancho_mat="Depto_Mat_Acero", barra_mat="Depto_Mat_AceroNegro", r_barra=0.011, llenado=0.92,
+                 alineacion="izq"):
+    """Barra de colgar de u0 a u1 (de costado a costado, con sus soportes) a la altura z y la profundidad v del
+    marco, con `prendas` = [(tipo, material[, largo])] en ese orden. La separación entre prendas es su espesor
+    más el barrido del giro más una holgura; si no caben, se descartan las últimas. Devuelve (objeto, n_prendas,
+    ocupación de la barra)."""
+    rng = random.Random(semilla)
+    m = Mallas()
+    with m.parte(barra_mat, suave=True) as bm:
+        cilindro_eje(bm, (u0, v, z), (u1, v, z), r_barra, seg=12)
+        for ue, s in ((u0, 1), (u1, -1)):                              # soportes: roseta y copa abierta arriba
+            cilindro_eje(bm, (ue, v, z), (ue + s * 0.006, v, z), 0.024, seg=14)
+            cilindro_eje(bm, (ue + s * 0.006, v, z - 0.004), (ue + s * 0.020, v, z - 0.004), 0.016, seg=10)
+    libre = (u1 - u0) - 0.05
+    colocadas = []
+    cursor = 0.0
+    for item in prendas:
+        tipo, mat = item[0], item[1]
+        largo = item[2] if len(item) > 2 else None
+        w = PRENDAS[tipo][0]
+        t = espesor_efectivo(tipo)
+        giro = rng.uniform(-3.0, 3.0) if tipo == "pantalon" else rng.uniform(-1.5, 1.5)
+        barrido = t * 1.12 + 2 * (w + 0.01) * math.sin(math.radians(abs(giro)))
+        paso = barrido + rng.uniform(0.004, 0.012)
+        if cursor + paso > libre * llenado + 0.02:
+            break
+        colocadas.append((tipo, mat, largo, giro, cursor + paso / 2))
+        cursor += paso
+    ocupado = cursor
+    if alineacion == "centro":
+        u_ini = u0 + 0.025 + (libre - ocupado) / 2
+    else:
+        u_ini = u0 + 0.03
+    for tipo, mat, largo, giro, uc in colocadas:
+        w = PRENDAS[tipo][0]
+        media = 0.19 if tipo == "pantalon" else min(0.205, w - 0.016)
+        dv = rng.uniform(-0.015, 0.015) if tipo == "pantalon" else rng.uniform(-0.008, 0.008)
+        antes = m.marca()
+        percha(m, tipo, percha_mat, gancho_mat, media, r_barra, pantalon=(tipo == "pantalon"))
+        prenda(m, tipo, mat, rng, largo)
+        m.transformar_desde(antes, _M(u_ini + uc, v + dv, z, giro))
+    ob = m.crear(col, nombre, marco, angulo=50.0, props={"colision": False})
+    return ob, len(colocadas), round(ocupado / (u1 - u0), 3)
+
+
+# ================================================================ ropa doblada, zapatos, cajas
+def pila_doblada(m, u_c, v_c, z0, ancho, hondo, capas, materiales, rng, alto_capa=0.052, gruesa=None):
+    """Pila de prendas dobladas: capas redondeadas (el doblez al frente), cada una algo corrida y de tamaño
+    levemente distinto, con el tinte elegido entre `materiales` (nombres de TINTES). gruesa: TelaGruesa (suéteres,
+    mantas); por defecto, si las capas son altas. Devuelve el z de arriba."""
+    base = TELA_GRUESA if (gruesa if gruesa is not None else alto_capa >= 0.055) else TELA
+    z = z0
+    for k in range(capas):
+        h = alto_capa * rng.uniform(0.82, 1.15)
+        a = ancho * rng.uniform(0.94, 1.0)
+        d = hondo * rng.uniform(0.95, 1.0)
+        du, dv = rng.uniform(-0.008, 0.008), rng.uniform(-0.006, 0.006)
+        with m.parte((base, rng.choice(materiales)), suave=True) as bm:
+            B.caja_redondeada(bm, u_c + du - a / 2, u_c + du + a / 2, v_c + dv - d / 2, v_c + dv + d / 2, z, z + h,
+                              min(0.018, h * 0.42), segmentos=1)
+        z += h
+    return z
+
+
+def _perfil_zapato(tipo):
+    """Estaciones (x desde el talón, media anchura, alto del empeine) y alto de la suela, por tipo (diseño)."""
+    if tipo == "bota":
+        return 0.27, 0.022, [(0.0, 0.030, 0.150), (0.03, 0.036, 0.160), (0.08, 0.040, 0.150), (0.12, 0.043, 0.090),
+                             (0.18, 0.046, 0.065), (0.23, 0.040, 0.050), (0.258, 0.030, 0.038), (0.27, 0.016, 0.022)]
+    if tipo == "zapatilla":
+        return 0.27, 0.026, [(0.0, 0.031, 0.060), (0.03, 0.038, 0.072), (0.08, 0.040, 0.070), (0.13, 0.045, 0.062),
+                             (0.19, 0.048, 0.050), (0.235, 0.042, 0.040), (0.259, 0.030, 0.030), (0.27, 0.015, 0.018)]
+    if tipo == "taco":                                                  # botín de taco bajo, de mujer
+        return 0.245, 0.014, [(0.0, 0.026, 0.120), (0.03, 0.031, 0.125), (0.07, 0.034, 0.110), (0.11, 0.036, 0.060),
+                              (0.165, 0.040, 0.040), (0.21, 0.034, 0.030), (0.234, 0.024, 0.022), (0.245, 0.012, 0.014)]
+    return 0.27, 0.014, [(0.0, 0.030, 0.055), (0.03, 0.036, 0.062), (0.08, 0.039, 0.058), (0.13, 0.043, 0.048),
+                         (0.19, 0.046, 0.040), (0.235, 0.040, 0.032), (0.259, 0.028, 0.024), (0.27, 0.014, 0.014)]
+
+
+TACO = dict(alto=0.045, planta_x=0.16, x0=0.008, x1=0.056, media=0.020)   # diseño: tacón del botín (4,5 cm), el
+                                                                           # talón baja hasta la planta (x = 0,16)
+CORDONES_X = (0.118, 0.140, 0.162, 0.184)                                  # diseño: 4 pasadas sobre el empeine
+
+
+def _alza(tipo, x):
+    """Cuánto sube el pie sobre el piso en x (sólo el botín de taco: del tacón a la planta)."""
+    if tipo != "taco":
+        return 0.0
+    return TACO["alto"] * max(0.0, 1.0 - x / TACO["planta_x"])
+
+
+def _loft_cerrado(bm, secciones):
+    """Une secciones (listas de vértices del mismo largo, cerradas) y tapa los extremos."""
+    for a, b in zip(secciones[:-1], secciones[1:]):
+        for k in range(len(a)):
+            j = (k + 1) % len(a)
+            bm.faces.new((a[k], a[j], b[j], b[k]))
+    bm.faces.new(list(reversed(secciones[0])))
+    bm.faces.new(secciones[-1])
+
+
+def zapato(m, tipo, mat_capellada, mat_suela, M):
+    """Un zapato: suela (planta extruida; en el botín, inclinada sobre un tacón) y capellada (loft de secciones
+    redondeadas), teñidas con los nombres de TINTES `mat_capellada` y `mat_suela`; las zapatillas llevan lengüeta y
+    cordones. Sistema: x hacia la punta, y a lo ancho, z arriba; apoyado en z = 0 con el talón en x = 0. M: matriz
+    al marco del mueble."""
+    L, s, est = _perfil_zapato(tipo)
+    with m.parte((SUELA, mat_suela), M) as bm:
+        if tipo == "taco":
+            # suela en rampa (sigue al pie) y tacón de bloque bajo el talón (corrección 07b: parecía una pantufla)
+            secs = []
+            for x, b, _ in est:
+                a, z = b + 0.003, _alza(tipo, x)
+                secs.append([bm.verts.new(p) for p in ((x, -a, z), (x, a, z), (x, a, z + s), (x, -a, z + s))])
+            _loft_cerrado(bm, secs)
+            t = TACO
+            x_a, x_b = t["x0"], t["x1"]
+            v = [bm.verts.new(p) for p in (
+                (x_a + 0.004, -(t["media"] - 0.003), 0.0), (x_b - 0.002, -(t["media"] - 0.003), 0.0),
+                (x_b - 0.002, t["media"] - 0.003, 0.0), (x_a + 0.004, t["media"] - 0.003, 0.0),
+                (x_a, -t["media"], _alza(tipo, x_a) + 0.001), (x_b, -t["media"], _alza(tipo, x_b) + 0.001),
+                (x_b, t["media"], _alza(tipo, x_b) + 0.001), (x_a, t["media"], _alza(tipo, x_a) + 0.001))]
+            for cara in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
+                bm.faces.new([v[i] for i in cara])
+        else:
+            planta = [(x, b + 0.003) for x, b, _ in est] + [(x, -(b + 0.003)) for x, b, _ in reversed(est)]
+            extruir_poligono(bm, planta, 0.0, s)
+    with m.parte((CALZADO, mat_capellada), M, suave=True) as bm:
+        anillos = []
+        for x, b, h in est:
+            sec = [(-b, 0.0), (-b, 0.45 * h), (-0.72 * b, 0.86 * h), (0.0, h), (0.72 * b, 0.86 * h), (b, 0.45 * h),
+                   (b, 0.0)]
+            z0 = s + _alza(tipo, x)
+            anillos.append([bm.verts.new((x, y, z0 + z)) for y, z in sec])
+        for a, b in zip(anillos[:-1], anillos[1:]):
+            for k in range(len(a) - 1):
+                bm.faces.new((a[k], a[k + 1], b[k + 1], b[k]))
+            bm.faces.new((a[-1], a[0], b[0], b[-1]))                                  # base (sobre la suela)
+        bm.faces.new(list(reversed(anillos[0])))
+        bm.faces.new(anillos[-1])
+        if tipo == "zapatilla":
+            # lengüeta: lámina que asoma sobre la boca, delante del tobillo (corrección 07b: se leía como pantufla).
+            # Ronda 2: sigue el empeine a lo largo y a lo ancho (antes era una lámina plana a la altura del centro, que
+            # flotaba sobre los costados y se leía como una etiqueta cuadrada)
+            xl0, xl1, bl = est[2][0] + 0.012, est[2][0] + 0.046, 0.55 * est[2][1]
+            ys = [bl * f for f in (-1.0, -0.5, 0.0, 0.5, 1.0)]
+            secs = []
+            for xl, dz in ((xl0, 0.014), ((xl0 + xl1) / 2, 0.007), (xl1, 0.0025)):
+                arriba = [(xl, y, _z_capellada(est, s, xl, y) + dz * (1.0 - 0.35 * abs(y) / bl)) for y in ys]
+                abajo = [(xl, y, _z_capellada(est, s, xl, y) - 0.004) for y in reversed(ys)]
+                secs.append([bm.verts.new(p) for p in arriba + abajo])
+            _loft_cerrado(bm, secs)
+    if tipo != "bota":
+        # boca del zapato: óvalo oscuro (el forro) pegado 1 mm sobre la capellada, entre el talón y el medio pie
+        x0b, x1b = est[0][0] + 0.014, est[2][0] + 0.03
+        with m.parte((SUELA, "Depto_Mat_CableTela"), M) as bm:
+            pts = []
+            for i in range(12):
+                x = x0b + (x1b - x0b) * (0.5 + 0.5 * math.cos(TAU * i / 12))
+                y = 0.60 * est[1][1] * math.sin(TAU * i / 12)
+                pts.append(bm.verts.new((x, y, _z_capellada(est, s, x, y) + _alza(tipo, x) + 0.001)))
+            bm.faces.new(pts)
+    if tipo == "zapatilla":
+        # cordones: 4 pasadas finas sobre el empeine, cada una siguiendo la curva de la capellada
+        with m.parte((SUELA, mat_suela), M) as bm:
+            for xc in CORDONES_X:
+                b = next(bb for xa, bb, _ in est if xa >= xc - 0.03)
+                ys = [0.5 * b * f for f in (-1.0, -0.5, 0.0, 0.5, 1.0)]
+                arriba = [bm.verts.new((xc - 0.002, y, _z_capellada(est, s, xc, y) + 0.0035)) for y in ys]
+                arriba2 = [bm.verts.new((xc + 0.002, y, _z_capellada(est, s, xc, y) + 0.0035)) for y in ys]
+                abajo = [bm.verts.new((xc - 0.002, y, _z_capellada(est, s, xc, y) - 0.001)) for y in ys]
+                abajo2 = [bm.verts.new((xc + 0.002, y, _z_capellada(est, s, xc, y) - 0.001)) for y in ys]
+                for k in range(len(ys) - 1):
+                    bm.faces.new((arriba[k], arriba[k + 1], arriba2[k + 1], arriba2[k]))
+                    bm.faces.new((abajo2[k], abajo2[k + 1], abajo[k + 1], abajo[k]))
+                    bm.faces.new((abajo[k], abajo[k + 1], arriba[k + 1], arriba[k]))
+                    bm.faces.new((arriba2[k], arriba2[k + 1], abajo2[k + 1], abajo2[k]))
+                for k in (0, len(ys) - 1):
+                    q = (arriba[k], arriba2[k], abajo2[k], abajo[k])
+                    bm.faces.new(q if k == 0 else tuple(reversed(q)))
+
+
+def _z_capellada(est, s, x, y):
+    """Altura de la cara de arriba de la capellada en (x, y), interpolando las estaciones de _perfil_zapato."""
+    for (xa, ba, ha), (xb, bb, hb) in zip(est[:-1], est[1:]):
+        if x <= xb:
+            t = (x - xa) / max(xb - xa, 1e-9)
+            b, h = ba + (bb - ba) * t, ha + (hb - ha) * t
+            break
+    else:
+        _, b, h = est[-1]
+    a = min(1.0, abs(y) / max(b, 1e-9))
+    tramo = [(0.0, 1.0), (0.72, 0.86), (1.0, 0.45)]                     # (|y|/b, z/h) de la sección
+    for (ya, za), (yb, zb) in zip(tramo[:-1], tramo[1:]):
+        if a <= yb:
+            return s + h * (za + (zb - za) * (a - ya) / (yb - ya))
+    return s + h * 0.45
+
+
+def par_zapatos(m, tipo, mat_capellada, mat_suela, u_c, v_c, z0, hacia_frente=True, separacion=0.105, giro=0.0):
+    """Par de zapatos con la punta hacia el frente del mueble (+v) o hacia el fondo, centrado en (u_c, v_c)."""
+    L = _perfil_zapato(tipo)[0]
+    ang = 90.0 if hacia_frente else -90.0
+    for k, s in enumerate((-1, 1)):
+        g = ang + giro + s * 2.0
+        c = Vector((u_c + s * separacion / 2, v_c, z0))
+        d = Matrix.Rotation(math.radians(g), 3, "Z") @ Vector((L / 2, 0.0, 0.0))
+        M = Matrix.Translation(c - d) @ Matrix.Rotation(math.radians(g), 4, "Z")
+        zapato(m, tipo, mat_capellada, mat_suela, M)
+
+
+def caja_guardado(m, u_c, v_c, z0, ancho, hondo, alto, mat_cuerpo, mat_tapa=None, tapa=0.035):
+    """Caja de guardado con tapa que sobresale 4 mm por lado."""
+    with m.parte(mat_cuerpo) as bm:
+        B.caja(bm, u_c - ancho / 2, u_c + ancho / 2, v_c - hondo / 2, v_c + hondo / 2, z0, z0 + alto - tapa + 0.004)
+    with m.parte(mat_tapa or mat_cuerpo, suave=True) as bm:
+        B.caja_redondeada(bm, u_c - ancho / 2 - 0.004, u_c + ancho / 2 + 0.004, v_c - hondo / 2 - 0.004,
+                          v_c + hondo / 2 + 0.004, z0 + alto - tapa, z0 + alto, 0.003, segmentos=1)
+
+
+def maleta(m, u_c, v_c, z0, ancho, hondo, alto, mat_casco, mat_detalle):
+    """Maleta de cabina acostada: casco redondeado, cierre perimetral y manilla."""
+    with m.parte(mat_casco, suave=True) as bm:
+        B.caja_redondeada(bm, u_c - ancho / 2, u_c + ancho / 2, v_c - hondo / 2, v_c + hondo / 2, z0, z0 + alto,
+                          0.025, segmentos=1)
+    zc = z0 + alto * 0.52
+    with m.parte(mat_detalle) as bm:
+        B.caja(bm, u_c - ancho / 2 - 0.002, u_c + ancho / 2 + 0.002, v_c - hondo / 2 - 0.002, v_c + hondo / 2 + 0.002,
+               zc - 0.006, zc + 0.006)
+        B.tubo(bm, [Vector((u_c - 0.07, v_c + hondo / 2 - 0.004, zc + 0.03)),
+                    Vector((u_c - 0.06, v_c + hondo / 2 + 0.022, zc + 0.03)),
+                    Vector((u_c + 0.06, v_c + hondo / 2 + 0.022, zc + 0.03)),
+                    Vector((u_c + 0.07, v_c + hondo / 2 - 0.004, zc + 0.03))], 0.007, seg=6, radio_curva=0.01)
+
+
+CALCETINES = dict(largo=(0.06, 0.10), giro=12.0, doblados=0.25, doblado=(0.10, 0.05, 0.03))   # diseño (corrección
+# 07b, ronda 2): pares enrollados de largo variable y girados hasta ±12°, filas en tresbolillo y ~1 de cada 4 pares
+# doblado plano (0,10 × 0,05 × 0,03). Antes eran una grilla perfecta de cilindros iguales y se leían como rollos de
+# monedas.
+
+
+def calcetines(m, u0, u1, v0, v1, z0, materiales, rng, r=0.022):
+    """Calcetines en un cajón: pares enrollados (cilindros acostados a lo largo de v) y algunos doblados planos, en
+    filas alternadas en tresbolillo, cada uno con su largo y un giro leve. Todo queda dentro de [u0, u1] × [v0, v1]."""
+    C = CALCETINES
+    paso_u, paso_v = 2 * r + 0.008, 0.095
+    nu, nv = int((u1 - u0) // paso_u), int((v1 - v0) // paso_v)
+    for j in range(nv):
+        vc = v0 + paso_v * (j + 0.5)
+        corrida = 0.5 * paso_u if j % 2 else 0.0                                  # tresbolillo
+        for i in range(nu - (1 if j % 2 else 0)):
+            uc = u0 + paso_u * (i + 0.5) + corrida
+            g = math.radians(rng.uniform(-C["giro"], C["giro"]))
+            if rng.random() < C["doblados"]:
+                a, d, h = C["doblado"]
+                a, d = min(a, paso_v - 0.01), min(d, paso_u - 0.004)
+                with m.parte(rng.choice(materiales), _M(uc, vc, z0, 0.5 * math.degrees(g) + 90.0), suave=True) as bm:
+                    B.caja_redondeada(bm, -a / 2, a / 2, -d / 2, d / 2, 0.0, h, 0.010, segmentos=1)
+                continue
+            rr = r * rng.uniform(0.88, 1.05)
+            # largo acotado para que el cilindro girado no salga de su celda (ni toque a los vecinos)
+            lmax = (paso_v - 0.006 - 2 * rr * abs(math.sin(g))) / max(abs(math.cos(g)), 1e-6)
+            L = min(rng.uniform(*C["largo"]), lmax)
+            du, dv = 0.5 * L * math.sin(g), 0.5 * L * math.cos(g)
+            with m.parte(rng.choice(materiales), suave=True) as bm:
+                cilindro_eje(bm, (uc - du, vc - dv, z0 + rr), (uc + du, vc + dv, z0 + rr), rr, seg=8)
+
+
+# ================================================================ alimentos (nevera)
+def botella(m, x, y, z0, r, alto, mat_vidrio, mat_liquido=None, llenado=0.8, cuello=0.3, tapa_mat=None):
+    """Botella de vidrio (cuerpo, hombro y cuello) con líquido interior opcional y tapa."""
+    zh = z0 + alto * (1 - cuello)
+    perfil = [(0.0, z0), (r, z0), (r, zh), (r * 0.42, zh + alto * cuello * 0.45), (r * 0.36, z0 + alto),
+              (0.0, z0 + alto)]
+    with m.parte(mat_vidrio, suave=True) as bm:
+        an = B.torno(bm, perfil, seg=14)
+        bmesh.ops.translate(bm, vec=(x, y, 0.0), verts=[v for a in an for v in a])
+    if mat_liquido:
+        zl = z0 + 0.004 + (alto * (1 - cuello) - 0.008) * llenado
+        with m.parte(mat_liquido, suave=True) as bm:
+            an = B.torno(bm, [(0.0, z0 + 0.004), (r - 0.003, z0 + 0.004), (r - 0.003, zl), (0.0, zl)], seg=12)
+            bmesh.ops.translate(bm, vec=(x, y, 0.0), verts=[v for a in an for v in a])
+    if tapa_mat:
+        with m.parte(tapa_mat, suave=True) as bm:
+            B.cilindro(bm, x, y, z0 + alto - 0.002, z0 + alto + 0.012, r * 0.40, seg=10)
+
+
+def frasco(m, x, y, z0, r, alto, mat_vidrio, mat_contenido, mat_tapa):
+    with m.parte(mat_vidrio, suave=True) as bm:
+        B.cilindro(bm, x, y, z0, z0 + alto - 0.012, r, seg=14)
+    with m.parte(mat_contenido, suave=True) as bm:
+        B.cilindro(bm, x, y, z0 + 0.003, z0 + (alto - 0.012) * 0.75, r - 0.003, seg=12)
+    with m.parte(mat_tapa, suave=True) as bm:
+        B.cilindro(bm, x, y, z0 + alto - 0.013, z0 + alto, r * 1.03, seg=14)
+
+
+def carton(m, x, y, z0, ancho, hondo, alto, mat, mat_tapa=None, giro=0.0):
+    """Envase de cartón de techo a dos aguas (leche, jugo), girado `giro` grados."""
+    Mg = Matrix.Translation((x, y, z0)) @ Matrix.Rotation(math.radians(giro), 4, "Z")
+    a, d = ancho / 2, hondo / 2
+    with m.parte(mat, Mg) as bm:
+        B.caja(bm, -a, a, -d, d, 0.0, alto)
+        v = [bm.verts.new(c) for c in ((-a, -d, alto), (a, -d, alto), (a, d, alto), (-a, d, alto),
+                                       (-a, 0.0, alto + 0.045), (a, 0.0, alto + 0.045))]
+        bm.faces.new((v[0], v[1], v[5], v[4]))
+        bm.faces.new((v[2], v[3], v[4], v[5]))
+        bm.faces.new((v[0], v[4], v[3]))
+        bm.faces.new((v[1], v[2], v[5]))
+        B.caja(bm, -a, a, -0.002, 0.002, alto + 0.043, alto + 0.058)                  # pestaña del techo
+    if mat_tapa:
+        with m.parte(mat_tapa, Mg, suave=True) as bm:
+            B.cilindro(bm, a * 0.35, -d * 0.45, alto + 0.018, alto + 0.034, 0.012, seg=10)
+
+
+def fruta(m, x, y, z0, r, mat, aplastar=1.0):
+    """Fruta o verdura redonda (manzana, naranja, tomate, lechuga) apoyada en z0; aplastar < 1 la achata."""
+    with m.parte(mat, suave=True) as bm:
+        esfera(bm, (x, y, z0 + r * aplastar), r, (1.0, 1.0, aplastar))
+
+
+def zanahoria(m, p0, p1, r, mat, mat_hojas):
+    """Cono acostado de p0 (hombro) a p1 (punta) con un penacho corto de hojas."""
+    with m.parte(mat, suave=True) as bm:
+        p0, p1 = Vector(p0), Vector(p1)
+        d = (p1 - p0)
+        pts = [p0 + d * t for t in (0.0, 0.25, 0.6, 1.0)]
+        radios = [r, r * 0.9, r * 0.6, r * 0.12]
+        anillos = []
+        eje = d.normalized()
+        ref = Vector((0, 0, 1)) if abs(eje.z) < 0.9 else Vector((1, 0, 0))
+        n1 = (ref - eje * ref.dot(eje)).normalized()
+        n2 = eje.cross(n1)
+        for p, rr in zip(pts, radios):
+            anillos.append([bm.verts.new(p + (n1 * math.cos(TAU * k / 8) + n2 * math.sin(TAU * k / 8)) * rr)
+                            for k in range(8)])
+        for a, b in zip(anillos[:-1], anillos[1:]):
+            for k in range(8):
+                j = (k + 1) % 8
+                bm.faces.new((a[k], a[j], b[j], b[k]))
+        bm.faces.new(list(reversed(anillos[0])))
+        bm.faces.new(anillos[-1])
+    with m.parte(mat_hojas, suave=True) as bm:
+        cilindro_eje(bm, p0, p0 - (p1 - p0).normalized() * 0.03, r * 0.35, seg=6)

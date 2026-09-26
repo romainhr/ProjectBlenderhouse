@@ -38,15 +38,24 @@ TEXTURA_MAT = {
     "Depto_Mat_Cielo": ("concreto_encofrado", dict(color=True, rugosidad=True, normal=0.5)),
     "Depto_Mat_Ladrillo": ("ladrillo", dict(color=True, rugosidad=True, normal=1.0)),
     "Depto_Mat_MuroBano": ("azulejo_subway", dict(color=True, rugosidad=True, normal=0.8)),
-    # madera
-    "Depto_Mat_PuertaMadera": ("oak_veneer_01", dict(color=True, rugosidad=True, normal=0.4)),
-    "Depto_Mat_FrenteCloset": ("oak_veneer_01", dict(color=True, rugosidad=True, normal=0.4)),
+    # madera. Corrección 07b (ronda 2): el enchapado de roble va sin el mapa de rugosidad de oak_veneer_01 (rugosidad
+    # constante de depto_geom, 0,55, de barniz satinado): con el mapa (percentil 5 en 0,32, medido en
+    # oak_veneer_01_rough_1k.jpg) las franjas lisas de la veta reflejaban el cielo y de día el roble se leía encalado o
+    # escarchado (gris lila con vetas blancas en el pie de las hojas y en los cajones); de noche, miel. El Specular queda
+    # en 0,5: otro valor exporta KHR_materials_specular y three.js pasa el material a MeshPhysicalMaterial (más caro).
+    "Depto_Mat_PuertaMadera": ("oak_veneer_01", dict(color=True, rugosidad=False, normal=0.4)),
+    "Depto_Mat_FrenteCloset": ("oak_veneer_01", dict(color=True, rugosidad=False, normal=0.4)),
     "Depto_Mat_MaderaMueble": ("roble_ahumado", dict(color=True, rugosidad=True, normal=0.5)),
     "Depto_Mat_MuebleBano": ("roble_ahumado", dict(color=True, rugosidad=True, normal=0.5)),
     # metal, piedra y concreto
     "Depto_Mat_AceroNegro": ("acero_pavonado", dict(color=True, rugosidad=True, normal=0.3)),
-    "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=True, normal=0.3)),
-    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=True, rugosidad=True, normal=0.25)),
+    # hoja de la entrada: sin el mapa de rugosidad (0,45 constante de depto_geom; el mapa va de 0,23 a 0,49, medido).
+    # Corrección 07b (ronda 2): con el mapa, el reflejo de la hoja era nítido y de noche, con el foco que la baña
+    # desde arriba, la hoja se leía negra; un satinado parejo abre el brillo del foco sobre la chapa.
+    "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=False, normal=0.3)),
+    # 07b: sólo el mapa normal, suave. Con el mapa de color o el de rugosidad, sus vetas de alto contraste se leían
+    # como madera gris en los renders; el cepillado queda como un relieve fino sobre el color base del acero.
+    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=False, rugosidad=False, normal=0.2)),
     "Depto_Mat_CubiertaConcreto": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_CubiertaBano": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_Concreto": ("microcemento", dict(color=True, rugosidad=True, normal=0.6, escala_m=0.8)),
@@ -58,21 +67,31 @@ TEXTURA_MAT = {
     "Depto_Mat_Textil": ("rough_linen", dict(color=False, rugosidad=True, normal=0.6)),
     "Depto_Mat_Cobertor": ("rough_linen", dict(color=False, rugosidad=True, normal=1.0)),
     "Depto_Mat_Alfombra": ("yute", dict(color=True, rugosidad=True, normal=1.0)),
-    # Ropa de los clósets: mismas texturas de tela del depto, sólo el relieve (el tinte lo da el color base).
-    "Depto_Mat_RopaCrudo": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaAzul": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaGris": ("lana", dict(color=False, rugosidad=True, normal=0.8)),
-    "Depto_Mat_RopaVino": ("lana", dict(color=False, rugosidad=True, normal=0.8)),
-    "Depto_Mat_RopaVerde": ("poly_wool_herringbone", dict(color=False, rugosidad=True, normal=0.6)),
-    "Depto_Mat_RopaCarbon": ("poly_wool_herringbone", dict(color=False, rugosidad=True, normal=0.6)),
-    "Depto_Mat_RopaDoblada1": ("lana", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_RopaDoblada2": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    # Interiores de clósets (fase 07b): sólo el relieve de las telas del depto; el color va por vértice.
+    "Depto_Mat_Tela": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    # Corrección 07b (ronda 2): el tejido de las prendas gruesas, 2,5 veces más fino que el de los cojines (repetición de
+    # 0,10 m en vez de 0,25) y con relieve suave (0,30): con 0,8 y la escala de los cojines, abrigos y chaquetas se leían
+    # como corcho, arpillera o estuco. El bouclé de los cojines (Depto_Mat_Lana) no cambia.
+    "Depto_Mat_TelaGruesa": ("lana", dict(color=False, rugosidad=True, normal=0.30, escala_m=0.10)),
+    "Depto_Mat_Calzado": ("cuero", dict(color=False, rugosidad=True, normal=0.6)),
     # cuadros: lámina con UV 0-1 propia
     "Depto_Mat_Arte1": ("arte_1", dict(color=True, rugosidad=False, normal=None, uv01=True)),
     "Depto_Mat_Arte2": ("arte_2", dict(color=True, rugosidad=False, normal=None, uv01=True)),
     "Depto_Mat_Arte3": ("arte_3", dict(color=True, rugosidad=False, normal=None, uv01=True)),
 }
-NODOS_GLTF = {"OUTPUT_MATERIAL", "BSDF_PRINCIPLED", "TEX_IMAGE", "NORMAL_MAP", "MAPPING", "TEX_COORD"}
+NODOS_GLTF = {"OUTPUT_MATERIAL", "BSDF_PRINCIPLED", "TEX_IMAGE", "NORMAL_MAP", "MAPPING", "TEX_COORD", "VERTEX_COLOR"}
+# Materiales teñidos por vértice (fase 07b): el color base sale del atributo "Col" de la malla (glTF: COLOR_0 por el
+# color base blanco). Ver build/deco_interiores.py (TINTES).
+COLOR_VERTICE = {"Depto_Mat_Tela", "Depto_Mat_TelaGruesa", "Depto_Mat_Calzado", "Depto_Mat_Suela", "Depto_Mat_Alimento"}
+
+
+def _color_vertice(mat):
+    nt = mat.node_tree
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    # idempotente: G.material no limpia el árbol de los materiales sin textura, así que se reutiliza el nodo
+    vc = next((n for n in nt.nodes if n.type == "VERTEX_COLOR"), None) or nt.nodes.new("ShaderNodeVertexColor")
+    vc.layer_name = "Col"
+    nt.links.new(vc.outputs["Color"], bsdf.inputs["Base Color"])
 
 
 def _manifiestos():
@@ -121,12 +140,12 @@ def _imagen(ruta, no_color):
 def aplicar(nombre):
     """Material en su versión con textura (idempotente). Devuelve True si quedó con textura."""
     mat = G.material(nombre)                          # base: color, rugosidad, metálico, alfa, emisión
-    if nombre not in TEXTURA_MAT:
+    t = textura(TEXTURA_MAT[nombre][0]) if nombre in TEXTURA_MAT else None
+    if t is None:
+        if nombre in COLOR_VERTICE:
+            _color_vertice(mat)
         return False
     tid, op = TEXTURA_MAT[nombre]
-    t = textura(tid)
-    if t is None:
-        return False
     nt = mat.node_tree
     viejo = nt.nodes["Principled BSDF"]
     base = {k: tuple(viejo.inputs[k].default_value) if hasattr(viejo.inputs[k].default_value, "__len__")
@@ -166,6 +185,8 @@ def aplicar(nombre):
         nm.inputs["Strength"].default_value = op["normal"]
         nt.links.new(nodo(t["normal"], True).outputs["Color"], nm.inputs["Color"])
         nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    if nombre in COLOR_VERTICE:
+        _color_vertice(mat)
     mat["textura"] = tid
     mat["escala_mapping"] = list(esc)
     return True

@@ -14,6 +14,9 @@ import bpy
 
 import depto_plano as P
 
+TOPE_TRIANGULOS = 200_000   # escena visible (ADR 0004, decisión 4: de 150 000 a 200 000); única fuente: la
+                            # importan las fases 3, 4 y 5
+
 S = P.M_POR_PX
 
 
@@ -104,18 +107,27 @@ def uv_mundo(bm):
 
 
 # ---------------------------------------------------------------------------
-# Materiales base (color sRGB, rugosidad, metálico, alfa). La fase 5 los reemplaza por PBR con textura.
+# Materiales base (color sRGB, rugosidad, metálico, alfa[, extras]). La fase 5 los reemplaza por PBR con textura.
+# Extras opcionales: "emision" (rgb, fuerza) y "sombra" (shadow_method de Eevee de los transparentes, HASHED por
+# defecto; no va al GLB).
 # ---------------------------------------------------------------------------
 MATERIALES = {
     "Depto_Mat_MarcoVentana": ((0.06, 0.06, 0.06), 0.50, 0.3, 1.0),   # v2: aluminio negro mate (diseño industrial)
-    "Depto_Mat_Vidrio": ((0.80, 0.90, 0.95), 0.02, 0.0, 0.18),
+    "Depto_Mat_Vidrio": ((0.80, 0.90, 0.95), 0.02, 0.0, 0.18, {"sombra": "NONE"}),   # vidrio claro: casi no da
+    # sombra; con la sombra tramada (HASHED) quedaba un grano oscuro bajo los estantes de la nevera (corrección 07b)
     "Depto_Mat_VidrioEsmerilado": ((0.90, 0.93, 0.95), 0.35, 0.0, 0.55),
+    "Depto_Mat_PlasticoEsmerilado": ((0.93, 0.95, 0.96), 0.45, 0.0, 0.80, {"sombra": "CLIP"}),   # nevera: el contenido
+    # se lee como sombra; sombra recortada (umbral 0,5: sombra llena) en vez de tramada, sin grano (corrección 07b)
     "Depto_Mat_Pasamanos": ((0.07, 0.07, 0.08), 0.45, 0.8, 1.0),      # v2: acero negro
     "Depto_Mat_MarcoPuerta": ((0.07, 0.07, 0.07), 0.55, 0.0, 1.0),    # v2: marco pintado negro mate
-    "Depto_Mat_PuertaMadera": ((0.72, 0.55, 0.36), 0.50, 0.0, 1.0),   # enchapado de roble (fase 5: oak_veneer_01)
+    "Depto_Mat_PuertaMadera": ((0.72, 0.55, 0.36), 0.55, 0.0, 1.0),   # enchapado de roble (fase 5: oak_veneer_01);
+                                                                      # 0,55: barniz satinado (corrección 07b)
     "Depto_Mat_PuertaEntrada": ((0.15, 0.15, 0.16), 0.45, 0.6, 1.0),  # v2: hoja de acceso de acero pavonado
     "Depto_Mat_Manilla": ((0.04, 0.04, 0.04), 0.40, 0.8, 1.0),        # v2: negro
-    "Depto_Mat_MuebleBlanco": ((0.94, 0.94, 0.92), 0.35, 0.0, 1.0),   # cocina y closets melamina blanca (supuesto)
+    "Depto_Mat_MuebleBlanco": ((0.94, 0.94, 0.92), 0.55, 0.0, 1.0),   # cocina y clósets: melamina blanca satinada
+    # (supuesto). Corrección 07b: con 0,35 de rugosidad los costados de los clósets y el forro de la nevera reflejaban
+    # prendas y zapatos como fantasmas borrosos. Specular en 0,5 (otro valor exporta KHR_materials_specular y three.js
+    # usa MeshPhysicalMaterial, más caro).
     "Depto_Mat_Zocalo": ((0.30, 0.30, 0.30), 0.60, 0.0, 1.0),
     "Depto_Mat_Granito": ((0.45, 0.45, 0.46), 0.30, 0.0, 1.0),        # cubierta gris (fase 5: procedural)
     "Depto_Mat_Acero": ((0.72, 0.72, 0.74), 0.30, 1.0, 1.0),
@@ -153,9 +165,11 @@ MATERIALES = {
     "Depto_Mat_FrenteCocina": ((0.17, 0.18, 0.18), 0.55, 0.0, 1.0),     # carbón mate
     "Depto_Mat_MuebleCocina": ((0.17, 0.18, 0.18), 0.60, 0.0, 1.0),
     "Depto_Mat_CubiertaConcreto": ((0.33, 0.33, 0.32), 0.35, 0.0, 1.0),
-    "Depto_Mat_FrenteCloset": ((0.62, 0.47, 0.32), 0.50, 0.0, 1.0),     # roble natural
+    "Depto_Mat_FrenteCloset": ((0.62, 0.47, 0.32), 0.55, 0.0, 1.0),     # roble natural (0,55: barniz satinado)
     "Depto_Mat_MuebleBano": ((0.42, 0.31, 0.23), 0.50, 0.0, 1.0),       # roble ahumado
     "Depto_Mat_AceroNegro": ((0.14, 0.14, 0.15), 0.45, 0.85, 1.0),      # acero pavonado de muebles
+    "Depto_Mat_AceroPintado": ((0.06, 0.06, 0.06), 0.55, 0.0, 1.0),     # acero pintado al horno (dieléctrico): mesa
+                                                                        # bistró del balcón (corrección 07b)
     "Depto_Mat_MetalNegroMate": ((0.03, 0.03, 0.03), 0.50, 0.70, 1.0),  # grifería, luminarias, herrajes
     "Depto_Mat_NeveraAcero": ((0.76, 0.75, 0.72), 0.35, 0.85, 1.0),     # acero cepillado del cuerpo de la nevera
     "Depto_Mat_Cuero": ((0.54, 0.29, 0.16), 0.45, 0.0, 1.0),            # coñac
@@ -179,18 +193,13 @@ MATERIALES = {
     "Depto_Mat_Arte1": ((0.80, 0.78, 0.72), 0.80, 0.0, 1.0),
     "Depto_Mat_Arte2": ((0.80, 0.78, 0.72), 0.80, 0.0, 1.0),
     "Depto_Mat_Arte3": ((0.80, 0.78, 0.72), 0.80, 0.0, 1.0),
-    # Ropa de los clósets (fase "07 detalle interactivo"): mismas texturas de tela ya usadas en el depto
-    # (sólo el relieve: color=False en deco_paleta.TEXTURA_MAT), con tintes sobrios y variados por prenda.
-    "Depto_Mat_RopaCrudo": ((0.82, 0.78, 0.68), 0.85, 0.0, 1.0),     # rough_linen: camisa cruda
-    "Depto_Mat_RopaAzul": ((0.33, 0.38, 0.46), 0.85, 0.0, 1.0),      # rough_linen: camisa azul grisáceo
-    "Depto_Mat_RopaGris": ((0.55, 0.53, 0.50), 0.90, 0.0, 1.0),      # lana: vestido/suéter gris cálido
-    "Depto_Mat_RopaVino": ((0.42, 0.22, 0.24), 0.90, 0.0, 1.0),      # lana: vestido vino apagado
-    "Depto_Mat_RopaVerde": ((0.33, 0.36, 0.28), 0.80, 0.0, 1.0),     # poly_wool_herringbone: chaqueta verde oliva
-    "Depto_Mat_RopaCarbon": ((0.20, 0.20, 0.21), 0.80, 0.0, 1.0),    # poly_wool_herringbone: chaqueta carbón
-    "Depto_Mat_RopaDoblada1": ((0.70, 0.66, 0.58), 0.90, 0.0, 1.0),  # lana: pilas de ropa doblada
-    "Depto_Mat_RopaDoblada2": ((0.38, 0.40, 0.42), 0.90, 0.0, 1.0),
-    "Depto_Mat_CajaZapatos": ((0.80, 0.74, 0.62), 0.85, 0.0, 1.0),   # cartón de las cajas de zapatos
-    "Depto_Mat_Zapato": ((0.30, 0.24, 0.20), 0.55, 0.0, 1.0),
+    # Interiores de clósets y nevera (fase 07b, build/deco_interiores.py): materiales base blancos; el color de cada
+    # prenda, zapato, caja o alimento va por vértice (atributo "Col", COLOR_0 en glTF) y la fase 5 lo conecta.
+    "Depto_Mat_Tela": ((1.0, 1.0, 1.0), 0.85, 0.0, 1.0),             # rough_linen: camisas, poleras, pantalones, cajas
+    "Depto_Mat_TelaGruesa": ((1.0, 1.0, 1.0), 0.92, 0.0, 1.0),       # lana: suéteres, polerones, chaquetas, abrigos
+    "Depto_Mat_Calzado": ((1.0, 1.0, 1.0), 0.50, 0.0, 1.0),          # cuero: capelladas
+    "Depto_Mat_Suela": ((1.0, 1.0, 1.0), 0.75, 0.0, 1.0),            # goma de suelas y forro de la boca
+    "Depto_Mat_Alimento": ((1.0, 1.0, 1.0), 0.45, 0.0, 1.0),         # fruta, verdura, salsas, tapas de plástico
 }
 
 
@@ -216,7 +225,8 @@ def material(nombre):
     if alfa < 1.0:
         bsdf.inputs["Transmission"].default_value = 1.0 if "Vidrio" in nombre else 0.0
         mat.blend_method = "BLEND"
-        mat.shadow_method = "HASHED"
+        mat.shadow_method = extra.get("sombra", "HASHED")
+        mat.alpha_threshold = 0.5
         mat.use_backface_culling = False
         mat.show_transparent_back = True
     else:

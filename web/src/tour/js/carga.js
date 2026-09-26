@@ -7,7 +7,10 @@
 import { THREE } from "./three.js";
 import { GLTFLoader } from "../../vendor/three/jsm/loaders/GLTFLoader.js";
 import { mergeGeometries } from "../../vendor/three/jsm/utils/BufferGeometryUtils.js";
-import { deducirGrupos, crearLuzTHREE, colorLinealAHex, FUNDIDO_MS, INTENSIDAD_POR_WATT } from "./luces.js";
+import {
+  deducirGrupos, crearLucesTHREE, colorLinealAHex, FUNDIDO_MS, intensidadBase, TILT_TECLA_DEG,
+  interruptorEncendido, ordenarInterruptores,
+} from "./luces.js";
 import { duracionPorClase } from "./animacion.js";
 
 export const RUTA_MODELO = "modelo/";
@@ -46,15 +49,23 @@ export function cargarGLTF(nombreArchivo, onProgreso) {
 }
 
 function arreglarVidrios(raiz) {
+  // Un material transparente por material de origen (no uno por malla): así la fusión por material de más abajo
+  // junta todos los vidrios iguales en una sola llamada de dibujo.
+  const cache = new Map();
   raiz.traverse((o) => {
     if (!o.isMesh) return;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     mats.forEach((mat, i) => {
       if (!mat || !MATERIALES_VIDRIO.has(mat.name)) return;
+      if (cache.has(mat)) {
+        if (Array.isArray(o.material)) o.material[i] = cache.get(mat); else o.material = cache.get(mat);
+        return;
+      }
       const v = new THREE.MeshStandardMaterial({
         name: mat.name, color: mat.color, roughness: mat.roughness, metalness: 0, transparent: true,
         opacity: mat.name === "Depto_Mat_VidrioEsmerilado" ? 0.55 : 0.16, depthWrite: false, side: THREE.DoubleSide,
       });
+      cache.set(mat, v);
       if (Array.isArray(o.material)) o.material[i] = v; else o.material = v;
     });
   });
@@ -87,45 +98,57 @@ export function prepararEscena(raiz, D) {
   }
 
   // --- interruptores y lámparas: cualquier nodo con userData.grupo_luz (viene de los extras del glTF) ---
+  // Primero las teclas con registro propio en interruptores[] (cada una manda sólo su grupo), después el resto
+  // (placas, lámparas y nodos sin registro): una placa doble ya no se queda con las mallas de sus teclas.
   const interruptores = [];
   const explicitos = new Map((D.interruptores || []).map((i) => [i.nodo, i]));
-  raiz.traverse((o) => {
-    if (excluidos.has(o)) return;
-    const grupoLuz = o.userData && o.userData.grupo_luz;
-    if (!grupoLuz) return;
-    const info = explicitos.get(o.name);
+  const registrar = (o, info, grupoLuz) => {
     const grupos = info ? info.grupos : String(grupoLuz).split(",").map((s) => s.trim()).filter(Boolean);
     let tecla = null;
-    if (info && info.tecla) tecla = raiz.getObjectByName(info.tecla);
+    if (info) tecla = info.tecla ? raiz.getObjectByName(info.tecla) : null;
     else o.traverse((h) => { if (!tecla && /_Tecla$/.test(h.name || "")) tecla = h; });
     const reg = { nodo: o, grupos, tecla, encendido: false, faseGrado: 0 };
     interruptores.push(reg);
     o.traverse((d) => {
       excluidos.add(d);
-      if (d.isMesh) { tocables.push(d); mapaTocable.set(d, { tipo: "interruptor", ref: reg }); }
+      if (d.isMesh && !mapaTocable.has(d)) { tocables.push(d); mapaTocable.set(d, { tipo: "interruptor", ref: reg }); }
     });
+  };
+  for (const info of ordenarInterruptores(D.interruptores || [])) {
+    if (!(info.tecla && info.tecla === info.nodo)) break;            // ordenadas: las teclas van primero
+    const o = raiz.getObjectByName(info.nodo);
+    if (o && !interruptores.some((r) => r.nodo === o)) registrar(o, info, null);
+  }
+  raiz.traverse((o) => {
+    const grupoLuz = o.userData && o.userData.grupo_luz;
+    if (!grupoLuz || interruptores.some((r) => r.nodo === o)) return;
+    if (excluidos.has(o) && !explicitos.has(o.name)) return;          // hija de un interruptor ya registrado
+    registrar(o, explicitos.get(o.name), grupoLuz);
   });
 
   // --- luces y sus grupos (deducidos por recinto si el JSON todavía no trae grupos_luz) ---
   const { luces: datosLuces, grupos: datosGrupos } = deducirGrupos(D);
+  // encendidoInicial: el estado de autor (grupos_luz[].encendido), que aplicarMomento() respeta al cambiar de momento.
   const gruposLuz = new Map(datosGrupos.map((g) => [g.id, {
-    ...g, luces: [], clones: new Map(), intensidad: g.encendido ? 1 : 0,
+    ...g, encendidoInicial: Boolean(g.encendido), luces: [], clones: new Map(), intensidad: g.encendido ? 1 : 0,
     _desde: g.encendido ? 1 : 0, _hasta: g.encendido ? 1 : 0, faseMs: FUNDIDO_MS, // ya "asentado": sin fundido al iniciar
   }]));
   const lucesTHREE = [];
+  const ampolletas = [];            // nodos emisivos: quedan fuera de la fusión y van a `sueltos` (se dibujan aparte)
   for (const l of datosLuces) {
-    const luzTHREE = crearLuzTHREE(THREE, l);
-    lucesTHREE.push(luzTHREE);
+    const lucesDeEsta = crearLucesTHREE(THREE, l);    // una puntual, o un foco si trae cono_deg
+    lucesTHREE.push(...lucesDeEsta);
     if (l.tipo !== "puntual") continue;
     const grupo = gruposLuz.get(l.grupo);
     if (!grupo) continue;
-    grupo.luces.push(luzTHREE);
+    grupo.luces.push(...lucesDeEsta);
     const nodoAmpolleta = raiz.getObjectByName(l.ampolleta);
     if (!nodoAmpolleta || !nodoAmpolleta.isMesh) {
       console.warn("[tour] no se encontró la ampolleta", l.ampolleta, "de", l.nombre);
       continue;
     }
     excluidos.add(nodoAmpolleta);
+    if (!ampolletas.includes(nodoAmpolleta)) ampolletas.push(nodoAmpolleta);
     const base = Array.isArray(nodoAmpolleta.material) ? nodoAmpolleta.material[0] : nodoAmpolleta.material;
     let clon = grupo.clones.get(base.uuid);
     if (!clon) {
@@ -139,8 +162,14 @@ export function prepararEscena(raiz, D) {
   // Aplica de una vez la intensidad inicial (encendido/apagado según grupos_luz o la deducción): el fundido
   // de pasoMundo() solo corre cuando `faseMs < FUNDIDO_MS`, y los grupos nacen ya "asentados".
   for (const grupo of gruposLuz.values()) {
-    for (const luz of grupo.luces) luz.intensity = (luz.userData.potenciaW || 40) * INTENSIDAD_POR_WATT * grupo.intensidad;
+    for (const luz of grupo.luces) luz.intensity = intensidadBase(luz) * grupo.intensidad;
     for (const clon of grupo.clones.values()) clon.emissiveIntensity = 1.4 * grupo.intensidad;
+  }
+  // Estado inicial de cada interruptor según sus grupos, con la tecla ya inclinada hacia ese lado.
+  for (const reg of interruptores) {
+    reg.encendido = interruptorEncendido(reg.grupos, gruposLuz);
+    reg._grados = reg.encendido ? TILT_TECLA_DEG : -TILT_TECLA_DEG;
+    if (reg.tecla) reg.tecla.rotation.x = (reg._grados * Math.PI) / 180;
   }
 
   // --- fusión de las mallas estáticas por material, con la transformación de mundo horneada ---
@@ -166,7 +195,19 @@ export function prepararEscena(raiz, D) {
 
   // Los móviles e interruptores quedan sueltos en la raíz de la escena con su transformación de mundo
   // (Object3D.attach preserva la posición mundial al cambiar de padre).
-  const sueltos = [...moviles.map((v) => v.nodo), ...interruptores.map((i) => i.nodo)].filter(Boolean);
+  // Una tecla con registro propio sigue siendo hija de su placa (gira en su X local, relativa a la placa): sólo se
+  // sueltan los interruptores sin otro interruptor por encima.
+  // Las ampolletas también se sueltan (antes quedaban fuera de la fusión y de la escena: no se dibujaba ningún
+  // filamento), salvo las que ya cuelgan de un móvil o de un interruptor suelto, que viajan con él.
+  const nodosInterruptor = new Set(interruptores.map((i) => i.nodo));
+  const bajoOtro = (o) => { for (let p = o.parent; p; p = p.parent) if (nodosInterruptor.has(p)) return true; return false; };
+  const nodosMoviles = new Set(moviles.map((v) => v.nodo).filter(Boolean));
+  const bajoSuelto = (o) => {
+    for (let p = o.parent; p; p = p.parent) if (nodosInterruptor.has(p) || nodosMoviles.has(p)) return true;
+    return false;
+  };
+  const sueltos = [...moviles.map((v) => v.nodo), ...interruptores.map((i) => i.nodo).filter((n) => !bajoOtro(n)),
+    ...ampolletas.filter((a) => !bajoSuelto(a))].filter(Boolean);
 
-  return { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables, mapaTocable };
+  return { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables, mapaTocable, ampolletas };
 }

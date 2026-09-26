@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(RAIZ, "build"))
 # bpy/bmesh/mathutils simulados: sólo se necesitan las constantes de los scripts de las fases 2 y 3
 for mod in ("bpy", "bmesh", "mathutils"):
     m = types.ModuleType(mod)
-    m.Vector = object
+    m.Vector = m.Matrix = object
     sys.modules[mod] = m
 import importlib.util  # noqa: E402
 
