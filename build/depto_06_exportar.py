@@ -54,8 +54,9 @@ MANIFIESTO = os.path.join(EXPORTS, "manifest.json")
 TEX_MANIFIESTO = os.path.join(RAIZ, "assets", "texturas", "polyhaven", "manifest.json")
 RADIO = 0.20                          # compuerta 0 / ADR 0002: radio de la cámara del tour con el mobiliario
 OJO = 1.60                            # altura de los ojos (la de las cámaras de revisión)
-CONTRATO = "2.1"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
-                                      # sigue siendo la mayor (2), por compatibilidad del visor
+CONTRATO = "2.2"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
+                                      # sigue siendo la mayor (2), por compatibilidad del visor. 2.2 (corrección 07c,
+                                      # ronda 2): enciende / movil (luz de la nevera), alcance_m y entornos[]
 INICIO, MIRAR = "Hall", (190, 250)    # crítico de recorrido, fase 3: hall con 0,45 m de holgura, hacia el living
 DETRAS_DE_PUERTA = {"Dorm1", "Dorm2", "Bano1", "Bano2", "Paso_D1", "Paso_D2", "Balcon"}
 
@@ -123,8 +124,9 @@ def colisiones(root):
         m["etiqueta"] = o.get("etiqueta", "")
         m["recinto"] = o.get("recinto", "")
         # Contrato v2, sección 1 (corrección 07b): cajones detrás de una corredera. depende_de = hoja que debe estar
-        # corrida para abrir el cajón; bloquea = cajones que la hoja cierra antes de moverse.
-        for k in ("depende_de", "bloquea"):
+        # corrida para abrir el cajón; bloquea = cajones que la hoja cierra antes de moverse. Contrato 2.2 (corrección
+        # 07c, ronda 2): enciende = grupos de luz que se prenden mientras la pieza está abierta (la nevera).
+        for k in ("depende_de", "bloquea", "enciende"):
             if k in o:
                 m[k] = [n for n in str(o[k]).split(",") if n]
         m["hijos"] = [h.name for h in o.children]
@@ -138,12 +140,14 @@ def luces():
     out = []
     for o in bpy.data.objects:
         if o.type == "LIGHT" and o.name.startswith("Depto_Luz_"):
-            if o.data.type == "POINT":
+            if o.data.type in ("POINT", "SPOT"):   # SPOT: la luz lineal bajo los altos (corrección 07c, ronda 2)
                 luz = {"nombre": o.name, "tipo": "puntual", "posicion": [r4(c) for c in gl(o.location)],
                        "potencia_w": o.data.energy, "grupo": o.get("grupo", ""),
                        "color": [r4(c) for c in o.data.color], "ampolleta": o.get("ampolleta", "")}
                 if "cono_deg" in o:              # contrato v2.1: luz que deja salir un domo o un foco (visor)
                     luz.update(cono_deg=r4(o["cono_deg"]), direccion=[r4(c) for c in gl(Vector(o["direccion"]))])
+                if "alcance_m" in o:             # contrato 2.2: distancia a la que el visor la corta (sin sombras)
+                    luz["alcance_m"] = r4(o["alcance_m"])
                 out.append(luz)
             elif o.data.type == "SUN":
                 d = o.matrix_world.to_3x3() @ Vector((0, 0, -1))
@@ -182,11 +186,23 @@ def prueba_luces(datos, objs):
             fallos.append(f"{l['nombre']}: grupo {l['grupo']!r} no está en grupos_luz")
         if l["ampolleta"] not in nombres:
             fallos.append(f"{l['nombre']}: la ampolleta {l['ampolleta']!r} no es un nodo exportado")
-    for g in ids:
-        if not any(l["grupo"] == g for l in puntuales):
-            fallos.append(f"grupo {g} sin luces")
-        if not any(g in i["grupos"] for i in datos["interruptores"]):
-            fallos.append(f"grupo {g} sin interruptor ni lámpara")
+    por_nodo = {m["nodo"]: m for m in datos["moviles"]}
+    for g in datos["grupos_luz"]:
+        gid = g["id"]
+        if not any(l["grupo"] == gid for l in puntuales):
+            fallos.append(f"grupo {gid} sin luces")
+        if "movil" in g:                      # contrato 2.2: lo prende un móvil al abrirse, no un interruptor
+            m = por_nodo.get(g["movil"])
+            if m is None or gid not in m.get("enciende", []):
+                fallos.append(f"grupo {gid}: el móvil {g['movil']} no está exportado o no lo nombra en enciende")
+            if g["encendido"]:
+                fallos.append(f"grupo {gid}: un grupo de móvil nace apagado (la pieza nace cerrada)")
+        elif not any(gid in i["grupos"] for i in datos["interruptores"]):
+            fallos.append(f"grupo {gid} sin interruptor ni lámpara")
+    for m in datos["moviles"]:
+        for gid in m.get("enciende", []):
+            if gid not in ids:
+                fallos.append(f"{m['nodo']}: enciende nombra el grupo {gid}, que no existe")
     for i in datos["interruptores"]:
         if i["nodo"] not in nombres:
             fallos.append(f"interruptor {i['nodo']} no es un nodo exportado")
@@ -332,11 +348,19 @@ def _solo_giro_z(M):
             and abs(R.determinant() - 1.0) < 1e-5)
 
 
+_ISLAS = {}      # nombre -> [(isla, aabb local)]: las islas no cambian durante la fase (el giro va en la matriz)
+
+
+def _islas(o):
+    if o.name not in _ISLAS:
+        _ISLAS[o.name] = [(isla, G.aabb(isla)) for isla in G.islas_locales(o)]
+    return _ISLAS[o.name]
+
+
 def _cajas(o, M):
     """Islas de la malla de o con la matriz M -> [(4 esquinas en planta, z0, z1, aabb de mundo)]."""
     out = []
-    for isla in G.islas_locales(o):
-        x0, x1, y0, y1, z0, z1 = G.aabb(isla)
+    for isla, (x0, x1, y0, y1, z0, z1) in _islas(o):
         if _solo_giro_z(M):
             esq = [(M @ Vector((x, y, 0.0)))[:2] for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1))]
             zs = (z0 + M.translation.z, z1 + M.translation.z)
@@ -449,9 +473,77 @@ def prueba_aperturas(root):
         pares += 1
         if pa > TOL_APERTURA:
             fallos.append(f"{a.name} y {b.name} abiertos a la vez se cruzan {pa * 1000:.1f} mm")
+    f_giro, inf_giro = prueba_giros(moviles, cajas)
+    fallos += f_giro
     informe = {"moviles": len(moviles), "estaticos": len(estaticos), "pares_abiertos": pares,
-               "max_mm": round(max((p for p, _ in peor.values()), default=0.0) * 1000, 2)}
+               "max_mm": round(max((p for p, _ in peor.values()), default=0.0) * 1000, 2), "giros": inf_giro}
     return fallos, informe
+
+
+# ---------------------------------------------------------------------------
+# Prueba del recorrido (corrección 07c, ronda 2): la prueba de aperturas sólo miraba los estados finales, y
+# PuertaLavaplatos1 atravesaba el frente de Cajon3 abierto entre 11° y 60° de su giro (18 mm; 0 mm a 95°). Aquí cada
+# móvil se mueve de cerrado a abierto, en pasos de PASO_GIRO_DEG (hojas) o PASO_CORREDERA_M (cajones y correderas), y
+# en cada paso no puede entrar más de TOL_APERTURA en los demás móviles de su recinto, en los estados en que el visor
+# los puede dejar mientras se mueve (bloqueos.js): lo que nombra en `bloquea`, cerrado (el visor lo cierra antes); lo
+# que nombra en `depende_de`, abierto; si tiene `depende_de`, las hojas que lo nombran en `bloquea`, cerradas; el resto,
+# abierto y cerrado.
+# ---------------------------------------------------------------------------
+PASO_GIRO_DEG = 2.0
+PASO_CORREDERA_M = 0.02
+
+
+def _recorrido(o):
+    """[(matriz de mundo, texto)] del móvil o (sin padre) de cerrado a abierto, ambos incluidos."""
+    if "puerta" in o:
+        amax = o["angulo_abierta_deg"]
+        n = max(1, math.ceil(abs(amax) / PASO_GIRO_DEG))
+        return [(Matrix.Translation(o.location) @ Matrix.Rotation(math.radians(amax * k / n), 4, "Z"),
+                 f"a {abs(amax) * k / n:.0f}°") for k in range(n + 1)]
+    eje = Vector(o["eje_apertura"]) * o["recorrido_m"]
+    cerrada = o.location - (eje if o.get("abierta") else Vector())
+    n = max(1, math.ceil(o["recorrido_m"] / PASO_CORREDERA_M))
+    return [(Matrix.Translation(cerrada + eje * (k / n)), f"a {o['recorrido_m'] * k / n * 100:.0f} cm")
+            for k in range(n + 1)]
+
+
+def _estados_permitidos(m, o):
+    lista = lambda x, k: [n for n in str(x.get(k, "")).split(",") if n]   # noqa: E731
+    if o.name in lista(m, "bloquea"):
+        return (False,)
+    if o.name in lista(m, "depende_de"):
+        return (True,)
+    if lista(m, "depende_de") and m.name in lista(o, "bloquea"):
+        return (False,)
+    return (False, True)
+
+
+def prueba_giros(moviles, cajas):
+    fallos, peor, pasos = [], {}, 0
+    for m in moviles:
+        otros = [(o, est) for o in moviles if o is not m and o.get("recinto") and o.get("recinto") == m.get("recinto")
+                 for est in _estados_permitidos(m, o)]
+        obst = [(o.name, est, b) for o, est in otros for b in cajas(o, est)]
+        if not obst:
+            continue
+        for M, etq in _recorrido(m):
+            pasos += 1
+            mias = _cajas_movil(m, M)
+            caja = (min(a[3][0] for a in mias), max(a[3][1] for a in mias), min(a[3][2] for a in mias),
+                    max(a[3][3] for a in mias), min(a[1] for a in mias), max(a[2] for a in mias))
+            cerca = [(n, est, b) for n, est, b in obst
+                     if b[3][0] < caja[1] and caja[0] < b[3][1] and b[3][2] < caja[3] and caja[2] < b[3][3]
+                     and b[1] < caja[5] and caja[4] < b[2]]
+            for a in mias:
+                for n, est, b in cerca:
+                    p = _pen(a, b)
+                    if p > peor.get(m.name, (0.0,))[0]:
+                        peor[m.name] = (p, n, est, etq)
+        if m.name in peor and peor[m.name][0] > TOL_APERTURA:
+            p, n, est, etq = peor[m.name]
+            fallos.append(f"{m.name} al moverse ({etq}) entra {p * 1000:.1f} mm en {n} "
+                          f"{'abierto' if est else 'cerrado'}")
+    return fallos, {"pasos": pasos, "max_mm": round(max((v[0] for v in peor.values()), default=0.0) * 1000, 2)}
 
 
 def prueba_nevera(root):
@@ -500,6 +592,85 @@ def pruebas(datos):
         fallos.append("con la entrada abierta no se llega al palier")
     fallos += prueba_muebles(datos)
     return fallos, {"tal_cual": tal_cual, "todo_cerrado": cerradas, "entrada_abierta": entrada}
+
+
+# ---------------------------------------------------------------------------
+# Entorno local de la cocina (corrección 07c, ronda 2; contrato 2.2, sección 6). El visor usaba para todos los
+# materiales el RoomEnvironment de three.js (un estudio genérico con cajas y paneles): con rugosidad 0,25-0,35 la nevera
+# reflejaba cajas que no existen en la cocina (nubes oscuras de 7-15 cm en la puerta) y la visera de la campana se leía
+# como latón. Aquí se renderiza en Cycles (CPU, pocas muestras) un equirectangular de la cocina desde ENTORNO["centro"],
+# con las luces que nacen encendidas (el estado de la tarde en el visor), y se publica junto al modelo; el visor lo usa
+# como envMap de ENTORNO["materiales"] en las mallas dentro de ENTORNO["caja"].
+# ---------------------------------------------------------------------------
+ENTORNO = dict(
+    id="cocina", archivo="tex/entorno_cocina.jpg", resolucion=(512, 256), muestras=48,
+    centro=(360.0, 235.0), z=1.30,          # diseño: px del plano y m; centro de la cocina, a media altura entre la
+                                            # cubierta y los altos (el tramo de la nevera y la visera)
+    caja=(P.X["T3_E"], P.X["E_FORRO"], P.Y["T5_S"], P.Y["COC_N"]),   # recinto Cocina del plano (px): mallas de los
+                                            # materiales de abajo cuyo centro cae aquí
+    materiales=("Depto_Mat_NeveraAcero", "Depto_Mat_Acero", "Depto_Mat_AceroInox"),
+    percentil=0.97, blanco=0.90,            # escala: el 97 % de los píxeles queda bajo 0,90 lineal (el resto, las
+                                            # ampolletas y la ventana, se recorta en el JPEG de 8 bits)
+)
+
+
+def entorno_cocina(scene, grupos):
+    """Renderiza ENTORNO en exports/web/<archivo> y devuelve su registro del contrato (sección 6). No guarda el .blend:
+    la fase 6 no modifica el maestro."""
+    import numpy as np
+    E_ = ENTORNO
+    apagados = {g["id"] for g in grupos if not g.get("encendido")}
+    previo = {o.name: o.hide_render for o in bpy.data.objects if o.type == "LIGHT"}
+    for o in bpy.data.objects:
+        if o.type == "LIGHT" and o.get("grupo") in apagados:
+            o.hide_render = True
+    cd = bpy.data.cameras.new("_Entorno")
+    cd.type = "PANO"
+    cd.cycles.panorama_type = "EQUIRECTANGULAR"          # Blender 3.6: en los ajustes de Cycles de la cámara
+    cam = bpy.data.objects.new("_Entorno", cd)
+    scene.collection.objects.link(cam)
+    cam.location = (*P.a_blender(*E_["centro"]), E_["z"])
+    cam.rotation_euler = (math.pi / 2, 0.0, -math.pi / 2)     # adelante = +X de Blender (+X de glTF), arriba = +Z
+    r = scene.render
+    r.engine = "CYCLES"
+    scene.cycles.device = "CPU"
+    scene.cycles.samples = E_["muestras"]
+    scene.cycles.use_denoising = True
+    scene.cycles.max_bounces = 4
+    r.resolution_x, r.resolution_y = E_["resolucion"]
+    r.resolution_percentage = 100
+    r.image_settings.file_format = "OPEN_EXR"
+    r.image_settings.color_depth = "32"
+    scene.camera = cam
+    tmp = os.path.join(bpy.app.tempdir or "/tmp", "_entorno_cocina.exr")
+    r.filepath = tmp
+    bpy.ops.render.render(write_still=True)
+    im = bpy.data.images.load(tmp)
+    px = np.array(im.pixels[:], dtype=np.float32).reshape(-1, 4)
+    lum = px[:, :3] @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    escala = E_["blanco"] / max(float(np.quantile(lum, E_["percentil"])), 1e-6)
+    px[:, :3] *= escala
+    im.pixels.foreach_set(px.ravel())
+    scene.view_settings.view_transform = "Standard"
+    scene.view_settings.look = "None"
+    scene.view_settings.exposure = 0.0
+    r.image_settings.file_format = "JPEG"
+    r.image_settings.quality = 92
+    r.image_settings.color_mode = "RGB"
+    ruta = os.path.join(WEB, E_["archivo"])
+    im.save_render(ruta, scene=scene)
+    for n, h in previo.items():
+        bpy.data.objects[n].hide_render = h
+    bpy.data.objects.remove(cam)
+    x0, x1, y0, y1 = E_["caja"]
+    a, b = P.a_blender(x0, y0), P.a_blender(x1, y1)
+    reg = {"id": E_["id"], "imagen": E_["archivo"], "centro": [r4(c) for c in gl(Vector((*P.a_blender(*E_["centro"]),
+                                                                                         E_["z"])))],
+           "caja": [r4(min(a[0], b[0])), r4(max(a[0], b[0])), r4(min(-a[1], -b[1])), r4(max(-a[1], -b[1]))],
+           "materiales": list(E_["materiales"]), "escala": r4(escala), "muestras": E_["muestras"],
+           "luces": "grupos que nacen encendidos (tarde)"}
+    print("CHECK entorno local:", reg, f"{os.path.getsize(ruta) / 1e3:.0f} kB")
+    return reg
 
 
 def exportar(objs):
@@ -585,7 +756,7 @@ def main():
         "inicio": {"posicion": punto_gl(R.PUNTOS[INICIO]), "mirar": punto_gl(MIRAR)},
         "recintos": {n: punto_gl(p) for n, p in R.PUNTOS.items()},
         "estaticos": estaticos, "moviles": moviles, "luces": luces(),
-        "grupos_luz": [{k: g[k] for k in ("id", "etiqueta", "recinto", "encendido", "kelvin") if k in g}
+        "grupos_luz": [{k: g[k] for k in ("id", "etiqueta", "recinto", "encendido", "kelvin", "movil") if k in g}
                        for g in grupos],
         "interruptores": interruptores(objs),
         "recintos_etiquetas": json.loads(scene.get("depto_recintos_etiquetas", "{}")),
@@ -613,6 +784,7 @@ def main():
                          f"{indice['total_bytes'] / 1e6:.1f} MB, {n_arch} archivos.")
     with open(os.path.join(EXPORTS, "depto_web_armado.glb"), "wb") as fh:   # lo reimporta tools/validar_glb.py
         fh.write(armar_glb(WEB))
+    datos["entornos"] = [entorno_cocina(scene, grupos)]
     with open(COLISIONES, "w") as fh:
         json.dump(datos, fh, ensure_ascii=False, separators=(",", ":"))
     shutil.copy(COLISIONES, os.path.join(WEB, "depto_colisiones.json"))
