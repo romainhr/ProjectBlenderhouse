@@ -173,3 +173,27 @@ Decisiones:
 7. **Acero cepillado:** sólo el rayado submilimétrico (paso alto de 0,5 mm) y una nube suave; la visera de la campana
    y el marco del horno llevan el UV girado 90° para que el cepillado corra a lo largo de la pieza
    (`depto_geom.uv_mundo(girar=True)`).
+
+### Ronda 2 de la corrección 07c (2026-09-26)
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 07c. **Revisor humano:** Romain Ange,
+  pendiente.
+
+8. **Torre como despensa de dos hojas por nivel:** el símbolo «<» del plano se lee como dos hojas de ≈0,29 m con las
+   bisagras en los extremos norte y sur, que se encuentran al centro (243,1 px). Sale el horno de la ronda 1: la torre
+   de 0,58 m (0,544 m libres) no admite un horno empotrable comercial. Cuatro hojas (`PuertaTorre{Baja,Alta}{N,S}`,
+   junta de niveles a 1,50 m) en vez de dos: pasan de 37 a 39 móviles. Las del norte comparten la junta con
+   `PuertaLavaplatos2` y `PuertaAltaE3`, que quedan con tope a 90° y 80°. Queda para el usuario si el horno va bajo el
+   anafe (el sitio lo promete; habría que reordenar los módulos base para dejar uno de 0,60).
+9. **Prueba del recorrido de cada móvil** (`prueba_giros`, fase 6): cada pieza se mueve cada 2° o 2 cm contra los
+   móviles de su recinto, abiertos y cerrados, en los estados que el visor permite durante ese movimiento
+   (`bloqueos.js`). La prueba de estados finales no veía que `PuertaLavaplatos1` cruzaba 18 mm el cajón 3 abierto a
+   mitad de su giro; ahora esa hoja lo nombra en `bloquea`.
+10. **Contrato 2.2:** `enciende` en los móviles y `movil` en los grupos (la luz interior de la nevera, 4 W a 5000 K,
+    que la puerta prende al abrirse; sin interruptor ni fila en el panel), `alcance_m` en las luces (el visor no
+    calcula sombras: la de la nevera se corta a 0,9 m) y `entornos[]` (sección 6): un equirectangular de la cocina
+    renderizado en Cycles en la fase 6 que el visor usa como `envMap` del acero de la cocina en vez del
+    `RoomEnvironment` genérico, que dibujaba sus cajas en la nevera. Se prefirió a un cubemap en tiempo real (una
+    pasada de render más por cuadro) y a hornear el reflejo en la textura (fijo, no cambia con el punto de vista).
+11. **Revisión sin adaptación cromática:** los renders de revisión dejan de aplicar la pendiente fija de las vistas
+    con lámparas, que el visor no tiene; la luz lineal bajo los altos es un foco hacia abajo también en Blender.

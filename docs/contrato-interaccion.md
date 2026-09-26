@@ -1,9 +1,10 @@
 # Contrato de interacción: modelo (Blender) ↔ visor web
 
-Versión 2.1 (2026-09-26; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
-temperatura y regla del momento del día agregados en la corrección 07b, ADR 0004). El JSON trae `"version": 2`
-(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.1"`
-(versión completa, desde la ronda 2 de la corrección 07b). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
+Versión 2.2 (2026-09-26; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
+temperatura y regla del momento del día agregados en la corrección 07b, ADR 0004; `enciende`, grupos de móvil,
+`alcance_m` y entornos locales, sección 6, en la ronda 2 de la corrección 07c). El JSON trae `"version": 2`
+(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.2"`
+(versión completa; `"2.1"` desde la ronda 2 de la corrección 07b hasta la ronda 1 de la 07c). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
 
 ## 1. Móviles (`moviles[]`, ya existe, se amplía)
 
@@ -17,7 +18,8 @@ Campos nuevos (propiedades de Blender con el mismo nombre, se copian tal cual):
 | `etiqueta` | texto corto en español | Pista del visor: "Abrir cajón de cubiertos". |
 | `recinto` | nombre de `recintos` | Para la lista de la interfaz y para apagar la pista fuera del recinto. |
 | `depende_de` | lista de `nodo` (opcional) | Hojas que deben estar corridas para abrir la pieza (cajones de clóset: su hoja A). |
-| `bloquea` | lista de `nodo` (opcional) | Piezas que la hoja tapa al moverse (cada hoja de un clóset de repisas: sus cajones). |
+| `bloquea` | lista de `nodo` (opcional) | Piezas que la hoja tapa al moverse (cada hoja de un clóset de repisas: sus cajones; `PuertaLavaplatos1`: `Cajon3Sup` y `Cajon3Inf`, que su canto cruza al girar). |
+| `enciende` | lista de `id` de `grupos_luz` (opcional, 2.2) | Grupos que se prenden mientras la pieza está abierta y se apagan al cerrarla (la puerta de la nevera: `cocina_nevera`). |
 
 Reglas del modelo:
 - El origen del objeto es el eje de giro (bisagra) o el punto de reposo (corredera). El giro de bisagra es en torno a +Z de Blender (+Y de glTF).
@@ -28,12 +30,19 @@ Reglas del modelo:
   cazoleta, y la hoja cuelga de un costado, divisor o montante del mueble. La bisagra va del lado libre cuando se
   puede; si del lado de la bisagra hay muro, torre o esquina, se agrega un rellenador (`ALTOS_RELLENO`,
   `RELLENO_ESQUINA`) o se limita el ángulo (`ANGULO_MUEBLE_TORRE`, `ANGULO_TORRE`), y `prueba_aperturas` lo verifica.
-  Excepciones con nombre (corrección 07c, ronda 1): `PuertaAltaN1` (bisagra del lado de T3, detrás del rellenador),
-  `PuertaAltaE3` (junto a la torre, tope a 90°), `PuertaLavaplatos2` (junto a la torre) y las dos puertas de la torre,
-  `PuertaTorreBaja` y `PuertaDespensa` (junto a la nevera, tope a 80°). La fase 6 prueba que ninguna hoja ni cajón,
-  abierto en el estado que permite este contrato (con las hojas de su `depende_de` corridas y las demás como en el
-  modelo), entre más de 1 mm en una caja estática o en otro móvil, y que dos hojas de mueble, o una hoja y un cajón del
-  mismo recinto, abiertos a la vez no se crucen (`prueba_aperturas` en `build/depto_06_exportar.py`).
+  Excepciones con nombre (corrección 07c, rondas 1 y 2): `PuertaAltaN1` (bisagra del lado de T3, detrás del
+  rellenador), `PuertaAltaE3` (junto a la torre, tope a 80°: comparte la junta con la hoja alta norte de la torre),
+  `PuertaLavaplatos2` (junto a la torre, tope a 90°: comparte la junta con la hoja baja norte de la torre) y las cuatro
+  hojas de la torre, `PuertaTorre{Baja,Alta}{N,S}` (dos por nivel, con las bisagras en los extremos norte y sur como el
+  símbolo «<» del plano, tope a 90°; hasta la ronda 1, `PuertaTorreBaja` y `PuertaDespensa`, una hoja por nivel con la
+  bisagra al sur). La fase 6 prueba que ninguna hoja ni cajón, abierto en el estado que permite este contrato (con las
+  hojas de su `depende_de` corridas y las demás como en el modelo), entre más de 1 mm en una caja estática o en otro
+  móvil; que dos hojas de mueble, o una hoja y un cajón del mismo recinto, abiertos a la vez no se crucen, y que
+  tampoco se crucen **mientras se mueven**: cada pieza se lleva de cerrada a abierta cada 2° (hojas) o cada 2 cm
+  (cajones y correderas) contra los demás móviles de su recinto, abiertos y cerrados, salvo los estados que el visor no
+  permite durante ese movimiento (lo que la pieza nombra en `bloquea`, cerrado; lo de su `depende_de`, abierto)
+  (`prueba_aperturas` y `prueba_giros` en `build/depto_06_exportar.py`). Hasta la ronda 1 sólo se probaban los estados
+  finales, y `PuertaLavaplatos1` cruzaba 18 mm el frente de `Cajon3Sup` abierto entre 11° y 60° de su giro.
 - Cajones detrás de correderas (corrección 07b): un móvil con `depende_de` sólo se abre si esas hojas están corridas
   del todo y cualquier otra hoja que lo nombre en `bloquea` está cerrada (en un clóset de dos hojas, la B corrida tapa
   la columna de cajones). Antes de mover una hoja con `bloquea`, el visor cierra los cajones abiertos que tapa y la
@@ -47,15 +56,23 @@ Cada luz puntual trae además `grupo` (id de `grupos_luz`), `color` [r, g, b] li
 ```json
 "grupos_luz": [
   {"id": "living_techo", "etiqueta": "Living · techo", "recinto": "Living", "encendido": true, "kelvin": 2700},
-  {"id": "dorm1_velador_izq", "etiqueta": "Dormitorio principal · velador izquierdo", "recinto": "Dorm1", "encendido": false, "kelvin": 2700}
+  {"id": "dorm1_velador_izq", "etiqueta": "Dormitorio principal · velador izquierdo", "recinto": "Dorm1", "encendido": false, "kelvin": 2700},
+  {"id": "cocina_nevera", "etiqueta": "Cocina · luz de la nevera", "recinto": "Cocina", "encendido": false, "kelvin": 5000, "movil": "Depto_Mueble_Nevera_Puerta"}
 ]
 ```
+
+- `movil` (2.2, opcional): el grupo no tiene interruptor ni lámpara; lo prende el móvil nombrado mientras está abierto
+  (su `enciende`, sección 1). Nace apagado, no cambia con el momento del día y el panel de luces del visor no lo
+  muestra (`gruposDelPanel`, `estadoGruposParaMomento` y `gruposDeMovil` en `web/src/tour/js/luces.js`).
+- `alcance_m` (2.2, opcional, en `luces[]`): distancia a la que el visor corta la luz (`distance` de three.js; si
+  falta, 7 m). La luz de la nevera trae 0,9 m: el visor no calcula sombras y, sin límite, alumbraba la cocina a través
+  del cuerpo de la nevera.
 
 - `color` es sRGB **lineal** (primarias Rec. 709, blanco D65, canal mayor = 1) y sale de `kelvin`
   (`build/depto_color.py`: radiancia de Planck contra CIE 1931; calculado, no medido): 2700 K ≈ [1.0, 0.42, 0.10] y
   3000 K ≈ [1.0, 0.48, 0.15]. Hasta la corrección 07b se escribía [1.0, 0.72, 0.42], que es el sRGB codificado de
   ~3000 K: usado como lineal daba ~4200 K.
-- 2700 K en general; cocina y baños a 3000 K.
+- 2700 K en general; cocina y baños a 3000 K; la luz interior de la nevera, 5000 K (LED usual; ronda 2 de la 07c).
 - Luces con pantalla (domos de techo, lámpara de arco, colgante del balcón, focos de los rieles y los tramos de la
   luz lineal bajo los altos de la cocina): `cono_deg` (semiángulo, 60° en domos y en la luz lineal, 35° en focos) y
   `direccion` (vector glTF del eje; hacia abajo en los domos y en la luz lineal). El
@@ -63,7 +80,9 @@ Cada luz puntual trae además `grupo` (id de `grupos_luz`), `color` [r, g, b] li
   domo cerrado recibía ~20 veces la luz del piso. Hasta la ronda 2 de la corrección 07b llevaban además una puntual
   con el 15 % para el rebote en el cielo: se quitó porque cada luz cuesta ~1,3-1,7 ms por cuadro en una GPU
   integrada (ADR 0004, adenda de la ronda 2). Las jaulas, los veladores y los apliques no traen cono. En Blender
-  todas son puntuales (la pantalla hace la sombra).
+  todas son puntuales (la pantalla hace la sombra), salvo la luz lineal bajo los altos de la cocina, que desde la
+  ronda 2 de la corrección 07c es un foco (SPOT) de 2 × `cono_deg` hacia abajo, como en el visor: puntual, a 8,5 mm
+  bajo el piso de los altos, emitía también hacia arriba y quemaba los platos de N1.
 - El visor clona el material emisivo de cada `ampolleta` para que cada grupo se apague por separado, y dibuja las
   ampolletas como nodos sueltos (fuera de la fusión estática).
 - **Momento del día:** al aplicar un momento, cada grupo queda encendido sólo si el momento prende las luces
@@ -90,6 +109,7 @@ desde los pies de la cama.
 | `paso_d2` | colgante de jaula de cable corto (nuevo en 07b) | Paso_D2 | 2700 K | sí |
 | `bano1`, `bano2` | colgante de jaula | Bano1, Bano2 | 3000 K | sí |
 | `balcon` | colgante de domo Ø 0,28 sobre la mesa bistró, bajo la losa del balcón de arriba (nuevo en 07b) | Balcon | 2700 K | sí |
+| `cocina_nevera` | luz interior de la nevera (difusor en el techo, 4 W; nuevo en la ronda 2 de la 07c): la prende la puerta al abrirse (`movil`) | Cocina | 5000 K | no |
 
 La etiqueta de cada grupo empieza con el nombre del recinto de `recintos_etiquetas` ("Dormitorio principal ·
 techo"); la fase 4 lo prueba.
@@ -147,3 +167,29 @@ y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
 Etiquetas (fase 07b, `RECINTOS_ETIQUETAS` en `build/depto_04_mobiliario.py`): Hall, Living, Cocina, Dormitorio
 principal (Dorm1), Segundo dormitorio (Dorm2), Clósets del principal (Paso_D1), Clósets del segundo (Paso_D2),
 Baño principal (Bano1), Segundo baño (Bano2), Balcón, Palier y Lavadora (Nicho_LV).
+
+## 6. Entornos locales (`entornos[]`, 2.2)
+
+Mapas de reflejo de un recinto, renderizados en Blender para los metales que se ven de cerca (corrección 07c, ronda 2).
+Con el entorno genérico del visor (`RoomEnvironment` de three.js, un estudio con cajas y paneles), el acero cepillado
+de la nevera reflejaba cajas que no existen en la cocina (nubes oscuras de 7-15 cm) y la visera de la campana se leía
+como latón.
+
+```json
+"entornos": [
+  {"id": "cocina", "imagen": "tex/entorno_cocina.jpg", "centro": [0.288, 1.3, 1.660],
+   "caja": [-0.921, 1.878, 0.395, 2.766], "materiales": ["Depto_Mat_NeveraAcero", "Depto_Mat_Acero", "Depto_Mat_AceroInox"],
+   "escala": 7.8, "muestras": 48, "luces": "grupos que nacen encendidos (tarde)"}
+]
+```
+
+- `imagen`: equirectangular de 512 × 256 (JPEG sRGB, junto a las texturas del modelo), renderizado en Cycles (CPU, 48
+  muestras con eliminación de ruido) desde `centro` (glTF) con las luces de los grupos que nacen encendidos; el
+  centro de la imagen mira hacia +X de glTF y la derecha hacia +Z, la convención de `EquirectangularReflectionMapping`.
+  `escala` es el factor que llevó el percentil 97 de la luminancia a 0,9 antes de codificar (informativo).
+- `caja` [xmin, xmax, zmin, zmax] (glTF) y `materiales`: el visor clona esos materiales en las mallas cuyo centro cae
+  dentro de la caja (también las móviles, como la puerta de la nevera) y les pone como `envMap` el mapa prefiltrado
+  (PMREM) de la imagen; su intensidad es la `entornoLocal` del momento del día (`web/src/tour/js/cielo.js`). Las
+  demás mallas siguen con el entorno general.
+- Lo produce `entorno_cocina()` en `build/depto_06_exportar.py`; lo usan `cargarEntornos` y `prepararEscena` en
+  `web/src/tour/js/carga.js`.
