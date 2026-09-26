@@ -141,7 +141,8 @@ test("reserva.html conserva todos los hooks de reserva.js", () => {
   }
   const form = (r.match(/<form[^>]*id="formulario"[^>]*>/) || [])[0];
   assert.match(form, /\smethod="post"/, "el formulario va por POST: nunca los datos en la URL");
-  assert.match(r, /<noscript><p class="mensaje[^"]*">[^<]*JavaScript[^<]*<\/p><\/noscript>/, "falta el aviso sin JS");
+  assert.match(r, /<noscript><p class="mensaje[^"]*"(?: data-i18n="[^"]+")?>[^<]*JavaScript[^<]*<\/p><\/noscript>/,
+    "falta el aviso sin JS");
   // orden del DOM de la retícula: calendario, resumen, qué pasa después, formulario
   const orden = ['id="calendario"', 'class="resumen"', 'class="despues"', 'id="formulario"'].map((x) => r.indexOf(x));
   assert.deepEqual([...orden].sort((a, b) => a - b), orden);

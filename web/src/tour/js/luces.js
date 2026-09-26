@@ -1,8 +1,10 @@
-// Luces y grupos de luz. Las funciones puras (sin `import`, para que web/tests/*.test.mjs las use directo)
+// Luces y grupos de luz. Las funciones puras (sin importar three.js, para que web/tests/*.test.mjs las use directo)
 // deducen los grupos cuando el modelo todavía no trae `grupos_luz` (contrato de interacción v2, sección 2):
 // "un grupo por recinto según el punto de recintos más cercano en XZ, con la ampolleta como nodo de nombre
 // luces[i].nombre sin el prefijo Depto_Luz_". Las funciones que construyen objetos de three.js reciben el
-// espacio de nombres THREE como parámetro (inyección) en vez de importarlo, por la misma razón.
+// espacio de nombres THREE como parámetro (inyección) en vez de importarlo, por la misma razón. El único import es
+// i18n.js (textos de la pista en el idioma de la página), que en Node carga sin red y da el español.
+import { LOCALE, t } from "../../js/i18n.js";
 
 // Respaldo de los nombres de recinto para cuando el JSON no trae `recintos_etiquetas` (la fuente es
 // RECINTOS_ETIQUETAS de build/depto_04_mobiliario.py; web/tests/test_contrato_luces.py exige que coincidan).
@@ -98,12 +100,22 @@ export function estadoGruposParaMomento(grupos, lucesEncendidas) {
   return out;
 }
 
-// Texto de la pista de un interruptor con las etiquetas de sus grupos: "Encender Living · techo"; en una placa
-// doble, las dos unidas con "y". `gruposLuz`: Map id -> { etiqueta }.
+// Texto de la pista de un interruptor con las etiquetas de sus grupos, en el idioma de la página (claves
+// js.tour.luz.*): "Encender Living · techo"; en una placa doble, las dos unidas como una lista del idioma ("… y …",
+// "… and …", "… et …"). Las etiquetas ya vienen traducidas (carga.js, etiquetaGrupo). `gruposLuz`: Map id -> { etiqueta }.
 export function textoInterruptor(grupos, gruposLuz, encendido) {
   const etiquetas = grupos.map((id) => gruposLuz && gruposLuz.get(id) && gruposLuz.get(id).etiqueta).filter(Boolean);
-  if (!etiquetas.length) return encendido ? "Apagar la luz" : "Encender la luz";
-  return `${encendido ? "Apagar" : "Encender"} ${etiquetas.join(" y ")}`;
+  if (!etiquetas.length) return t(encendido ? "js.tour.luz.apagar_la_luz" : "js.tour.luz.encender_la_luz");
+  return t(encendido ? "js.tour.luz.apagar" : "js.tour.luz.encender", { luces: listaDelIdioma(etiquetas) });
+}
+
+// "a y b", "a, b y c" con el formato del idioma; sin Intl.ListFormat, unidas con comas.
+let formatoLista = null;
+function listaDelIdioma(textos) {
+  if (textos.length < 2) return textos.join("");
+  if (typeof Intl.ListFormat !== "function") return textos.join(", ");
+  formatoLista ??= new Intl.ListFormat(LOCALE, { type: "conjunction" });
+  return formatoLista.format(textos);
 }
 
 // Orden de registro de interruptores[]: primero las teclas con registro propio (tecla === nodo) y después placas y
