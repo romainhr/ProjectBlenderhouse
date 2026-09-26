@@ -1,0 +1,173 @@
+// Pruebas del modo simulado del portal (api-simulada.js) y de los pasos compuestos de fotos (acciones-fotos.js):
+// consistencia entre el objeto de Storage y la fila, reintento de ruta y orden.
+//   cd web && npm test
+import assert from "node:assert/strict";
+import { test } from "node:test";
+
+import { publicarFoto, quitarFoto, reordenarFoto } from "../src/admin/js/acciones-fotos.js";
+import { crearApiSimulada, datosEjemplo } from "../src/admin/js/api-simulada.js";
+import { ErrorApi, codigoConocido, mensajeError } from "../src/admin/js/errores.js";
+import { RE_RUTA, fotosDeEspacio } from "../src/admin/js/logica-fotos.js";
+import { CLAVE_ALMACEN } from "../src/admin/js/sesion.js";
+
+const HOY = "2026-10-05";
+
+class AlmacenFalso {
+  constructor() { this.m = new Map(); }
+  getItem(k) { return this.m.has(k) ? this.m.get(k) : null; }
+  setItem(k, v) { this.m.set(k, String(v)); }
+  removeItem(k) { this.m.delete(k); }
+  clear() { this.m.clear(); }
+}
+
+async function dentro() {
+  const almacen = new AlmacenFalso();
+  const api = crearApiSimulada({ almacen, retardo: 0, hoy: HOY });
+  await api.iniciarSesion("cualquiera@example.com", "cualquier-cosa");
+  return { api, almacen };
+}
+
+const webp = (n = 10) => new Blob([new Uint8Array(n)], { type: "image/webp" });
+const azarFijo = (...series) => () => new Uint8Array(series.shift() || [9, 9, 9, 9]);
+
+test("simulado: datos de ejemplo inventados (example.com) y con un texto con marcas para probar textContent", () => {
+  const d = datosEjemplo(HOY);
+  assert.ok(d.reservas.length >= 6);
+  assert.ok(d.reservas.every((r) => r.email.endsWith("@example.com")));
+  assert.ok(d.reservas.some((r) => /<img|<b>/.test(r.nombre + r.mensaje)));
+  assert.ok(d.contenido.some((f) => f.tipo === "precio") && d.contenido.some((f) => f.tipo === "parrafo"));
+  assert.ok(d.fotos.every((f) => RE_RUTA.test(f.ruta)));
+  assert.ok(d.fotos.some((f) => !f.visible));
+});
+
+test("simulado: login falso acepta cualquier dato no vacío, restaura en la pestaña y cerrar borra el almacén", async () => {
+  const almacen = new AlmacenFalso();
+  const api = crearApiSimulada({ almacen, retardo: 0, hoy: HOY });
+  assert.equal(await api.restaurarSesion(), null);
+  await assert.rejects(api.reservas.listar(), (e) => e.codigo === "sesion_vencida");
+  await assert.rejects(api.iniciarSesion("", "x"), (e) => codigoConocido(e) === "datos_login");
+  await api.iniciarSesion("dueno@example.com", "1");
+  assert.equal(api.usuario().email, "dueno@example.com");
+  assert.equal(JSON.parse(almacen.getItem(CLAVE_ALMACEN)).modo, "simulado");
+  const otra = crearApiSimulada({ almacen, retardo: 0, hoy: HOY });
+  assert.ok(await otra.restaurarSesion());
+  assert.equal(await otra.esPropietario(), true);
+  await otra.cerrarSesion();
+  assert.equal(almacen.m.size, 0);
+});
+
+test("simulado: confirmar una rechazada que choca con otra confirmada da 23P01 y el mensaje claro", async () => {
+  const { api } = await dentro();
+  const lista = await api.reservas.listar();
+  const carla = lista.find((r) => r.nombre.startsWith("Carla"));
+  await assert.rejects(api.reservas.cambiarEstado(carla.id, "confirmada"), (e) => {
+    assert.equal(e.codigo, "23P01");
+    assert.match(mensajeError(e), /chocan con otra solicitud/);
+    return true;
+  });
+  const diego = lista.find((r) => r.nombre.startsWith("Diego"));
+  const nueva = await api.reservas.cambiarEstado(diego.id, "confirmada");
+  assert.equal(nueva.estado, "confirmada");
+  assert.ok(nueva.actualizada);
+  await assert.rejects(api.reservas.cambiarEstado(diego.id, "borrada"), (e) => codigoConocido(e) === "regla_base");
+});
+
+test("simulado: nota interna (límite 2000), eliminar y fila inexistente", async () => {
+  const { api } = await dentro();
+  const [r] = await api.reservas.listar();
+  assert.equal((await api.reservas.guardarNota(r.id, "Llega tarde")).nota_interna, "Llega tarde");
+  await assert.rejects(api.reservas.guardarNota(r.id, "x".repeat(2001)), (e) => codigoConocido(e) === "regla_base");
+  await api.reservas.eliminar(r.id);
+  assert.ok(!(await api.reservas.listar()).some((x) => x.id === r.id));
+  await assert.rejects(api.reservas.eliminar(r.id), (e) => codigoConocido(e) === "sin_filas");
+});
+
+test("simulado: contenido con el mismo check de precio que la base", async () => {
+  const { api } = await dentro();
+  assert.equal((await api.contenido.guardar("tarifa.noche", "60000")).valor, "60000");
+  await assert.rejects(api.contenido.guardar("tarifa.noche", "60.000,5"), (e) => codigoConocido(e) === "regla_base");
+  await assert.rejects(api.contenido.guardar("no.existe", "x"), (e) => codigoConocido(e) === "sin_filas");
+});
+
+test("fotos: publicar sube el objeto con ruta generada y crea la fila al final del espacio", async () => {
+  const { api } = await dentro();
+  const antes = fotosDeEspacio(await api.fotos.listar(), "living");
+  const fila = await publicarFoto({ api, espacio: "living", blob: webp(), alt: "  Living  de noche ", visible: false,
+    fotosEspacio: antes, hoy: HOY, azar: azarFijo([0xde, 0xad, 0xbe, 0xef]) });
+  assert.equal(fila.ruta, "living/20261005-deadbeef.webp");
+  assert.equal(fila.alt, "Living de noche");
+  assert.equal(fila.visible, false);
+  assert.equal(fila.orden, Math.max(...antes.map((f) => f.orden)) + 10);
+  assert.ok(api.fotos._existe(fila.ruta));
+});
+
+test("fotos: si la ruta aleatoria ya existe (409) se prueba otra", async () => {
+  const { api } = await dentro();
+  await publicarFoto({ api, espacio: "cocina", blob: webp(), alt: "a", hoy: HOY, azar: azarFijo([1, 1, 1, 1]) });
+  const f = await publicarFoto({ api, espacio: "cocina", blob: webp(), alt: "b", hoy: HOY,
+    azar: azarFijo([1, 1, 1, 1], [2, 2, 2, 2]) });
+  assert.equal(f.ruta, "cocina/20261005-02020202.webp");
+});
+
+test("fotos: si falla la fila, se borra el objeto recién subido (sin huérfanos)", async () => {
+  const { api } = await dentro();
+  let subida = null;
+  const subir = api.fotos.subir;
+  api.fotos.subir = async (ruta, blob) => { subida = ruta; return subir(ruta, blob); };
+  api.fotos.crear = async () => { throw new ErrorApi({ estado: 403, codigo: "42501", mensaje: "new row violates row-level security policy" }); };
+  await assert.rejects(publicarFoto({ api, espacio: "banos", blob: webp(), alt: "Baño", hoy: HOY, azar: azarFijo([3, 3, 3, 3]) }),
+    (e) => codigoConocido(e) === "sin_permiso");
+  assert.equal(subida, "banos/20261005-03030303.webp");
+  assert.ok(!api.fotos._existe(subida));
+});
+
+test("fotos: validaciones antes de tocar Storage (alt, espacio, tipo, tamaño del bucket)", async () => {
+  const { api } = await dentro();
+  let llamadas = 0;
+  const subir = api.fotos.subir;
+  api.fotos.subir = async (...a) => { llamadas++; return subir(...a); };
+  await assert.rejects(publicarFoto({ api, espacio: "living", blob: webp(), alt: "  ", hoy: HOY }), (e) => e.codigo === "alt_vacio");
+  await assert.rejects(publicarFoto({ api, espacio: "../x", blob: webp(), alt: "a", hoy: HOY }), (e) => e.codigo === "id_invalido");
+  await assert.rejects(publicarFoto({ api, espacio: "living", blob: new Blob(["<svg/>"], { type: "image/svg+xml" }), alt: "a", hoy: HOY }),
+    (e) => codigoConocido(e) === "archivo_tipo");
+  assert.equal(llamadas, 0);
+  await assert.rejects(publicarFoto({ api, espacio: "living", blob: webp(5242881), alt: "a", hoy: HOY, azar: azarFijo([4, 4, 4, 4]) }),
+    (e) => codigoConocido(e) === "archivo_grande");
+});
+
+test("fotos: quitar borra primero la fila y luego el objeto; si Storage falla, la fila ya no está y se avisa", async () => {
+  const { api } = await dentro();
+  const [f] = fotosDeEspacio(await api.fotos.listar(), "living");
+  assert.deepEqual(await quitarFoto({ api, foto: f }), { objetoBorrado: true });
+  assert.ok(!(await api.fotos.listar()).some((x) => x.id === f.id));
+  assert.ok(!api.fotos._existe(f.ruta));
+
+  const [g] = fotosDeEspacio(await api.fotos.listar(), "cocina");
+  api.fotos.borrarObjeto = async () => { throw new ErrorApi({ codigo: "objeto_no_borrado", origen: "storage" }); };
+  const r = await quitarFoto({ api, foto: g });
+  assert.equal(r.objetoBorrado, false);
+  assert.match(mensajeError(r.error), /Storage no borró/);
+  assert.ok(!(await api.fotos.listar()).some((x) => x.id === g.id));
+
+  api.fotos.eliminarFila = async () => { throw new ErrorApi({ codigo: "sin_filas" }); };
+  let tocado = false;
+  api.fotos.borrarObjeto = async () => { tocado = true; };
+  await assert.rejects(quitarFoto({ api, foto: { id: "x", ruta: "living/x.webp" } }), (e) => e.codigo === "sin_filas");
+  assert.ok(!tocado, "si la fila no se borró, el objeto no se toca");
+});
+
+test("fotos: reordenar guarda sólo los órdenes que cambian", async () => {
+  const { api } = await dentro();
+  await publicarFoto({ api, espacio: "living", blob: webp(), alt: "tercera", hoy: HOY,
+    fotosEspacio: fotosDeEspacio(await api.fotos.listar(), "living"), azar: azarFijo([5, 5, 5, 5]) });
+  const lista = fotosDeEspacio(await api.fotos.listar(), "living");
+  assert.equal(lista.length, 3);
+  const cambios = [];
+  const actualizar = api.fotos.actualizar;
+  api.fotos.actualizar = async (id, c) => { cambios.push([id, c]); return actualizar(id, c); };
+  const nueva = await reordenarFoto({ api, fotosEspacio: lista, id: lista[2].id, delta: -1 });
+  assert.deepEqual(nueva.map((f) => f.id), [lista[0].id, lista[2].id, lista[1].id]);
+  assert.deepEqual(cambios, [[lista[2].id, { orden: 10 }], [lista[1].id, { orden: 20 }]]);
+  const guardadas = fotosDeEspacio(await api.fotos.listar(), "living").map((f) => f.id);
+  assert.deepEqual(guardadas, nueva.map((f) => f.id));
+});

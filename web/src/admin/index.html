@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Portal del propietario · LOFT 2D2B</title>
+<meta name="theme-color" content="#F7F4EF">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="admin.css">
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+
+<a class="saltar" href="#principal">Saltar al contenido</a>
+<p id="aviso-modo" class="aviso-modo" hidden><strong>Modo simulado</strong> · datos de ejemplo en memoria: nada se guarda en Supabase y lo editado se pierde al recargar.</p>
+
+<header class="cabecera">
+  <div class="cabecera-fila">
+    <p class="marca"><b>Loft 2D2B</b><small>Portal del propietario</small></p>
+    <div id="usuario" class="usuario" hidden>
+      <span id="usuario-correo" class="usuario-correo"></span>
+      <button type="button" id="cerrar-sesion" class="boton secundario chico">Cerrar sesión</button>
+    </div>
+  </div>
+  <nav id="navegacion" class="navegacion" aria-label="Secciones del portal" hidden>
+    <a href="#reservas" data-vista="reservas">Reservas <span id="insignia-pendientes" class="insignia-nav" hidden></span></a>
+    <a href="#textos" data-vista="textos">Textos</a>
+    <a href="#fotos" data-vista="fotos">Fotos</a>
+    <a href="../" class="nav-sitio">Ver el sitio <span aria-hidden="true">↗</span></a>
+  </nav>
+</header>
+
+<main id="principal" class="principal" tabindex="-1">
+
+  <section id="vista-cargando" class="vista vista-cargando" aria-live="polite">
+    <p>Cargando el portal…</p>
+    <noscript><p>El portal necesita JavaScript activado.</p></noscript>
+  </section>
+
+  <!-- Ingreso -->
+  <section id="vista-login" class="vista vista-login" aria-labelledby="t-login" hidden>
+    <div class="tarjeta login">
+      <h1 id="t-login" tabindex="-1">Ingresar</h1>
+      <p class="ayuda">Acceso sólo para el propietario. La cuenta se crea en el panel de Supabase; aquí no hay registro.</p>
+      <p id="login-aviso" class="aviso" role="status" hidden></p>
+      <form id="form-login" novalidate>
+        <div class="campo">
+          <label for="login-correo">Correo</label>
+          <input id="login-correo" name="email" type="email" autocomplete="username" inputmode="email"
+                 autocapitalize="off" spellcheck="false" required>
+        </div>
+        <div class="campo">
+          <label for="login-clave">Contraseña</label>
+          <input id="login-clave" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <p id="login-error" class="error" role="alert"></p>
+        <button type="submit" id="login-boton" class="boton primario bloque">Ingresar</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Cuenta sin rol de propietario o base sin la migración 0003 -->
+  <section id="vista-sin-rol" class="vista" aria-labelledby="t-sin-rol" hidden>
+    <div class="tarjeta login">
+      <h1 id="t-sin-rol" tabindex="-1">Sin acceso de propietario</h1>
+      <p id="sin-rol-texto"></p>
+      <p class="ayuda">Puedes cerrar la sesión con el botón de arriba.</p>
+    </div>
+  </section>
+
+  <!-- Reservas -->
+  <section id="vista-reservas" class="vista" aria-labelledby="t-reservas" hidden>
+    <div class="vista-cabeza">
+      <h1 id="t-reservas" tabindex="-1">Reservas</h1>
+      <button type="button" id="reservas-recargar" class="boton secundario chico">Actualizar</button>
+    </div>
+    <div class="filtros">
+      <fieldset id="filtro-estado" class="chips">
+        <legend>Estado</legend>
+      </fieldset>
+      <div class="campo campo-linea">
+        <label for="filtro-periodo">Fechas</label>
+        <select id="filtro-periodo"></select>
+      </div>
+    </div>
+    <p id="reservas-aviso" class="aviso-linea" role="status" aria-live="polite"></p>
+    <div id="reservas-cuerpo" class="reservas-cuerpo">
+      <ul id="reservas-lista" class="lista-reservas" aria-label="Solicitudes de reserva"></ul>
+      <article id="reserva-detalle" class="detalle tarjeta" tabindex="-1" aria-labelledby="detalle-titulo" hidden></article>
+    </div>
+  </section>
+
+  <!-- Textos -->
+  <section id="vista-textos" class="vista" aria-labelledby="t-textos" hidden>
+    <div class="vista-cabeza">
+      <h1 id="t-textos" tabindex="-1">Textos del sitio</h1>
+      <button type="button" id="textos-recargar" class="boton secundario chico">Actualizar</button>
+    </div>
+    <p class="ayuda">Cada texto se guarda por separado. El sitio público muestra el cambio al recargar la página.</p>
+    <p id="textos-aviso" class="aviso-linea" role="status" aria-live="polite"></p>
+    <div id="textos-grupos" class="textos-grupos"></div>
+  </section>
+
+  <!-- Fotos -->
+  <section id="vista-fotos" class="vista" aria-labelledby="t-fotos" hidden>
+    <div class="vista-cabeza">
+      <h1 id="t-fotos" tabindex="-1">Fotos</h1>
+      <button type="button" id="fotos-recargar" class="boton secundario chico">Actualizar</button>
+    </div>
+    <fieldset id="filtro-espacio" class="chips">
+      <legend>Espacio</legend>
+    </fieldset>
+
+    <form id="form-subir" class="tarjeta subir" novalidate aria-labelledby="t-subir">
+      <h2 id="t-subir">Agregar foto a <span id="subir-espacio">Living</span></h2>
+      <div class="campo">
+        <label for="subir-archivo">Imagen</label>
+        <input id="subir-archivo" type="file" accept="image/jpeg,image/png,image/webp">
+        <p id="subir-archivo-ayuda" class="ayuda"></p>
+      </div>
+      <figure id="subir-previa" class="previa" hidden>
+        <img id="subir-img" alt="">
+        <figcaption id="subir-info"></figcaption>
+      </figure>
+      <div class="campo">
+        <label for="subir-alt">Descripción de la foto (texto alternativo, obligatorio)</label>
+        <input id="subir-alt" type="text" autocomplete="off" required aria-describedby="subir-alt-ayuda subir-alt-error">
+        <p id="subir-alt-ayuda" class="ayuda">Di lo que se ve, p. ej. «Living con sofá gris y ventanal al balcón». La leen quienes usan lector de pantalla.</p>
+        <p id="subir-alt-error" class="error-campo"></p>
+      </div>
+      <label class="check" for="subir-visible"><input id="subir-visible" type="checkbox" checked> Visible en el sitio</label>
+      <div class="fila-pie">
+        <button type="submit" id="subir-boton" class="boton primario">Agregar foto</button>
+        <p id="subir-estado" class="indicador" role="status" aria-live="polite"></p>
+      </div>
+    </form>
+
+    <h2 id="t-lista-fotos" class="subtitulo-lista" tabindex="-1">Fotos</h2>
+    <p class="ayuda">La primera foto visible es la imagen principal del espacio en el sitio; las demás, su galería.</p>
+    <p id="fotos-aviso" class="aviso-linea" role="status" aria-live="polite"></p>
+    <ol id="fotos-lista" class="lista-fotos"></ol>
+  </section>
+</main>
+
+<dialog id="dialogo" class="dialogo" aria-labelledby="dialogo-titulo" aria-describedby="dialogo-texto">
+  <h2 id="dialogo-titulo"></h2>
+  <p id="dialogo-texto"></p>
+  <div class="dialogo-acciones">
+    <button type="button" id="dialogo-no" class="boton secundario">Volver</button>
+    <button type="button" id="dialogo-si" class="boton primario">Confirmar</button>
+  </div>
+</dialog>
+
+</body>
+</html>

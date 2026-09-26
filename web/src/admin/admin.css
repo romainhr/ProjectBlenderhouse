@@ -1,0 +1,306 @@
+/* LOFT 2D2B: portal del propietario. De la familia del sitio («luz de tarde»), pero sobrio: toma los tokens de
+   ../css/tokens.css (colores y fuentes autoalojadas) y trae valores de respaldo iguales a los de ese archivo al
+   2026-09-26, por si cambia de nombre o no carga. Mobile-first: la base es el teléfono; @media (min-width) agrega el
+   computador. Contrastes medidos (WCAG 2.1): texto normal ≥ 4,5:1 y bordes de campos ≥ 3:1. */
+@import url("../css/tokens.css");
+
+:root {
+  --a-papel: var(--papel, #F7F4EF);
+  --a-papel-2: var(--papel-2, #EFEAE2);
+  --a-tarjeta: var(--tarjeta, #FFFFFF);
+  --a-tinta: var(--tinta, #1E1C19);         /* 15,5:1 sobre --a-papel */
+  --a-tinta-2: var(--tinta-2, #5E5850);     /* 6,4:1 sobre --a-papel; también borde de campos (≥ 3:1) */
+  --a-linea: var(--linea, #E2DBD0);         /* sólo separadores decorativos (1,3:1) */
+  --a-borde-ui: #8C8479;                    /* borde de tarjetas pulsables: 3,7:1 sobre blanco, 3,4:1 sobre papel */
+  --a-acento: var(--acento, #A8481F);       /* blanco sobre acento 5,8:1; acento sobre papel 5,3:1 */
+  --a-acento-2: var(--acento-2, #8E3C19);
+  --a-error: var(--error, #B3261E);         /* 6,0:1 sobre papel; blanco sobre error 6,5:1 */
+  --a-radio: var(--radio, 10px);
+  --a-sombra: var(--sombra, 0 1px 2px rgba(30, 28, 25, .06), 0 8px 24px rgba(30, 28, 25, .06));
+  --a-f-titulo: var(--f-titulo, "Iowan Old Style", Georgia, serif);
+  --a-f-texto: var(--f-texto, system-ui, -apple-system, "Segoe UI", sans-serif);
+  --a-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --a-margen: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  --a-ancho: 1180px;
+  /* insignias de estado: texto oscuro sobre fondo claro del mismo tono (todas ≥ 6,4:1) */
+  --e-pendiente-t: #7A4E00; --e-pendiente-f: #FDF1D8;
+  --e-confirmada-t: #3F5238; --e-confirmada-f: #E6EDE1;
+  --e-rechazada-t: #9B2019; --e-rechazada-f: #FBE7E4;
+  --e-cancelada-t: #4A4640; --e-cancelada-f: #ECE8E1;
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 130px; }   /* lo enfocado no queda bajo la cabecera fija */
+body {
+  margin: 0; min-height: 100vh; background: var(--a-papel); color: var(--a-tinta);
+  font: 400 16px/1.55 var(--a-f-texto); -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; height: auto; }
+a { color: var(--a-acento); text-underline-offset: 2px; }
+a:hover { color: var(--a-acento-2); }
+button, input, select, textarea { font: inherit; color: inherit; }
+h1, h2, h3 { font-family: var(--a-f-titulo); font-weight: 500; line-height: 1.2; margin: 0; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.3rem; }
+h3 { font-size: 1.05rem; font-family: var(--a-f-texto); font-weight: 600; }
+p { margin: 0; }
+code, .mono { font-family: var(--a-mono); font-size: 0.9em; }
+:focus-visible { outline: 3px solid var(--a-acento); outline-offset: 2px; border-radius: 4px; }
+/* destinos de foco programático (títulos, detalle, avisos): no son controles, no llevan anillo */
+[tabindex="-1"]:focus { outline: none; }
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.saltar {
+  position: absolute; left: var(--a-margen); top: -60px; z-index: 60; padding: 12px 18px; border-radius: var(--a-radio);
+  background: var(--a-tinta); color: var(--a-papel); text-decoration: none; font-weight: 600;
+}
+.saltar:focus { top: 12px; }
+
+/* ------------------------------------------------------------------ aviso de modo simulado */
+.aviso-modo {
+  margin: 0; padding: 10px var(--a-margen); background: var(--a-tinta); color: #FFF4DC;   /* 15,6:1 */
+  font-size: 0.95rem; text-align: center;
+}
+.aviso-modo strong { text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* ------------------------------------------------------------------ cabecera y navegación */
+.cabecera {
+  position: sticky; top: 0; z-index: 20; background: var(--a-tarjeta); border-bottom: 1px solid var(--a-linea);
+}
+.cabecera-fila {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap; max-width: var(--a-ancho); margin: 0 auto;
+  padding: 10px var(--a-margen);
+}
+.marca { display: flex; flex-direction: column; line-height: 1.15; margin-right: auto; }
+.marca b { font: 500 1.2rem var(--a-f-titulo); }
+.marca small { color: var(--a-tinta-2); font-size: 0.85rem; }
+.usuario { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.usuario-correo {
+  color: var(--a-tinta-2); font-size: 0.9rem; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.navegacion {
+  display: flex; gap: 4px; max-width: var(--a-ancho); margin: 0 auto; padding: 0 var(--a-margen);
+  overflow-x: auto; scrollbar-width: thin;
+}
+.navegacion a {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; white-space: nowrap;
+  color: var(--a-tinta-2); text-decoration: none; font-weight: 500; border-bottom: 3px solid transparent;
+}
+.navegacion a:hover { color: var(--a-tinta); }
+.navegacion a[aria-current="page"] { color: var(--a-tinta); border-bottom-color: var(--a-acento); }
+.navegacion .nav-sitio { margin-left: auto; font-weight: 400; }
+.insignia-nav {
+  min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: var(--a-acento); color: #fff;
+  font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ------------------------------------------------------------------ estructura */
+.principal { display: block; max-width: var(--a-ancho); margin: 0 auto; padding: 20px var(--a-margen) 64px; }
+.principal:focus { outline: none; }
+.vista { display: grid; gap: 16px; }
+.vista-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.vista-cargando { color: var(--a-tinta-2); padding: 40px 0; }
+.tarjeta {
+  background: var(--a-tarjeta); border: 1px solid var(--a-linea); border-radius: var(--a-radio); box-shadow: var(--a-sombra);
+  padding: 18px;
+}
+.ayuda { color: var(--a-tinta-2); font-size: 0.92rem; }
+.aviso-linea:empty, .indicador:empty, .error-campo:empty, .error:empty, .aviso-accion:empty { display: none; }
+[data-tipo="error"] { color: var(--a-error); font-weight: 500; }
+[data-tipo="ok"] { color: var(--e-confirmada-t); }
+[data-tipo="cargando"], [data-tipo="info"] { color: var(--a-tinta-2); }
+.aviso-linea[data-tipo="error"], .aviso-accion[data-tipo="error"] {
+  padding: 10px 12px; border-radius: var(--a-radio); background: var(--e-rechazada-f); color: var(--e-rechazada-t);
+}
+.aviso-accion[data-tipo="ok"] {
+  padding: 10px 12px; border-radius: var(--a-radio); background: var(--e-confirmada-f); color: var(--e-confirmada-t);
+}
+.error, .error-campo { color: var(--a-error); font-weight: 500; font-size: 0.95rem; }
+
+/* ------------------------------------------------------------------ botones */
+.boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 10px 18px;
+  border: 1px solid transparent; border-radius: var(--a-radio); background: none; cursor: pointer; font-weight: 600;
+  line-height: 1.2; text-align: center; text-decoration: none; max-width: 100%;
+}
+.boton.primario { background: var(--a-acento); color: #fff; }
+.boton.primario:hover { background: var(--a-acento-2); color: #fff; }
+.boton.secundario { background: var(--a-tarjeta); border-color: var(--a-tinta-2); color: var(--a-tinta); }
+.boton.secundario:hover { border-color: var(--a-acento); color: var(--a-acento-2); }
+.boton.peligro { background: var(--a-error); color: #fff; }
+.boton.peligro:hover { background: #8F1E17; }
+.boton.texto { padding-inline: 4px; color: var(--a-acento); min-height: 44px; }
+.boton.chico { min-height: 40px; padding: 8px 14px; font-size: 0.95rem; }
+.boton.bloque { width: 100%; }
+.boton:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ------------------------------------------------------------------ campos */
+.campo { display: grid; gap: 6px; }
+label { font-weight: 500; }
+input[type="text"], input[type="email"], input[type="password"], select, textarea {
+  width: 100%; min-height: 44px; padding: 10px 12px; font-size: 16px;   /* 16 px: iOS no hace zoom al enfocar */
+  background: var(--a-tarjeta); border: 1px solid var(--a-tinta-2); border-radius: 8px;
+}
+textarea { resize: vertical; line-height: 1.5; }
+input[readonly], textarea[readonly] { background: var(--a-papel-2); }
+input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--a-error); border-width: 2px; }
+input[type="file"] { max-width: 100%; font-size: 0.95rem; }
+input[type="file"]::file-selector-button {
+  margin-right: 10px; min-height: 40px; padding: 8px 14px; border: 1px solid var(--a-tinta-2); border-radius: 8px;
+  background: var(--a-tarjeta); color: var(--a-tinta); font: inherit; font-weight: 600; cursor: pointer;
+}
+.check { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-weight: 500; }
+.check input { width: 22px; height: 22px; accent-color: var(--a-acento); margin: 0; }
+.campo-linea { grid-template-columns: auto 1fr; align-items: center; gap: 10px; }
+.fila-pie { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ------------------------------------------------------------------ chips (filtros con contador) */
+.chips { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.chips legend { padding: 0; margin-bottom: 8px; font-weight: 600; font-size: 0.95rem; float: left; width: 100%; }
+.chip { cursor: pointer; font-weight: 400; }
+.chip-cuerpo {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 12px; border-radius: 20px;
+  border: 1px solid var(--a-tinta-2); background: var(--a-tarjeta); color: var(--a-tinta); font-size: 0.95rem;
+}
+.chip:hover .chip-cuerpo { border-color: var(--a-acento); }
+.chip input:checked + .chip-cuerpo { background: var(--a-tinta); border-color: var(--a-tinta); color: var(--a-papel); }
+.chip input:focus-visible + .chip-cuerpo { outline: 3px solid var(--a-acento); outline-offset: 2px; }
+.cuenta {
+  min-width: 24px; padding: 0 6px; border-radius: 12px; background: var(--a-papel-2); color: var(--a-tinta);
+  font-weight: 600; font-size: 0.85rem; text-align: center;
+}
+.chip input:checked + .chip-cuerpo .cuenta { background: var(--a-tarjeta); color: var(--a-tinta); }
+.filtros { display: grid; gap: 14px; }
+
+/* ------------------------------------------------------------------ insignias */
+.insignia {
+  display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+}
+.estado-pendiente { color: var(--e-pendiente-t); background: var(--e-pendiente-f); }
+.estado-confirmada { color: var(--e-confirmada-t); background: var(--e-confirmada-f); }
+.estado-rechazada { color: var(--e-rechazada-t); background: var(--e-rechazada-f); }
+.estado-cancelada { color: var(--e-cancelada-t); background: var(--e-cancelada-f); }
+.etiqueta {
+  display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.82rem; font-weight: 600;
+  border: 1px solid var(--a-tinta-2); color: var(--a-tinta);
+}
+
+/* ------------------------------------------------------------------ reservas */
+.reservas-cuerpo { display: grid; gap: 16px; align-items: start; }
+.lista-reservas { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.lista-reservas .vacio { color: var(--a-tinta-2); padding: 12px 0; }
+.tarjeta-reserva {
+  display: grid; gap: 4px; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer;
+  background: var(--a-tarjeta); border: 1px solid var(--a-borde-ui); border-left: 4px solid var(--a-borde-ui);
+  border-radius: var(--a-radio);
+}
+.tarjeta-reserva:hover { border-color: var(--a-tinta); }
+.tarjeta-reserva[aria-current="true"] { border-color: var(--a-acento); border-left-color: var(--a-acento); background: #FFFBF7; }
+.tr-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tr-fechas { font-weight: 600; }
+.tr-nombre { font-size: 1.05rem; overflow-wrap: anywhere; }
+.tr-meta { color: var(--a-tinta-2); font-size: 0.9rem; }
+
+.detalle { display: grid; gap: 14px; }
+.detalle h2 { font-size: 1.5rem; overflow-wrap: anywhere; }
+.detalle-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--a-tinta-2); }
+.detalle .volver { justify-self: start; }
+.datos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin: 0; }
+.dato { min-width: 0; }
+.dato.ancho { grid-column: 1 / -1; }
+.dato dt { color: var(--a-tinta-2); font-size: 0.85rem; }
+.dato dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+.mensaje-huesped { white-space: pre-wrap; }
+.contacto { display: flex; gap: 8px; flex-wrap: wrap; }
+.subtitulo { margin-top: 4px; }
+.acciones-reserva { display: flex; gap: 8px; flex-wrap: wrap; }
+.acciones-reserva .boton { flex: 1 1 160px; }
+.nota { display: grid; gap: 8px; padding-top: 14px; border-top: 1px solid var(--a-linea); }
+.contador { color: var(--a-tinta-2); font-size: 0.85rem; margin-right: auto; }
+.zona-peligro { display: grid; gap: 6px; padding-top: 14px; border-top: 1px solid var(--a-linea); justify-items: start; }
+
+/* teléfono: con una reserva abierta se muestra sólo el detalle (con «Volver a la lista») */
+@media (max-width: 899px) {
+  .con-detalle .lista-reservas, .con-detalle .filtros, .con-detalle #reservas-aviso { display: none; }
+}
+@media (min-width: 900px) {
+  h1 { font-size: 2rem; }
+  .filtros { grid-template-columns: 1fr auto; align-items: end; }
+  .reservas-cuerpo { grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); }
+  .detalle { position: sticky; top: 120px; max-height: calc(100vh - 140px); overflow-y: auto; }
+  .detalle .volver { display: none; }
+  .datos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ------------------------------------------------------------------ textos */
+.textos-grupos { display: grid; gap: 28px; }
+.grupo-textos { display: grid; gap: 12px; }
+.fila-texto {
+  display: grid; gap: 8px; padding: 16px; background: var(--a-tarjeta); border: 1px solid var(--a-linea);
+  border-radius: var(--a-radio);
+}
+.fila-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.clave { color: var(--a-tinta-2); overflow-wrap: anywhere; }
+.actualizado { color: var(--a-tinta-2); font-size: 0.85rem; margin-left: auto; }
+.fila-texto .ayuda:empty { display: none; }
+
+/* ------------------------------------------------------------------ fotos */
+.subir { display: grid; gap: 14px; }
+.previa { margin: 0; display: grid; gap: 8px; }
+.previa img { max-height: 320px; width: auto; border-radius: 8px; border: 1px solid var(--a-linea); }
+.previa figcaption { color: var(--a-tinta-2); font-size: 0.9rem; }
+.subtitulo-lista { margin-top: 8px; }
+.lista-fotos { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.lista-fotos .vacio { color: var(--a-tinta-2); }
+.foto {
+  display: grid; gap: 12px; padding: 12px; background: var(--a-tarjeta); border: 1px solid var(--a-linea);
+  border-radius: var(--a-radio);
+}
+.foto.oculta .foto-imagen img { opacity: 0.55; }
+.foto-imagen { position: relative; }
+.foto-imagen img {
+  width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 8px; background: var(--a-papel-2);
+}
+.etiqueta-foto {
+  position: absolute; left: 8px; top: 8px; padding: 3px 10px; border-radius: 12px; background: var(--a-tinta);
+  color: var(--a-papel); font-size: 0.8rem; font-weight: 600;
+}
+.etiqueta-foto.gris { left: auto; right: 8px; background: var(--a-tarjeta); color: var(--a-tinta); border: 1px solid var(--a-tinta-2); }
+.foto-datos { display: grid; gap: 10px; min-width: 0; }
+.foto-posicion { color: var(--a-tinta-2); font-size: 0.9rem; }
+.foto-alt { display: grid; gap: 6px; }
+.foto-alt .boton { justify-self: start; }
+.foto-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.foto-acciones .peligro { margin-left: auto; }
+@media (min-width: 700px) {
+  .foto { grid-template-columns: 280px minmax(0, 1fr); align-items: start; }
+}
+
+/* ------------------------------------------------------------------ ingreso */
+.vista-login, #vista-sin-rol { justify-items: center; padding-top: 24px; }
+.login { width: 100%; max-width: 420px; display: grid; gap: 14px; }
+.login form { display: grid; gap: 14px; }
+.aviso { padding: 10px 12px; border-radius: var(--a-radio); background: var(--e-pendiente-f); color: var(--e-pendiente-t); }
+
+/* ------------------------------------------------------------------ diálogo de confirmación */
+.dialogo {
+  width: min(480px, calc(100vw - 32px)); padding: 20px; border: 1px solid var(--a-linea); border-radius: var(--a-radio);
+  background: var(--a-tarjeta); color: var(--a-tinta); box-shadow: 0 12px 40px rgba(30, 28, 25, .25);
+}
+.dialogo::backdrop { background: rgba(30, 28, 25, .45); }
+.dialogo h2 { margin-bottom: 10px; overflow-wrap: anywhere; }
+.dialogo p { overflow-wrap: anywhere; }
+.dialogo-acciones { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 18px; }
+.dialogo-acciones .boton { flex: 1 1 140px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+@media (forced-colors: active) {
+  .chip input:checked + .chip-cuerpo { outline: 2px solid CanvasText; }
+  .tarjeta-reserva[aria-current="true"] { outline: 2px solid Highlight; }
+}
