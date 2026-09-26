@@ -104,7 +104,7 @@ HALL_EJE_Y = (Y["LV_F"] + Y["T9_N"]) / 2
 PERCHERO_Z = 1.55         # diseño: base de la tabla del perchero
 RIEL_HALL = (371.0, HALL_EJE_Y)   # diseño: riel de focos en el cielo del hall, a lo largo de x (reemplaza al
                                   # colgante de domo, que quedaba sobre la cámara del hall y la encandilaba)
-UTENSILIOS_Z = 1.30       # diseño: eje de la barra de utensilios, bajo la repisa (1,55) y sobre la cubierta (0,94)
+UTENSILIOS_Z = 1.30       # diseño: eje de la barra de utensilios, bajo los muebles altos (1,50) y sobre la cubierta
 TOALLERO_Z = 0.62         # diseño: eje del toallero en el frente del vanitorio (bajo la cubierta a 0,80)
 BALCON_DOMO_SOBRE_MESA = 0.80   # diseño (corrección 07b): borde del domo del balcón sobre la cubierta de la mesa
 BISTRO = dict(x=(X["BAL_F"] + X["W_O"]) / 2, y=285.0)   # diseño: mesa del balcón en el extremo sur (la silla sur
@@ -390,16 +390,11 @@ def dormitorios(c):
 
 
 def cocina(c):
+    # Corrección 07c: sin las repisas abiertas de la versión 2 en el tramo norte; ahí el plano marca muebles altos
+    # (discontinua ALTOS_Y), que ahora arma la fase 3 (altos_cocina) con la vajilla adentro. No quedan repisas: el plano
+    # no deja otro paño libre de muebles en la cocina.
     y_muro = Y["T5_S"] + F3.px(F3.SALPICADERO_ESP)     # cara del azulejo del tramo norte
-    tramos = [(X["T3_E"] + 0.03 / S, F3.ANAFE[0] - 0.06 / S), (F3.ANAFE[1] + 0.06 / S, F3.ALTOS_X - 0.03 / S)]
-    for i, (x0, x1) in enumerate(tramos):
-        largo = (x1 - x0) * S
-        rep = c.contra_muro(CB.repisa_abierta, f"Cocina_Repisa{i + 1}", "solido", y_muro, (x0 + x1) / 2, "S",
-                            z=1.55, holgura=0.0, largo=largo)
-        for nivel, zn in enumerate(alturas_repisa(rep)):
-            s_ = c.construir(CB.set_repisa, f"Cocina_Set{i + 1}{nivel}", largo=largo - 0.04, semilla=10 * i + nivel)
-            c.poner(f"Cocina_Set{i + 1}{nivel}", "adorno", s_, (x0 + x1) / 2, y_muro, zn, "S")
-    x0, x1 = tramos[0]
+    x0, x1 = X["T3_E"] + 0.03 / S, F3.ANAFE[0] - 0.06 / S   # entre T3 y el anafe, bajo el mueble alto de la izquierda
     c.contra_muro(HA.riel_utensilios, "Cocina_Utensilios", "adorno", y_muro, (x0 + x1) / 2, "S", z=UTENSILIOS_Z,
                   holgura=0.0, largo=min(0.45, (x1 - x0) * S - 0.04))
     g = c.construir(CB.grifo_cocina, "Cocina_Grifo")

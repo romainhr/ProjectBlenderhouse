@@ -589,6 +589,27 @@
       "desvio_mediano_px": 0.28
     },
     {
+      "muro": "cocina nevera N (contorno)",
+      "cara": "261.50",
+      "coord_px": 261.5,
+      "n": 20,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "cocina nevera S (contorno)",
+      "cara": "296.00",
+      "coord_px": 296.0,
+      "n": 20,
+      "desvio_mediano_px": -0.02
+    },
+    {
+      "muro": "cocina nevera frente (discontinua)",
+      "cara": "386.70",
+      "coord_px": 386.7,
+      "n": 33,
+      "desvio_mediano_px": 0.03
+    },
+    {
       "muro": "baño 1 repisa",
       "cara": "408.50",
       "coord_px": 408.5,
