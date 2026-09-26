@@ -94,7 +94,7 @@ Todo cambio pasa por GitHub (`romainhr/ProjectBlenderhouse`, privado): rama, PR,
 
 3. Commit, push de la rama y PR con `gh pr create`. La plantilla está en `.github/pull_request_template.md`.
 4. El workflow «CI y despliegue» corre cinco verificaciones: «Sin secretos versionados», «Pruebas», «Pruebas SQL», «Build del sitio» y, sólo en `main`, «Desplegar en Netlify». El artefacto `sitio-dist` de cada corrida es la vista previa del sitio.
-5. Con todo en verde, fusiona con `gh pr merge <n> --squash --delete-branch`. Al entrar en `main`, el job de despliegue publica https://loft-2d2b.netlify.app. Nadie publica a mano.
+5. Con todo en verde, fusiona con `gh pr merge <n> --squash` (GitHub borra la rama remota; no uses `--delete-branch`, que falla dentro de un worktree porque `main` está tomada por la carpeta principal). Al entrar en `main`, el job de despliegue publica https://loft-2d2b.netlify.app. Nadie publica a mano.
 
 - **Pipeline de Blender:** en GitHub, Actions → «Pipeline de Blender» → Run workflow. Es manual y pesado; entrega el maestro, los exports y los renders como artefacto.
 - **Secretos:** `NETLIFY_TOKEN`, `SUPABASE_URL` y `SUPABASE_CLAVE_PUBLICA` van en Settings → Secrets and variables → Actions. Los carga el dueño del repositorio.
