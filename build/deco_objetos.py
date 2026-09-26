@@ -562,20 +562,26 @@ def aplique_brazo(col, prefijo, brazo1=0.28, brazo2=0.26, angulo1=50.0, angulo2=
 
 
 # ================================================================ conducto eléctrico visto
+CONDUCTO_CAJA = dict(radio=0.040, fondo=0.046, boca=0.012)   # diseño: caja de derivación redonda de fundición
+
+
 def conducto(col, prefijo, puntos=((-0.45, -0.014, 0.10), (0.25, -0.014, 0.10), (0.25, -0.014, 0.65),
                                    (0.25, -0.014, 1.15), (0.70, -0.014, 1.15)),
              cajas=(0, 2), normal_muro=(0.0, 1.0, 0.0), radio=0.010, radio_curva=0.05, paso_abrazaderas=0.8,
-             material=NEGRO):
+             material=NEGRO, ramales=None):
     """Tubo metálico de Ø 20 mm por el eje `puntos` (locales, se usan tal cual), con curvas de radio `radio_curva`,
     cajas de derivación redondas de fundición (Ø 0,08 × 0,046, tapa con buña y dos tornillos, bocas roscadas
     donde entra el tubo) en los índices de `cajas`, abrazaderas omega sobre el muro cada `paso_abrazaderas` y
     copla en los extremos libres. `normal_muro` apunta del tubo al muro; el eje queda a radio + 4 mm del muro
-    (por defecto el muro está en y = 0). ≤ 300 triángulos por tramo."""
+    (por defecto el muro está en y = 0). `ramales` = {índice de caja: (puntos,)}: bocas extra de esa caja hacia
+    otros conductos (derivación en T; el otro conducto termina en la boca, a radio + boca del centro de la caja).
+    ≤ 300 triángulos por tramo."""
     P = [Vector(p) for p in puntos]
     nm = Vector(normal_muro).normalized()
     sep = radio + 0.004                                  # eje del tubo al muro (abrazadera con separador)
     cajas = sorted({i % len(P) for i in cajas})
-    RB, DB, LB = 0.040, 0.046, 0.012                    # caja: radio, fondo y largo de boca (diseño)
+    RB, DB, LB = CONDUCTO_CAJA["radio"], CONDUCTO_CAJA["fondo"], CONDUCTO_CAJA["boca"]   # caja (diseño)
+    ramales = {i % len(P): [Vector(q) for q in qs] for i, qs in (ramales or {}).items()}
     rh = radio + 0.0035
     m = _Malla()
 
@@ -639,7 +645,7 @@ def conducto(col, prefijo, puntos=((-0.45, -0.014, 0.10), (0.25, -0.014, 0.10), 
                         (RB + 0.0006, DB - 0.0052), (RB - 0.0024, DB), (0.0, DB + 0.0008)], 20)
             for x in (-(RB - 0.011), RB - 0.011):          # tornillos hexagonales de la tapa
                 B.cilindro(bm, x, 0.0, DB - 0.0005, DB + 0.0022, 0.0032, seg=6)
-            for q in vecinos:                            # bocas donde entra el tubo
+            for q in vecinos + ramales.get(i, []):       # bocas donde entra el tubo
                 e_loc = R3.transposed() @ en_plano(q - P[i])
                 c0 = e_loc * (RB - 0.004) + Vector((0, 0, sep))
                 c1 = e_loc * (RB + LB) + Vector((0, 0, sep))

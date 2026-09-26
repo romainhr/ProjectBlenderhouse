@@ -42,6 +42,7 @@ TINTES = {
     "Depto_Mat_RopaBlanco": (0.88, 0.87, 0.84), "Depto_Mat_RopaCeleste": (0.60, 0.68, 0.76),
     "Depto_Mat_RopaDenim": (0.22, 0.29, 0.42), "Depto_Mat_RopaCamel": (0.63, 0.48, 0.33),
     "Depto_Mat_RopaNegro": (0.08, 0.08, 0.09), "Depto_Mat_CajaZapatos": (0.80, 0.74, 0.62),
+    "Depto_Mat_RopaSalvia": (0.50, 0.55, 0.40), "Depto_Mat_RopaGrisClaro": (0.74, 0.74, 0.72),   # zapatillas de D2
     "Depto_Mat_Cuero": (0.54, 0.29, 0.16), "Depto_Mat_Zapato": (0.30, 0.24, 0.20),
     "Depto_Mat_SuelaClara": (0.86, 0.85, 0.81), "Depto_Mat_CableTela": (0.07, 0.07, 0.07),
     "Depto_Mat_ComidaVerde": (0.36, 0.55, 0.22), "Depto_Mat_ComidaRoja": (0.68, 0.12, 0.08),
@@ -230,7 +231,8 @@ def z_hombro(v, media):
 
 # tipo: (media anchura de hombros, largo desde el cuello, espesor al centro, espesor del canto). Diseño: talla M de
 # mercado (camisa de ~0,45 m de hombros, para una percha estándar de 0,41-0,45 m); espesores de la prenda colgada
-# con su caída, no medidos.
+# con su caída, no medidos. El espesor del canto es el diámetro del doblez redondeado en los costados de la sección
+# (cuerpo_prenda).
 PRENDAS = {
     "camisa": (0.225, 0.76, 0.024, 0.017),
     "polera": (0.235, 0.68, 0.018, 0.016),
@@ -247,12 +249,18 @@ RUEDO = {"vestido": 0.05, "abrigo": 0.01, "camisa": -0.012, "polera": -0.02, "su
          "chaqueta": -0.008}      # ancho del ruedo respecto de los hombros (diseño)
 
 
-def cuerpo_prenda(bm, tipo, largo, t, rng, n=16, niveles=7):
+def cuerpo_prenda(bm, tipo, largo, t, rng, n=20, niveles=7):
     """Cuerpo de la prenda colgada como superficie cerrada: secciones horizontales desde la línea de hombros (que
-    sigue la percha 6 mm por encima) hasta el ruedo curvo. Cada sección es una lente de espesor `t` con pliegues
-    que se marcan hacia abajo, como la tela que cae; los cantos (v = ±ancho) quedan finos. z = 0 en el eje de la
-    barra; la prenda en el plano v-z, el espesor en u."""
-    w, L, _, _ = PRENDAS[tipo]
+    sigue la percha 6 mm por encima) hasta el ruedo curvo. Cada sección es una lente de espesor `t` al centro con
+    pliegues que se marcan hacia abajo, como la tela que cae, y cantos (v = ±ancho) redondeados del espesor del canto
+    de PRENDAS (el doblez de la tela en la costura lateral). z = 0 en el eje de la barra; la prenda en el plano v-z,
+    el espesor en u.
+
+    Sección (corrección 07b, ronda 2): suma de Minkowski aproximada de una elipse de semiejes (ancho − r, t/2 − r) y
+    un círculo de radio r = canto/2, tomado en la normal de la elipse. La versión anterior (superelipse de exponente
+    0,5) era casi una caja: el canto que se ve de frente en el clóset era una cara plana del espesor completo y las
+    prendas gruesas se leían como tablones. Muestreo angular más denso cerca de los cantos, donde gira la normal."""
+    w, L, _, tb = PRENDAS[tipo]
     L = largo or L
     h2 = PERCHA["alto_madera"] / 2
     if tipo == "pantalon":
@@ -286,19 +294,23 @@ def cuerpo_prenda(bm, tipo, largo, t, rng, n=16, niveles=7):
     def z_bot(v):
         return bot - curva * max(0.0, 1.0 - (v / W1) ** 2) + inclina * v / W1
     k, fase = rng.choice((3, 4, 5)), rng.uniform(0.0, TAU)
+    # ángulos de la sección: parámetro uniforme deformado para juntar muestras en los cantos (th = 0 y π)
+    ths = [TAU * i / n - 0.22 * math.sin(2 * TAU * i / n) for i in range(n)]
     anillos = []
     for q in range(niveles):
         f = q / (niveles - 1)
         W = ancho(f)
         Tf = t * (0.85 + 0.25 * math.sin(math.pi * min(1.0, f * 1.6)))    # algo más llena en el pecho
         A = 0.06 + 0.30 * f                                                # pliegues más marcados abajo
+        r = min(0.5 * tb * (0.9 + 0.2 * f), 0.45 * Tf)                     # radio del canto (algo más lleno abajo)
+        ea, eb = W - r, max(0.5 * Tf - r, 0.001)                           # semiejes de la elipse interior
         anillo = []
-        for i in range(n):
-            th = TAU * i / n
+        for th in ths:
             c, s_ = math.cos(th), math.sin(th)
-            v = W * c
+            phi = math.atan2(ea * s_, eb * c)                              # dirección de la normal de la elipse
+            v = ea * c + r * math.cos(phi)
             z = z_top(v) + f * (z_bot(v) - z_top(v))
-            u = 0.5 * Tf * math.copysign(abs(s_) ** 0.5, s_) * (1.0 + A * math.sin(k * th + fase))
+            u = (eb * s_ + r * math.sin(phi)) * (1.0 + A * math.sin(k * th + fase))
             anillo.append(bm.verts.new((u, v, z)))
         anillos.append(anillo)
     for a, b in zip(anillos[:-1], anillos[1:]):
@@ -541,13 +553,16 @@ def zapato(m, tipo, mat_capellada, mat_suela, M):
         bm.faces.new(list(reversed(anillos[0])))
         bm.faces.new(anillos[-1])
         if tipo == "zapatilla":
-            # lengüeta: lámina que asoma sobre la boca, delante del tobillo (corrección 07b: se leía como pantufla)
+            # lengüeta: lámina que asoma sobre la boca, delante del tobillo (corrección 07b: se leía como pantufla).
+            # Ronda 2: sigue el empeine a lo largo y a lo ancho (antes era una lámina plana a la altura del centro, que
+            # flotaba sobre los costados y se leía como una etiqueta cuadrada)
             xl0, xl1, bl = est[2][0] + 0.012, est[2][0] + 0.046, 0.55 * est[2][1]
+            ys = [bl * f for f in (-1.0, -0.5, 0.0, 0.5, 1.0)]
             secs = []
-            for xl, dz in ((xl0, 0.016), (xl1, 0.002)):
-                zc = _z_capellada(est, s, xl, 0.0)
-                secs.append([bm.verts.new(p) for p in ((xl, -bl, zc - 0.004), (xl, bl, zc - 0.004),
-                                                        (xl, bl, zc + dz), (xl, -bl, zc + dz))])
+            for xl, dz in ((xl0, 0.014), ((xl0 + xl1) / 2, 0.007), (xl1, 0.0025)):
+                arriba = [(xl, y, _z_capellada(est, s, xl, y) + dz * (1.0 - 0.35 * abs(y) / bl)) for y in ys]
+                abajo = [(xl, y, _z_capellada(est, s, xl, y) - 0.004) for y in reversed(ys)]
+                secs.append([bm.verts.new(p) for p in arriba + abajo])
             _loft_cerrado(bm, secs)
     if tipo != "bota":
         # boca del zapato: óvalo oscuro (el forro) pegado 1 mm sobre la capellada, entre el talón y el medio pie
@@ -632,16 +647,37 @@ def maleta(m, u_c, v_c, z0, ancho, hondo, alto, mat_casco, mat_detalle):
                     Vector((u_c + 0.07, v_c + hondo / 2 - 0.004, zc + 0.03))], 0.007, seg=6, radio_curva=0.01)
 
 
+CALCETINES = dict(largo=(0.06, 0.10), giro=12.0, doblados=0.25, doblado=(0.10, 0.05, 0.03))   # diseño (corrección
+# 07b, ronda 2): pares enrollados de largo variable y girados hasta ±12°, filas en tresbolillo y ~1 de cada 4 pares
+# doblado plano (0,10 × 0,05 × 0,03). Antes eran una grilla perfecta de cilindros iguales y se leían como rollos de
+# monedas.
+
+
 def calcetines(m, u0, u1, v0, v1, z0, materiales, rng, r=0.022):
-    """Calcetines enrollados (cilindros acostados) en filas dentro de un cajón."""
+    """Calcetines en un cajón: pares enrollados (cilindros acostados a lo largo de v) y algunos doblados planos, en
+    filas alternadas en tresbolillo, cada uno con su largo y un giro leve. Todo queda dentro de [u0, u1] × [v0, v1]."""
+    C = CALCETINES
     paso_u, paso_v = 2 * r + 0.008, 0.095
     nu, nv = int((u1 - u0) // paso_u), int((v1 - v0) // paso_v)
-    for i in range(nu):
-        for j in range(nv):
-            uc = u0 + paso_u * (i + 0.5)
-            vc = v0 + paso_v * (j + 0.5)
+    for j in range(nv):
+        vc = v0 + paso_v * (j + 0.5)
+        corrida = 0.5 * paso_u if j % 2 else 0.0                                  # tresbolillo
+        for i in range(nu - (1 if j % 2 else 0)):
+            uc = u0 + paso_u * (i + 0.5) + corrida
+            g = math.radians(rng.uniform(-C["giro"], C["giro"]))
+            if rng.random() < C["doblados"]:
+                a, d, h = C["doblado"]
+                a, d = min(a, paso_v - 0.01), min(d, paso_u - 0.004)
+                with m.parte(rng.choice(materiales), _M(uc, vc, z0, 0.5 * math.degrees(g) + 90.0), suave=True) as bm:
+                    B.caja_redondeada(bm, -a / 2, a / 2, -d / 2, d / 2, 0.0, h, 0.010, segmentos=1)
+                continue
+            rr = r * rng.uniform(0.88, 1.05)
+            # largo acotado para que el cilindro girado no salga de su celda (ni toque a los vecinos)
+            lmax = (paso_v - 0.006 - 2 * rr * abs(math.sin(g))) / max(abs(math.cos(g)), 1e-6)
+            L = min(rng.uniform(*C["largo"]), lmax)
+            du, dv = 0.5 * L * math.sin(g), 0.5 * L * math.cos(g)
             with m.parte(rng.choice(materiales), suave=True) as bm:
-                cilindro_eje(bm, (uc, vc - 0.04, z0 + r), (uc, vc + 0.04, z0 + r), r * rng.uniform(0.9, 1.05), seg=8)
+                cilindro_eje(bm, (uc - du, vc - dv, z0 + rr), (uc + du, vc + dv, z0 + rr), rr, seg=8)
 
 
 # ================================================================ alimentos (nevera)

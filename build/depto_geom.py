@@ -107,19 +107,27 @@ def uv_mundo(bm):
 
 
 # ---------------------------------------------------------------------------
-# Materiales base (color sRGB, rugosidad, metálico, alfa). La fase 5 los reemplaza por PBR con textura.
+# Materiales base (color sRGB, rugosidad, metálico, alfa[, extras]). La fase 5 los reemplaza por PBR con textura.
+# Extras opcionales: "emision" (rgb, fuerza) y "sombra" (shadow_method de Eevee de los transparentes, HASHED por
+# defecto; no va al GLB).
 # ---------------------------------------------------------------------------
 MATERIALES = {
     "Depto_Mat_MarcoVentana": ((0.06, 0.06, 0.06), 0.50, 0.3, 1.0),   # v2: aluminio negro mate (diseño industrial)
-    "Depto_Mat_Vidrio": ((0.80, 0.90, 0.95), 0.02, 0.0, 0.18),
+    "Depto_Mat_Vidrio": ((0.80, 0.90, 0.95), 0.02, 0.0, 0.18, {"sombra": "NONE"}),   # vidrio claro: casi no da
+    # sombra; con la sombra tramada (HASHED) quedaba un grano oscuro bajo los estantes de la nevera (corrección 07b)
     "Depto_Mat_VidrioEsmerilado": ((0.90, 0.93, 0.95), 0.35, 0.0, 0.55),
-    "Depto_Mat_PlasticoEsmerilado": ((0.93, 0.95, 0.96), 0.45, 0.0, 0.80),   # nevera: el contenido se lee como sombra
+    "Depto_Mat_PlasticoEsmerilado": ((0.93, 0.95, 0.96), 0.45, 0.0, 0.80, {"sombra": "CLIP"}),   # nevera: el contenido
+    # se lee como sombra; sombra recortada (umbral 0,5: sombra llena) en vez de tramada, sin grano (corrección 07b)
     "Depto_Mat_Pasamanos": ((0.07, 0.07, 0.08), 0.45, 0.8, 1.0),      # v2: acero negro
     "Depto_Mat_MarcoPuerta": ((0.07, 0.07, 0.07), 0.55, 0.0, 1.0),    # v2: marco pintado negro mate
-    "Depto_Mat_PuertaMadera": ((0.72, 0.55, 0.36), 0.50, 0.0, 1.0),   # enchapado de roble (fase 5: oak_veneer_01)
+    "Depto_Mat_PuertaMadera": ((0.72, 0.55, 0.36), 0.55, 0.0, 1.0),   # enchapado de roble (fase 5: oak_veneer_01);
+                                                                      # 0,55: barniz satinado (corrección 07b)
     "Depto_Mat_PuertaEntrada": ((0.15, 0.15, 0.16), 0.45, 0.6, 1.0),  # v2: hoja de acceso de acero pavonado
     "Depto_Mat_Manilla": ((0.04, 0.04, 0.04), 0.40, 0.8, 1.0),        # v2: negro
-    "Depto_Mat_MuebleBlanco": ((0.94, 0.94, 0.92), 0.35, 0.0, 1.0),   # cocina y closets melamina blanca (supuesto)
+    "Depto_Mat_MuebleBlanco": ((0.94, 0.94, 0.92), 0.55, 0.0, 1.0),   # cocina y clósets: melamina blanca satinada
+    # (supuesto). Corrección 07b: con 0,35 de rugosidad los costados de los clósets y el forro de la nevera reflejaban
+    # prendas y zapatos como fantasmas borrosos. Specular en 0,5 (otro valor exporta KHR_materials_specular y three.js
+    # usa MeshPhysicalMaterial, más caro).
     "Depto_Mat_Zocalo": ((0.30, 0.30, 0.30), 0.60, 0.0, 1.0),
     "Depto_Mat_Granito": ((0.45, 0.45, 0.46), 0.30, 0.0, 1.0),        # cubierta gris (fase 5: procedural)
     "Depto_Mat_Acero": ((0.72, 0.72, 0.74), 0.30, 1.0, 1.0),
@@ -157,7 +165,7 @@ MATERIALES = {
     "Depto_Mat_FrenteCocina": ((0.17, 0.18, 0.18), 0.55, 0.0, 1.0),     # carbón mate
     "Depto_Mat_MuebleCocina": ((0.17, 0.18, 0.18), 0.60, 0.0, 1.0),
     "Depto_Mat_CubiertaConcreto": ((0.33, 0.33, 0.32), 0.35, 0.0, 1.0),
-    "Depto_Mat_FrenteCloset": ((0.62, 0.47, 0.32), 0.50, 0.0, 1.0),     # roble natural
+    "Depto_Mat_FrenteCloset": ((0.62, 0.47, 0.32), 0.55, 0.0, 1.0),     # roble natural (0,55: barniz satinado)
     "Depto_Mat_MuebleBano": ((0.42, 0.31, 0.23), 0.50, 0.0, 1.0),       # roble ahumado
     "Depto_Mat_AceroNegro": ((0.14, 0.14, 0.15), 0.45, 0.85, 1.0),      # acero pavonado de muebles
     "Depto_Mat_MetalNegroMate": ((0.03, 0.03, 0.03), 0.50, 0.70, 1.0),  # grifería, luminarias, herrajes
@@ -215,7 +223,8 @@ def material(nombre):
     if alfa < 1.0:
         bsdf.inputs["Transmission"].default_value = 1.0 if "Vidrio" in nombre else 0.0
         mat.blend_method = "BLEND"
-        mat.shadow_method = "HASHED"
+        mat.shadow_method = extra.get("sombra", "HASHED")
+        mat.alpha_threshold = 0.5
         mat.use_backface_culling = False
         mat.show_transparent_back = True
     else:

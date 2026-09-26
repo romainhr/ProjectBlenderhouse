@@ -46,6 +46,8 @@ H = P.ALTURA_PISO_CIELO
 COL = "Depto_Mobiliario"
 EXTRACCION = os.path.join(RAIZ, "build", "depto_medicion", "extraccion_px_bordes.json")
 ALTURA_LIBRE = 1.85        # m: nada colgante por debajo en zonas de paso (la cámara del tour choca hasta 1,80)
+COLGANTE_CABLE_CORTO = 0.10   # m: cable de los colgantes de jaula de pasos, cocina y baños (diseño; con la jaula de
+                              # 0,17 m el fondo queda a ≈ 2,0 m del piso, sobre la cabeza y lejos de la ducha)
 HOLGURA_MURO = 0.01        # m entre la espalda de una pieza y el muro
 ALFOMBRA_ALTO = 0.008      # lo que se levantan las piezas apoyadas en una alfombra
 TOL_PENETRACION = 0.001
@@ -71,7 +73,8 @@ GRUPOS_LUZ = [
     ("cocina_techo", "Cocina · techo", "Cocina", True, K3000),
     ("hall_techo", "Hall · focos", "Hall", True, K2700),
     ("dorm1_techo", "Dormitorio principal · techo", "Dorm1", True, K2700),
-    ("dorm1_velador", "Dormitorio principal · lámpara del velador", "Dorm1", False, K2700),
+    ("dorm1_velador_izq", "Dormitorio principal · velador izquierdo", "Dorm1", False, K2700),
+    ("dorm1_velador_der", "Dormitorio principal · velador derecho", "Dorm1", False, K2700),
     ("paso_d1", "Clósets del principal · techo", "Paso_D1", True, K2700),
     ("dorm2_techo", "Segundo dormitorio · techo", "Dorm2", True, K2700),
     ("dorm2_aplique_izq", "Segundo dormitorio · aplique izquierdo", "Dorm2", False, K2700),
@@ -93,6 +96,8 @@ RESOLUCION_CAMA = 0.7     # deco_dormitorio.cama: 13 100 triángulos en vez de 2
                           # (review/deco/piezas/cama_r0.7 vs r1.0); deja presupuesto para las piezas de la tanda 2
 APLIQUE_PLACA_Z = 1.20    # diseño: centro de la placa de los apliques de lectura del dormitorio 2
 CONDUCTO_SEP = 0.014      # eje del conducto a la cara del cielo o del muro (deco_objetos.conducto: radio + 4 mm)
+CONDUCTO_T_Z = H - 0.25   # diseño: altura de la caja en T y del tramo horizontal que une las cajas de los
+                          # interruptores del living y del balcón (sobre el televisor, bajo el cielo)
 Z_BALCON = -P.DESNIVEL_BALCON
 HALL_MURO = X["LV_E"]      # muro oeste del hall: cara este del tabique del nicho de lavadora (y 325,6 a 363,2)
 HALL_EJE_Y = (Y["LV_F"] + Y["T9_N"]) / 2
@@ -121,8 +126,6 @@ def _junto(borde_marco, lado):
     return borde_marco + lado * (INTERRUPTOR_MARCO + OB.INTERRUPTOR["ancho"] / 2) / S
 
 
-# cara interior del marco del ventanal (depto_03 ventanal(): marco de PERFIL_PROF_CORREDERA centrado en la fachada)
-VENTANAL_MARCO_X = (F3.VENTANAL["c0"] + F3.VENTANAL["c1"]) / 2 + F3.px(F3.PERFIL_PROF_CORREDERA) / 2
 
 # (recinto de los grupos, grupos (una tecla por grupo, de izquierda a derecha), cara del muro px, u px, hacia dónde
 # mira[, recinto donde está la placa (por defecto el de los grupos), caja de superficie en m])
@@ -137,9 +140,11 @@ INTERRUPTORES = [
     # living: al pie del conducto visto del muro de ladrillo, junto a la puerta D1 (lado de la manilla), con el
     # colgante del comedor del balcón (docs/deco-industrial.md: el comedor para dos es el del balcón)
     ("Living", ("living_techo", "balcon"), Y["D1_S"], _junto(X["JAMBA_D"], -1), "S", "Living", CAJA_SUPERFICIE),
-    # balcón: por dentro, en el muro de ladrillo junto a la hoja móvil del ventanal (esquina con la fachada), con el
-    # canto a 0,10 del marco del ventanal (VENTANAL_MARCO_X). Está en el living: recinto de ubicación "Living".
-    ("Balcon", ("balcon",), Y["D1_S"], _junto(VENTANAL_MARCO_X, +1), "S", "Living"),
+    # balcón: por dentro, en el muro de ladrillo junto a la hoja móvil del ventanal (esquina con la fachada). Está en
+    # el living: recinto de ubicación "Living". Corrección 07b (ronda 2): el canto a 0,10 m de la arista del vano
+    # (X["W_I"], donde termina el ladrillo y empieza el derrame revocado), no del marco, que está 7,4 cm más adentro
+    # (quedaba a 2,6 cm de la arista); sobre caja de superficie, como la del living, con su conducto visto.
+    ("Balcon", ("balcon",), Y["D1_S"], _junto(X["W_I"], +1), "S", "Living", CAJA_SUPERFICIE),
     # dormitorios: espalda con espalda con el del living (D1) y del lado de la manilla; la segunda tecla prende el
     # paso de los clósets, que no tiene puerta propia
     ("Dorm1", ("dorm1_techo", "paso_d1"), Y["D1_N"], _junto(X["JAMBA_D"], -1), "N"),
@@ -264,7 +269,8 @@ CUADROS_Z = 1.35                           # diseño: base de los cuadros sobre 
 # baño quedaba en 0,42 m y la cámara del tour (radio 0,20) no pasaba. Cabecero contra el muro de las almohadas del plano.
 CAMA_CX = 205.5 - 2.3
 VELADOR_ANCHO = 0.42       # diseño: 3 cm menos que la especificación, para que quepa junto a la ventana
-# lectura: D1 con lámpara de mesa en el velador oeste; D2 con apliques de brazo sobre los dos veladores (y un jarrón)
+# lectura: D1 con lámpara de mesa en los dos veladores (libros en la repisa del este); D2 con apliques de brazo sobre
+# los dos veladores (y un jarrón)
 CAMAS = {"D1": dict(cx=CAMA_CX, muro=Y["N_I"], mira="S", tapiz="Depto_Mat_Lana", espejo=(150.0, Y["D1_N"], "N"),
                     lectura="mesa"),
          "D2": dict(cx=CAMA_CX, muro=Y["S_I"], mira="N", tapiz="Depto_Mat_Cuero", espejo=(150.0, Y["D2_S"], "S"),
@@ -327,6 +333,13 @@ def sofa_ancho(sofa):
     return hi.x - lo.x
 
 
+def lado_cama(d, lado):
+    """'izq' o 'der' del velador en el `lado` (−1 oeste, +1 este) mirando la cabecera desde los pies de la cama: con
+    la cama mirando al sur (D1) el oeste queda a la izquierda; mirando al norte (D2), a la derecha."""
+    derecha = lado > 0 if d["mira"] == "S" else lado < 0
+    return "der" if derecha else "izq"
+
+
 def dormitorios(c):
     for did, d in CAMAS.items():
         rug_y = d["muro"] + (1.25 / S if d["mira"] == "S" else -1.25 / S)   # sin pisar los veladores
@@ -342,21 +355,27 @@ def dormitorios(c):
             vy = d["muro"] + dy * (vhi.y + HOLGURA_MURO) / S
             c.poner(f"{did}_Velador{'O' if lado < 0 else 'E'}", "solido", vel, vx, vy, 0.0, d["mira"])
             zt = vhi.z - vlo.z
+            lado_n = 'O' if lado < 0 else 'E'
             if d["lectura"] == "aplique":
-                lado_n = 'O' if lado < 0 else 'E'
                 apl = c.contra_muro(OB.aplique_brazo, f"{did}_Aplique{lado_n}", "adorno", d["muro"], vx, d["mira"],
                                     holgura=0.0)
                 pc = next(o["placa_centro_z"] for o in apl if "placa_centro_z" in o)
                 for o in apl:
                     o.location.z = APLIQUE_PLACA_Z - pc
-                g = f"dorm{did[1]}_aplique_{'der' if lado < 0 else 'izq'}"   # mirando la cabecera: el oeste a la derecha
+                g = f"dorm{did[1]}_aplique_{lado_cama(d, lado)}"
                 marcar_ampolletas(apl, POTENCIA["aplique"], radio=RADIO_PANTALLA_CHICA, grupo=g)
                 clicable(apl, g, ("_Metal", "_Pantalla"))
-            if lado < 0 and d["lectura"] == "mesa":
-                lam = c.construir(DO.lampara_mesa, f"{did}_LamparaMesa")
-                c.poner(f"{did}_LamparaMesa", "adorno", lam, vx, vy, zt, d["mira"])
-                marcar_ampolletas(lam, POTENCIA["mesa"], radio=RADIO_PANTALLA_CHICA, grupo=f"dorm{did[1]}_velador")
-                clicable(lam, f"dorm{did[1]}_velador", ("_Cuerpo", "_Pantalla"))
+            if d["lectura"] == "mesa":
+                # corrección 07b (ronda 2): una lámpara en cada velador de la cama doble (antes sólo en el oeste; el
+                # este tenía libros), cada una con su grupo, apagada al cargar y clicable
+                g = f"dorm{did[1]}_velador_{lado_cama(d, lado)}"
+                lam = c.construir(DO.lampara_mesa, f"{did}_LamparaMesa{lado_n}")
+                c.poner(f"{did}_LamparaMesa{lado_n}", "adorno", lam, vx, vy, zt, d["mira"])
+                marcar_ampolletas(lam, POTENCIA["mesa"], radio=RADIO_PANTALLA_CHICA, grupo=g)
+                clicable(lam, g, ("_Cuerpo", "_Pantalla"))
+                if lado > 0:        # los libros bajan a la repisa del velador, bajo la lámpara
+                    lib = c.construir(OB.libros, f"{did}_Libros", n=3, apilados=True, semilla=7)
+                    c.poner(f"{did}_Libros", "adorno", lib, vx, vy, alturas_repisa(vel)[0], d["mira"])
             elif lado < 0:
                 jar = c.construir(OB.jarron, f"{did}_Jarron", variante=2)
                 c.poner(f"{did}_Jarron", "adorno", jar, vx, vy, zt, d["mira"])
@@ -386,7 +405,10 @@ def cocina(c):
     g = c.construir(CB.grifo_cocina, "Cocina_Grifo")
     c.poner("Cocina_Grifo", "adorno", g, F3.BACHA[1] + 0.035 / S, (F3.BACHA[2] + F3.BACHA[3]) / 2, F3.MESON_Z, "O")
     for i, x in enumerate((310.0, 368.0)):
-        col = c.colgante(OB.colgante_jaula, f"Cocina_Colgante{i + 1}", x, 200.0)
+        # corrección 07b (ronda 2): cable corto, como en los pasos. Con el cable de 0,8 m recortado a ALTURA_LIBRE, el
+        # fondo de la jaula quedaba a 1,86 m y a 0,33 m del frente de la cubierta: a la altura de la cabeza de quien
+        # cocina. Con COLGANTE_CABLE_CORTO queda a ≈ 2,0 m.
+        col = c.colgante(OB.colgante_jaula, f"Cocina_Colgante{i + 1}", x, 200.0, cable_pref=COLGANTE_CABLE_CORTO)
         marcar_ampolletas(col, POTENCIA["colgante"], grupo="cocina_techo")
 
 
@@ -421,7 +443,10 @@ def banos(c):
         frente_v = vy0 if b["vanitorio"]["muro"][0] == "S" else vy1
         c.contra_muro(HA.toallero_barra, f"{bid}_Toallero", "adorno", frente_v, cx, "N", z=TOALLERO_Z, holgura=0.0,
                       largo=0.40)                                   # en el frente del vanitorio, bajo el lavabo
-        col = c.colgante(OB.colgante_jaula, f"{bid}_Colgante", (tx0 + tx1) / 2, (ty1 + vy0) / 2)
+        # cable corto (corrección 07b, ronda 2): entre la tina con ducha y el vanitorio la ampolleta quedaba a 1,86 m,
+        # expuesta a menos de 0,6 m de la ducha
+        col = c.colgante(OB.colgante_jaula, f"{bid}_Colgante", (tx0 + tx1) / 2, (ty1 + vy0) / 2,
+                         cable_pref=COLGANTE_CABLE_CORTO)
         marcar_ampolletas(col, POTENCIA["colgante"], grupo=f"bano{bid[1]}")
     # portarrollos: B1 en la cara de la repisa de instalaciones, B2 en el muro este junto al WC
     rep = F3.BANOS["B1"]["repisa"]
@@ -479,7 +504,8 @@ def pasos(c):
     corto, casi pegado al cielo, al centro de cada paso."""
     for pid, (x0, x1, y0, y1) in (("Paso_D1", (X["T3_E"], X["T4_W"], Y["CL1_N"], Y["CL1_S"])),
                                   ("Paso_D2", (X["T3_E"], X["T10_W"], Y["CL2_N"], Y["CL2_S"]))):
-        col = c.colgante(OB.colgante_jaula, f"{pid}_Colgante", (x0 + x1) / 2, (y0 + y1) / 2, cable_pref=0.10)
+        col = c.colgante(OB.colgante_jaula, f"{pid}_Colgante", (x0 + x1) / 2, (y0 + y1) / 2,
+                         cable_pref=COLGANTE_CABLE_CORTO)
         marcar_ampolletas(col, POTENCIA["paso"], grupo=pid.lower())
 
 
@@ -512,13 +538,19 @@ def conductos(c):
 
     # living: del florón del colgante hacia el este (libre del televisor), al muro de ladrillo y bajando a una caja
     x_baja, y_muro = _junto(X["JAMBA_D"], -1), MURO_TV + CONDUCTO_SEP / S    # 07b: baja al interruptor del living
+    # Corrección 07b (ronda 2): el tramo del muro es una derivación en T (caja redonda a CONDUCTO_T_Z): baja al
+    # interruptor del living y va por el ladrillo, sobre el televisor, hasta el del balcón (el colgante del balcón
+    # se prende desde las dos placas: combinación de escalera, que necesita ese tramo entre las dos cajas).
+    boca = OB.CONDUCTO_CAJA["radio"] + OB.CONDUCTO_CAJA["boca"]      # del centro de la caja al extremo de su boca
+    z_caja = INTERRUPTOR_Z + OB.INTERRUPTOR["caja_alto"] / 2          # entra por arriba a la caja de superficie
+    x_bal = _junto(X["W_I"], +1)                                      # eje del interruptor del balcón
     c.mundo(OB.conducto, "Living_ConductoCielo", "adorno", normal_muro=(0.0, 0.0, 1.0), cajas=(),
             puntos=(pt(205.0 + florn, 246.0, zc), pt(x_baja, 246.0, zc), pt(x_baja, y_muro, zc),
-                    pt(x_baja, y_muro, H - 0.25)))
-    c.mundo(OB.conducto, "Living_ConductoMuro", "adorno", normal_muro=(1.0, 0.0, 0.0), cajas=(),
-            puntos=(pt(x_baja, y_muro, H - 0.25),                           # copla contra copla: unión
-                    pt(x_baja, y_muro, INTERRUPTOR_Z + OB.INTERRUPTOR["caja_alto"] / 2)))   # entra por arriba a la
-                                                                                             # caja de superficie
+                    pt(x_baja, y_muro, CONDUCTO_T_Z + boca)))            # termina en la boca de arriba de la T
+    c.mundo(OB.conducto, "Living_ConductoMuro", "adorno", normal_muro=(1.0, 0.0, 0.0), cajas=(2,),
+            ramales={2: (pt(x_baja, y_muro, zc),)},                    # boca hacia el tramo que baja del cielo
+            puntos=(pt(x_bal, y_muro, z_caja), pt(x_bal, y_muro, CONDUCTO_T_Z), pt(x_baja, y_muro, CONDUCTO_T_Z),
+                    pt(x_baja, y_muro, z_caja)))
     # balcón: del muro de la fachada al florón del colgante, por la losa del balcón de arriba
     c.mundo(OB.conducto, "Balcon_Conducto", "adorno", normal_muro=(0.0, 0.0, 1.0), cajas=(),
             puntos=(pt(X["W_O"] - 0.001 / S, BISTRO["y"], zc), pt(BISTRO["x"] + florn, BISTRO["y"], zc)))

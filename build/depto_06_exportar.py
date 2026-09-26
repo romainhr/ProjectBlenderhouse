@@ -53,6 +53,8 @@ MANIFIESTO = os.path.join(EXPORTS, "manifest.json")
 TEX_MANIFIESTO = os.path.join(RAIZ, "assets", "texturas", "polyhaven", "manifest.json")
 RADIO = 0.20                          # compuerta 0 / ADR 0002: radio de la cámara del tour con el mobiliario
 OJO = 1.60                            # altura de los ojos (la de las cámaras de revisión)
+CONTRATO = "2.1"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
+                                      # sigue siendo la mayor (2), por compatibilidad del visor
 INICIO, MIRAR = "Hall", (190, 250)    # crítico de recorrido, fase 3: hall con 0,45 m de holgura, hacia el living
 DETRAS_DE_PUERTA = {"Dorm1", "Dorm2", "Bano1", "Bano2", "Paso_D1", "Paso_D2", "Balcon"}
 
@@ -409,7 +411,7 @@ def main():
     estaticos, moviles = colisiones(root)
     grupos = json.loads(scene.get("depto_grupos_luz", "[]"))
     datos = {
-        "version": 2, "unidades": "m", "ejes": "glTF: Y arriba; el balcón (frente) hacia -Z; cajas [xmin, xmax, zmin, zmax]",
+        "version": 2, "contrato": CONTRATO, "unidades": "m", "ejes": "glTF: Y arriba; el balcón (frente) hacia -Z; cajas [xmin, xmax, zmin, zmax]",
         "radio": RADIO, "franja_y": [R.Z_PASO, R.Z_CABEZA], "ojo": OJO,
         "inicio": {"posicion": punto_gl(R.PUNTOS[INICIO]), "mirar": punto_gl(MIRAR)},
         "recintos": {n: punto_gl(p) for n, p in R.PUNTOS.items()},

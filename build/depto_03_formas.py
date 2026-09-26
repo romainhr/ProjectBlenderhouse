@@ -55,7 +55,11 @@ LUZ_PISO = 0.01              # supuesto: holgura bajo la hoja
 MARCO_ANCHO = 0.025          # medido: jamba = (luz 0,76 − hoja 0,71) / 2 en las puertas interiores
 MARCO_SOBRESALE = 0.01       # supuesto: el marco sobresale 1 cm de cada cara del muro
 MANILLA_Z = 1.00             # supuesto: altura estándar
-MANILLA = (0.12, 0.06)       # supuesto: largo de la manilla y cuánto sobresale de la hoja
+# Manilla de palanca (corrección 07b, ronda 2; diseño, en la línea de los tiradores de barra negros): roseta Ø 0,05 ×
+# 0,008, cuello Ø 0,016 que sale 0,052 de la hoja y palanca de 0,12 × 0,018 × 0,010 con las puntas redondeadas, hacia
+# la bisagra, con el eje a 0,06 del canto libre (entrada estándar de cerradura tubular). Antes era un bloque de
+# 0,12 × 0,06 × 0,02 pegado a la hoja, que desentonaba junto a los interruptores de tornillos y balancín.
+MANILLA = dict(roseta=(0.025, 0.008), cuello=(0.008, 0.052), palanca=(0.12, 0.018, 0.010), eje_desde_canto=0.06)
 # Ángulo de las hojas abiertas. D1 y D2: a 90° la manilla del lado de la bisagra toca el tabique T3 (≈86°),
 # así que quedan a 84°. B1 y B2: del lado de la bisagra no hay muro (la tina queda a 0,07 m de la manilla) y a
 # 90° la hoja deja 0,61 m de paso frente a la jamba opuesta; a 84° dejaba 0,53 (recorrido de 0,25 m: no pasa).
@@ -138,8 +142,9 @@ CLOSET_ALTURAS = {           # diseño (m): repisa maletero y barras de colgar d
 }
 CLOSET_CAJON_ALTO = 0.18     # diseño: frente de cada cajón interior
 CLOSET_CAJON_JUNTA = 0.004   # diseño: junta entre frentes de cajón
-CLOSET_CAJONES = {"D1": 2, "D2": 3}
-CLOSET_CAJON_RECORRIDO = 0.30
+CLOSET_CAJONES = {"D1": 2, "D2": 3}   # diseño: cajones que caben en la columna de la hoja A (CLOSET_CAJON_ALTO +
+                                      # junta cada uno) bajo la primera repisa: 2 en D1 y 3 en D2
+CLOSET_CAJON_RECORRIDO = 0.30         # diseño: recorrido del cajón, ≈ 65 % del fondo útil de la celda _Sur (~0,46 m)
 CLOSET_REPISAS_PASO = 0.36   # diseño: distancia entre repisas de las columnas (ropa doblada de 3-5 capas)
 MALETERO_CAJA = (0.36, 0.34, 0.22)      # diseño: caja de guardado de tela (~27 L: ancho, hondo, alto) en el maletero
 MALETERO_MANTAS = (0.36, 0.34, 3, 0.06)  # diseño: pila de mantas (ancho, hondo, capas, alto de capa)
@@ -463,6 +468,35 @@ PUERTA_CONTRATO = {   # clase/etiqueta/recinto del contrato de interacción v2 (
 }
 
 
+def _manilla_palanca(bm, c, n, t):
+    """Manilla de palanca de MANILLA en una cara de la hoja (m, mundo): c = punto del eje sobre la cara, n = normal
+    hacia afuera de la cara, t = hacia dónde apunta la palanca (la bisagra). ≈ 180 triángulos."""
+    rr, er = MANILLA["roseta"]
+    rc, lc = MANILLA["cuello"]
+    lp, hp, ep = MANILLA["palanca"]
+    B_.tubo(bm, [c, c + n * er], rr, seg=20)                                    # roseta
+    wc = lc - ep / 2                                                            # eje de la palanca (sobre la cara)
+    B_.tubo(bm, [c + n * (er - 0.001), c + n * wc], rc, seg=12)                 # cuello (entra en la palanca)
+    z = Vector((0.0, 0.0, 1.0))
+    sec = [(math.cos(TAU_M * k / 8), math.sin(TAU_M * k / 8)) for k in range(8)]
+    sec = [(math.copysign(abs(a) ** 0.6, a), math.copysign(abs(b) ** 0.6, b)) for a, b in sec]   # sección redondeada
+    anillos = []
+    # estaciones (distancia desde el eje hacia la punta, escala de la sección): las dos puntas redondeadas
+    for d, k in ((-(rc + 0.003), 0.55), (-(rc - 0.001), 0.92), (lp - rc - 0.012, 1.0), (lp - rc - 0.004, 0.92),
+                 (lp - rc, 0.55)):
+        o = c + n * wc + t * d
+        anillos.append([bm.verts.new(o + n * (a * k * ep / 2) + z * (b * k * hp / 2)) for a, b in sec])
+    for a, b in zip(anillos[:-1], anillos[1:]):
+        for i in range(8):
+            j = (i + 1) % 8
+            bm.faces.new((a[i], a[j], b[j], b[i])).smooth = True
+    bm.faces.new(list(reversed(anillos[0]))).smooth = True
+    bm.faces.new(anillos[-1]).smooth = True
+
+
+TAU_M = 2 * math.pi
+
+
 def puertas(col):
     """Marco, hoja y manillas. La hoja y sus manillas se arman cerradas con el origen en la bisagra, y la
     hoja abierta es la misma malla girada ANGULO_ABIERTA[id]: el tour puede abrir y cerrar rotando en Z."""
@@ -497,9 +531,11 @@ def puertas(col):
         h = Pieza(f"Depto_Puerta_{pid}_Hoja", "Depto_Mat_PuertaEntrada" if es_ent else "Depto_Mat_PuertaMadera")
         h.caja(*uw(eje, a + ma, b - ma, w0, w1), LUZ_PISO, HOJA_ALTO)
         man = Pieza(f"Depto_Puerta_{pid}_Manillas", "Depto_Mat_Manilla")
-        m0, m1 = sorted((ulibre - du * px(0.05), ulibre - du * px(0.05 + MANILLA[0])))
-        for wa, wb in ((w0 - px(MANILLA[1]), w0), (w1, w1 + px(MANILLA[1]))):
-            man.caja(*uw(eje, m0, m1, wa, wb), MANILLA_Z - 0.01, MANILLA_Z + 0.01)
+        u_eje = ulibre - du * px(MANILLA["eje_desde_canto"])
+        hacia_bisagra = (mundo(eje, u_eje - du, w0) - mundo(eje, u_eje, w0)).normalized()
+        for w_cara, afuera in ((w0, -1), (w1, +1)):
+            n = (mundo(eje, u_eje, w_cara + afuera) - mundo(eje, u_eje, w_cara)).normalized()
+            _manilla_palanca(man.bm, mundo(eje, u_eje, w_cara, MANILLA_Z), n, hacia_bisagra)
         # Giro: del sentido cerrado (bisagra -> canto libre) hacia el lado en que abre, en coordenadas de mundo.
         dc, do = mundo(eje, ub + du, cara) - piv, mundo(eje, ub, cara + sentido) - piv
         signo = 1 if dc.x * do.y - dc.y * do.x > 0 else -1
@@ -668,10 +704,14 @@ CLOSET_ZAPATOS = {
                  ("taco", "Depto_Mat_RopaNegro", SUELA_OSCURA)],
     "D1_Sur": [("bota", "Depto_Mat_Zapato", SUELA_OSCURA), ("zapato", "Depto_Mat_RopaNegro", SUELA_OSCURA),
                ("zapatilla", "Depto_Mat_RopaGris", SUELA_CLARA), ("taco", "Depto_Mat_Cuero", SUELA_OSCURA)],
-    "D2_Norte": [("bota", "Depto_Mat_Cuero", SUELA_OSCURA), ("zapatilla", "Depto_Mat_RopaBlanco", SUELA_CLARA),
-                 ("zapatilla", "Depto_Mat_RopaCarbon", SUELA_CLARA)],
-    "D2_Sur": [("zapatilla", "Depto_Mat_RopaVerde", SUELA_CLARA), ("zapato", "Depto_Mat_Zapato", SUELA_OSCURA),
-               ("bota", "Depto_Mat_RopaNegro", SUELA_OSCURA), ("zapatilla", "Depto_Mat_RopaDenim", SUELA_CLARA)],
+    # D2_Norte (corrección 07b, ronda 2): la bota al final, fuera de la barra baja de pantalones (que ocupa hasta
+    # u ≈ 0,45 m); primera, su caña quedaba a 1-3 cm del ruedo del pantalón gris y se leía apoyado en ella.
+    "D2_Norte": [("zapatilla", "Depto_Mat_RopaBlanco", SUELA_CLARA), ("zapatilla", "Depto_Mat_RopaCarbon", SUELA_CLARA),
+                 ("bota", "Depto_Mat_Cuero", SUELA_OSCURA)],
+    # D2_Sur: zapatillas en tintes claros (salvia y gris claro); en verde oscuro y denim se leían negras como el zapato
+    # y la bota
+    "D2_Sur": [("zapatilla", "Depto_Mat_RopaSalvia", SUELA_CLARA), ("zapato", "Depto_Mat_Zapato", SUELA_OSCURA),
+               ("bota", "Depto_Mat_RopaNegro", SUELA_OSCURA), ("zapatilla", "Depto_Mat_RopaGrisClaro", SUELA_CLARA)],
 }
 
 

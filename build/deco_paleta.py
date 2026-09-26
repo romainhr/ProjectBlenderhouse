@@ -38,9 +38,13 @@ TEXTURA_MAT = {
     "Depto_Mat_Cielo": ("concreto_encofrado", dict(color=True, rugosidad=True, normal=0.5)),
     "Depto_Mat_Ladrillo": ("ladrillo", dict(color=True, rugosidad=True, normal=1.0)),
     "Depto_Mat_MuroBano": ("azulejo_subway", dict(color=True, rugosidad=True, normal=0.8)),
-    # madera
-    "Depto_Mat_PuertaMadera": ("oak_veneer_01", dict(color=True, rugosidad=True, normal=0.4)),
-    "Depto_Mat_FrenteCloset": ("oak_veneer_01", dict(color=True, rugosidad=True, normal=0.4)),
+    # madera. Corrección 07b (ronda 2): el enchapado de roble va sin el mapa de rugosidad de oak_veneer_01 (rugosidad
+    # constante de depto_geom, 0,55, de barniz satinado): con el mapa (percentil 5 en 0,32, medido en
+    # oak_veneer_01_rough_1k.jpg) las franjas lisas de la veta reflejaban el cielo y de día el roble se leía encalado o
+    # escarchado (gris lila con vetas blancas en el pie de las hojas y en los cajones); de noche, miel. El Specular queda
+    # en 0,5: otro valor exporta KHR_materials_specular y three.js pasa el material a MeshPhysicalMaterial (más caro).
+    "Depto_Mat_PuertaMadera": ("oak_veneer_01", dict(color=True, rugosidad=False, normal=0.4)),
+    "Depto_Mat_FrenteCloset": ("oak_veneer_01", dict(color=True, rugosidad=False, normal=0.4)),
     "Depto_Mat_MaderaMueble": ("roble_ahumado", dict(color=True, rugosidad=True, normal=0.5)),
     "Depto_Mat_MuebleBano": ("roble_ahumado", dict(color=True, rugosidad=True, normal=0.5)),
     # metal, piedra y concreto
@@ -62,7 +66,10 @@ TEXTURA_MAT = {
     "Depto_Mat_Alfombra": ("yute", dict(color=True, rugosidad=True, normal=1.0)),
     # Interiores de clósets (fase 07b): sólo el relieve de las telas del depto; el color va por vértice.
     "Depto_Mat_Tela": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
-    "Depto_Mat_TelaGruesa": ("lana", dict(color=False, rugosidad=True, normal=0.8)),
+    # Corrección 07b (ronda 2): el tejido de las prendas gruesas, 2,5 veces más fino que el de los cojines (repetición de
+    # 0,10 m en vez de 0,25) y con relieve suave (0,30): con 0,8 y la escala de los cojines, abrigos y chaquetas se leían
+    # como corcho, arpillera o estuco. El bouclé de los cojines (Depto_Mat_Lana) no cambia.
+    "Depto_Mat_TelaGruesa": ("lana", dict(color=False, rugosidad=True, normal=0.30, escala_m=0.10)),
     "Depto_Mat_Calzado": ("cuero", dict(color=False, rugosidad=True, normal=0.6)),
     # cuadros: lámina con UV 0-1 propia
     "Depto_Mat_Arte1": ("arte_1", dict(color=True, rugosidad=False, normal=None, uv01=True)),
