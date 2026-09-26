@@ -35,6 +35,7 @@ import depto_sellos as SE  # noqa: E402
 COLS = ("Depto_Luces",)
 LUZ_COLOR = DC.kelvin_a_lineal(2700)   # 2700 K lineal (contrato v2, sección 2): respaldo si el grupo no trae color
 LUZ_RADIO = 0.03                   # radio de la fuente (sombras suaves)
+AMPOLLETA_SIN_SOMBRA = ("Depto_Mat_Bombilla", "Depto_Mat_VidrioBombilla")
 LUZ_CLIP_SOMBRA = 0.005            # m: inicio del mapa de sombras de cada luz (Eevee usa 0,05 por defecto: dentro de
                                    # las pantallas cerradas, el tapón a ~5 cm de la ampolleta no hacía sombra)
 SOL = dict(elevacion=35.0, azimut=-25.0, energia=3.0)   # supuesto: sol desde el lado del balcón (+Y), 25° al -X
@@ -181,6 +182,11 @@ def main():
     bpy.context.view_layer.update()
     usados = sorted({m.name for o in visibles(root) for m in o.data.materials if m})
     con_textura = [n for n in usados if PAL.aplicar(n)]
+    # La ampolleta (filamento emisivo y vidrio) no hace sombra a la luz que la representa: con el mapa de sombras
+    # desde 5 mm (LUZ_CLIP_SOMBRA), una ampolleta cerrada alrededor de su luz la apagaba (velador de D1).
+    for n in AMPOLLETA_SIN_SOMBRA:
+        if bpy.data.materials.get(n):
+            bpy.data.materials[n].shadow_method = "NONE"
     grupos = {g["id"]: g for g in json.loads(scene.get("depto_grupos_luz", "[]"))}
     hacia_sol, n_luces = luces(cols["Depto_Luces"], root, grupos)
     mundo(scene, hacia_sol)
