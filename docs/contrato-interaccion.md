@@ -1,6 +1,6 @@
 # Contrato de interacción: modelo (Blender) ↔ visor web
 
-Versión 2 (2026-09-26). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
+Versión 2 (2026-09-26; secciones 2, 3 y 5 completadas en la fase 07b). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
 
 ## 1. Móviles (`moviles[]`, ya existe, se amplía)
 
@@ -33,6 +33,29 @@ Cada luz puntual trae además `grupo` (id de `grupos_luz`), `color` [r, g, b] li
 - Color cálido por defecto: 2700 K (≈ [1.0, 0.72, 0.42] lineal). Los focos de cocina y baño pueden ir a 3000 K.
 - El visor clona el material emisivo de cada `ampolleta` para que cada grupo se apague por separado.
 
+Grupos que exporta el modelo (fase 07b; `GRUPOS_LUZ` en `build/depto_04_mobiliario.py`, que también los guarda en
+la escena para las fases 5 y 6). `encendido` es el estado con que nace el grupo: `true` para las luces de techo,
+`false` para veladores, apliques y la lámpara de pie. Izquierda y derecha de los veladores: mirando la cabecera
+desde los pies de la cama.
+
+| id | luminaria | recinto | color | encendido |
+|---|---|---|---|---|
+| `living_techo` | colgante de domo | Living | 2700 K | sí |
+| `living_lampara_pie` | lámpara de arco | Living | 2700 K | no |
+| `cocina_techo` | 2 colgantes de jaula | Cocina | 3000 K | sí |
+| `hall_techo` | riel de 3 focos | Hall | 2700 K | sí |
+| `dorm1_techo` | colgante de domo | Dorm1 | 2700 K | sí |
+| `dorm1_velador` | lámpara de mesa (velador oeste) | Dorm1 | 2700 K | no |
+| `paso_d1` | colgante de jaula de cable corto (nuevo en 07b) | Paso_D1 | 2700 K | sí |
+| `dorm2_techo` | colgante de domo | Dorm2 | 2700 K | sí |
+| `dorm2_aplique_izq`, `dorm2_aplique_der` | apliques de brazo (este y oeste) | Dorm2 | 2700 K | no |
+| `paso_d2` | colgante de jaula de cable corto (nuevo en 07b) | Paso_D2 | 2700 K | sí |
+| `bano1`, `bano2` | colgante de jaula | Bano1, Bano2 | 3000 K | sí |
+| `balcon` | colgante de domo Ø 0,28 sobre la mesa bistró, bajo la losa del balcón de arriba (nuevo en 07b) | Balcon | 2700 K | sí |
+
+La etiqueta de cada grupo empieza con el nombre del recinto de `recintos_etiquetas` ("Dormitorio principal ·
+techo"); la fase 4 lo prueba.
+
 ## 3. Interruptores y objetos que prenden luces
 
 Propiedad de Blender `grupo_luz` (texto o lista separada por comas) en cualquier objeto clicable:
@@ -41,6 +64,34 @@ Propiedad de Blender `grupo_luz` (texto o lista separada por comas) en cualquier
 
 Se exporta como `interruptores: [{"nodo", "grupos": [...], "tecla": nombre o null}]`. Los `extras` del nodo repiten `grupo_luz` para que el raycast lo reconozca sin buscar en la lista.
 
+Detalle (fase 07b):
+- Placa de 0,08 × 0,12 × 0,012 m de acero negro mate con dos tornillos vistos; teclas de balancín de latón
+  envejecido. Centro a 1,10 m, canto a 0,10 m del marco, del lado de la manilla y dentro del recinto. Sin colisión
+  (`colision: false`): 12 mm de muro no deben angostar los pasos del recorrido.
+- Teclas hijas de la placa, sin giro propio y con el origen en su eje de giro (horizontal, paralelo al muro, sobre
+  la cara de la placa): el visor las inclina con `rotation.x`. Nombres: `<placa>_Tecla` (placa simple) o
+  `<placa>_1_Tecla` y `<placa>_2_Tecla` (placa doble, de izquierda a derecha mirando la placa).
+- Registros: uno por placa (`grupos` = los de todas sus teclas; `tecla` = la suya si es simple, `null` si es
+  doble), uno por tecla (`nodo` = `tecla` = la tecla, `grupos` = el suyo) y uno por pieza clicable de lámpara
+  (`tecla: null`). El visor registra primero las teclas (cada una manda sólo su grupo) y deja la tecla colgando de
+  su placa.
+- El estado de un interruptor sale de sus grupos (encendido si alguno lo está), no de un estado propio: varios
+  nodos mandan el mismo grupo (tecla y placa, pantalla y cuerpo de una lámpara, los dos puntos de encendido del
+  balcón) y los grupos de techo nacen encendidos.
+
+| placa | teclas (izquierda → derecha) | dónde |
+|---|---|---|
+| `Depto_Interruptor_Hall` | `hall_techo` | tabique cocina/hall, junto a la jamba norte de la entrada |
+| `Depto_Interruptor_Cocina` | `cocina_techo` | canto de 0,12 m del mismo tabique (la cocina no tiene puerta) |
+| `Depto_Interruptor_Living` | `living_techo`, `balcon` | muro de ladrillo junto a la puerta D1, al pie del conducto visto; el comedor para dos es el del balcón (`docs/deco-industrial.md`) |
+| `Depto_Interruptor_Balcon` | `balcon` | por dentro, muro de ladrillo junto a la hoja móvil del ventanal |
+| `Depto_Interruptor_Dorm1` | `dorm1_techo`, `paso_d1` | dentro del dormitorio, espalda con espalda con la del living |
+| `Depto_Interruptor_Dorm2` | `dorm2_techo`, `paso_d2` | dentro del dormitorio |
+| `Depto_Interruptor_Bano1`, `_Bano2` | `bano1`, `bano2` | dentro del baño, en el tabique de la puerta |
+
+Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Base,Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa_{Cuerpo,Pantalla}`
+y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
+
 ## 4. Exterior
 
 `exterior: {"panorama": "tex/<archivo>.jpg", "rotacion_deg": n, "suelo_y": n}`: panorama equirectangular (Poly Haven, CC0) que el visor usa como fondo y como reflejo tenue. En Blender se usa el HDRI equivalente como mundo para los renders de revisión.
@@ -48,3 +99,7 @@ Se exporta como `interruptores: [{"nodo", "grupos": [...], "tecla": nombre o nul
 ## 5. Recintos
 
 `recintos` sigue siendo `{nombre: [x, z]}`. Se agrega `recintos_etiquetas: {nombre: "Dormitorio principal"}` para la interfaz.
+
+Etiquetas (fase 07b, `RECINTOS_ETIQUETAS` en `build/depto_04_mobiliario.py`): Hall, Living, Cocina, Dormitorio
+principal (Dorm1), Segundo dormitorio (Dorm2), Clósets del principal (Paso_D1), Clósets del segundo (Paso_D2),
+Baño principal (Bano1), Segundo baño (Bano2), Balcón, Palier y Lavadora (Nicho_LV).

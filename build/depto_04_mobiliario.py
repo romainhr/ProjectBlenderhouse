@@ -48,9 +48,39 @@ ALTURA_LIBRE = 1.85        # m: nada colgante por debajo en zonas de paso (la c�
 HOLGURA_MURO = 0.01        # m entre la espalda de una pieza y el muro
 ALFOMBRA_ALTO = 0.008      # lo que se levantan las piezas apoyadas en una alfombra
 TOL_PENETRACION = 0.001
+TOPE_TRIANGULOS = 200_000        # escena visible (ADR 0004, decisión 4: de 150 000 a 200 000)
 HOLGURA_CAMARA = 0.20
 TOL_BBOX = 2.5
-POTENCIA = dict(colgante=40.0, arco=35.0, mesa=12.0, aplique=10.0, foco=8.0)   # W de las luces de revisión por lámpara (supuesto)
+POTENCIA = dict(colgante=40.0, arco=35.0, mesa=12.0, aplique=10.0, foco=8.0, paso=25.0, balcon=30.0)   # W de las
+# luces de revisión por lámpara (supuesto; paso y balcón: fase 07b)
+# Grupos de luz (contrato de interacción v2, sección 2; fase 07b): uno por luminaria o conjunto que se prende junto.
+# (id, etiqueta, recinto, encendido al cargar el visor, color lineal). 2700 K en general y 3000 K en cocina y baños
+# (docs/contrato-interaccion.md). Izquierda y derecha de los veladores: mirando la cabecera desde los pies de la cama.
+K2700, K3000 = (1.0, 0.72, 0.42), (1.0, 0.78, 0.55)
+GRUPOS_LUZ = [
+    ("living_techo", "Living · techo", "Living", True, K2700),
+    ("living_lampara_pie", "Living · lámpara de pie", "Living", False, K2700),
+    ("cocina_techo", "Cocina · techo", "Cocina", True, K3000),
+    ("hall_techo", "Hall · focos", "Hall", True, K2700),
+    ("dorm1_techo", "Dormitorio principal · techo", "Dorm1", True, K2700),
+    ("dorm1_velador", "Dormitorio principal · lámpara del velador", "Dorm1", False, K2700),
+    ("paso_d1", "Clósets del principal · techo", "Paso_D1", True, K2700),
+    ("dorm2_techo", "Segundo dormitorio · techo", "Dorm2", True, K2700),
+    ("dorm2_aplique_izq", "Segundo dormitorio · aplique izquierdo", "Dorm2", False, K2700),
+    ("dorm2_aplique_der", "Segundo dormitorio · aplique derecho", "Dorm2", False, K2700),
+    ("paso_d2", "Clósets del segundo · techo", "Paso_D2", True, K2700),
+    ("bano1", "Baño principal · techo", "Bano1", True, K3000),
+    ("bano2", "Segundo baño · techo", "Bano2", True, K3000),
+    ("balcon", "Balcón · colgante del comedor", "Balcon", True, K2700),
+]
+RECINTOS_CON_LUZ = ("Hall", "Living", "Cocina", "Dorm1", "Paso_D1", "Bano1", "Dorm2", "Paso_D2", "Bano2", "Balcon")
+# Nombres de los recintos para la interfaz del visor (contrato v2, sección 5); las etiquetas de GRUPOS_LUZ los usan.
+RECINTOS_ETIQUETAS = {
+    "Hall": "Hall", "Living": "Living", "Cocina": "Cocina", "Dorm1": "Dormitorio principal",
+    "Dorm2": "Segundo dormitorio", "Paso_D1": "Clósets del principal", "Paso_D2": "Clósets del segundo",
+    "Bano1": "Baño principal", "Bano2": "Segundo baño", "Balcon": "Balcón", "Palier": "Palier",
+    "Nicho_LV": "Lavadora",
+}
 RESOLUCION_CAMA = 0.7     # deco_dormitorio.cama: 13 100 triángulos en vez de 20 000, sin diferencia visible
                           # (review/deco/piezas/cama_r0.7 vs r1.0); deja presupuesto para las piezas de la tanda 2
 APLIQUE_PLACA_Z = 1.20    # diseño: centro de la placa de los apliques de lectura del dormitorio 2
@@ -68,6 +98,38 @@ BISTRO = dict(x=(X["BAL_F"] + X["W_O"]) / 2, y=285.0)   # diseño: mesa del balc
                                                       # abierta, queda libre para salir al balcón
 
 DIRS = {"N": (0, -1), "S": (0, 1), "E": (1, 0), "O": (-1, 0)}   # hacia dónde mira el frente, en el plano
+
+# Interruptores de muro (contrato v2, sección 3; fase 07b). Placa con el centro a 1,10 del piso, el canto a 0,10 del
+# marco, del lado de la manilla y dentro del recinto (la hoja abierta queda del lado de la bisagra y no la tapa).
+INTERRUPTOR_Z = 1.10
+INTERRUPTOR_MARCO = 0.10
+
+
+def _junto(borde_marco, lado):
+    """u (px) del centro de una placa cuyo canto queda a INTERRUPTOR_MARCO del borde del marco, hacia `lado`."""
+    return borde_marco + lado * (INTERRUPTOR_MARCO + OB.INTERRUPTOR["ancho"] / 2) / S
+
+
+# (recinto, grupos (una tecla por grupo, de izquierda a derecha), cara del muro px, u px, hacia dónde mira)
+INTERRUPTORES = [
+    # hall: en la cara sur del tabique cocina/hall, junto a la jamba norte de la entrada (manilla al norte; el
+    # marco sobresale hasta E_FORRO - 1 cm del lado del hall)
+    ("Hall", ("hall_techo",), Y["COC_S"], _junto(X["E_FORRO"] - F3.px(F3.MARCO_SOBRESALE), -1), "S"),
+    # cocina (abierta, sin puerta): en el canto de 0,12 del mismo tabique, que da al paso entre hall y cocina
+    ("Cocina", ("cocina_techo",), X["COC_W"], (Y["COC_N"] + Y["COC_S"]) / 2, "O"),
+    # living: al pie del conducto visto del muro de ladrillo, junto a la puerta D1 (lado de la manilla), con el
+    # colgante del comedor del balcón (docs/deco-industrial.md: el comedor para dos es el del balcón)
+    ("Living", ("living_techo", "balcon"), Y["D1_S"], _junto(X["JAMBA_D"], -1), "S"),
+    # balcón: por dentro, en el muro de ladrillo junto a la hoja móvil del ventanal (esquina con la fachada)
+    ("Balcon", ("balcon",), Y["D1_S"], _junto(X["W_I"], +1), "S"),
+    # dormitorios: espalda con espalda con el del living (D1) y del lado de la manilla; la segunda tecla prende el
+    # paso de los clósets, que no tiene puerta propia
+    ("Dorm1", ("dorm1_techo", "paso_d1"), Y["D1_N"], _junto(X["JAMBA_D"], -1), "N"),
+    ("Dorm2", ("dorm2_techo", "paso_d2"), Y["D2_S"], _junto(X["JAMBA_D"], -1), "S"),
+    # baños: por dentro, en el tabique de la puerta, al sur de la jamba de la manilla (bisagra al norte)
+    ("Bano1", ("bano1",), X["T4_E"], _junto(Y["T4_B"], +1), "E"),
+    ("Bano2", ("bano2",), X["T10_E"], _junto(Y["T10_B"], +1), "E"),
+]
 
 
 def yaw(mira):
@@ -139,14 +201,24 @@ class Colocador:
         return self.poner(nombre, "adorno", objs, x, y, H, "S")
 
 
-def marcar_ampolletas(objs, potencia, radio=None):
+def marcar_ampolletas(objs, potencia, radio=None, grupo=None):
     """Marca los objetos emisivos para la fase 5 (luz puntual en su centroide); `radio`: radio de la fuente si no
-    sirve el de la fase 5 (p. ej. dentro de un foco, cuya boca es más chica que ese radio)."""
+    sirve el de la fase 5 (p. ej. dentro de un foco, cuya boca es más chica que ese radio); `grupo`: id de
+    GRUPOS_LUZ al que pertenece la luz (lo exige pruebas_luces)."""
     for o in objs:
         if o.type == "MESH" and any(m and m.name == "Depto_Mat_Bombilla" for m in o.data.materials):
             o["luz_w"] = potencia
             if radio is not None:
                 o["luz_radio"] = radio
+            if grupo is not None:
+                o["luz_grupo"] = grupo
+
+
+def clicable(objs, grupo, sufijos):
+    """Lámparas que se prenden tocándolas (contrato v2, sección 3): `grupo_luz` en su pantalla y su cuerpo."""
+    for o in objs:
+        if o.name.endswith(tuple(sufijos)):
+            o["grupo_luz"] = grupo
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +266,8 @@ def living(c):
     base_x = LIV_X + (sofa_ancho(sofa) / 2 + 0.05) / S - alo.x / S     # justo al este del sofá
     base_y = MURO_SOFA - (0.03 + ahi.x) / S                           # a 3 cm del tabique (tras girar, x local -> y)
     c.poner("Living_LamparaArco", "adorno", arco, base_x, base_y, 0.0, "O")
-    marcar_ampolletas(arco, POTENCIA["arco"])
+    marcar_ampolletas(arco, POTENCIA["arco"], grupo="living_lampara_pie")
+    clicable(arco, "living_lampara_pie", ("_Base", "_Tubo", "_Pantalla"))
     lat = c.construir(LV.mesa_lateral, "Living_MesaLateral")
     llo, lhi = c.caja_local(lat)
     c.poner("Living_MesaLateral", "solido", lat, base_x, base_y - (ahi.x + 0.05 + lhi.y) / S - 0.0, 0.0, "N")
@@ -243,11 +316,14 @@ def dormitorios(c):
                 pc = next(o["placa_centro_z"] for o in apl if "placa_centro_z" in o)
                 for o in apl:
                     o.location.z = APLIQUE_PLACA_Z - pc
-                marcar_ampolletas(apl, POTENCIA["aplique"])
+                g = f"dorm{did[1]}_aplique_{'der' if lado < 0 else 'izq'}"   # mirando la cabecera: el oeste a la derecha
+                marcar_ampolletas(apl, POTENCIA["aplique"], grupo=g)
+                clicable(apl, g, ("_Metal", "_Pantalla"))
             if lado < 0 and d["lectura"] == "mesa":
                 lam = c.construir(DO.lampara_mesa, f"{did}_LamparaMesa")
                 c.poner(f"{did}_LamparaMesa", "adorno", lam, vx, vy, zt, d["mira"])
-                marcar_ampolletas(lam, POTENCIA["mesa"])
+                marcar_ampolletas(lam, POTENCIA["mesa"], grupo=f"dorm{did[1]}_velador")
+                clicable(lam, f"dorm{did[1]}_velador", ("_Cuerpo", "_Pantalla"))
             elif lado < 0:
                 jar = c.construir(OB.jarron, f"{did}_Jarron", variante=2)
                 c.poner(f"{did}_Jarron", "adorno", jar, vx, vy, zt, d["mira"])
@@ -258,7 +334,7 @@ def dormitorios(c):
         c.contra_muro(DO.espejo_pie, f"{did}_Espejo", "solido", ey, ex, em)
         col = c.colgante(OB.colgante_domo, f"{did}_Colgante", d["cx"], d["muro"] + (1.15 / S if d["mira"] == "S"
                                                                                      else -1.15 / S))
-        marcar_ampolletas(col, POTENCIA["colgante"])
+        marcar_ampolletas(col, POTENCIA["colgante"], grupo=f"dorm{did[1]}_techo")
 
 
 def cocina(c):
@@ -278,7 +354,7 @@ def cocina(c):
     c.poner("Cocina_Grifo", "adorno", g, F3.BACHA[1] + 0.035 / S, (F3.BACHA[2] + F3.BACHA[3]) / 2, F3.MESON_Z, "O")
     for i, x in enumerate((310.0, 368.0)):
         col = c.colgante(OB.colgante_jaula, f"Cocina_Colgante{i + 1}", x, 200.0)
-        marcar_ampolletas(col, POTENCIA["colgante"])
+        marcar_ampolletas(col, POTENCIA["colgante"], grupo="cocina_techo")
 
 
 def alturas_repisa(objs):
@@ -313,7 +389,7 @@ def banos(c):
         c.contra_muro(HA.toallero_barra, f"{bid}_Toallero", "adorno", frente_v, cx, "N", z=TOALLERO_Z, holgura=0.0,
                       largo=0.40)                                   # en el frente del vanitorio, bajo el lavabo
         col = c.colgante(OB.colgante_jaula, f"{bid}_Colgante", (tx0 + tx1) / 2, (ty1 + vy0) / 2)
-        marcar_ampolletas(col, POTENCIA["colgante"])
+        marcar_ampolletas(col, POTENCIA["colgante"], grupo=f"bano{bid[1]}")
     # portarrollos: B1 en la cara de la repisa de instalaciones, B2 en el muro este junto al WC
     rep = F3.BANOS["B1"]["repisa"]
     c.contra_muro(CB.portarrollo, "B1_Portarrollo", "adorno", rep[0], 101.0, "O", z=0.65, holgura=0.0)
@@ -325,7 +401,7 @@ def hall(c):
     c.contra_muro(LV.cuadro, "Hall_Cuadro", "solido", Y["T9_N"], 356.0, "N", z=1.20, holgura=0.0,
                   arte=3)
     col = c.colgante(OB.colgante_domo, "Living_Colgante", 205.0, 246.0)
-    marcar_ampolletas(col, POTENCIA["colgante"])
+    marcar_ampolletas(col, POTENCIA["colgante"], grupo="living_techo")
 
 
 def hall_entrada(c):
@@ -337,7 +413,7 @@ def hall_entrada(c):
     # focos (giro 0 = −Y local = sur del plano; −90 = oeste): banca y perchero, cuadro (en diagonal) y reloj
     riel = c.construir(HA.riel_focos, "Hall_Riel", giros=(-90.0, -30.0, 20.0), inclinaciones=(35.0, 30.0, 30.0))
     c.poner("Hall_Riel", "adorno", riel, *RIEL_HALL, H, "S")          # "S": el riel (x local) corre según x
-    marcar_ampolletas(riel, POTENCIA["foco"], radio=0.01)    # la boca del foco mide Ø 0,06
+    marcar_ampolletas(riel, POTENCIA["foco"], radio=0.01, grupo="hall_techo")    # la boca del foco mide Ø 0,06
     fel = c.construir(HA.felpudo, "Palier_Felpudo")
     flo, fhi = c.caja_local(fel)
     c.poner("Palier_Felpudo", "solido", fel, X["E_O"] + 0.02 / S + (fhi.y - flo.y) / 2 / S,
@@ -353,6 +429,37 @@ def balcon(c):
         slo, shi = c.caja_local(silla)
         d = (r + 0.06 + (shi.y - slo.y) / 2) / S                # frente del asiento a 6 cm del canto de la mesa
         c.poner(nombre, "solido", silla, BISTRO["x"], BISTRO["y"] + lado * d, Z_BALCON, mira)
+    # fase 07b: el balcón no tenía luz. Colgante de domo (el del living, más chico) sobre la mesa, colgado de la losa
+    # del balcón de arriba (Depto_Cielo_Balcon), con su conducto visto desde la fachada.
+    col = c.colgante(OB.colgante_domo, "Balcon_Colgante", BISTRO["x"], BISTRO["y"], cable_pref=0.45, diametro=0.28,
+                     alto=0.19)
+    marcar_ampolletas(col, POTENCIA["balcon"], grupo="balcon")
+
+
+def pasos(c):
+    """Fase 07b: los pasos de los clósets no tenían luz. Colgante de jaula (el de la cocina y los baños) con cable
+    corto, casi pegado al cielo, al centro de cada paso."""
+    for pid, (x0, x1, y0, y1) in (("Paso_D1", (X["T3_E"], X["T4_W"], Y["CL1_N"], Y["CL1_S"])),
+                                  ("Paso_D2", (X["T3_E"], X["T10_W"], Y["CL2_N"], Y["CL2_S"]))):
+        col = c.colgante(OB.colgante_jaula, f"{pid}_Colgante", (x0 + x1) / 2, (y0 + y1) / 2, cable_pref=0.10)
+        marcar_ampolletas(col, POTENCIA["paso"], grupo=pid.lower())
+
+
+def interruptores(c):
+    """Placas de INTERRUPTORES con una tecla por grupo; grupo_luz en la placa ("id1,id2") y en cada tecla ("id").
+    Sin colisión: son 12 mm de muro y no deben angostar los pasos del recorrido."""
+    for recinto, grupos, muro, u, mira in INTERRUPTORES:
+        nombre = f"Depto_Interruptor_{recinto}"
+        objs = OB.interruptor(c.col, nombre, n_teclas=len(grupos))
+        x, y = (u, muro) if mira in ("N", "S") else (muro, u)
+        c.poner(f"Interruptor_{recinto}", "adorno", objs, x, y, INTERRUPTOR_Z, mira)
+        placa, teclas = objs[0], objs[1:]
+        placa["grupo_luz"] = ",".join(grupos)
+        for t, g in zip(teclas, grupos):
+            t["grupo_luz"] = g
+        for o in objs:
+            o["recinto"] = recinto
+            o["colision"] = False
 
 
 def conductos(c):
@@ -364,12 +471,16 @@ def conductos(c):
         return (*P.a_blender(x, y), z)
 
     # living: del florón del colgante hacia el este (libre del televisor), al muro de ladrillo y bajando a una caja
-    x_baja, y_muro = 240.0, MURO_TV + CONDUCTO_SEP / S
+    x_baja, y_muro = _junto(X["JAMBA_D"], -1), MURO_TV + CONDUCTO_SEP / S    # 07b: baja al interruptor del living
     c.mundo(OB.conducto, "Living_ConductoCielo", "adorno", normal_muro=(0.0, 0.0, 1.0), cajas=(),
             puntos=(pt(205.0 + florn, 246.0, zc), pt(x_baja, 246.0, zc), pt(x_baja, y_muro, zc),
                     pt(x_baja, y_muro, H - 0.25)))
-    c.mundo(OB.conducto, "Living_ConductoMuro", "adorno", normal_muro=(1.0, 0.0, 0.0), cajas=(1,),
-            puntos=(pt(x_baja, y_muro, H - 0.25), pt(x_baja, y_muro, 1.10)))    # copla contra copla: unión
+    c.mundo(OB.conducto, "Living_ConductoMuro", "adorno", normal_muro=(1.0, 0.0, 0.0), cajas=(),
+            puntos=(pt(x_baja, y_muro, H - 0.25),                           # copla contra copla: unión
+                    pt(x_baja, y_muro, INTERRUPTOR_Z + OB.INTERRUPTOR["alto"] / 2)))   # entra por arriba a la placa
+    # balcón: del muro de la fachada al florón del colgante, por la losa del balcón de arriba
+    c.mundo(OB.conducto, "Balcon_Conducto", "adorno", normal_muro=(0.0, 0.0, 1.0), cajas=(),
+            puntos=(pt(X["W_O"] - 0.001 / S, BISTRO["y"], zc), pt(BISTRO["x"] + florn, BISTRO["y"], zc)))
     # cocina: entre los dos colgantes de jaula, con caja de derivación al medio
     c.mundo(OB.conducto, "Cocina_Conducto", "adorno", normal_muro=(0.0, 0.0, 1.0), cajas=(1,),
             puntos=(pt(310.0 + florn, 200.0, zc), pt(339.0, 200.0, zc), pt(368.0 - florn, 200.0, zc)))
@@ -468,9 +579,56 @@ def pruebas(root, c):
         if o.type == "MESH" and not o.hide_render and not o.name.startswith("Depto_Ref"):
             o.data.calc_loop_triangles()
             total += len(o.data.loop_triangles)
-    if total > 150_000:
+    if total > TOPE_TRIANGULOS:
         fallos.append(f"presupuesto de triángulos excedido: {total}")
     return fallos, holguras, total
+
+
+def pruebas_luces(root):
+    """Cada ampolleta en un grupo válido, cada grupo con ampolletas y con algo que lo prenda (tecla o lámpara),
+    cada recinto con luz, y cada placa a 1,10 con una tecla hija sin giro por grupo."""
+    fallos = []
+    ids = [g[0] for g in GRUPOS_LUZ]
+    if len(set(ids)) != len(ids):
+        fallos.append("ids de GRUPOS_LUZ repetidos")
+    amp = [o for o in root.all_objects if o.get("luz_w")]
+    for o in amp:
+        if o.get("luz_grupo") not in ids:
+            fallos.append(f"{o.name}: ampolleta sin grupo de luz válido ({o.get('luz_grupo')!r})")
+    con_luz = {o.get("luz_grupo") for o in amp}
+    controles = {}
+    for o in root.all_objects:
+        for g in str(o.get("grupo_luz", "")).split(","):
+            if g:
+                controles.setdefault(g, []).append(o.name)
+    for g in ids:
+        if g not in con_luz:
+            fallos.append(f"grupo {g} sin ampolletas")
+        if g not in controles:
+            fallos.append(f"grupo {g} sin interruptor ni lámpara que lo prenda")
+    for g, nombres in controles.items():
+        if g not in ids:
+            fallos.append(f"{nombres}: grupo_luz {g} no existe en GRUPOS_LUZ")
+    for i, e, r, *_ in GRUPOS_LUZ:
+        if not e.startswith(RECINTOS_ETIQUETAS[r] + " · "):
+            fallos.append(f"grupo {i}: la etiqueta {e!r} no empieza con el nombre de su recinto")
+    faltan = set(RECINTOS_CON_LUZ) - {g[2] for g in GRUPOS_LUZ}
+    if faltan:
+        fallos.append(f"recintos sin luz: {sorted(faltan)}")
+    bpy.context.view_layer.update()
+    for o in root.all_objects:
+        if not o.name.startswith("Depto_Interruptor_") or o.parent is not None:
+            continue
+        if abs(o.matrix_world.translation.z - INTERRUPTOR_Z) > 1e-4:
+            fallos.append(f"{o.name}: centro a {o.matrix_world.translation.z:.3f} m (se pide {INTERRUPTOR_Z})")
+        grupos = str(o.get("grupo_luz", "")).split(",")
+        teclas = [h for h in o.children if h.name.endswith("_Tecla")]
+        if len(teclas) != len(grupos):
+            fallos.append(f"{o.name}: {len(teclas)} teclas para {len(grupos)} grupos")
+        for t in teclas:
+            if t.rotation_euler.to_quaternion().angle > 1e-6 or t.get("grupo_luz") not in grupos:
+                fallos.append(f"{t.name}: tecla girada o con grupo_luz ajeno a su placa")
+    return fallos
 
 
 def main():
@@ -486,9 +644,12 @@ def main():
     hall(c)
     hall_entrada(c)
     balcon(c)
+    pasos(c)
+    interruptores(c)
     conductos(c)
     compartidos, unicas, antes = compartir_mallas([o for _, _, objs in c.piezas for o in objs])
     fallos, holguras, total = pruebas(root, c)
+    fallos += pruebas_luces(root)
     for f in fallos:
         print("FALLA", f)
     print("CHECK holgura de cámaras (m):", holguras)
@@ -498,9 +659,15 @@ def main():
     objs = list(col.all_objects)
     tris = sum(len(o.data.loop_triangles) for o in objs if o.type == "MESH")
     luces = sum(1 for o in objs if o.get("luz_w"))
+    n_int = sum(1 for o in objs if o.name.startswith("Depto_Interruptor_") and o.parent is None)
+    # para las fases 5 (color de cada luz) y 6 (grupos_luz del contrato)
+    scene["depto_grupos_luz"] = json.dumps([dict(id=i, etiqueta=e, recinto=r, encendido=en, color=list(k))
+                                            for i, e, r, en, k in GRUPOS_LUZ], ensure_ascii=False)
+    scene["depto_recintos_etiquetas"] = json.dumps(RECINTOS_ETIQUETAS, ensure_ascii=False)
     SE.sellar(scene, "04")
     bpy.ops.wm.save_mainfile(filepath=SE.MAESTRO)
-    print(f"CHECK fase 4: {len(c.piezas)} piezas, {len(objs)} objetos, {tris} triángulos, {luces} ampolletas; "
+    print(f"CHECK fase 4: {len(c.piezas)} piezas, {len(objs)} objetos, {tris} triángulos, {luces} ampolletas en {len(GRUPOS_LUZ)} grupos, "
+          f"{n_int} interruptores; "
           f"escena visible {total}; sin interferencias > {TOL_PENETRACION * 1000:.0f} mm")
     print(f"FASE_OK Depto_04_mobiliario {len(objs)} {tris} sello={scene['depto_fase04']}")
 
