@@ -64,3 +64,31 @@ hall 119, living 93, cocina 92, dormitorio 56, paso 48 (antes de los tintes y la
 117, 65 y 54; el informe del visor v3, sin el contenido de esta fase, daba 48 a 95). Lo que queda por encima es
 sobre todo interruptores y lámparas clicables (nodos sueltos, ~17 en la vista del hall) y cajones de otros
 recintos que caen en el frustum detrás de los muros: pide culling por recinto en el visor.
+
+## Adenda 07b, corrección de la ronda 1 (2026-09-26): contrato 2.1
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector de la fase 07b. **Revisor humano:** Romain Ange,
+  pendiente.
+
+Decisiones (cambian el contrato de interacción, que pasa a la versión 2.1):
+
+1. **Color de las luces por temperatura:** `grupos_luz[].kelvin` (2700 o 3000) y `luces[].color` en sRGB lineal
+   calculado desde esa temperatura (`build/depto_color.py`: Planck contra CIE 1931, ajuste de Wyman 2013). El triple
+   del encargo, (1.0, 0.72, 0.42), es el sRGB codificado de ~3000 K; tomado como lineal, en Blender y en el visor,
+   daba ~4200 K. Se prefirió la temperatura pedida al número aproximado que la acompañaba.
+2. **Cajones atados a su hoja** (`moviles[].depende_de` y `bloquea`): un cajón de clóset sólo abre con su hoja A
+   corrida y la B cerrada; mover una hoja cierra antes sus cajones. Sin esto, en el visor una hoja atravesaba el
+   frente de un cajón abierto (0,29 m por delante de su plano).
+3. **Momento del día y `encendido`:** el momento decide si hay luces (tarde y noche sí, día no) y `encendido` qué
+   grupos prende. Antes el momento inicial prendía los 14 grupos, contra lo que decía el contrato.
+4. **Luces con pantalla en el visor** (`luces[].cono_deg` y `direccion`, sólo domos y focos): el visor no calcula
+   sombras; una puntual dentro de un domo cerrado iluminaba el cielo ~20 veces más que el piso (inverso del
+   cuadrado: 0,42 m al cielo contra 1,98 m al piso). Se reparte en un foco (85 %) y una puntual (15 %). En Blender
+   siguen siendo puntuales: la pantalla hace la sombra.
+5. **Interruptor de la cocina** en el remate del tabique T3, a la entrada desde el living: en el canto del tabique
+   cocina/hall la puerta de la nevera (bisagra al sur, 100°) pasaba a 4-8 cm de la placa y la tapaba desde la cocina.
+   Mover la bisagra al norte no sirve (la torre del horno está pegada) y limitar la puerta a 90° dejaba la manilla a
+   4 cm del canto.
+6. **Renders de revisión de día** con el HDRI de Poly Haven (`kloofendal_48d_partly_cloudy_puresky`) desaturado, luz
+   rebotada horneada también de día, sondas planas en los espejos y un cubemap por baño (`tools/render_07b.py`). Son
+   supuestos de revisión y no van al GLB.
