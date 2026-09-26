@@ -43,14 +43,17 @@ const anio = $("#anio");
 if (anio) anio.textContent = String(new Date().getFullYear());
 
 // Encabezado transparente sobre el hero y barra fija oculta en el hero y sobre Tarifas (solo en la portada).
+// El HTML trae el encabezado sólido y este módulo le pone .sobre-hero: sin JS, o si el módulo no carga, el menú queda
+// en tinta sobre papel y no en blanco sobre papel (RA-16).
 const hero = $(".hero"), barra = $(".barra"), movil = $(".barra-movil"), tarifas = $("#tarifas");
 if (hero && barra) {
   if ("IntersectionObserver" in window) {
-    let enHero = true, enTarifas = false;
+    let enHero = hero.getBoundingClientRect().bottom > barra.offsetHeight, enTarifas = false;
     const aplicar = () => {
       barra.classList.toggle("sobre-hero", enHero);
       movil?.classList.toggle("oculta", enHero || enTarifas);
     };
+    aplicar();                                     // al iniciar, sin esperar la primera respuesta del observador
     new IntersectionObserver(([e]) => { enHero = e.isIntersecting; aplicar(); },
       { rootMargin: `-${barra.offsetHeight}px 0px 0px 0px` }).observe(hero);
     if (tarifas && movil) {
@@ -60,9 +63,20 @@ if (hero && barra) {
     // la barra se desliza sólo después del primer estado: al cargar no aparece y se va
     requestAnimationFrame(() => requestAnimationFrame(() => movil?.classList.add("lista")));
   } else {
-    barra.classList.remove("sobre-hero");
     movil?.classList.remove("oculta");            // en el HTML parte oculta (sin JS la muestra el <noscript>)
   }
+}
+
+// Carruseles (.desliza): parada de Tab solo mientras se desplazan (bajo 700 px). En la retícula de escritorio no se
+// mueven, y un tabindex=0 dejaba una parada que mostraba el anillo y no hacía nada. Sin JS conservan el del HTML.
+const carruseles = document.querySelectorAll(".desliza[tabindex]");
+if (carruseles.length) {
+  const paradas = () => carruseles.forEach((c) => {
+    if (c.scrollWidth > c.clientWidth + 1) c.setAttribute("tabindex", "0");
+    else if (document.activeElement !== c) c.removeAttribute("tabindex");
+  });
+  addEventListener("resize", paradas);
+  paradas();
 }
 
 // Barra de progreso del carrusel de Espacios (decorativa: aria-hidden).

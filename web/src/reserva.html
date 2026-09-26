@@ -8,11 +8,12 @@
 <meta name="theme-color" content="#F6F1EA">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preload" as="font" type="font/woff2" href="fonts/fraunces-var.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="fonts/fraunces-var-italic.woff2" crossorigin>
 <link rel="stylesheet" href="css/sitio.css">
 <script type="module" src="js/sitio.js"></script>
 <script type="module" src="js/contenido-publico.js"></script>
 <script type="module" src="js/reserva.js"></script>
-<noscript><style>.aparece { opacity: 1 !important; transform: none !important; }</style></noscript>
+<noscript><style>.aparece { opacity: 1 !important; transform: none !important; } .cal-cuerpo, .rango-texto, .leyenda { display: none; }</style></noscript>
 </head>
 <body class="con-barra-movil">
 
@@ -54,6 +55,7 @@
     <div class="reserva">
       <section id="calendario" class="tarjeta bloque" aria-labelledby="t-cal">
         <h2 id="t-cal">Fechas</h2>
+        <noscript><p class="mensaje sin-js">El calendario y la solicitud necesitan JavaScript. Actívalo en tu navegador y vuelve a cargar la página para elegir tus fechas y reservar.</p></noscript>
         <div class="cal-cuerpo">
           <div class="cal-nav">
             <button id="mes-ant" type="button" aria-label="Mes anterior"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -65,7 +67,7 @@
         <div class="leyenda" aria-hidden="true">
           <span><i class="m-disp">8</i>Disponible</span><span><i class="m-ocup">8</i>Ocupado</span><span><i class="m-sel">8</i>Tu selección</span>
         </div>
-        <p id="cal-error" class="mensaje error" hidden role="alert"></p>
+        <p id="cal-error" class="mensaje error" hidden role="alert" tabindex="-1"></p>
       </section>
 
       <aside class="resumen" aria-labelledby="t-resumen">
@@ -81,7 +83,7 @@
           <div class="linea"><span>Limpieza (ejemplo)</span><span id="s-limpieza">—</span></div>
           <div class="linea total"><span>Total estimado</span><b id="s-total">—</b></div>
           <p class="nota">Valores de ejemplo. Sin cobro en línea: te confirmamos por correo.</p>
-          <button id="enviar" class="boton primario grande bloque" type="submit" form="formulario" aria-disabled="true">Solicitar</button>
+          <button id="enviar" class="boton primario grande bloque" type="submit" form="formulario" aria-disabled="true" disabled>Solicitar</button>
           <a class="enlace-dudas" href="./#preguntas">¿Dudas? Revisa las preguntas frecuentes</a>
         </div>
       </aside>
@@ -95,7 +97,7 @@
         </div>
       </section>
 
-      <form id="formulario" class="tarjeta bloque" novalidate aria-labelledby="t-datos">
+      <form id="formulario" class="tarjeta bloque" method="post" novalidate aria-labelledby="t-datos">
         <h2 id="t-datos">Tus datos</h2>
         <p class="aviso-demo">Es un sitio de demostración: usa un nombre y un correo inventados.</p>
         <div class="campos">
@@ -120,7 +122,7 @@
           <div class="trampa" aria-hidden="true"><label for="sitio">Sitio web</label><input id="sitio" name="sitio" tabindex="-1" autocomplete="off"></div>
           <label class="check"><input id="acepta" type="checkbox" required>
             <span>Acepto que usen mis datos solo para responder esta solicitud (<a href="privacidad.html">privacidad</a>).</span></label>
-          <p id="form-error" class="mensaje error" hidden role="alert"></p>
+          <p id="form-error" class="mensaje error" hidden role="alert" tabindex="-1"></p>
         </div>
       </form>
     </div>
@@ -150,7 +152,7 @@
 
 <div class="barra-movil">
   <p class="precio"><span id="m-total" class="vacio">Elige tus fechas</span><small id="m-noches">sin cobro en línea</small></p>
-  <button class="boton primario" type="submit" form="formulario" id="enviar-movil" aria-disabled="true">Solicitar</button>
+  <button class="boton primario" type="submit" form="formulario" id="enviar-movil" aria-disabled="true" disabled>Solicitar</button>
 </div>
 </body>
 </html>

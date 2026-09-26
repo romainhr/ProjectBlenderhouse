@@ -130,7 +130,8 @@ a:not(.boton):focus-visible, summary:focus-visible { border-radius: 4px; }
   .barra .reservar { display: inline-flex; margin-left: 24px; }
   .hamburguesa, .panel-menu { display: none !important; }
 }
-/* sobre el hero de la portada: transparente, sin marca (el H1 ya es la marca); el velo superior asegura el contraste */
+/* sobre el hero de la portada: transparente, sin marca (el H1 ya es la marca); el velo superior asegura el contraste.
+   La clase la pone sitio.js (el HTML parte sólido): sin JS, o si el módulo falla, el menú queda en tinta sobre papel. */
 .barra.sobre-hero { background: transparent; border-bottom-color: transparent; color: #fff; }
 .barra.sobre-hero .marca { visibility: hidden; }
 .barra.sobre-hero .menu a { color: #fff; }
@@ -182,7 +183,8 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 .sep { color: var(--tinta-2); margin-inline: 8px; }
 /* cortes deliberados: sin punto colgando al final ni al inicio de una línea */
 @media (max-width: 759px) { .sep.corte-1 { display: block; height: 0; overflow: hidden; } }
-@media (max-width: 359px) { .sep.corte-2 { display: block; height: 0; overflow: hidden; } }
+/* a 360 px (Android) «hasta 4 huéspedes · ≈ 54 m² construidos» necesita unos 330 px y hay 328: corta hasta 374 */
+@media (max-width: 374px) { .sep.corte-2 { display: block; height: 0; overflow: hidden; } }
 @media (min-width: 700px) { .sep { margin-inline: 12px; } }
 @media (min-width: 1000px) { .datos .contenedor { min-height: 72px; padding: 20px 0; line-height: 32px; } }
 
@@ -321,8 +323,10 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 @media (min-width: 1000px) {
   .tarifas { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 48px; }
   .tarifas-info { grid-column: 1 / span 6; }
-  .tarifas-accion { grid-column: 8 / span 5; align-self: end; margin: 0; padding-top: 24px;
-    border-top: 1px solid rgba(246, 241, 234, .25); }
+  /* arriba, a la altura del precio (como la tarjeta del modelo): al pie de la columna dejaba unos 470 px de terracota
+     vacía en la primera vista de la sección */
+  .tarifas-accion { grid-column: 8 / span 5; grid-row: 1; align-self: start; margin: calc(var(--t-capitulo) + 20px) 0 0;
+    padding-top: 24px; border-top: 1px solid rgba(246, 241, 234, .25); }
 }
 
 /* ---------------------------------------------------------------- preguntas (ESPEC-v4 §3.9) */
@@ -486,11 +490,12 @@ td:first-child > .dia.salida::after, td:empty + td > .dia.salida::after { displa
 .leyenda .m-ocup { color: #9C9388; background: repeating-linear-gradient(45deg, var(--linea) 0 1.5px, transparent 1.5px 6px); }
 .leyenda .m-sel { background: var(--terracota); color: #fff; font-weight: 600; }
 #cal-error { margin-top: 16px; }
+.sin-js { margin-bottom: 8px; }                  /* <noscript> de reserva.html: el calendario necesita JS */
 /* teléfono: el calendario va a sangre, porque en una tarjeta no caben 7 × 48 */
 @media (max-width: 559px) {
   #calendario { margin-inline: calc(-1 * var(--margen)); padding: 20px 4px; background: none; border: 0;
     border-block: 1px solid var(--linea); border-radius: 0; box-shadow: none; }
-  #calendario > h2, .rango-texto, .leyenda, #cal-error { margin-inline: calc(var(--margen) - 4px); }
+  #calendario > h2, .rango-texto, .leyenda, #cal-error, .sin-js { margin-inline: calc(var(--margen) - 4px); }
   #calendario > h2 { margin-bottom: 12px; }
   #mes-ant { left: calc(var(--margen) - 4px); }
   #mes-sig { right: calc(var(--margen) - 4px); }
@@ -506,7 +511,7 @@ td:first-child > .dia.salida::after, td:empty + td > .dia.salida::after { displa
   border-bottom: 1px solid var(--linea); }
 .linea > :first-child { color: var(--tinta-2); }
 .linea > :last-child { color: var(--tinta); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-.linea.total { flex-wrap: wrap; column-gap: 12px; margin-top: 12px; border-bottom: 0; }
+.linea.total { flex-wrap: wrap; column-gap: 8px; margin-top: 12px; border-bottom: 0; }
 .linea.total > :first-child { font-weight: 600; font-size: 17px; color: var(--tinta); white-space: nowrap; }
 .linea.total > :last-child { margin-left: auto; }
 .linea.total b { font: 400 var(--t-total)/1 var(--f-titulo); white-space: nowrap; }
@@ -524,6 +529,9 @@ td:first-child > .dia.salida::after, td:empty + td > .dia.salida::after { displa
   .resumen h2 { font-size: 28px; margin-bottom: 4px; }
   .resumen .linea { padding-block: 8px; }
   .resumen .linea.total { margin-top: 8px; }
+  /* 380 − 2 × 1 − 2 × 24 = 330 px: «Total estimado» (118) + 8 + «CLP 189.000» a 32 px (unos 189) deja 15 px;
+     a 34 px faltaba 1 px y el total bajaba solo a la línea siguiente */
+  .resumen .linea.total b { font-size: 32px; }
   #enviar { display: flex; margin-top: 16px; }
   .enlace-dudas { margin-top: 0; }
 }
@@ -568,6 +576,8 @@ td:first-child > .dia.salida::after, td:empty + td > .dia.salida::after { displa
   color: var(--tinta-2); cursor: pointer; }
 .check input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--terracota); cursor: pointer; }
 .check input[aria-invalid="true"] { outline: 2px solid var(--terracota-osc); outline-offset: 2px; }
+/* con error y foco: el anillo cambia a tinta y se engrosa (el de error, casi del mismo color, le ganaba a :focus-visible) */
+.check input[aria-invalid="true"]:focus-visible { outline: 3px solid var(--tinta); outline-offset: 3px; }
 .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* ---------------------------------------------------------------- éxito (ESPEC-v4 §4.9) */

@@ -77,6 +77,13 @@ test("«Project-roomVR» siempre va en un elemento que no se parte", () => {
   assert.match(css["sitio.css"], /\.pie-marca \{[^}]*white-space: nowrap/);
 });
 
+test("sin JS el encabezado de la portada es sólido: .sobre-hero lo pone sitio.js", () => {
+  const cab = (html["index.html"].match(/<header class="[^"]*barra[^"]*">/) || [])[0];
+  assert.ok(cab, "falta header.barra");
+  assert.doesNotMatch(cab, /sobre-hero/, "con .sobre-hero en el HTML el menú queda blanco sobre papel sin JS");
+  assert.match(leer("js/sitio.js"), /classList\.toggle\("sobre-hero"/);
+});
+
 test("reserva.html conserva todos los hooks de reserva.js", () => {
   const ids = ["calendario", "meses", "mes-ant", "mes-sig", "rango-texto", "cal-error", "aviso-sim", "s-entrada",
     "s-salida", "s-noches-txt", "s-alojamiento", "s-limpieza", "s-total", "enviar", "formulario", "menos", "mas",
@@ -87,13 +94,18 @@ test("reserva.html conserva todos los hooks de reserva.js", () => {
   // las flechas van antes de los días (orden de tabulación) y los dos botones de envío apuntan al formulario
   const r = html["reserva.html"];
   assert.ok(r.indexOf('id="mes-sig"') < r.indexOf('id="meses"'));
+  // Sin JS (o antes de que cargue reserva.js) el envío nativo mandaría los datos personales en la URL: los botones
+  // parten disabled en el HTML (resumen() los activa al cargar y deja aria-disabled) y el formulario va por POST.
   for (const id of ["enviar", "enviar-movil"]) {
     const b = (r.match(new RegExp(`<button[^>]*id="${id}"[^>]*>`)) || [])[0];
     assert.match(b, /type="submit"/);
     assert.match(b, /form="formulario"/);
     assert.match(b, /aria-disabled="true"/);
-    assert.doesNotMatch(b, /\sdisabled/);
+    assert.match(b, /\sdisabled[\s>]/, `#${id} debe venir disabled en el HTML`);
   }
+  const form = (r.match(/<form[^>]*id="formulario"[^>]*>/) || [])[0];
+  assert.match(form, /\smethod="post"/, "el formulario va por POST: nunca los datos en la URL");
+  assert.match(r, /<noscript><p class="mensaje[^"]*">[^<]*JavaScript[^<]*<\/p><\/noscript>/, "falta el aviso sin JS");
   // orden del DOM de la retícula: calendario, resumen, qué pasa después, formulario
   const orden = ['id="calendario"', 'class="resumen"', 'class="despues"', 'id="formulario"'].map((x) => r.indexOf(x));
   assert.deepEqual([...orden].sort((a, b) => a - b), orden);

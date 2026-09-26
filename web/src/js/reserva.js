@@ -16,6 +16,12 @@ const fMes = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric", 
 const fDia = new Intl.DateTimeFormat("es-CL", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const fLargo = new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const aFecha = (s) => new Date(s + "T00:00:00Z");
+/** Ancho disponible para los meses: el de contenido de #calendario. No se mide #meses: con un solo mes, el CSS lo
+ *  angosta a 392 px (.cal-cuerpo:has(.mes:only-child)) y la cuenta se quedaba en 1 aunque la ventana creciera. */
+function anchoMeses() {
+  const c = $("#calendario"), s = getComputedStyle(c);
+  return c.clientWidth - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight);
+}
 
 const estado = {
   ocupados: [],
@@ -23,7 +29,7 @@ const estado = {
   salida: null,
   huespedes: 2,
   mes: (() => { const d = aFecha(HOY); return { anio: d.getUTCFullYear(), mes: d.getUTCMonth() }; })(),
-  porPagina: mesesPorPagina($("#meses").clientWidth),   // 1 o 2 según el ancho del contenedor, no del viewport
+  porPagina: mesesPorPagina(anchoMeses()),   // 1 o 2 según el ancho del contenedor, no del viewport
   enviando: false,
 };
 
@@ -63,7 +69,7 @@ function motivo(d) {
 }
 
 function pintar() {
-  const foco = document.activeElement?.dataset?.dia;
+  const previo = document.activeElement, foco = previo?.dataset?.dia;
   const cont = $("#meses");
   cont.replaceChildren();
   cont.style.setProperty("--meses", String(estado.porPagina));
@@ -126,11 +132,14 @@ function pintar() {
     : !estado.salida ? `Llegada ${fDia.format(aFecha(estado.entrada))} · elige la salida`
       : `${fDia.format(aFecha(estado.entrada))} → ${fDia.format(aFecha(estado.salida))} · ` +
         `${noches(estado.entrada, estado.salida)} noches`;
-  // conservar el foco: el mismo día si sigue habilitado, o un botón de navegación que siga activo
+  // conservar el foco (ESPEC-v4 §8.3). replaceChildren() lo deja en el body, así que se decide con lo que había antes:
+  // el mismo día si sigue habilitado; si no (una salida que no sirve de llegada queda deshabilitada), #rango-texto, que
+  // anuncia el rango; y si una flecha llegó al tope, la otra flecha.
   const mismo = foco && document.querySelector(`button.dia[data-dia="${foco}"]`);
   if (mismo && !mismo.disabled) mismo.focus();
-  else if (document.activeElement?.disabled || (foco && !mismo)) {
-    (["#mes-sig", "#mes-ant"].map((s) => $(s)).find((b) => !b.disabled) || $("#rango-texto")).focus?.();
+  else if (foco) $("#rango-texto").focus();
+  else if (previo?.disabled && previo.closest(".cal-nav")) {
+    (["#mes-sig", "#mes-ant"].map((s) => $(s)).find((b) => !b.disabled) || $("#rango-texto")).focus();
   }
   resumen();
 }
@@ -158,12 +167,12 @@ function moverMes(delta) {
 }
 $("#mes-ant").addEventListener("click", () => moverMes(-1));
 $("#mes-sig").addEventListener("click", () => moverMes(1));
-// meses por página según el ancho real de #meses (con el resumen al lado, dos meses caben desde unos 1.230 px)
+// meses por página según el ancho real del calendario (con el resumen al lado, dos meses caben desde unos 1.230 px)
 if ("ResizeObserver" in window) {
   new ResizeObserver(() => {
-    const n = mesesPorPagina($("#meses").clientWidth);
+    const n = mesesPorPagina(anchoMeses());
     if (n !== estado.porPagina) { estado.porPagina = n; pintar(); }
-  }).observe($("#meses"));
+  }).observe($("#calendario"));
 }
 
 // ---------------------------------------------------------------- huéspedes y resumen
@@ -187,7 +196,7 @@ function resumen() {
   const t = total(v.ok ? v.noches : 0);
   $("#s-entrada").textContent = estado.entrada ? fDia.format(aFecha(estado.entrada)) : "—";
   $("#s-salida").textContent = estado.salida ? fDia.format(aFecha(estado.salida)) : "—";
-  $("#s-noches-txt").textContent = v.ok ? `${v.noches} noches × ${clp(tarifaVigente().noche)} (ejemplo)` : "Noches";
+  $("#s-noches-txt").textContent = v.ok ? `${v.noches} noches × ${clp(tarifaVigente().noche)}` : "Noches";
   $("#s-alojamiento").textContent = v.ok ? clp(t.alojamiento) : "—";
   $("#s-limpieza").textContent = v.ok ? clp(t.limpieza) : "—";
   $("#s-total").textContent = v.ok ? clp(t.total) : "—";
@@ -212,17 +221,28 @@ function mostrarError(el, texto) {
   el.textContent = texto;
   el.hidden = !texto;
 }
+/** Lleva al calendario con #cal-error a la vista. Si la tarjeta entera no cabe entre el encabezado y la barra fija
+ *  (teléfono), manda el mensaje, que va al final de la tarjeta: con block "start" quedaba tapado por la barra. */
+function verCalendario() {
+  const cal = $("#calendario"), raiz = getComputedStyle(document.documentElement);
+  const libre = innerHeight - (parseFloat(raiz.scrollPaddingTop) || 0) - (parseFloat(raiz.scrollPaddingBottom) || 0);
+  if (cal.getBoundingClientRect().height <= libre) cal.scrollIntoView({ block: "start" });
+  else $("#cal-error").scrollIntoView({ block: "end" });
+}
 
 $("#formulario").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   if (estado.enviando) return;
+  // desde dónde se envió (Safari no enfoca un botón al hacer clic): mientras se envía, el botón queda disabled y el
+  // foco cae al body; si hay error, vuelve aquí
+  const origen = document.activeElement && document.activeElement !== document.body ? document.activeElement : ev.submitter;
   const datos = Object.fromEntries(campos.map((c) => [c, $("#" + c).value]));
   datos.huespedes = estado.huespedes;
   datos.acepta = $("#acepta").checked;
   const v = rangoActual();
   if (!v.ok) {
     mostrarError($("#cal-error"), MENSAJES[v.error || "fechas_requeridas"]);
-    $("#calendario").scrollIntoView({ block: "start" });
+    verCalendario();
     return;
   }
   const errores = validarDatos(datos);
@@ -249,8 +269,14 @@ $("#formulario").addEventListener("submit", async (ev) => {
     estado.enviando = false;
     rotuloEnvio("Solicitar");
     if (c === "fechas_ocupadas") await cargarDisponibilidad();
-    mostrarError(c === "fechas_ocupadas" || c.startsWith("fecha") ? $("#cal-error") : $("#form-error"), MENSAJES[c]);
+    const aviso = c === "fechas_ocupadas" || c.startsWith("fecha") ? $("#cal-error") : $("#form-error");
+    mostrarError(aviso, MENSAJES[c]);
     pintar();
+    if (!document.activeElement || document.activeElement === document.body) {
+      origen?.focus({ preventScroll: true });
+      if (document.activeElement !== origen) aviso.focus({ preventScroll: true });   // p. ej. #enviar oculto (< 1000 px)
+    }
+    if (aviso.id === "cal-error") verCalendario();
     return;
   }
   estado.enviando = false;
