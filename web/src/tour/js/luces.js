@@ -10,8 +10,10 @@ export const NOMBRES_RECINTO = {
   Balcon: "Balcón",
 };
 
-// 2700 K en lineal, según el contrato de interacción (sección 2).
-export const KELVIN_2700 = [1.0, 0.72, 0.42];
+// 2700 K en sRGB LINEAL (contrato de interacción, sección 2; build/depto_color.py: Planck + CIE 1931, calculado).
+// Sólo es el respaldo si una luz no trae `color`. Antes valía [1, 0.72, 0.42], que es ~3000 K en sRGB codificado:
+// usado como lineal daba una luz de ~4200 K.
+export const KELVIN_2700 = [1.0, 0.423, 0.0996];
 export const INTENSIDAD_POR_WATT = 0.35; // escala no física, igual a la del visor anterior (se ve bien, no se midió)
 export const DISTANCIA_LUZ = 7; // m, del encargo ("distance ≈ 7 m")
 export const FUNDIDO_MS = 150;
@@ -80,6 +82,27 @@ export function interruptorEncendido(grupos, gruposLuz) {
   });
 }
 
+// Estado de cada grupo al aplicar un momento del día (contrato v2, sección 2): un grupo queda encendido sólo si el
+// momento prende las luces y el autor lo exportó con `encendido: true` (lo guarda `encendidoInicial`). Así los
+// veladores, apliques y la lámpara de pie nacen apagados también de tarde y de noche, y el día apaga todo.
+// `grupos`: iterable de { id, encendidoInicial (o encendido) }. -> Map id -> boolean.
+export function estadoGruposParaMomento(grupos, lucesEncendidas) {
+  const out = new Map();
+  for (const g of grupos) {
+    const deAutor = g.encendidoInicial !== undefined ? g.encendidoInicial : g.encendido;
+    out.set(g.id, Boolean(lucesEncendidas) && Boolean(deAutor));
+  }
+  return out;
+}
+
+// Texto de la pista de un interruptor con las etiquetas de sus grupos: "Encender Living · techo"; en una placa
+// doble, las dos unidas con "y". `gruposLuz`: Map id -> { etiqueta }.
+export function textoInterruptor(grupos, gruposLuz, encendido) {
+  const etiquetas = grupos.map((id) => gruposLuz && gruposLuz.get(id) && gruposLuz.get(id).etiqueta).filter(Boolean);
+  if (!etiquetas.length) return encendido ? "Apagar la luz" : "Encender la luz";
+  return `${encendido ? "Apagar" : "Encender"} ${etiquetas.join(" y ")}`;
+}
+
 // Orden de registro de interruptores[]: primero las teclas con registro propio (tecla === nodo) y después placas y
 // lámparas, para que una placa doble no se quede con las mallas de sus teclas y cada tecla mande sólo su grupo.
 export function ordenarInterruptores(lista) {
@@ -89,20 +112,43 @@ export function ordenarInterruptores(lista) {
 
 // --- A partir de aquí, THREE se recibe por parámetro: no hay `import` en este archivo. ---
 
-export function crearLuzTHREE(THREE, l) {
+// Luces con pantalla (contrato v2.1, sección 2: `cono_deg` y `direccion` en domos y focos). El visor no calcula
+// sombras, así que una PointLight sola iluminaba el cielo sobre cada domo cerrado ~20 veces más que el piso. Se
+// reparte en un foco hacia abajo (FRACCION_CONO de la intensidad: bajo el cono ilumina como antes) y una puntual
+// tenue para el rebote; jaulas, veladores y apliques siguen puntuales.
+export const FRACCION_CONO = 0.85;
+export const PENUMBRA_CONO = 0.5;
+
+export function crearLucesTHREE(THREE, l) {
   if (l.tipo === "sol") {
     const sol = new THREE.DirectionalLight(0xfff4e5, l.intensidad ?? 3);
     sol.position.set(-l.direccion[0] * 20, -l.direccion[1] * 20, -l.direccion[2] * 20);
     sol.userData.esSol = true;
-    return sol;
+    return [sol];
   }
-  const luz = new THREE.PointLight(colorLinealAHex(l.color || KELVIN_2700), 0, DISTANCIA_LUZ, 2);
-  luz.position.set(l.posicion[0], l.posicion[1], l.posicion[2]);
-  luz.userData.potenciaW = l.potencia_w || 40;
-  return luz;
+  const color = colorLinealAHex(l.color || KELVIN_2700);
+  const puntual = new THREE.PointLight(color, 0, DISTANCIA_LUZ, 2);
+  puntual.position.set(l.posicion[0], l.posicion[1], l.posicion[2]);
+  puntual.userData.potenciaW = l.potencia_w || 40;
+  if (!l.cono_deg) return [puntual];
+  const d = l.direccion || [0, -1, 0];
+  const foco = new THREE.SpotLight(color, 0, DISTANCIA_LUZ, (l.cono_deg * Math.PI) / 180, PENUMBRA_CONO, 2);
+  foco.position.copy(puntual.position);
+  foco.target.position.set(d[0], d[1], d[2]);   // hijo del foco: se mueve con él
+  foco.add(foco.target);
+  foco.userData.potenciaW = puntual.userData.potenciaW;
+  foco.userData.fraccion = FRACCION_CONO;
+  puntual.userData.fraccion = 1 - FRACCION_CONO;
+  return [foco, puntual];
 }
 
-// Intensidad objetivo (grupo encendido a pleno) de una luz puntual.
+// Compatibilidad: la primera luz de crearLucesTHREE.
+export function crearLuzTHREE(THREE, l) {
+  return crearLucesTHREE(THREE, l)[0];
+}
+
+// Intensidad objetivo (grupo encendido a pleno) de una luz puntual o de su parte en cono.
 export function intensidadBase(luzTHREE) {
-  return (luzTHREE.userData.potenciaW || 40) * INTENSIDAD_POR_WATT;
+  const f = luzTHREE.userData.fraccion ?? 1;
+  return (luzTHREE.userData.potenciaW || 40) * INTENSIDAD_POR_WATT * f;
 }

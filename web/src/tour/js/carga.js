@@ -8,7 +8,7 @@ import { THREE } from "./three.js";
 import { GLTFLoader } from "../../vendor/three/jsm/loaders/GLTFLoader.js";
 import { mergeGeometries } from "../../vendor/three/jsm/utils/BufferGeometryUtils.js";
 import {
-  deducirGrupos, crearLuzTHREE, colorLinealAHex, FUNDIDO_MS, INTENSIDAD_POR_WATT, TILT_TECLA_DEG,
+  deducirGrupos, crearLucesTHREE, colorLinealAHex, FUNDIDO_MS, intensidadBase, TILT_TECLA_DEG,
   interruptorEncendido, ordenarInterruptores,
 } from "./luces.js";
 import { duracionPorClase } from "./animacion.js";
@@ -124,24 +124,27 @@ export function prepararEscena(raiz, D) {
 
   // --- luces y sus grupos (deducidos por recinto si el JSON todavía no trae grupos_luz) ---
   const { luces: datosLuces, grupos: datosGrupos } = deducirGrupos(D);
+  // encendidoInicial: el estado de autor (grupos_luz[].encendido), que aplicarMomento() respeta al cambiar de momento.
   const gruposLuz = new Map(datosGrupos.map((g) => [g.id, {
-    ...g, luces: [], clones: new Map(), intensidad: g.encendido ? 1 : 0,
+    ...g, encendidoInicial: Boolean(g.encendido), luces: [], clones: new Map(), intensidad: g.encendido ? 1 : 0,
     _desde: g.encendido ? 1 : 0, _hasta: g.encendido ? 1 : 0, faseMs: FUNDIDO_MS, // ya "asentado": sin fundido al iniciar
   }]));
   const lucesTHREE = [];
+  const ampolletas = [];            // nodos emisivos: quedan fuera de la fusión y van a `sueltos` (se dibujan aparte)
   for (const l of datosLuces) {
-    const luzTHREE = crearLuzTHREE(THREE, l);
-    lucesTHREE.push(luzTHREE);
+    const lucesDeEsta = crearLucesTHREE(THREE, l);    // una puntual, o foco + puntual si trae cono_deg
+    lucesTHREE.push(...lucesDeEsta);
     if (l.tipo !== "puntual") continue;
     const grupo = gruposLuz.get(l.grupo);
     if (!grupo) continue;
-    grupo.luces.push(luzTHREE);
+    grupo.luces.push(...lucesDeEsta);
     const nodoAmpolleta = raiz.getObjectByName(l.ampolleta);
     if (!nodoAmpolleta || !nodoAmpolleta.isMesh) {
       console.warn("[tour] no se encontró la ampolleta", l.ampolleta, "de", l.nombre);
       continue;
     }
     excluidos.add(nodoAmpolleta);
+    if (!ampolletas.includes(nodoAmpolleta)) ampolletas.push(nodoAmpolleta);
     const base = Array.isArray(nodoAmpolleta.material) ? nodoAmpolleta.material[0] : nodoAmpolleta.material;
     let clon = grupo.clones.get(base.uuid);
     if (!clon) {
@@ -155,7 +158,7 @@ export function prepararEscena(raiz, D) {
   // Aplica de una vez la intensidad inicial (encendido/apagado según grupos_luz o la deducción): el fundido
   // de pasoMundo() solo corre cuando `faseMs < FUNDIDO_MS`, y los grupos nacen ya "asentados".
   for (const grupo of gruposLuz.values()) {
-    for (const luz of grupo.luces) luz.intensity = (luz.userData.potenciaW || 40) * INTENSIDAD_POR_WATT * grupo.intensidad;
+    for (const luz of grupo.luces) luz.intensity = intensidadBase(luz) * grupo.intensidad;
     for (const clon of grupo.clones.values()) clon.emissiveIntensity = 1.4 * grupo.intensidad;
   }
   // Estado inicial de cada interruptor según sus grupos, con la tecla ya inclinada hacia ese lado.
@@ -190,10 +193,17 @@ export function prepararEscena(raiz, D) {
   // (Object3D.attach preserva la posición mundial al cambiar de padre).
   // Una tecla con registro propio sigue siendo hija de su placa (gira en su X local, relativa a la placa): sólo se
   // sueltan los interruptores sin otro interruptor por encima.
+  // Las ampolletas también se sueltan (antes quedaban fuera de la fusión y de la escena: no se dibujaba ningún
+  // filamento), salvo las que ya cuelgan de un móvil o de un interruptor suelto, que viajan con él.
   const nodosInterruptor = new Set(interruptores.map((i) => i.nodo));
   const bajoOtro = (o) => { for (let p = o.parent; p; p = p.parent) if (nodosInterruptor.has(p)) return true; return false; };
-  const sueltos = [...moviles.map((v) => v.nodo), ...interruptores.map((i) => i.nodo).filter((n) => !bajoOtro(n))]
-    .filter(Boolean);
+  const nodosMoviles = new Set(moviles.map((v) => v.nodo).filter(Boolean));
+  const bajoSuelto = (o) => {
+    for (let p = o.parent; p; p = p.parent) if (nodosInterruptor.has(p) || nodosMoviles.has(p)) return true;
+    return false;
+  };
+  const sueltos = [...moviles.map((v) => v.nodo), ...interruptores.map((i) => i.nodo).filter((n) => !bajoOtro(n)),
+    ...ampolletas.filter((a) => !bajoSuelto(a))].filter(Boolean);
 
-  return { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables, mapaTocable };
+  return { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables, mapaTocable, ampolletas };
 }

@@ -5,10 +5,10 @@ import { THREE } from "./three.js";
 import * as carga from "./carga.js";
 import * as colision from "./colision.js";
 import { crearControles } from "./controles.js";
-import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo } from "./interaccion.js";
+import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo, MOTIVO_CAMINO } from "./interaccion.js";
 import { MOMENTOS, MOMENTO_POR_DEFECTO, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
 import { RoomEnvironment } from "../../vendor/three/jsm/environments/RoomEnvironment.js";
-import { NOMBRES_RECINTO } from "./luces.js";
+import { NOMBRES_RECINTO, estadoGruposParaMomento } from "./luces.js";
 import { prepararMinimapa, dibujarMinimapa, recintoTocado } from "./minimapa.js";
 import { crearCalidad, activarDepuracion, textoDepuracion } from "./calidad.js";
 import * as ui from "./interfaz.js";
@@ -71,7 +71,10 @@ function aplicarMomento(id, estadoInteraccion) {
   renderer.toneMappingExposure = m.exposicion;
   if (sol) { sol.color.set(m.sol.color); sol.intensity = m.sol.intensidad; }
   if (estadoInteraccion) {
-    for (const id2 of estadoInteraccion.gruposLuz.keys()) fijarGrupo(estadoInteraccion, id2, m.lucesEncendidas);
+    // cada grupo vuelve al estado de autor para este momento (grupos_luz[].encendido): el día apaga todo; la tarde y
+    // la noche prenden sólo los que nacen encendidos (techos), no los veladores, apliques ni la lámpara de pie
+    const estados = estadoGruposParaMomento(estadoInteraccion.gruposLuz.values(), m.lucesEncendidas);
+    for (const [id2, encendido] of estados) fijarGrupo(estadoInteraccion, id2, encendido);
     ui.refrescarGruposLuzUI(estadoInteraccion.gruposLuz);
   }
   sucio = true;
@@ -163,21 +166,21 @@ function cablearControles() {
     if (activar(estado, entrada, { x: controles.yo.x, z: controles.yo.z, radio: D.radio })) {
       ui.refrescarGruposLuzUI(estado.gruposLuz);
     } else if (entrada.tipo === "movil") {
-      ui.mostrarAviso("Estás en el camino: retrocede un paso", 2000);
+      ui.mostrarAviso(estado.motivo || MOTIVO_CAMINO, 2000);
     }
     sucio = true;
   };
   controles.onToqueCorto = (nx, ny, clientX, clientY) => {
     const hit = apuntar(estado, camera, nx, ny);
     if (hit) {
-      const etiqueta = etiquetaAccion(hit.entrada); // antes de activar(): describe la acción que se hará, no la que queda pendiente
+      const etiqueta = etiquetaAccion(hit.entrada, estado.gruposLuz); // antes de activar(): la acción que se hará
       const ok = activar(estado, hit.entrada, { x: controles.yo.x, z: controles.yo.z, radio: D.radio });
       if (ok) {
         ui.refrescarGruposLuzUI(estado.gruposLuz);
         ui.mostrarChip(etiqueta, clientX, clientY);
         chipHasta = performance.now() + 1400;
       } else if (hit.entrada.tipo === "movil") {
-        ui.mostrarAviso("Estás en el camino: retrocede un paso", 2000);
+        ui.mostrarAviso(estado.motivo || MOTIVO_CAMINO, 2000);
       }
       sucio = true;
       return;
@@ -237,7 +240,7 @@ function actualizarApuntado() {
   const hit = apuntar(estado, camera, 0, 0);
   resaltar(estado, hit ? hit.objeto : null);
   ui.marcarMiraActiva(!!hit);
-  if (hit) ui.mostrarPista(etiquetaAccion(hit.entrada)); else ui.ocultarPista();
+  if (hit) ui.mostrarPista(etiquetaAccion(hit.entrada, estado.gruposLuz)); else ui.ocultarPista();
 }
 
 function pasoCuadro(dt) {

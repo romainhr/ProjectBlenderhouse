@@ -4,7 +4,11 @@
 import { THREE } from "./three.js";
 import { estadoMovil, chocaMovil } from "./colision.js";
 import { iniciarToggle, pasoAnimacion, congelar, duracionPorClase, valorFundido } from "./animacion.js";
-import { INTENSIDAD_POR_WATT, FUNDIDO_MS, TILT_TECLA_DEG, interruptorEncendido } from "./luces.js";
+import { intensidadBase, FUNDIDO_MS, TILT_TECLA_DEG, interruptorEncendido, textoInterruptor } from "./luces.js";
+import { puedeAbrir, cajonesQueCerrar, ESPERA_HOJA_S } from "./bloqueos.js";
+
+export const MOTIVO_CAMINO = "Estás en el camino: retrocede un paso";
+export const MOTIVO_HOJA = "Corre primero la puerta del clóset";
 
 const DISTANCIA_MAXIMA = 2.5;
 
@@ -20,6 +24,8 @@ export function crearInteraccion(preparado) {
 
   return {
     ...preparado,
+    porNodo: new Map((preparado.moviles || []).filter((v) => v.m).map((v) => [v.m.nodo, v])),
+    motivo: null,     // por qué no se pudo activar lo último (texto del aviso)
     rayo,
     apuntado: null,
     _resaltados: resaltados,
@@ -80,9 +86,10 @@ export function quitarResaltado(estado) {
   estado.objetoApuntado = null;
 }
 
-// Texto de la pista/chip para una entrada de `mapaTocable`.
-export function etiquetaAccion(entrada) {
-  if (entrada.tipo === "interruptor") return entrada.ref.encendido ? "apagar la luz" : "encender la luz";
+// Texto de la pista/chip para una entrada de `mapaTocable`; `gruposLuz` (opcional) pone la etiqueta del grupo en la
+// pista de un interruptor ("Encender Living · techo").
+export function etiquetaAccion(entrada, gruposLuz) {
+  if (entrada.tipo === "interruptor") return textoInterruptor(entrada.ref.grupos, gruposLuz, entrada.ref.encendido);
   const v = entrada.ref;
   const abrir = v.objetivo < 0.5;
   if (v.m.etiqueta) return (abrir ? "Abrir " : "Cerrar ") + v.m.etiqueta.replace(/^(Abrir|Cerrar)\s+/i, "").toLowerCase();
@@ -92,11 +99,21 @@ export function etiquetaAccion(entrada) {
 
 // Activa lo que se está apuntando/tocando (clic, E o toque corto). `walker` = { x, z, radio }.
 export function activar(estado, entrada, walker) {
+  estado.motivo = null;
   if (entrada.tipo === "movil") {
     const v = entrada.ref;
     const nuevo = iniciarToggle(v, undefined);
-    if (chocaMovil(walker.x, walker.z, v, nuevo.objetivo, walker.radio)) return false; // no dejes atrapado al caminante
+    const porNodo = estado.porNodo || new Map();
+    if (nuevo.objetivo === 1 && !puedeAbrir(v, porNodo)) { estado.motivo = MOTIVO_HOJA; return false; }
+    if (chocaMovil(walker.x, walker.z, v, nuevo.objetivo, walker.radio)) { // no dejes atrapado al caminante
+      estado.motivo = MOTIVO_CAMINO;
+      return false;
+    }
+    // una hoja que tapa cajones abiertos los cierra primero y espera a que terminen (la hoja no los atraviesa)
+    const aCerrar = cajonesQueCerrar(v, porNodo);
+    for (const c of aCerrar) Object.assign(c, iniciarToggle(c, 0));
     Object.assign(v, nuevo);
+    v.espera = aCerrar.length ? ESPERA_HOJA_S : 0;
     return true;
   }
   const reg = entrada.ref;
@@ -144,6 +161,7 @@ export function fijarGrupo(estado, idGrupo, encendido) {
 export function pasoMundo(estado, dt, walker) {
   for (const v of estado.moviles) {
     if (v.t === v.objetivo && v.fase >= duracionPorClase(v.m.clase)) continue;
+    if (v.espera > 0) { v.espera = Math.max(0, v.espera - dt); continue; }   // esperando que cierren sus cajones
     const duracion = duracionPorClase(v.m.clase);
     const siguiente = pasoAnimacion(v, dt, duracion);
     if (chocaMovil(walker.x, walker.z, v, siguiente.t, walker.radio)) {
@@ -161,7 +179,7 @@ export function pasoMundo(estado, dt, walker) {
     grupo.faseMs = Math.min(FUNDIDO_MS, grupo.faseMs + dt * 1000);
     const k = valorFundido(grupo.faseMs, FUNDIDO_MS);
     grupo.intensidad = grupo._desde + ((grupo._hasta ?? grupo.intensidad) - grupo._desde) * k;
-    for (const luz of grupo.luces) luz.intensity = (luz.userData.potenciaW || 40) * INTENSIDAD_POR_WATT * grupo.intensidad;
+    for (const luz of grupo.luces) luz.intensity = intensidadBase(luz) * grupo.intensidad;
     for (const clon of grupo.clones.values()) clon.emissiveIntensity = 1.4 * grupo.intensidad;
   }
 
