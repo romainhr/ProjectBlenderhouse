@@ -1,9 +1,11 @@
 // Lógica de reservas sin DOM (se prueba con `cd web && npm test`). Fechas como texto ISO "AAAA-MM-DD" y
 // aritmética en UTC, para que el huso horario del visitante no corra los días; «hoy» es el día en el huso de la
-// propiedad, el mismo que usa la base (public.hoy_loft(), 0002_hoy_propiedad.sql). Un rango [entrada, salida) ocupa las
+// propiedad, el mismo que usa la base (public.hoy_propiedad(), 0004_renombrar_hoy.sql). Un rango [entrada, salida) ocupa las
 // noches desde la entrada hasta la noche anterior a la salida: la base de datos usa el mismo criterio (daterange '[)').
 
 // Valores de EJEMPLO del sitio de prueba (no son tarifas reales). Deben coincidir con 0001_reservas.sql.
+// noche y limpieza son sólo los valores POR DEFECTO: el total se calcula con tarifaVigente(), que fijarTarifas()
+// cambia por las que editó el propietario (public.contenido, claves tarifa.*, que lee contenido-publico.js).
 export const TARIFA = Object.freeze({
   noche: 58000,
   limpieza: 15000,
@@ -13,7 +15,28 @@ export const TARIFA = Object.freeze({
   anticipacionMaxDias: 365,
 });
 
-// Supuesto: la propiedad está en Chile continental (tarifas en CLP). Debe coincidir con public.hoy_loft().
+// Rango de un precio en CLP: el del CHECK contenido_precio_entero de 0003_gestion.sql (entero de 0 a 10 000 000).
+export const PRECIO_MAX = 10_000_000;
+
+let vigente = Object.freeze({ noche: TARIFA.noche, limpieza: TARIFA.limpieza });
+
+/** Tarifas con que se calcula el total: { noche, limpieza } en CLP (congelado), las de TARIFA o las fijadas.
+ *  Todo texto con un precio se arma al pintar con esto; MENSAJES no lleva precios, así no queda desfasado. */
+export function tarifaVigente() {
+  return vigente;
+}
+
+/** Fija noche y limpieza: enteros de 0 a PRECIO_MAX y la noche mayor que 0. Si alguna no es válida no cambia nada
+ *  y devuelve false. fijarTarifas(TARIFA) vuelve a los valores de ejemplo. */
+export function fijarTarifas(t) {
+  const noche = t?.noche, limpieza = t?.limpieza;
+  const entero = (n) => Number.isSafeInteger(n) && n >= 0 && n <= PRECIO_MAX;
+  if (!entero(noche) || noche === 0 || !entero(limpieza)) return false;
+  vigente = Object.freeze({ noche, limpieza });
+  return true;
+}
+
+// Supuesto: la propiedad está en Chile continental (tarifas en CLP). Debe coincidir con public.hoy_propiedad().
 export const ZONA_PROPIEDAD = "America/Santiago";
 
 const DIA_MS = 86400000;
@@ -78,9 +101,10 @@ export function salidaMaxima(entrada, ocupados) {
   return siguientes.length && siguientes[0] < tope ? siguientes[0] : tope;
 }
 
-export function total(n) {
-  const alojamiento = n * TARIFA.noche;
-  return { noches: n, alojamiento, limpieza: n > 0 ? TARIFA.limpieza : 0, total: n > 0 ? alojamiento + TARIFA.limpieza : 0 };
+/** Total de `n` noches con la tarifa `t` (por defecto, la vigente). */
+export function total(n, t = vigente) {
+  const alojamiento = n * t.noche;
+  return { noches: n, alojamiento, limpieza: n > 0 ? t.limpieza : 0, total: n > 0 ? alojamiento + t.limpieza : 0 };
 }
 
 export function clp(monto) {

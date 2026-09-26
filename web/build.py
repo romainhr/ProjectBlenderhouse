@@ -1,4 +1,4 @@
-"""Arma el sitio LOFT 2D2B en web/dist/ (lo que se sube a Netlify).
+"""Arma el sitio Project-roomVR en web/dist/ (lo que se sube a Netlify).
 
 Uso:
     python3 web/build.py [--env archivo.env]
@@ -6,10 +6,9 @@ Uso:
 - Copia web/src/.
 - Convierte los renders de web/renders_png/ (Eevee, 1600 × 1000; tools/render_interior.py) a JPEG y WebP de 1600
   y 800 px.
-- Arma web/dist/tour/ con los archivos del modelo (exports/web/, fase 6) y una versión liviana para teléfono
-  (texturas de 512 px en tex_movil/ y su índice depto_web_movil.json). La página del tour es web/src/tour/index.html
-  si existe (tour propio del sitio); si no, el visor exports/depto_tour.html (el de la página publicada) con los
-  colores del sitio inyectados.
+- Arma web/dist/tour/: la página y el visor v3 vienen de web/src/tour/ y el modelo (tour/modelo/, con su versión
+  liviana para teléfono) lo genera web/tour_modelo.py a partir de exports/web/ (fase 6). El visor de la página
+  publicada en claude.ai (exports/depto_tour.html) ya no se inyecta: el sitio tiene su propio tour.
 - Escribe js/config.js con SUPABASE_URL y SUPABASE_CLAVE_PUBLICA (variables de entorno o --env). Es la clave
   pública (publishable/anon): con RLS no da acceso a la tabla. Nunca poner aquí la clave de servicio.
 - Pone en cada HTML su CSP como <meta>, derivada de lo que la página carga de verdad (scripts propios, rutas exactas
@@ -33,14 +32,9 @@ WEB = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(WEB)
 SRC, DIST = os.path.join(WEB, "src"), os.path.join(WEB, "dist")
 RENDERS = os.path.join(WEB, "renders_png")
-VISOR = os.path.join(RAIZ, "exports", "depto_tour.html")
-MODELO = os.path.join(RAIZ, "exports", "web")
 IMAGENES = {"Living": "living", "Living_Sofa": "living-sofa", "Cocina": "cocina", "Dorm1": "dorm1", "Dorm2": "dorm2",
             "Bano1_Vanitorio": "bano", "Balcon": "balcon", "Hall_Recibidor": "recibidor", "Maqueta": "maqueta"}
 ANCHOS = (1600, 800)
-TEX_MOVIL = 512                     # px: texturas del tour en teléfono (las de escritorio son de 1024)
-FUENTES = ("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600"
-           "&family=JetBrains+Mono:wght@400;500;600&display=swap")
 RE_SUPABASE = re.compile(r"^https://[a-z0-9]{10,40}\.supabase\.co$")
 RE_PUBLICABLE = re.compile(r"sb_publishable_[A-Za-z0-9_-]{20,}")
 RE_CDN = re.compile(r"https://cdn\.jsdelivr\.net/npm/[A-Za-z0-9._-]+@[0-9][0-9A-Za-z.-]*/")
@@ -73,68 +67,17 @@ def imagenes():
             r.save(os.path.join(DIST, "img", f"{slug}-{ancho}.webp"), quality=80, method=6)
 
 
-def visor_del_sitio():
-    """El HTML del visor como página completa del sitio, con la barra «Sitio / Reservar» y los colores del sitio."""
-    with open(VISOR, encoding="utf-8") as fh:
-        s = fh.read()
-    cambios = [
-        ("<title>Recorrido Depto 2D2B</title>",
-         '<!doctype html>\n<html lang="es">\n<head>\n<meta charset="utf-8">\n'
-         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-         '<title>Tour 3D · LOFT 2D2B</title>\n<meta name="theme-color" content="#0f1113">\n'
-         '<meta name="description" content="Recorre en 3D el departamento LOFT 2D2B, en computador o teléfono.">\n'
-         '<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">'),
-        ("</style>\n",
-         f'</style>\n<link rel="stylesheet" href="{FUENTES}">\n<link rel="stylesheet" href="../css/tour-loft.css">\n'
-         "</head>\n<body>\n"),
-        ('<canvas id="vista" tabindex="0" aria-label="Vista 3D del departamento"></canvas>\n',
-         '<canvas id="vista" tabindex="0" aria-label="Vista 3D del departamento"></canvas>\n'
-         '<nav id="sitio-barra" class="panel" aria-label="Sitio">\n'
-         '  <a href="../"><span aria-hidden="true">←</span> Sitio</a>\n'
-         '  <a class="primario" href="../reserva.html">Reservar<span class="solo-grande"> estadía</span></a>\n</nav>\n'),
-        ("<h1>Depto 2D2B</h1>", "<h1>LOFT 2D2B</h1>"),
-    ]
-    for viejo, nuevo in cambios:
-        if s.count(viejo) != 1:
-            raise SystemExit(f"el visor cambió: no se encontró una sola vez {viejo[:60]!r}")
-        s = s.replace(viejo, nuevo)
-    return s.rstrip() + "\n</body>\n</html>\n"
-
-
 def tour():
+    """dist/tour/ ya trae la página y el visor (copiados de web/src/tour/); aquí se genera tour/modelo/ con
+    web/tour_modelo.py (una copia de desarrollo en src/tour/modelo se descarta y se regenera)."""
     carpeta = os.path.join(DIST, "tour")
-    if os.path.exists(os.path.join(carpeta, "index.html")):
-        # tour propio del sitio (web/src/tour/, visor v3): lee tour/modelo/, que arma web/tour_modelo.py a partir de
-        # exports/web; una copia de desarrollo en src/tour/modelo se descarta y se regenera
-        import tour_modelo
-        modelo = os.path.join(carpeta, "modelo")
-        if os.path.exists(modelo):
-            shutil.rmtree(modelo)
-        return tour_modelo.construir(destino=modelo)
-    # si no, el visor de la página publicada (exports/depto_tour.html) con los colores del sitio
-    shutil.copytree(MODELO, carpeta, dirs_exist_ok=True)
-    for extra in ("depto_web_armado.glb",):
-        if os.path.exists(os.path.join(carpeta, extra)):
-            os.remove(os.path.join(carpeta, extra))
-    with open(os.path.join(carpeta, "index.html"), "w", encoding="utf-8") as fh:
-        fh.write(visor_del_sitio())
-    # versión liviana para teléfono
-    with open(os.path.join(carpeta, "depto_web.json")) as fh:
-        idx = json.load(fh)
-    movil = os.path.join(carpeta, "tex_movil")
-    os.makedirs(movil, exist_ok=True)
-    total = sum(os.path.getsize(os.path.join(carpeta, idx[k])) for k in ("gltf", "bin"))
-    for nombre in sorted(os.listdir(os.path.join(carpeta, "tex"))):
-        im = Image.open(os.path.join(carpeta, "tex", nombre))
-        if max(im.size) > TEX_MOVIL:
-            im = im.resize((TEX_MOVIL, round(im.height * TEX_MOVIL / im.width)), Image.LANCZOS)
-        destino = os.path.join(movil, nombre)
-        im.convert("RGB").save(destino, quality=80, optimize=True)
-        total += os.path.getsize(destino)
-    idx_movil = dict(idx, tex_base="tex_movil/", total_bytes=total)
-    with open(os.path.join(carpeta, "depto_web_movil.json"), "w") as fh:
-        json.dump(idx_movil, fh, ensure_ascii=False, indent=1)
-    return idx["total_bytes"], total
+    if not os.path.exists(os.path.join(carpeta, "index.html")):
+        raise SystemExit("falta web/src/tour/index.html: el sitio necesita su tour")
+    import tour_modelo
+    modelo = os.path.join(carpeta, "modelo")
+    if os.path.exists(modelo):
+        shutil.rmtree(modelo)
+    return tour_modelo.construir(destino=modelo)
 
 
 def configuracion(env):

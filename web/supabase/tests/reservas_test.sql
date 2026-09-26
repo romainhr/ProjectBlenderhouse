@@ -1,11 +1,11 @@
--- Pruebas de public.reservas y sus funciones (0001_reservas.sql y 0002_hoy_propiedad.sql). Se ejecutan en el SQL Editor de Supabase (o psql
+-- Pruebas de public.reservas y sus funciones (0001_reservas.sql, 0002_hoy_propiedad.sql y 0004_renombrar_hoy.sql). Se ejecutan en el SQL Editor de Supabase (o psql
 -- como postgres) dentro de una transacción que se deshace: no dejan datos. Si todo pasa, la última línea del
 -- resultado es «PRUEBAS_OK»; si una falla, se aborta con el nombre de la prueba.
 begin;
 
 do $$
 declare
-  hoy date := public.hoy_loft();                        -- el día en el huso de la propiedad (0002)
+  hoy date := public.hoy_propiedad();               -- el día en el huso de la propiedad (0004)
   c text;
   n int;
   err text;
@@ -53,11 +53,12 @@ begin
 
   -- 5g. cambiar el huso de la sesión no mueve «hoy» (antes current_date seguía a la sesión)
   perform set_config('timezone', 'Etc/GMT+12', true);
-  begin perform public.solicitar_reserva(public.hoy_loft() - 1, public.hoy_loft() + 2, 2, 'Eva', 'eva@ejemplo.cl');
+  begin perform public.solicitar_reserva(public.hoy_propiedad() - 1, public.hoy_propiedad() + 2, 2, 'Eva', 'eva@ejemplo.cl');
         raise exception 'prueba 5g';
   exception when others then get stacked diagnostics err = message_text; assert err = 'fecha_pasada', '5g ' || err; end;
   perform set_config('timezone', 'UTC', true);
   assert not exists (select 1 from pg_extension where extname = 'btree_gist'), 'prueba 5h: btree_gist sigue instalada';
+  assert to_regprocedure('public.hoy_loft()') is null, 'prueba 5i: la función vieja hoy_loft() sigue existiendo (0004)';
 
   -- 6. disponibilidad: sólo rangos activos y sin columnas personales
   assert (select count(*) from public.disponibilidad(hoy, hoy + 60)) = 2, 'prueba 6: dos rangos activos';
