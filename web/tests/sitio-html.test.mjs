@@ -77,11 +77,47 @@ test("«Project-roomVR» siempre va en un elemento que no se parte", () => {
   assert.match(css["sitio.css"], /\.pie-marca \{[^}]*white-space: nowrap/);
 });
 
-test("sin JS el encabezado de la portada es sólido: .sobre-hero lo pone sitio.js", () => {
+test("encabezado de la portada: .sobre-hero desde el HTML (sin parpadeo) y sólido sin JS", () => {
   const cab = (html["index.html"].match(/<header class="[^"]*barra[^"]*">/) || [])[0];
-  assert.ok(cab, "falta header.barra");
-  assert.doesNotMatch(cab, /sobre-hero/, "con .sobre-hero en el HTML el menú queda blanco sobre papel sin JS");
-  assert.match(leer("js/sitio.js"), /classList\.toggle\("sobre-hero"/);
+  assert.equal(cab, '<header class="barra sobre-hero">', "index.html parte sobre el hero (ESPEC-v4 §2.2)");
+  for (const p of ["reserva.html", "privacidad.html"]) assert.match(html[p], /<header class="barra">/, p);
+  // sin JS, el <noscript> lo vuelve sólido: papel, tinta, filete, marca visible y enlaces en tinta secundaria
+  const ns = (html["index.html"].match(/<noscript><style>([\s\S]*?)<\/style><\/noscript>/) || [])[1] || "";
+  assert.match(ns, /\.barra\.sobre-hero \{[^}]*background: var\(--papel\)[^}]*color: var\(--tinta\)[^}]*border-bottom-color: var\(--linea\)/);
+  assert.match(ns, /\.barra\.sobre-hero \.marca \{ visibility: visible; \}/);
+  assert.match(ns, /\.barra\.sobre-hero \.menu a \{ color: var\(--tinta-2\); \}/);
+  // con JS: lo alterna el observador y, sin IntersectionObserver, se quita
+  const js = leer("js/sitio.js");
+  assert.match(js, /classList\.toggle\("sobre-hero"/);
+  assert.match(js, /\} else \{\s*barra\.classList\.remove\("sobre-hero"\)/);
+});
+
+test("sin JS no queda la hamburguesa, que no abriría el panel", () => {
+  for (const p of ["index.html", "reserva.html", "privacidad.html"]) {
+    const ns = (html[p].match(/<noscript><style>([\s\S]*?)<\/style><\/noscript>/) || [])[1] || "";
+    assert.match(ns, /\.hamburguesa \{ display: none !important; \}/, p);
+  }
+});
+
+test("calendario: hoy deshabilitado u ocupado no se ve como un día libre", () => {
+  const c = css["sitio.css"];
+  const reglasHoy = [...c.matchAll(/([^{}]*\.dia\.hoy[^{}]*)\{([^}]*)\}/g)];
+  const conColor = reglasHoy.filter(([, , cuerpo]) => /(^|;|\s)color:/.test(cuerpo));
+  assert.ok(conColor.length, "falta la regla de color de .dia.hoy");
+  for (const [, sel] of conColor) assert.match(sel, /:not\(:disabled\)/, `«${sel.trim()}» le ganaría a .dia:disabled`);
+  const ocupado = (c.match(/\.dia\.hoy\.ocupado::before \{([^}]*)\}/) || [])[1] || "";
+  assert.match(ocupado, /radial-gradient[\s\S]*repeating-linear-gradient/, "hoy ocupado lleva el punto y la trama");
+});
+
+test("carrusel de Materiales: cada muestra mide 140 px también en Firefox", () => {
+  assert.match(css["sitio.css"], /\.muestra \{ flex: none; width: 140px;/);
+});
+
+test("solo se precarga la Fraunces redonda (ESPEC-v4 §1.8)", () => {
+  for (const p of ["index.html", "reserva.html"]) {
+    assert.match(html[p], /<link rel="preload" as="font" type="font\/woff2" href="fonts\/fraunces-var\.woff2" crossorigin>/, p);
+    assert.doesNotMatch(html[p], /rel="preload"[^>]*fraunces-var-italic/, `${p}: la cursiva compite con la imagen del hero`);
+  }
 });
 
 test("reserva.html conserva todos los hooks de reserva.js", () => {

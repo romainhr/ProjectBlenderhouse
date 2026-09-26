@@ -11,18 +11,18 @@
 <meta property="og:image" content="img/living-1600.jpg">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preload" as="font" type="font/woff2" href="fonts/fraunces-var.woff2" crossorigin>
-<link rel="preload" as="font" type="font/woff2" href="fonts/fraunces-var-italic.woff2" crossorigin>
 <link rel="preload" as="image" href="img/living-1600.webp" imagesrcset="img/living-800.webp 800w, img/living-1600.webp 1600w" imagesizes="100vw">
 <link rel="stylesheet" href="css/sitio.css">
 <link rel="modulepreload" href="js/reserva-logica.js">
 <script type="module" src="js/sitio.js"></script>
 <script type="module" src="js/contenido-publico.js"></script>
-<noscript><style>.aparece { opacity: 1 !important; transform: none !important; } .barra-movil.oculta { transform: none; visibility: visible; }</style></noscript>
+<noscript><style>.aparece { opacity: 1 !important; transform: none !important; } .barra-movil.oculta { transform: none; visibility: visible; }
+.barra.sobre-hero { background: var(--papel); color: var(--tinta); border-bottom-color: var(--linea); --anillo: var(--terracota); } .barra.sobre-hero .marca { visibility: visible; } .barra.sobre-hero .menu a { color: var(--tinta-2); } .barra.sobre-hero .menu a:hover { color: var(--terracota); text-decoration: none; } .hamburguesa { display: none !important; }</style></noscript>
 </head>
 <body class="con-barra-movil">
 
 <a class="saltar" href="#contenido">Saltar al contenido</a>
-<header class="barra">
+<header class="barra sobre-hero">
   <div class="contenedor">
     <a class="marca" href="./" aria-label="Project-roomVR, inicio"><b>Project-roomVR</b><small>Arriendo turístico</small></a>
     <nav class="menu-nav" aria-label="Principal"><ul class="menu">
@@ -235,8 +235,14 @@
         </table>
       </div>
       <div class="tarifas-accion aparece">
+        <h3>Reserva por solicitud</h3>
         <p>Elige tus noches en el calendario y envía la solicitud. Te confirmamos por correo.</p>
-        <a class="boton invertido" href="reserva.html#calendario">Ver fechas</a>
+        <ul class="claves" role="list">
+          <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>De 2 a 30 noches</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Hasta 4 huéspedes</li>
+          <li><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Sin cobro en línea</li>
+        </ul>
+        <a class="boton primario grande bloque" href="reserva.html#calendario">Ver fechas</a>
       </div>
     </div>
   </section>

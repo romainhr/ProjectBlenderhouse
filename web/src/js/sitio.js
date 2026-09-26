@@ -43,8 +43,8 @@ const anio = $("#anio");
 if (anio) anio.textContent = String(new Date().getFullYear());
 
 // Encabezado transparente sobre el hero y barra fija oculta en el hero y sobre Tarifas (solo en la portada).
-// El HTML trae el encabezado sólido y este módulo le pone .sobre-hero: sin JS, o si el módulo no carga, el menú queda
-// en tinta sobre papel y no en blanco sobre papel (RA-16).
+// index.html ya trae .sobre-hero (ESPEC-v4 §2.2): al cargar no parpadea de papel a transparente. Sin JS lo vuelve sólido
+// el <noscript>; sin IntersectionObserver, este módulo le quita la clase para que el menú no quede blanco sobre papel.
 const hero = $(".hero"), barra = $(".barra"), movil = $(".barra-movil"), tarifas = $("#tarifas");
 if (hero && barra) {
   if ("IntersectionObserver" in window) {
@@ -63,6 +63,7 @@ if (hero && barra) {
     // la barra se desliza sólo después del primer estado: al cargar no aparece y se va
     requestAnimationFrame(() => requestAnimationFrame(() => movil?.classList.add("lista")));
   } else {
+    barra.classList.remove("sobre-hero");         // no se sabría cuándo sale del hero: queda sólido
     movil?.classList.remove("oculta");            // en el HTML parte oculta (sin JS la muestra el <noscript>)
   }
 }

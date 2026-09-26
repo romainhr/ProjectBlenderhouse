@@ -1,7 +1,7 @@
 /* Project-roomVR: estilos del sitio, sistema v4 («editorial cálido»). Especificación: web/diseno/ESPEC-v4.md; del
    modelo de Google Stitch se tradujeron valores (medidas, colores, radios), no marcado ni clases. Los colores y las
    fuentes viven en tokens.css (compartido con el visor 3D y el portal). Mobile-first: la base es el teléfono y los
-   cortes (min-width) son 560, 600, 700, 760, 900, 1000 y 1100 px. */
+   cortes (min-width) son 560, 600, 700, 760, 900, 1000 y 1100 px; «Qué pasa después» usa una container query. */
 @import url("tokens.css");
 
 /* ---------------------------------------------------------------- escala (ESPEC-v4 §1.3 y §1.4) */
@@ -67,7 +67,7 @@ p { margin: 0; }
 /* foco: siempre outline con separación (se ve en alto contraste y no lo recorta un overflow) */
 :focus-visible { outline: 2px solid var(--anillo); outline-offset: 2px; }
 a:not(.boton):focus-visible, summary:focus-visible { border-radius: 4px; }
-.hero, .barra.sobre-hero { --anillo: #fff; }                         /* 7,1:1 sobre el velo */
+.hero, .barra.sobre-hero { --anillo: #fff; }        /* ≥ 5:1 sobre el velo (el mismo contraste que el menú) */
 .fondo-carbon, .fondo-terracota { --anillo: var(--papel); }          /* 14,1:1 y 7,7:1 */
 
 .saltar { position: absolute; left: var(--margen); top: -80px; z-index: 60; padding: 14px 18px; border-radius: var(--radio);
@@ -131,7 +131,8 @@ a:not(.boton):focus-visible, summary:focus-visible { border-radius: 4px; }
   .hamburguesa, .panel-menu { display: none !important; }
 }
 /* sobre el hero de la portada: transparente, sin marca (el H1 ya es la marca); el velo superior asegura el contraste.
-   La clase la pone sitio.js (el HTML parte sólido): sin JS, o si el módulo falla, el menú queda en tinta sobre papel. */
+   La clase viene en el HTML de index.html, así el encabezado no parpadea de papel a transparente al cargar. Sin JS lo
+   vuelve sólido el <noscript> de index.html, y sitio.js la quita si no hay IntersectionObserver (ESPEC-v4 §2.2). */
 .barra.sobre-hero { background: transparent; border-bottom-color: transparent; color: #fff; }
 .barra.sobre-hero .marca { visibility: hidden; }
 .barra.sobre-hero .menu a { color: #fff; }
@@ -147,12 +148,18 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 .hero { position: relative; height: max(540px, 82vh); height: max(540px, 82svh); max-height: 1200px; overflow: hidden;
   background: var(--carbon); color: #fff; }
 .hero-img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: 60% 50%; }
-.hero::before { content: ""; position: absolute; inset: 0 0 auto; z-index: 1; height: 180px; pointer-events: none;
-  background: linear-gradient(to bottom, rgba(20, 16, 12, .6) 0, rgba(20, 16, 12, .6) 72px, rgba(20, 16, 12, 0) 180px); }
-/* velo inferior atado al texto: el borde superior del texto siempre queda sobre 0,70, mida lo que mida la bajada */
+/* Velos aclarados con el render real (ESPEC-v4 §1.2 y §8.2): la foto manda y el texto conserva el contraste. Medido
+   sobre living-1600 con object-fit: cover a 1440 × 900, 1280 × 800, 1024 × 768, 768 × 1024, 450 × 900 y 375 × 812,
+   contra el píxel más claro bajo cada caja de texto: H1 ≥ 3,0:1 (mín. 3), lema ≥ 4,3:1 (mín. 3), bajada ≥ 5,2:1,
+   «Ver fechas» ≥ 9,4:1, pie de portada ≥ 7,4:1 y menú ≥ 5,0:1 (mín. 4,5). Con una bajada de 4 líneas en escritorio,
+   H1 ≥ 3,0:1 y bajada ≥ 4,7:1. Con los velos anteriores (0,6 y 0,85 → 0,70) la luminancia media del hero bajaba un 74 %.
+   Si cambia la portada o se oscurecen menos, hay que volver a medir. */
+.hero::before { content: ""; position: absolute; inset: 0 0 auto; z-index: 1; height: 140px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(20, 16, 12, .45) 0, rgba(20, 16, 12, .45) 56px, rgba(20, 16, 12, 0) 140px); }
+/* velo inferior atado al texto: el borde superior del texto siempre queda sobre 0,5, mida lo que mida la bajada */
 .hero-texto { position: absolute; inset: auto 0 0; z-index: 2; padding-top: 160px;
   padding-bottom: clamp(24px, calc(8px + 3.8vw), 56px);
-  background: linear-gradient(to top, rgba(20, 16, 12, .85) 0, rgba(20, 16, 12, .70) calc(100% - 160px), rgba(20, 16, 12, 0) 100%); }
+  background: linear-gradient(to top, rgba(20, 16, 12, .7) 0, rgba(20, 16, 12, .5) calc(100% - 160px), rgba(20, 16, 12, 0) 100%); }
 .hero-texto .contenedor { position: relative; }
 .hero h1 { font: 400 var(--t-marca-hero)/.95 var(--f-titulo); letter-spacing: -0.02em; white-space: nowrap; margin: 0 0 12px;
   color: #fff; text-wrap: nowrap; }
@@ -193,6 +200,9 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 .fondo-arena { background: var(--arena); }
 .fondo-carbon { background: var(--carbon); color: var(--papel); }
 .fondo-terracota { background: var(--terracota-osc); color: var(--papel); }
+/* al saltar desde el menú, el bloque de color empieza justo bajo el encabezado: los 16 px extra de scroll-padding-top
+   dejaban una franja de la sección anterior (el bloque ya trae su propio relleno) */
+.fondo-arena, .fondo-carbon, .fondo-terracota { scroll-margin-top: -16px; }
 .cabecera { display: grid; gap: 16px; margin-bottom: var(--cab-y); }
 .cabecera h2 { font-size: var(--t-seccion); line-height: 1.05; }
 .cabecera .bajada { max-width: 60ch; }
@@ -252,7 +262,9 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 
 /* ---------------------------------------------------------------- materiales (ESPEC-v4 §3.5) */
 .muestras ul { display: flex; flex: none; gap: 16px; list-style: none; margin: 0; padding: 0; }
-.muestra { flex: 0 0 140px; scroll-snap-align: start; }
+/* ancho fijo y no solo flex-basis: el ul (flex: none) toma su ancho de los hijos, y en Firefox el tamaño intrínseco de
+   cada li era el de su texto sin partir, lo que dejaba unos 770 px vacíos al final del carrusel */
+.muestra { flex: none; width: 140px; scroll-snap-align: start; }
 .muestra img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radio-img); background: #DFD7CC;
   box-shadow: var(--sombra-1); }
 .muestra h3 { font: 500 var(--t-material)/1.2 var(--f-titulo); margin-top: 14px; }
@@ -262,6 +274,7 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
   .muestras.desliza { display: block; overflow: visible; margin: 0; padding: 0; }
   .muestras.desliza::after { content: none; }
   .muestras ul { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .muestra { width: auto; }
 }
 @media (min-width: 1000px) { .muestras ul { gap: 24px; } }
 
@@ -297,12 +310,16 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 }
 
 /* ---------------------------------------------------------------- lo que hay (ESPEC-v4 §3.7) */
-.equipos { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--linea); columns: 1; column-gap: 48px; }
-.equipos li { break-inside: avoid; padding: 20px 0; border-bottom: 1px solid var(--linea); }
+/* grid ordenado por columnas (cocina, lavadora, TV; baños, closets, balcón; Wi-Fi, ropa de cama, como el modelo): a
+   diferencia de columns, las filas son comunes y los filetes calzan aunque un ítem parta en dos líneas */
+.equipos { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--linea); column-gap: 48px; }
+.equipos li { padding: 20px 0; border-bottom: 1px solid var(--linea); }
 .equipos h3 { font: 500 var(--t-item)/1.25 var(--f-titulo); }
 .equipos p { margin-top: 4px; color: var(--tinta-2); }
-@media (min-width: 700px) { .equipos { columns: 2; } }
-@media (min-width: 1000px) { .equipos { columns: 3; } }
+@media (min-width: 700px) {
+  .equipos { display: grid; grid-auto-flow: column; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); }
+}
+@media (min-width: 1000px) { .equipos { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, auto); } }
 
 /* ---------------------------------------------------------------- tarifas, bloque terracota oscura (ESPEC-v4 §3.8) */
 .precio-grande { margin-top: 20px; }
@@ -316,17 +333,23 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
   color: rgba(246, 241, 234, .88); }
 .tabla-tarifas td { padding: 15px 0; text-align: right; font: 600 16px/1.4 var(--f-texto); color: var(--papel);
   font-variant-numeric: tabular-nums; white-space: nowrap; }
-.tarifas-accion { margin-top: 32px; }
-.tarifas-accion p { max-width: 36ch; margin: 0 0 24px; font-size: var(--t-bajada); line-height: 1.6; color: rgba(246, 241, 234, .9); }
-.tarifas-accion .boton { width: 100%; }
-@media (min-width: 700px) { .tarifas-accion .boton { width: auto; } }
+/* la acción es una tarjeta papel, como la del modelo de Stitch, pero sin los input type=date: lleva al calendario */
+.tarifas-accion { --anillo: var(--terracota); display: flex; flex-direction: column; gap: 20px; margin-top: 32px; padding: 24px;
+  border-radius: var(--radio-img); background: var(--papel); color: var(--tinta); box-shadow: 0 4px 20px rgba(0, 0, 0, .15); }
+.tarifas-accion h3 { font: 500 var(--t-tarjeta)/1.15 var(--f-titulo); letter-spacing: -0.01em; }
+.tarifas-accion p { max-width: 40ch; margin-top: -8px; line-height: 1.6; color: var(--tinta-2); }
+.claves { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--linea); }
+.claves li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--linea);
+  font-weight: 500; line-height: 1.4; }
+.claves svg { flex: none; color: var(--terracota); }
+@media (min-width: 560px) { .tarifas-accion { padding: 32px; } }
 @media (min-width: 1000px) {
   .tarifas { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 48px; }
   .tarifas-info { grid-column: 1 / span 6; }
-  /* arriba, a la altura del precio (como la tarjeta del modelo): al pie de la columna dejaba unos 470 px de terracota
-     vacía en la primera vista de la sección */
-  .tarifas-accion { grid-column: 8 / span 5; grid-row: 1; align-self: start; margin: calc(var(--t-capitulo) + 20px) 0 0;
-    padding-top: 24px; border-top: 1px solid rgba(246, 241, 234, .25); }
+  /* la tarjeta empieza a la altura del precio (bajo el h2 de una línea: su alto más los 20 px del precio) y se estira
+     hasta el filete inferior de la tabla (ESPEC-v4 §3.8), con el botón abajo: el bloque queda parejo, sin hueco */
+  .tarifas-accion { grid-column: 8 / span 5; grid-row: 1; align-self: stretch; margin: calc(var(--t-capitulo) + 20px) 0 0; }
+  .tarifas-accion .claves { margin-block: auto; }
 }
 
 /* ---------------------------------------------------------------- preguntas (ESPEC-v4 §3.9) */
@@ -364,7 +387,7 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 @media (min-width: 900px) {
   .pie .contenedor { grid-template-columns: auto 1fr auto; align-items: center; gap: 32px; }
   .pie-marca { font-size: 28px; }
-  .pie .nota-pie { text-align: center; }
+  .pie .nota-pie { text-align: center; text-wrap: balance; }
 }
 
 /* ---------------------------------------------------------------- barra fija inferior, bajo 1000 px (ESPEC-v4 §2.3) */
@@ -379,8 +402,9 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 .barra-movil .precio small { display: block; margin-top: 2px; font: 500 var(--t-meta)/1.4 var(--f-texto); color: var(--tinta-2); }
 .barra-movil .boton { flex: none; }
 body.con-barra-movil { --pie-extra: calc(72px + env(safe-area-inset-bottom, 0px)); }
+body.con-barra-movil:has(> .barra-movil[hidden]) { --pie-extra: 0px; }        /* reserva después del éxito */
 @media (max-width: 999px) {
-  html:has(body.con-barra-movil) { scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+  html:has(body.con-barra-movil > .barra-movil:not([hidden])) { scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (min-width: 1000px) { .barra-movil { display: none; } body.con-barra-movil { --pie-extra: 0px; } }
 
@@ -479,7 +503,12 @@ td:last-child > .dia.llegada::after, td:has(+ td:empty) > .dia.llegada::after,
 td:first-child > .dia.salida::after, td:empty + td > .dia.salida::after { display: none; }
 .dia.hoy::before { background-image: radial-gradient(circle, currentColor 2.5px, transparent 3px); background-repeat: no-repeat;
   background-size: 6px 6px; background-position: 50% calc(100% - 5px); }
-.dia.hoy:not(.extremo) { color: var(--tinta); }
+/* hoy ocupado: el punto sobre la trama (la regla de .hoy, que va después, se la quitaba) */
+.dia.hoy.ocupado::before { background-image: radial-gradient(circle, currentColor 2.5px, transparent 3px),
+    repeating-linear-gradient(45deg, var(--linea) 0 1.5px, transparent 1.5px 6px);
+  background-size: 6px 6px, auto; background-position: 50% calc(100% - 5px), 0 0; background-repeat: no-repeat, repeat; }
+/* solo si se puede elegir: hoy deshabilitado (ocupado, sin 2 noches libres o mientras se envía) queda gris como los demás */
+.dia.hoy:not(.extremo):not(:disabled) { color: var(--tinta); }
 .dia:focus-visible { outline-offset: 0; z-index: 1; }
 .rango-texto { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--linea); font-weight: 500; color: var(--tinta); }
 .leyenda { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 12px; font: 500 var(--t-meta)/1.4 var(--f-texto); color: var(--tinta-2); }
@@ -535,7 +564,8 @@ td:first-child > .dia.salida::after, td:empty + td > .dia.salida::after { displa
   #enviar { display: flex; margin-top: 16px; }
   .enlace-dudas { margin-top: 0; }
 }
-@media (min-width: 1000px) and (min-height: 860px) {
+/* con la imagen, «Solicitar» termina en y ≈ 927 al cargar (medido a 1440 × 900 y 1600 × 900): solo desde 940 px de alto */
+@media (min-width: 1000px) and (min-height: 940px) {
   .resumen-img { display: block; border-radius: 0; }
 }
 
@@ -544,11 +574,15 @@ td:first-child > .dia.salida::after, td:empty + td > .dia.salida::after { displa
 .pasos > div { padding: 14px 0; border-top: 1px solid var(--linea); }
 .pasos h3 { font: 500 var(--t-item)/1.25 var(--f-titulo); }
 .pasos p { margin-top: 4px; color: var(--tinta-2); }
-@media (min-width: 760px) {
-  .pasos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .pasos > div { padding: 4px 0; border-top: 0; }
-  .pasos > div:not(:last-child) { padding-right: 32px; }
-  .pasos > div + div { padding-left: 32px; border-left: 1px solid var(--linea); }
+/* tres columnas del mismo ancho (el filete va en el hueco) y solo cuando la sección mide 740 px o más, es decir,
+   columnas de al menos 204 px de texto: con 760 px de ventana quedaban de 208, 176 y 208 px y alturas muy distintas.
+   Se mide la sección y no la ventana: entre 1000 y 1230 px va junto al resumen y mide 550 a 750. Sin container
+   queries, queda en filas. */
+.despues, .exito { container-type: inline-size; }
+@container (min-width: 740px) {
+  .pasos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 64px; }
+  .pasos > div { position: relative; padding: 4px 0; border-top: 0; }
+  .pasos > div + div::before { content: ""; position: absolute; top: 0; bottom: 0; left: -32px; border-left: 1px solid var(--linea); }
 }
 
 /* ---------------------------------------------------------------- tus datos y campos (ESPEC-v4 §2.4 y §4.7) */
