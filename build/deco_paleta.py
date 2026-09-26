@@ -53,9 +53,9 @@ TEXTURA_MAT = {
     # Corrección 07b (ronda 2): con el mapa, el reflejo de la hoja era nítido y de noche, con el foco que la baña
     # desde arriba, la hoja se leía negra; un satinado parejo abre el brillo del foco sobre la chapa.
     "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=False, normal=0.3)),
-    # 07b: sólo el mapa normal, suave. Con el mapa de color o el de rugosidad, sus vetas de alto contraste se leían
-    # como madera gris en los renders; el cepillado queda como un relieve fino sobre el color base del acero.
-    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=False, rugosidad=False, normal=0.2)),
+    # Corrección 07c: textura rehecha (vetas rectas muy finas, contraste bajo, gris frío) con sus tres mapas; en la 07b
+    # sólo iba el normal, porque las vetas anchas del color y la rugosidad se leían como madera clara veteada.
+    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=True, rugosidad=True, normal=0.5)),
     "Depto_Mat_CubiertaConcreto": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_CubiertaBano": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_Concreto": ("microcemento", dict(color=True, rugosidad=True, normal=0.6, escala_m=0.8)),

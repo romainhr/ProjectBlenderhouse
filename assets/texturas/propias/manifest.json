@@ -98,18 +98,18 @@
       ]
     },
     "acero_cepillado": {
-      "nombre": "Acero cepillado (electrodomésticos)",
+      "nombre": "Acero inoxidable cepillado (electrodomésticos)",
       "dimensiones_m": [
-        0.6,
-        0.6
+        0.3,
+        0.3
       ],
       "mapas": {
         "color": "acero_cepillado_diff_1k.jpg",
         "normal": "acero_cepillado_nor_gl_1k.jpg",
         "rugosidad": "acero_cepillado_rough_1k.jpg"
       },
-      "descripcion": "Acero inoxidable gris cálido claro (#C2BFB7) con vetas finas cepilladas verticales (a lo largo de V), motas suaves y manchas tenues de dedos.",
-      "semilla": 114,
+      "descripcion": "Acero inoxidable gris frío claro (#C3C7CB) con vetas rectas muy finas y parejas a lo largo de V, contraste bajo y rugosidad de 0,25 a 0,35 que sigue a las vetas.",
+      "semilla": 119,
       "licencia": "propia: generada por build/deco_texturas.py",
       "resolucion_px": [
         1024,

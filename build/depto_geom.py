@@ -171,7 +171,8 @@ MATERIALES = {
     "Depto_Mat_AceroPintado": ((0.06, 0.06, 0.06), 0.55, 0.0, 1.0),     # acero pintado al horno (dieléctrico): mesa
                                                                         # bistró del balcón (corrección 07b)
     "Depto_Mat_MetalNegroMate": ((0.03, 0.03, 0.03), 0.50, 0.70, 1.0),  # grifería, luminarias, herrajes
-    "Depto_Mat_NeveraAcero": ((0.76, 0.75, 0.72), 0.35, 0.85, 1.0),     # acero cepillado del cuerpo de la nevera
+    "Depto_Mat_NeveraAcero": ((0.76, 0.78, 0.80), 0.30, 1.0, 1.0),      # inoxidable cepillado (nevera y visera de la
+                                                                        # campana): gris frío, metálico 1 (corrección 07c)
     "Depto_Mat_Cuero": ((0.54, 0.29, 0.16), 0.45, 0.0, 1.0),            # coñac
     "Depto_Mat_Lana": ((0.85, 0.81, 0.75), 0.95, 0.0, 1.0),             # bouclé avena
     "Depto_Mat_Manta": ((0.24, 0.24, 0.25), 0.95, 0.0, 1.0),            # lana carbón

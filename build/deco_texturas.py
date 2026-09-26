@@ -698,19 +698,19 @@ def tex_acero_pavonado(L, s):
 
 
 def tex_acero_cepillado(L, s):
-    """Acero inoxidable cepillado gris cálido claro (electrodomésticos): vetas finas anisotrópicas a lo largo de V
-    (verticales en la puerta de la nevera), con variación de brillo por veta, motas suaves y manchas tenues de
-    dedos. Más claro y con rugosidad más pareja que Depto_Mat_AceroNegro (acero_pavonado: negro, cepillado en U)."""
-    veta = L.ruido(s(), 0.05, 0.0006, p=0.6, estira=60, angulo=90.0)     # vetas muy finas
-    veta2 = L.ruido(s(), 0.15, 0.002, p=0.9, estira=90, angulo=90.0)     # vetas algo más anchas, menos frecuentes
-    mota = L.ruido(s(), 0.30, 0.02, p=1.3)
-    huella = ss(1.1, 2.2, L.ruido(s(), 0.22, 0.03, p=1.1))               # manchas tenues, muy sutiles
-    c = por_px(col("#C9C6BE"), 1 + 0.05 * veta + 0.03 * veta2 + 0.02 * mota)
-    c = mezcla(c, col("#B9B6AE"), 0.10 * huella)
-    c = ajustar_media(c, col("#C2BFB7"))
-    rug = 0.32 + 0.08 * np.abs(veta) + 0.05 * np.abs(veta2) + 0.04 * mota - 0.05 * huella
-    h = 0.000006 * veta + 0.000003 * veta2
-    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.18, 0.55))
+    """Acero inoxidable cepillado (electrodomésticos; corrección 07c): gris frío claro, vetas rectas muy finas y parejas
+    a lo largo de V (verticales en la puerta de la nevera), de contraste bajo, y una nube apenas perceptible. Sin
+    ondulación ni vetas anchas de brillo desigual: con ellas (versión 07b) la chapa se leía como madera clara veteada.
+    Rugosidad de 0,25 a 0,35 que sigue a las vetas; el relieve son surcos de décimas de micra para que el brillo se
+    rompa en líneas."""
+    fino = L.ruido(s(), 0.004, 0.00025, p=0.3, estira=420, angulo=90.0)     # rayado del cepillo: ~0,25 mm de ancho
+    medio = L.ruido(s(), 0.010, 0.0007, p=0.5, estira=260, angulo=90.0)     # pasadas algo más anchas, igual de rectas
+    nube = L.ruido(s(), 0.12, 0.04, p=1.2)                                  # variación de brillo de la chapa, muy suave
+    c = por_px(col("#C3C7CB"), 1 + 0.028 * fino + 0.016 * medio + 0.008 * nube)
+    c = ajustar_media(c, col("#C3C7CB"))
+    rug = 0.30 + 0.020 * fino + 0.012 * medio + 0.010 * nube
+    h = 0.000005 * fino + 0.000003 * medio
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.25, 0.35))
 
 
 def tex_cuero(L, s):
@@ -948,9 +948,9 @@ CATALOGO = {
     "acero_pavonado": ("Acero pavonado", (0.6, 0.6), 109, tex_acero_pavonado,
                        "Acero negro azulado (#232426) con manchas pardas del pavonado, cepillado a lo largo de U y "
                        "algunas rayas claras."),
-    "acero_cepillado": ("Acero cepillado (electrodomésticos)", (0.6, 0.6), 114, tex_acero_cepillado,
-                        "Acero inoxidable gris cálido claro (#C2BFB7) con vetas finas cepilladas verticales (a lo "
-                        "largo de V), motas suaves y manchas tenues de dedos."),
+    "acero_cepillado": ("Acero inoxidable cepillado (electrodomésticos)", (0.3, 0.3), 119, tex_acero_cepillado,
+                        "Acero inoxidable gris frío claro (#C3C7CB) con vetas rectas muy finas y parejas a lo largo "
+                        "de V, contraste bajo y rugosidad de 0,25 a 0,35 que sigue a las vetas."),
     "ladrillo": ("Ladrillo a la vista", (1.25, 1.28), 103, tex_ladrillo,
                  "Ladrillo #8C4A36 con variación por pieza, aparejo soga de 24 × 7 cm y junta hundida de 1 cm "
                  "(5 ladrillos × 16 hiladas: por eso 1,25 × 1,28 m), cantos gastados, motas y restos de mortero."),
