@@ -20,7 +20,7 @@ FASES = {
     "01": ("depto_01_calibracion.py", "depto_plano.py", "depto_sellos.py"),
     "02": ("depto_02_blockout.py", "depto_geom.py"),
     "03": ("depto_03_formas.py", "deco_base.py", "deco_interiores.py"),
-    "04": ("depto_04_mobiliario.py", "deco_living.py", "deco_dormitorio.py", "deco_cocina_bano.py",
+    "04": ("depto_04_mobiliario.py", "depto_color.py", "deco_living.py", "deco_dormitorio.py", "deco_cocina_bano.py",
            "deco_objetos.py", "deco_comedor.py", "deco_hall.py"),
     "05": ("depto_05_materiales.py", "deco_paleta.py", "deco_texturas.py", "../assets/texturas/propias/manifest.json"),
     "06": ("depto_06_exportar.py",),   # no sella el maestro: el sello va en exports/manifest.json

@@ -912,26 +912,36 @@ def reloj_pared(col, prefijo, diametro=0.40, hora=(10, 10, 36), cristal=True):
 
 # ================================================================ interruptor de muro (fase 07b)
 TECLA = LATON            # teclas de latón envejecido: contrastan con la placa negra y el visor las ve girar
-INTERRUPTOR = dict(ancho=0.08, alto=0.12, espesor=0.012, r_canto=0.0025, tornillo_z=0.047,
-                   tecla_alto=0.056, tecla_saliente=0.008, tecla_ancho_1=0.034, tecla_ancho_2=0.026,
-                   tecla_sep=0.006)       # contrato de interacción, sección 3: placa de 0,08 × 0,12 × 0,012
+INTERRUPTOR = dict(ancho=0.08, alto=0.12, espesor=0.012,     # contrato de interacción, sección 3 (encargo 07b)
+                   r_canto=0.0025, tornillo_z=0.047,           # diseño: canto redondeado y tornillos de la placa
+                   tecla_alto=0.056, tecla_saliente=0.008,     # diseño: balancín de interruptor de tecla estándar
+                   tecla_ancho_1=0.034, tecla_ancho_2=0.026, tecla_sep=0.006,   # diseño: placa simple y doble
+                   tecla_hundida=0.0045,     # espalda de la tecla dentro de la placa: ≥ (alto/2)·sen 8° = 3,9 mm
+                                             # para que al inclinarse ±8° no quede rendija (corrección 07b)
+                   caja_ancho=0.085, caja_alto=0.125)          # diseño: caja de superficie de acero (conducto visto)
 
 
-def interruptor(col, nombre, n_teclas=1):
+def interruptor(col, nombre, n_teclas=1, caja=0.0):
     """Placa de interruptor de muro de acero negro mate con dos tornillos pavonados y `n_teclas` teclas de balancín
     de latón envejecido (1 o 2), estilo industrial. Mural: espalda en y = 0, frente hacia −Y, centro de la placa en el
     origen (x = z = 0). Cada tecla es un objeto hijo de la placa, sin giro propio y con el origen en su eje de
     giro (horizontal, paralelo al muro, a la altura del centro de la tecla y sobre la cara de la placa): el visor
     la inclina ±8° girándola en su X local. Nombres: la placa `nombre`; las teclas `nombre`_Tecla (una) o
-    `nombre`_1_Tecla y `nombre`_2_Tecla (izquierda y derecha mirando la placa). ≤ 300 triángulos."""
+    `nombre`_1_Tecla y `nombre`_2_Tecla (izquierda y derecha mirando la placa). `caja` > 0: la placa va sobre una
+    caja de superficie de ese fondo (m), parte de la misma malla, y placa y teclas avanzan lo mismo (la espalda de la
+    caja queda en y = 0). ≤ 320 triángulos."""
     I = INTERRUPTOR
     a, h, e = I["ancho"] / 2, I["alto"] / 2, I["espesor"]
     placa = _Malla()
     with placa.parte(NEGRO, suave=True) as bm:
-        B.caja_redondeada(bm, -a, a, -e, 0.0, -h, h, I["r_canto"], segmentos=1)
+        if caja > 0:
+            ca, ch = I["caja_ancho"] / 2, I["caja_alto"] / 2
+            B.caja_redondeada(bm, -ca, ca, -caja, 0.0, -ch, ch, 0.004, segmentos=1)
+        B.caja_redondeada(bm, -a, a, -caja - e, -caja, -h, h, I["r_canto"], segmentos=1)
     with placa.parte(NEGRO, suave=True) as bm:              # tornillos pavonados (un solo material: 1 llamada de dibujo)
         for z in (-I["tornillo_z"], I["tornillo_z"]):
-            _torno_eje(bm, [(0.0, 0.0), (0.0032, 0.0), (0.0027, 0.0010), (0.0, 0.0015)], (0.0, -e, z), (0, -1, 0), 8)
+            _torno_eje(bm, [(0.0, 0.0), (0.0032, 0.0), (0.0027, 0.0010), (0.0, 0.0015)], (0.0, -caja - e, z),
+                       (0, -1, 0), 8)
     ob_placa = placa.crear(col, nombre, angulo=50)
     ancho_t = I["tecla_ancho_1"] if n_teclas == 1 else I["tecla_ancho_2"]
     xs = [0.0] if n_teclas == 1 else [-(ancho_t + I["tecla_sep"]) / 2, (ancho_t + I["tecla_sep"]) / 2]
@@ -940,10 +950,10 @@ def interruptor(col, nombre, n_teclas=1):
         t = _Malla()
         with t.parte(TECLA, suave=True) as bm:
             # balancín: perfil (y, z) con una arista suave al centro (el frente baja 1,5 mm hacia arriba y abajo),
-            # extruido a lo ancho; la espalda entra 1,5 mm en la placa para que no quede luz al inclinarse
-            sa, ht = I["tecla_saliente"], I["tecla_alto"] / 2
-            perfil = [(0.0015, -ht), (-(sa - 0.0015), -ht), (-(sa - 0.0005), -ht * 0.55), (-sa, 0.0),
-                      (-(sa - 0.0005), ht * 0.55), (-(sa - 0.0015), ht), (0.0015, ht)]
+            # extruido a lo ancho; la espalda entra tecla_hundida en la placa para que no quede luz al inclinarse
+            sa, ht, hu = I["tecla_saliente"], I["tecla_alto"] / 2, I["tecla_hundida"]
+            perfil = [(hu, -ht), (-(sa - 0.0015), -ht), (-(sa - 0.0005), -ht * 0.55), (-sa, 0.0),
+                      (-(sa - 0.0005), ht * 0.55), (-(sa - 0.0015), ht), (hu, ht)]
             izq = [bm.verts.new((-ancho_t / 2, y, z)) for y, z in perfil]
             der = [bm.verts.new((ancho_t / 2, y, z)) for y, z in perfil]
             bm.faces.new(izq)
@@ -955,6 +965,6 @@ def interruptor(col, nombre, n_teclas=1):
         nt = f"{nombre}_Tecla" if n_teclas == 1 else f"{nombre}_{i + 1}_Tecla"
         ob = t.crear(col, nt, angulo=50)
         ob.parent = ob_placa
-        ob.location = (xc, -e, 0.0)                      # eje de giro: sobre la cara de la placa
+        ob.location = (xc, -caja - e, 0.0)               # eje de giro: sobre la cara de la placa
         teclas.append(ob)
     return [ob_placa] + teclas

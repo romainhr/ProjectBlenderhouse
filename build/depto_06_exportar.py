@@ -119,6 +119,11 @@ def colisiones(root):
         m["clase"] = o.get("clase", "puerta" if "puerta" in o else "corredera")
         m["etiqueta"] = o.get("etiqueta", "")
         m["recinto"] = o.get("recinto", "")
+        # Contrato v2, sección 1 (corrección 07b): cajones detrás de una corredera. depende_de = hoja que debe estar
+        # corrida para abrir el cajón; bloquea = cajones que la hoja cierra antes de moverse.
+        for k in ("depende_de", "bloquea"):
+            if k in o:
+                m[k] = [n for n in str(o[k]).split(",") if n]
         m["hijos"] = [h.name for h in o.children]
         moviles.append(m)
     return estaticos, moviles
@@ -131,9 +136,12 @@ def luces():
     for o in bpy.data.objects:
         if o.type == "LIGHT" and o.name.startswith("Depto_Luz_"):
             if o.data.type == "POINT":
-                out.append({"nombre": o.name, "tipo": "puntual", "posicion": [r4(c) for c in gl(o.location)],
-                            "potencia_w": o.data.energy, "grupo": o.get("grupo", ""),
-                            "color": [r4(c) for c in o.data.color], "ampolleta": o.get("ampolleta", "")})
+                luz = {"nombre": o.name, "tipo": "puntual", "posicion": [r4(c) for c in gl(o.location)],
+                       "potencia_w": o.data.energy, "grupo": o.get("grupo", ""),
+                       "color": [r4(c) for c in o.data.color], "ampolleta": o.get("ampolleta", "")}
+                if "cono_deg" in o:              # contrato v2.1: luz que deja salir un domo o un foco (visor)
+                    luz.update(cono_deg=r4(o["cono_deg"]), direccion=[r4(c) for c in gl(Vector(o["direccion"]))])
+                out.append(luz)
             elif o.data.type == "SUN":
                 d = o.matrix_world.to_3x3() @ Vector((0, 0, -1))
                 out.append({"nombre": o.name, "tipo": "sol", "direccion": [r4(c) for c in gl(d)],
@@ -282,8 +290,18 @@ def prueba_muebles(datos):
     """Los móviles de clase cajón, clóset, nevera y mueble no deben romper el recorrido: se prueban cerrados (ya
     lo cubre `cerradas`, más abajo, para los que dan a un recinto detrás de puerta) y, uno por vez con los demás
     tal cual, que al abrirse no dejen inalcanzable el recinto donde están. Si alguno lo hace, hay que reducirle
-    el recorrido o el ángulo, o excluirlo en EXCLUIR_ABIERTO con un comentario que explique por qué."""
+    el recorrido o el ángulo, o excluirlo en EXCLUIR_ABIERTO con un comentario que explique por qué. También:
+    depende_de y bloquea sólo nombran móviles exportados y son recíprocos (cajón -> hoja que lo bloquea)."""
     fallos = []
+    por_nodo = {m["nodo"]: m for m in datos["moviles"]}
+    for m in datos["moviles"]:
+        for k in ("depende_de", "bloquea"):
+            for n in m.get(k, []):
+                if n not in por_nodo:
+                    fallos.append(f"{m['nodo']}: {k} nombra {n}, que no es un móvil exportado")
+        for n in m.get("depende_de", []):
+            if n in por_nodo and m["nodo"] not in por_nodo[n].get("bloquea", []):
+                fallos.append(f"{m['nodo']} depende de {n}, pero {n} no lo bloquea")
     for m in datos["moviles"]:
         if m.get("clase") not in CLASES_MUEBLE or m["nodo"] in EXCLUIR_ABIERTO:
             continue
@@ -396,7 +414,8 @@ def main():
         "inicio": {"posicion": punto_gl(R.PUNTOS[INICIO]), "mirar": punto_gl(MIRAR)},
         "recintos": {n: punto_gl(p) for n, p in R.PUNTOS.items()},
         "estaticos": estaticos, "moviles": moviles, "luces": luces(),
-        "grupos_luz": [{k: g[k] for k in ("id", "etiqueta", "recinto", "encendido")} for g in grupos],
+        "grupos_luz": [{k: g[k] for k in ("id", "etiqueta", "recinto", "encendido", "kelvin") if k in g}
+                       for g in grupos],
         "interruptores": interruptores(objs),
         "recintos_etiquetas": json.loads(scene.get("depto_recintos_etiquetas", "{}")),
     }

@@ -78,7 +78,8 @@ COLOR_VERTICE = {"Depto_Mat_Tela", "Depto_Mat_TelaGruesa", "Depto_Mat_Calzado", 
 def _color_vertice(mat):
     nt = mat.node_tree
     bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
-    vc = nt.nodes.new("ShaderNodeVertexColor")
+    # idempotente: G.material no limpia el árbol de los materiales sin textura, así que se reutiliza el nodo
+    vc = next((n for n in nt.nodes if n.type == "VERTEX_COLOR"), None) or nt.nodes.new("ShaderNodeVertexColor")
     vc.layer_name = "Col"
     nt.links.new(vc.outputs["Color"], bsdf.inputs["Base Color"])
 

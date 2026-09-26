@@ -26,18 +26,35 @@ from mathutils import Vector
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RAIZ, "build"))
 import deco_paleta as PAL  # noqa: E402
+import depto_color as DC  # noqa: E402
 import depto_geom as G  # noqa: E402
 # Los módulos de piezas registran sus materiales propios (MATERIALES.setdefault) al importarse.
 import deco_cocina_bano, deco_comedor, deco_dormitorio, deco_hall, deco_living, deco_objetos  # noqa: E402,F401
 import depto_sellos as SE  # noqa: E402
 
 COLS = ("Depto_Luces",)
-LUZ_COLOR = (1.0, 0.72, 0.42)      # 2700 K lineal (contrato v2, sección 2): respaldo si el grupo no trae color
+LUZ_COLOR = DC.kelvin_a_lineal(2700)   # 2700 K lineal (contrato v2, sección 2): respaldo si el grupo no trae color
 LUZ_RADIO = 0.03                   # radio de la fuente (sombras suaves)
+LUZ_CLIP_SOMBRA = 0.005            # m: inicio del mapa de sombras de cada luz (Eevee usa 0,05 por defecto: dentro de
+                                   # las pantallas cerradas, el tapón a ~5 cm de la ampolleta no hacía sombra)
 SOL = dict(elevacion=35.0, azimut=-25.0, energia=3.0)   # supuesto: sol desde el lado del balcón (+Y), 25° al -X
 CIELO_FUERZA = 0.25
-TOPE_TRIANGULOS = 200_000        # escena visible (ADR 0004, decisión 4: de 150 000 a 200 000)
+TOPE_TRIANGULOS = G.TOPE_TRIANGULOS
 SUELO_COLOR = (0.34, 0.34, 0.32)   # bajo el horizonte el cielo Nishita es negro: vidrios y espejos lo reflejaban
+
+
+def direccion_luz(o):
+    """Eje de la luz que deja salir una pantalla (Blender, mundo): hacia abajo en los domos (ampolleta de revolución,
+    sus normales se anulan); en un foco, la normal de su disco emisivo más grande, orientada hacia abajo."""
+    mw = o.matrix_world.to_3x3()
+    suma = sum((f.normal * f.area for f in o.data.polygons), Vector())
+    total = sum(f.area for f in o.data.polygons)
+    if total <= 0 or suma.length < 0.5 * total:          # superficie de revolución (ampolleta): sin eje propio
+        return Vector((0.0, 0.0, -1.0))
+    n = (mw @ suma).normalized()                          # disco plano (foco): su normal
+    if abs(n.z) < 0.2:
+        return Vector((0.0, 0.0, -1.0))
+    return n if n.z < 0 else -n
 
 
 def luces(col, root, grupos):
@@ -55,10 +72,14 @@ def luces(col, root, grupos):
         g = grupos.get(o.get("luz_grupo"), {})
         ld.color = tuple(g.get("color", LUZ_COLOR))
         ld.shadow_soft_size = float(o.get("luz_radio", LUZ_RADIO))   # la fase 4 lo achica dentro de los focos
+        ld.shadow_buffer_clip_start = LUZ_CLIP_SOMBRA
         ob = bpy.data.objects.new(f"Depto_Luz_{o.name}", ld)
         ob.location = centro
         ob["ampolleta"] = o.name
         ob["grupo"] = o.get("luz_grupo", "")
+        if o.get("luz_cono_deg"):
+            ob["cono_deg"] = float(o["luz_cono_deg"])
+            ob["direccion"] = list(direccion_luz(o))
         col.objects.link(ob)
         n += 1
     el, az = math.radians(SOL["elevacion"]), math.radians(SOL["azimut"])
@@ -107,7 +128,7 @@ def eevee(scene):
     ee = scene.eevee
     ee.taa_render_samples = 32
     ee.use_gtao = True
-    ee.gtao_distance = 0.5
+    ee.gtao_distance = 0.2               # 0,5 dejaba un halo oscuro alrededor de los florones del cielo
     ee.use_ssr = True
     ee.use_soft_shadows = True
     ee.use_bloom = True                  # halo suave de las ampolletas encendidas
