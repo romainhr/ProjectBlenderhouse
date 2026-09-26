@@ -99,6 +99,10 @@ test("reservas: reemplazar una fila por id sin tocar las demás", () => {
 test("textos: precio validado como el check de la base (entero 0..10 000 000 en dígitos)", () => {
   assert.deepEqual(validarValor("precio", "58000"), { ok: true, valor: "58000" });
   assert.deepEqual(validarValor("precio", "58.000"), { ok: true, valor: "58000" }, "acepta separador de miles es-CL");
+  // la noche en 0 no sirve (el sitio la ignora); la limpieza sí puede ser 0
+  assert.deepEqual(validarValor("precio", "0", "tarifa.noche"), { ok: false, error: "precio_noche_cero" });
+  assert.deepEqual(validarValor("precio", "0", "tarifa.limpieza"), { ok: true, valor: "0" });
+  assert.deepEqual(validarValor("precio", "58000", "tarifa.noche"), { ok: true, valor: "58000" });
   assert.deepEqual(validarValor("precio", "CLP 58 000"), { ok: true, valor: "58000" });
   assert.deepEqual(validarValor("precio", "058000"), { ok: true, valor: "58000" }, "sin ceros a la izquierda");
   assert.deepEqual(validarValor("precio", "0"), { ok: true, valor: "0" });

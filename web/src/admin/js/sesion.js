@@ -1,7 +1,7 @@
 // Sesión del propietario: forma, vencimiento y guardado en sessionStorage (no localStorage: se borra al cerrar la
 // pestaña). Sin DOM: el almacén se inyecta (sessionStorage en el navegador, un objeto falso en las pruebas).
 
-export const CLAVE_ALMACEN = "loft-admin-sesion";
+export const CLAVE_ALMACEN = "depto2d2b-admin-sesion";
 // Supuesto: refrescar 60 s antes de vencer. El access_token de Supabase dura 3600 s por defecto (JWT expiry del
 // proyecto); si el proyecto usa otro valor, el cálculo sale de expires_in igual.
 export const MARGEN_REFRESCO_S = 60;

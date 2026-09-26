@@ -55,7 +55,7 @@ export function datosEjemplo(hoy = hoyIso()) {
   ];
   const contenido = [
     { clave: "hero.bajada", grupo: "portada", orden: 10, tipo: "parrafo", etiqueta: "Bajada de la portada",
-      valor: "Texto de ejemplo del modo simulado: loft de dos dormitorios y dos baños para arriendo turístico." },
+      valor: "Texto de ejemplo del modo simulado: departamento de dos dormitorios y dos baños para arriendo turístico." },
     ...ESPACIOS.flatMap((e, i) => [
       { clave: `espacio.${e.id}.titulo`, grupo: "espacios", orden: 20 + i * 2, tipo: "texto", etiqueta: `${e.nombre}: título`, valor: e.nombre },
       { clave: `espacio.${e.id}.texto`, grupo: "espacios", orden: 21 + i * 2, tipo: "parrafo", etiqueta: `${e.nombre}: texto`,
@@ -157,7 +157,7 @@ export function crearApiSimulada({ almacen, retardo = 250, hoy = hoyIso(), ahora
       guardar: (k, valor) => paso(() => {
         const f = db.contenido.find((x) => x.clave === k);
         if (!f) throw new ErrorApi({ codigo: "sin_filas" });
-        const v = validarValor(f.tipo, valor);
+        const v = validarValor(f.tipo, valor, f.clave);
         if (!v.ok || v.valor !== valor) throw new ErrorApi({ estado: 400, codigo: "23514", mensaje: "violates check constraint" });
         f.valor = valor;
         f.actualizado = new Date(ahora()).toISOString();

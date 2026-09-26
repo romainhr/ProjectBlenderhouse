@@ -11,8 +11,22 @@ function azarDelNavegador() {
 }
 
 /**
- * Sube la imagen ya reducida y crea su fila. Orden: 1) objeto, 2) fila. Si la fila falla, se borra el objeto recién
- * subido para no dejar archivos huérfanos. -> la fila creada.
+ * ¿El servidor rechazó la operación? Sí si respondió 4xx, o 5xx de la propia base (500, 503: la transacción no se
+ * hizo). No se sabe con «red», «tiempo_agotado» (sin respuesta: estado 0) ni con 502 o 504, que vienen del intermediario
+ * que dejó de esperar (supuesto): la fila pudo crearse y sólo se perdió la respuesta.
+ */
+export function rechazoDefinitivo(e) {
+  const estado = Number(e && e.estado) || 0;
+  return estado >= 400 && estado !== 502 && estado !== 504;
+}
+
+/**
+ * Sube la imagen ya reducida y crea su fila. Orden: 1) objeto, 2) fila. -> la fila creada.
+ * Si la fila falla:
+ *   - con un rechazo definitivo del servidor, se borra el objeto recién subido (sin archivos huérfanos);
+ *   - si no se sabe (red, tiempo agotado, 502/504), se busca la fila por su ruta: si existe, el INSERT se hizo y se
+ *     devuelve como éxito (un reintento la duplicaría); si no aparece, o no se pudo consultar, se deja el objeto y se
+ *     lanza el error. Un archivo huérfano no se ve en el sitio; una fila sin archivo sí (imagen rota).
  */
 export async function publicarFoto({ api, espacio, blob, alt, visible = true, fotosEspacio = [], hoy = hoyIso(), azar = azarDelNavegador }) {
   const a = validarAlt(alt);
@@ -33,7 +47,12 @@ export async function publicarFoto({ api, espacio, blob, alt, visible = true, fo
   try {
     return await api.fotos.crear({ espacio, ruta, alt: a.valor, visible: Boolean(visible), orden: siguienteOrden(fotosEspacio) });
   } catch (e) {
-    await api.fotos.borrarObjeto(ruta).catch(() => {});
+    if (rechazoDefinitivo(e)) {
+      await api.fotos.borrarObjeto(ruta).catch(() => {});
+      throw e;
+    }
+    const creada = await api.fotos.listar().then((l) => (l || []).find((f) => f.ruta === ruta), () => null);
+    if (creada) return creada;
     throw e;
   }
 }

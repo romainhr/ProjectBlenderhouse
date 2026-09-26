@@ -2,13 +2,12 @@
 import { mensajeError } from "./errores.js";
 import { LIMITE_VALOR, MENSAJES_VALOR, agruparContenido, previaPrecio, validarValor } from "./logica-contenido.js";
 import { anunciar, confirmar, el, mientras, oculto, vaciar } from "./ui.js";
-import { formatearMomento, horaCorta, largo } from "./util.js";
+import { formatearMomento, horaCorta, largo, unaALaVez } from "./util.js";
 
 export function crearVistaTextos({ raiz, api }) {
   const nodos = { grupos: raiz.querySelector("#textos-grupos"), aviso: raiz.querySelector("#textos-aviso"),
     recargar: raiz.querySelector("#textos-recargar") };
   let cargada = false;
-  let enCurso = null;                    // carga inicial en curso
   let generacion = 0;                    // sube al cerrar sesión: una respuesta tardía ya no se pinta
   const sucias = new Set();          // claves con cambios sin guardar
 
@@ -20,6 +19,7 @@ export function crearVistaTextos({ raiz, api }) {
     }
     cargar();
   });
+  const cargaInicial = unaALaVez(() => cargar());          // una sola carga inicial a la vez (se suelta al cerrar sesión)
 
   async function cargar() {
     anunciar(nodos.aviso, "Cargando textos…", "cargando");
@@ -101,7 +101,7 @@ export function crearVistaTextos({ raiz, api }) {
 
     form.addEventListener("submit", async (ev) => {
       ev.preventDefault();
-      const v = validarValor(f.tipo, control.value);
+      const v = validarValor(f.tipo, control.value, f.clave);
       if (!v.ok) {
         error.textContent = MENSAJES_VALOR[v.error] || MENSAJES_VALOR.tipo;
         control.setAttribute("aria-invalid", "true");
@@ -130,11 +130,12 @@ export function crearVistaTextos({ raiz, api }) {
 
   return {
     mostrar() {
-      if (!cargada && !enCurso) enCurso = cargar().finally(() => { enCurso = null; });   // una sola carga a la vez
+      if (!cargada) cargaInicial();
     },
     hayCambios: () => sucias.size > 0,
     reiniciar() {
       generacion++;
+      cargaInicial.soltar();                 // si la carga vieja sigue colgada, el próximo ingreso carga de nuevo
       cargada = false;
       sucias.clear();
       vaciar(nodos.grupos);

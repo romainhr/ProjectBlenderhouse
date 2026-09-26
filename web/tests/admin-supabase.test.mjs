@@ -9,7 +9,8 @@ import { codigoConocido, mensajeError } from "../src/admin/js/errores.js";
 import {
   CLAVE_ALMACEN, debeRefrescar, leerSesion, msHastaRefresco, normalizarSesion,
 } from "../src/admin/js/sesion.js";
-import { REINTENTO_REFRESCO_MS, crearCliente } from "../src/admin/js/supabase.js";
+import { crearCierre } from "../src/admin/js/logica-portal.js";
+import { ESPERA_MS, REINTENTO_REFRESCO_MS, crearCliente } from "../src/admin/js/supabase.js";
 
 const URL_SB = "https://abcdefghijklmnopqrst.supabase.co";
 const CLAVE = "sb_publishable_clave_de_prueba_no_real_000";
@@ -226,6 +227,34 @@ test("cerrar sesión: POST /auth/v1/logout con el token y borra el sessionStorag
   assert.equal(b.cliente.sesion(), null);
 });
 
+test("cerrar sesión desde el portal: la sesión local y la pantalla se limpian antes de que responda el logout (H3)", async () => {
+  const a = armar([{ json: tokens(1) }]);
+  await a.cliente.iniciarSesion("dueno@example.com", "x");
+  let responder;
+  const fetchLento = async (url, init) => {
+    a.fetch.llamadas.push({ url, metodo: init.method, cabeceras: init.headers });
+    return new Promise((r) => { responder = () => r(new Response(null, { status: 204 })); });
+  };
+  const cliente = crearCliente({ url: URL_SB, clave: CLAVE, almacen: a.almacen, fetch: fetchLento, ahora: () => T0,
+    temporizador: temporizadorFalso() });
+  await cliente.restaurar();                                   // misma sesión, ahora con un logout que tarda
+  assert.ok(cliente.sesion());
+  const cierre = crearCierre({ cerrarSesion: () => cliente.cerrarSesion() });
+  let limpiada = null;
+  const revocacion = cierre.cerrar(() => {
+    limpiada = { sesion: cliente.sesion(), almacen: a.almacen.m.size };
+  });
+  assert.deepEqual(limpiada, { sesion: null, almacen: 0 }, "al limpiar ya no hay token en memoria ni en el almacén");
+  assert.equal(a.fetch.llamadas.at(-1).url, `${URL_SB}/auth/v1/logout`, "el logout salió igual");
+  let terminada = false;
+  revocacion.then(() => { terminada = true; });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(terminada, false, "la revocación sigue pendiente");
+  responder();
+  await revocacion;
+  assert.equal(terminada, true);
+});
+
 test("restaurar: sólo sesiones del modo real; si está por vencer la refresca", async () => {
   const almacen = new AlmacenFalso();
   almacen.setItem(CLAVE_ALMACEN, JSON.stringify({ ...normalizarSesion(tokens(1), T0), modo: "simulado" }));
@@ -343,4 +372,56 @@ test("API contenido y fotos: rutas, filtros y sólo los campos permitidos", asyn
   assert.equal(ultima().url, `${URL_SB}/rest/v1/rpc/es_propietario`);
   assert.equal(ultima().metodo, "POST");
   await assert.rejects(api.esPropietario(), (e) => codigoConocido(e) === "falta_migracion");
+});
+
+// ---------------------------------------------------------------------------------------------- tiempo máximo (H12)
+/** fetch cuyo cuerpo no termina nunca (conexión cortada a mitad de la respuesta); con `respetaAbort` lo corta el abort. */
+function fetchCuerpoColgado({ respetaAbort }) {
+  return async (url, init = {}) => {
+    if (url.includes("/auth/v1/token")) {
+      return new Response(JSON.stringify(tokens(1)), { status: 200, headers: { "content-type": "application/json" } });
+    }
+    return {
+      ok: true, status: 200, headers: new Headers({ "content-type": "application/json" }),
+      text: () => new Promise((_, rechazar) => {
+        if (respetaAbort) init.signal.addEventListener("abort", () => rechazar(new DOMException("aborted", "AbortError")));
+      }),
+    };
+  };
+}
+
+for (const respetaAbort of [true, false]) {
+  test(`http: el tiempo máximo cubre la lectura del cuerpo (${respetaAbort ? "fetch que corta el cuerpo" : "cuerpo que ignora el abort"}) (H12)`, async (t) => {
+    t.mock.timers.enable({ apis: ["setTimeout"] });
+    const cliente = crearCliente({ url: URL_SB, clave: CLAVE, almacen: new AlmacenFalso(), fetch: fetchCuerpoColgado({ respetaAbort }),
+      ahora: () => T0, temporizador: temporizadorFalso() });
+    await cliente.iniciarSesion("dueno@example.com", "x");
+    let error = null;
+    const p = cliente.rest("/reservas").catch((e) => { error = e; });
+    await new Promise((r) => setImmediate(r));
+    t.mock.timers.tick(ESPERA_MS - 1);
+    await new Promise((r) => setImmediate(r));
+    assert.equal(error, null, "antes del límite sigue esperando");
+    t.mock.timers.tick(1);
+    await p;
+    assert.equal(error && error.codigo, "tiempo_agotado");
+    assert.match(mensajeError(error), /tardó demasiado/);
+    assert.ok(cliente.sesion(), "un tiempo agotado no cierra la sesión");
+  });
+}
+
+test("http: después de leer el cuerpo no queda el temporizador del abort pendiente (H12)", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  let senal = null;
+  const fetch = async (url, init) => {
+    senal = init.signal;
+    return new Response(JSON.stringify(url.includes("/auth/") ? tokens(1) : [{ id: 1 }]),
+      { status: 200, headers: { "content-type": "application/json" } });
+  };
+  const cliente = crearCliente({ url: URL_SB, clave: CLAVE, almacen: new AlmacenFalso(), fetch, ahora: () => T0,
+    temporizador: temporizadorFalso() });
+  await cliente.iniciarSesion("dueno@example.com", "x");
+  assert.deepEqual(await cliente.rest("/reservas"), [{ id: 1 }]);
+  t.mock.timers.tick(ESPERA_MS * 2);
+  assert.equal(senal.aborted, false, "el temporizador se quitó al terminar la lectura");
 });

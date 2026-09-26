@@ -7,19 +7,19 @@ Todos los pasos se hacen en el panel de Supabase del proyecto: **SQL Editor** pa
 **Estado al 2026-09-26**, según un sondeo de sólo lectura con la clave pública:
 
 - La 0003 no está aplicada: `contenido` y `es_propietario` no existen.
-- El registro público está **abierto** (`disable_signup: false`). La confirmación por correo está activa y las sesiones anónimas, desactivadas.
-- `hoy_loft()` no aparece para el rol público. O falta la 0002, o ese rol no tiene permiso para ejecutarla. El paso 1 lo aclara.
+- El registro público está **abierto** (`disable_signup: false`); el paso 3 lo cierra antes de crear la cuenta. La confirmación por correo está activa y las sesiones anónimas, desactivadas.
+- La 0002 está aplicada: la función del día de la propiedad es interna y el rol público no la ve (es lo esperado). La 0004 le cambia el nombre, porque el departamento no es un loft.
 
 ## 1. Revisar la 0002
 
 En el SQL Editor, ejecuta:
 
 ```sql
-select to_regprocedure('public.hoy_loft()') is not null as tiene_0002;
+select to_regprocedure('public.hoy_loft()') is not null or to_regprocedure('public.hoy_propiedad()') is not null as tiene_0002;
 ```
 
 - Si da `false`, pega el contenido de `web/supabase/migrations/0002_hoy_propiedad.sql` y ejecútalo (**Run**).
-- Después, ejecuta `web/supabase/tests/reservas_test.sql`. El resultado debe ser `PRUEBAS_OK`.
+- Las pruebas de reservas (`reservas_test.sql`) se corren después de la 0004 (paso 2, punto 3): usan el nombre nuevo de la función.
 
 ## 2. Aplicar la 0003 y probarla
 
@@ -28,39 +28,61 @@ select to_regprocedure('public.hoy_loft()') is not null as tiene_0002;
    - Si algo falla, no se aplica nada, porque la migración va en una transacción. Se puede volver a ejecutar sin pisar los textos ya editados.
 2. Ejecuta `web/supabase/tests/gestion_test.sql`. El resultado debe ser `PRUEBAS_GESTION_OK`.
    - Usa usuarios y datos inventados y deshace todo al final.
-   - Un aviso «S5/S6 omitida» no es un error: el proyecto bloquea el borrado por SQL en Storage, y el portal borra por la Storage API.
+   - Un aviso «S5, S6 o A13 omitida» no es un error: el proyecto bloquea el borrado por SQL en Storage, y el portal borra por la Storage API.
    - Si una prueba falla, copia el mensaje: empieza con su código (A, N, P, S, E o F).
+3. Pega y ejecuta `web/supabase/migrations/0004_renombrar_hoy.sql` (renombra la función del día a `hoy_propiedad()`: la propiedad no es un loft). Después ejecuta `web/supabase/tests/reservas_test.sql`: el resultado debe ser `PRUEBAS_OK`.
 
-## 3. Crear la cuenta del propietario
+## 3. Cerrar el registro público
 
-1. Ve a **Authentication → Users → Add user → Create new user**.
-2. Escribe **tu** correo y una contraseña larga y única; lo ideal es generarla con un gestor de contraseñas.
-3. Marca **Auto Confirm User**, si aparece. El proyecto exige confirmar el correo, así que sin esa marca hay que confirmarlo desde el mensaje que llega.
-
-No escribas la contraseña en archivos del repositorio ni en el chat.
-
-## 4. Cerrar el registro público
+Hazlo **antes** de crear la cuenta. Mientras el registro esté abierto, cualquiera que conozca tu correo puede registrarse primero con él y con su propia contraseña; le basta la URL del proyecto y la clave pública, que están en el sitio.
 
 1. Ve a **Authentication → Sign In / Providers**. Desactiva **Allow new users to sign up** y guarda.
 2. En la misma pantalla, confirma que **Allow anonymous sign-ins** sigue desactivado.
 3. Revisa **Authentication → Users** y borra toda cuenta que no reconozcas: el registro estuvo abierto.
 
-Aunque quedara una cuenta ajena, no podría hacer nada: sin una fila en `propietarios`, ve lo mismo que el público. Cerrar el registro evita cuentas basura.
+Una cuenta ajena con **otro** correo no puede hacer nada: sin una fila en `propietarios`, ve lo mismo que el público. La peligrosa es una cuenta creada por otra persona con **tu** correo, porque parece legítima. El paso 4 comprueba que no exista.
+
+Según la documentación de Supabase, con el registro cerrado el panel sigue pudiendo crear cuentas (no se ha probado en este proyecto).
+
+## 4. Crear la cuenta del propietario
+
+La cuenta la creas **tú** en el panel. Claude no crea la cuenta ni escribe o ingresa contraseñas.
+
+1. En el SQL Editor, cambia el correo y comprueba que todavía no haya una cuenta con él:
+
+   ```sql
+   select id, created_at, email_confirmed_at, last_sign_in_at
+   from auth.users
+   where lower(email) = lower('CORREO-DEL-PROPIETARIO');
+   ```
+
+   - Debe dar **0 filas**.
+   - Si da alguna, bórrala en **Authentication → Users**, aunque creas que es tuya: con el registro abierto, cualquiera pudo crearla con tu correo y su propia contraseña. No hagas clic en correos de confirmación que no pediste.
+2. Ve a **Authentication → Users → Add user → Create new user**.
+3. Escribe **tu** correo y una contraseña larga y única; lo ideal es generarla con un gestor de contraseñas.
+4. Marca **Auto Confirm User**, si aparece. Si no aparece, confirma la cuenta sólo con el correo que llegue justo después de crearla.
+5. Si el panel responde que el correo ya existe, alguien se adelantó: vuelve al punto 1.
+6. Ejecuta otra vez la consulta del punto 1. Ahora debe dar **una** fila, con `created_at` de hace unos minutos y `email_confirmed_at` con fecha. Su `id` es el UID de la cuenta (el panel también lo muestra como UID): anótalo para el paso 5.
+
+No escribas la contraseña en archivos del repositorio ni en el chat.
 
 ## 5. Dar el rol de propietario
 
-En el SQL Editor, cambia el correo y ejecuta:
+Dale el rol por el **UID** de la cuenta que acabas de crear, no sólo por el correo. En el SQL Editor, cambia el UID y el correo y ejecuta:
 
 ```sql
 insert into public.propietarios (user_id, email)
-select id, email from auth.users where lower(email) = lower('CORREO-DEL-PROPIETARIO')
+select id, email from auth.users
+where id = 'UID-DE-LA-CUENTA'
+  and lower(email) = lower('CORREO-DEL-PROPIETARIO')
+  and email_confirmed_at is not null
 on conflict (user_id) do nothing
 returning user_id, email;
 ```
 
-- Debe devolver **una** fila. Si no devuelve ninguna, el correo no coincide con el del paso 3.
-- Para revisar: `select user_id, email, creado from public.propietarios;`
-- Para quitar el rol: `delete from public.propietarios where email = 'CORREO';`
+- Debe devolver **una** fila. Si no devuelve ninguna, revisa que el UID y el correo sean los del paso 4 y que la cuenta esté confirmada (`email_confirmed_at` con fecha). Tampoco devuelve filas si esa cuenta ya tenía el rol.
+- Para revisar: `select user_id, email, creado from public.propietarios;`. Debe aparecer sólo el UID del paso 4.
+- Para quitar el rol: `delete from public.propietarios where user_id = 'UID';`. Hazlo también si borras una cuenta que lo tenía: la tabla no se limpia sola.
 
 La tabla `propietarios` sólo se edita desde el panel: nadie, ni el propio propietario, puede darse el rol desde el sitio.
 
@@ -100,13 +122,13 @@ Cómo se muestra cada tipo:
 
 - **texto:** una línea.
 - **parrafo:** puede traer saltos de línea. Se muestra con `textContent` y `white-space: pre-line`, o se parte en varios `<p>`, cada uno con `textContent`.
-- **precio:** un entero en pesos escrito sólo con dígitos (de 0 a 10 000 000), que el sitio formatea en CLP. Si la tarifa se vuelve editable, el cálculo del total en `reserva-logica.js` (`TARIFA`) también debe leerla. Si no, la tabla y el total no coincidirán.
+- **precio:** un entero en pesos escrito sólo con dígitos (de 0 a 10 000 000), que el sitio formatea en CLP. El sitio aplica las tarifas editadas a los precios publicados y al total de la reserva (`contenido-publico.js`, `tarifas()`; `reserva-logica.js`, `fijarTarifas`), así que coinciden. La noche debe ser mayor que 0: con 0, el sitio usa el valor por defecto, y por eso el portal no la acepta.
 
 Las fotos se leen con `GET <SUPABASE_URL>/rest/v1/fotos?select=espacio,ruta,alt,orden&order=espacio.asc,orden.asc`. El público recibe sólo las visibles.
 
 - **URL de cada imagen:** `<SUPABASE_URL>/storage/v1/object/public/fotos/<ruta>`.
-- **Espacios sugeridos:** `portada`, `living`, `cocina`, `dorm1`, `dorm2`, `banos`, `balcon` y `recibidor`. Un espacio sin filas sigue mostrando las imágenes de `web/src/img/`.
-- **Nombre de archivo:** una carpeta opcional y un nombre en minúsculas, con extensión `jpg`, `jpeg`, `png` o `webp`. Por ejemplo, `living/2026-09-26-a1b2c3.webp`. Máximo 5 MB, y nada de SVG. Un nombre que no cumple la regla se rechaza al subir.
+- **Espacios:** `living`, `cocina`, `dorm1`, `dorm2`, `banos`, `balcon` y `recibidor`, los mismos que ofrece el portal (`ESPACIOS` en `web/src/admin/js/logica-fotos.js`). Un espacio sin filas sigue mostrando las imágenes de `web/src/img/`. Para sumar otro, por ejemplo una foto de portada, hay que agregarlo a `ESPACIOS` y poner el `data-fotos` correspondiente en el HTML.
+- **Nombre de archivo:** una carpeta opcional y un nombre en minúsculas, con extensión `jpg`, `jpeg`, `png` o `webp`. Por ejemplo, `living/20260926-a1b2c3d4.webp`, que es el formato que genera el portal. Máximo 5 MB, y nada de SVG. Un nombre que no cumple la regla se rechaza al subir.
 
 ## 8. Cuidados
 

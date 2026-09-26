@@ -1,4 +1,4 @@
--- 0003 (sobre 0001_reservas.sql; no depende de 0002): portal de gestión del propietario de LOFT 2D2B.
+-- 0003 (sobre 0001_reservas.sql; no depende de 0002): portal de gestión del propietario del Departamento 2D2B.
 -- Pedido: «un portal de gestión con login simple para que el propietario pueda editar fotos, descripción y manejar
 -- reservas». Guía de aplicación: docs/portal-gestion.md. Pruebas: web/supabase/tests/gestion_test.sql.
 --
@@ -311,13 +311,13 @@ on conflict (id) do update
 -- La lectura por SQL/API (listar, /object/info) también es sólo del propietario: el público no puede enumerar el
 -- bucket (por ejemplo, para descubrir fotos ocultas), aunque sí descarga por URL pública si conoce la ruta. Esa
 -- política de lectura hace falta además para reemplazar (upsert) y para que update/delete encuentren la fila.
-drop policy if exists loft_fotos_propietario_lee on storage.objects;
-create policy loft_fotos_propietario_lee on storage.objects
+drop policy if exists fotos_propietario_lee on storage.objects;
+create policy fotos_propietario_lee on storage.objects
   for select to authenticated
   using (bucket_id = 'fotos' and (select public.es_propietario()));
 
-drop policy if exists loft_fotos_propietario_sube on storage.objects;
-create policy loft_fotos_propietario_sube on storage.objects
+drop policy if exists fotos_propietario_sube on storage.objects;
+create policy fotos_propietario_sube on storage.objects
   for insert to authenticated
   with check (
     bucket_id = 'fotos'
@@ -325,8 +325,8 @@ create policy loft_fotos_propietario_sube on storage.objects
     and name ~ '^([a-z0-9][a-z0-9_-]{0,59}/)?[a-z0-9][a-z0-9_.-]{0,119}\.(jpg|jpeg|png|webp)$'
   );
 
-drop policy if exists loft_fotos_propietario_actualiza on storage.objects;
-create policy loft_fotos_propietario_actualiza on storage.objects
+drop policy if exists fotos_propietario_actualiza on storage.objects;
+create policy fotos_propietario_actualiza on storage.objects
   for update to authenticated
   using (bucket_id = 'fotos' and (select public.es_propietario()))
   with check (
@@ -335,8 +335,8 @@ create policy loft_fotos_propietario_actualiza on storage.objects
     and name ~ '^([a-z0-9][a-z0-9_-]{0,59}/)?[a-z0-9][a-z0-9_.-]{0,119}\.(jpg|jpeg|png|webp)$'
   );
 
-drop policy if exists loft_fotos_propietario_borra on storage.objects;
-create policy loft_fotos_propietario_borra on storage.objects
+drop policy if exists fotos_propietario_borra on storage.objects;
+create policy fotos_propietario_borra on storage.objects
   for delete to authenticated
   using (bucket_id = 'fotos' and (select public.es_propietario()));
 

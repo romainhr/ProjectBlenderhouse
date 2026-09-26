@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { publicarFoto, quitarFoto, reordenarFoto } from "../src/admin/js/acciones-fotos.js";
+import { publicarFoto, quitarFoto, rechazoDefinitivo, reordenarFoto } from "../src/admin/js/acciones-fotos.js";
 import { crearApiSimulada, datosEjemplo } from "../src/admin/js/api-simulada.js";
 import { ErrorApi, codigoConocido, mensajeError } from "../src/admin/js/errores.js";
 import { RE_RUTA, fotosDeEspacio } from "../src/admin/js/logica-fotos.js";
@@ -119,6 +119,52 @@ test("fotos: si falla la fila, se borra el objeto recién subido (sin huérfanos
     (e) => codigoConocido(e) === "sin_permiso");
   assert.equal(subida, "banos/20261005-03030303.webp");
   assert.ok(!api.fotos._existe(subida));
+});
+
+test("fotos: qué errores de la fila son un rechazo definitivo (se borra el objeto) y cuáles no se saben", () => {
+  for (const estado of [400, 401, 403, 404, 409, 413, 500, 503]) assert.equal(rechazoDefinitivo({ estado }), true, String(estado));
+  for (const e of [{ estado: 0, codigo: "red" }, { codigo: "tiempo_agotado" }, { estado: 502 }, { estado: 504 },
+    { codigo: "sin_filas" }, null, undefined]) {
+    assert.equal(rechazoDefinitivo(e), false, JSON.stringify(e));
+  }
+});
+
+test("fotos: si la fila se creó pero se perdió la respuesta (tiempo agotado), no se borra el archivo y es éxito (H4)", async () => {
+  const { api } = await dentro();
+  const crear = api.fotos.crear;
+  let borrados = 0;
+  const borrar = api.fotos.borrarObjeto;
+  api.fotos.borrarObjeto = async (ruta) => { borrados++; return borrar(ruta); };
+  api.fotos.crear = async (fila) => {
+    await crear(fila);                                          // el INSERT se hizo…
+    throw new ErrorApi({ codigo: "tiempo_agotado", mensaje: "tiempo_agotado", origen: "rest" });   // …y la respuesta no llegó
+  };
+  const antes = (await api.fotos.listar()).length;
+  const fila = await publicarFoto({ api, espacio: "banos", blob: webp(), alt: "Baño", hoy: HOY, azar: azarFijo([6, 6, 6, 6]) });
+  assert.equal(fila.ruta, "banos/20261005-06060606.webp");
+  assert.equal(borrados, 0, "el archivo de una fila existente no se borra");
+  assert.ok(api.fotos._existe(fila.ruta));
+  const despues = await api.fotos.listar();
+  assert.equal(despues.length, antes + 1, "una sola fila: nada que reintentar ni duplicar");
+  assert.ok(despues.some((f) => f.id === fila.id));
+});
+
+test("fotos: si no hubo respuesta y la fila no aparece, se deja el archivo (huérfano invisible) y se informa (H4)", async () => {
+  const { api } = await dentro();
+  let subida = null;
+  const subir = api.fotos.subir;
+  api.fotos.subir = async (ruta, blob) => { subida = ruta; return subir(ruta, blob); };
+  api.fotos.crear = async () => { throw new ErrorApi({ codigo: "red", mensaje: "red", origen: "rest" }); };
+  await assert.rejects(publicarFoto({ api, espacio: "banos", blob: webp(), alt: "Baño", hoy: HOY, azar: azarFijo([7, 7, 7, 7]) }),
+    (e) => e.codigo === "red");
+  assert.ok(api.fotos._existe(subida), "sin saber si la fila existe, no se borra el archivo");
+
+  // 502 del intermediario y, además, la consulta de comprobación también falla: igual no se borra
+  api.fotos.crear = async () => { throw new ErrorApi({ estado: 502, mensaje: "Bad Gateway" }); };
+  api.fotos.listar = async () => { throw new ErrorApi({ codigo: "red" }); };
+  await assert.rejects(publicarFoto({ api, espacio: "banos", blob: webp(), alt: "Baño", hoy: HOY, azar: azarFijo([8, 8, 8, 8]) }),
+    (e) => e.estado === 502);
+  assert.ok(api.fotos._existe("banos/20261005-08080808.webp"));
 });
 
 test("fotos: validaciones antes de tocar Storage (alt, espacio, tipo, tamaño del bucket)", async () => {

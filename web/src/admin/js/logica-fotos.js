@@ -217,3 +217,36 @@ export function moverFoto(fotosEspacio, id, delta) {
   });
   return { lista: nueva, cambios };
 }
+
+/** Copia los órdenes de `nueva` (lo que devolvió reordenarFoto) sobre la lista completa de fotos. -> lista nueva. */
+export function aplicarOrden(fotos, nueva) {
+  const porId = new Map((nueva || []).map((x) => [x.id, x.orden]));
+  return (fotos || []).map((x) => (porId.has(x.id) ? { ...x, orden: porId.get(x.id) } : x));
+}
+
+// Mismo espaciado que deja validarAlt: «  Living  de noche » y «Living de noche» guardan lo mismo.
+const comoSeGuarda = (v) => String(v ?? "").replace(/\s+/g, " ").trim();
+
+/**
+ * Borradores de descripción de fotos ya subidas (Map id -> texto escrito). Se guarda el texto mientras lo que se
+ * guardaría difiera de lo guardado y se quita cuando vuelve a coincidir. -> ¿quedó con cambios sin guardar?
+ * (el botón «Guardar descripción» se habilita con esto)
+ */
+export function anotarBorrador(borradores, id, valor, guardado) {
+  if (comoSeGuarda(valor) !== comoSeGuarda(guardado)) {
+    borradores.set(id, String(valor ?? ""));
+    return true;
+  }
+  borradores.delete(id);
+  return false;
+}
+
+/** Al repintar: quita los borradores de fotos que ya no existen o cuyo texto ya coincide con lo guardado. */
+export function podarBorradores(borradores, fotos) {
+  const porId = new Map((fotos || []).map((f) => [f.id, f]));
+  for (const [id, texto] of [...borradores]) {
+    const f = porId.get(id);
+    if (!f || comoSeGuarda(texto) === comoSeGuarda(f.alt)) borradores.delete(id);
+  }
+  return borradores;
+}

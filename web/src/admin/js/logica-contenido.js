@@ -16,7 +16,7 @@ const RE_PRECIO = /^(\d+|\d{1,3}([. ]\d{3})+)$/;
  * Valida y normaliza el valor según el tipo -> { ok: true, valor } o { ok: false, error }.
  * Regla propia del portal (más estricta que la base): los textos no pueden quedar vacíos, para no dejar huecos en el sitio.
  */
-export function validarValor(tipo, bruto) {
+export function validarValor(tipo, bruto, clave = "") {
   const s = String(bruto ?? "").replace(/\r\n?/g, "\n");
   if (tipo === "precio") {
     const t = s.replace(/[  ]/g, " ").trim().replace(/^CLP\s*/i, "").replace(/^\$\s*/, "");
@@ -25,6 +25,8 @@ export function validarValor(tipo, bruto) {
     const digitos = t.replace(/[. ]/g, "");
     const n = Number(digitos);
     if (!Number.isSafeInteger(n) || n < 0 || n > PRECIO_MAX) return { ok: false, error: "precio_rango" };
+    // el sitio trata una noche en 0 como «sin editar» (contenido-publico.js, tarifasEditadas): no se acepta
+    if (clave === "tarifa.noche" && n === 0) return { ok: false, error: "precio_noche_cero" };
     return { ok: true, valor: String(n) };                     // sin ceros a la izquierda
   }
   if (!TIPOS.includes(tipo)) return { ok: false, error: "tipo" };
@@ -39,6 +41,7 @@ export const MENSAJES_VALOR = Object.freeze({
   largo: `Admite hasta ${LIMITE_VALOR.toLocaleString("es-CL")} caracteres.`,
   precio_formato: "Escribe sólo el monto en pesos, con dígitos (p. ej. 58000 o 58.000), sin decimales.",
   precio_rango: `El monto debe estar entre 0 y ${PRECIO_MAX.toLocaleString("es-CL")}.`,
+  precio_noche_cero: "La tarifa por noche debe ser mayor que 0 (la limpieza sí puede ser 0).",
   tipo: "Tipo de contenido desconocido.",
 });
 

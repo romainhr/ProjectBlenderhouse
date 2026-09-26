@@ -3,10 +3,11 @@ import { publicarFoto, quitarFoto, reordenarFoto } from "./acciones-fotos.js";
 import { mensajeError } from "./errores.js";
 import { ErrorImagen, prepararImagen } from "./imagen.js";
 import {
-  ESPACIOS, LIMITE_ALT, MAX_ORIGINAL, MENSAJES_FOTO, contarPorEspacio, fotosDeEspacio, nombreEspacio, validarAlt,
+  ESPACIOS, LIMITE_ALT, MAX_ORIGINAL, MENSAJES_FOTO, anotarBorrador, aplicarOrden, contarPorEspacio, fotosDeEspacio,
+  nombreEspacio, podarBorradores, validarAlt,
 } from "./logica-fotos.js";
 import { anunciar, confirmar, el, mientras, oculto, vaciar } from "./ui.js";
-import { peso } from "./util.js";
+import { peso, unaALaVez } from "./util.js";
 
 function mensaje(e) {
   if (e instanceof ErrorImagen || (e && Object.prototype.hasOwnProperty.call(MENSAJES_FOTO, e.codigo))) {
@@ -25,12 +26,13 @@ export function crearVistaFotos({ raiz, api }) {
   };
   let fotos = [];
   let cargada = false;
-  let enCurso = null;                    // carga inicial en curso
   let generacion = 0;                    // sube al cerrar sesión: una respuesta tardía ya no se pinta
   let espacio = ESPACIOS[0].id;
   let preparada = null;              // resultado de prepararImagen
   let urlPrevia = null;
   let preparando = null;             // promesa en curso (para no subir antes de terminar de reducir)
+  let reordenando = false;           // mientras se guardan órdenes, las tarjetas nuevas nacen sin Subir/Bajar/Borrar
+  const borradores = new Map();      // descripciones sin guardar de fotos ya subidas (id -> texto), de cualquier espacio
 
   // ------------------------------------------------------------------ selector de espacio
   const cuentas = {};
@@ -47,6 +49,7 @@ export function crearVistaFotos({ raiz, api }) {
       el("span", { clase: "chip-cuerpo" }, e.nombre, " ", cuentas[e.id])));
   }
   n.recargar.addEventListener("click", () => cargar());
+  const cargaInicial = unaALaVez(() => cargar());          // una sola carga inicial a la vez (se suelta al cerrar sesión)
   n.archivo.setAttribute("aria-describedby", "subir-archivo-ayuda subir-estado");
   $("#subir-archivo-ayuda").textContent =
     `JPEG, PNG o WebP de hasta ${MAX_ORIGINAL / 1024 / 1024} MB. Se reduce a 1600 px de ancho y se guarda como WebP ` +
@@ -95,34 +98,49 @@ export function crearVistaFotos({ raiz, api }) {
     n.alt.removeAttribute("aria-invalid");
   });
 
-  n.form.addEventListener("submit", async (ev) => {
-    ev.preventDefault();
-    if (preparando) await preparando.catch(() => {});
-    if (!preparada) {
-      anunciar(n.estado, MENSAJES_FOTO.sin_imagen, "error");
-      n.archivo.focus();
-      return;
-    }
-    const a = validarAlt(n.alt.value);
-    if (!a.ok) {
-      n.altError.textContent = MENSAJES_FOTO[a.error];
-      n.alt.setAttribute("aria-invalid", "true");
-      n.alt.focus();
-      return;
-    }
-    anunciar(n.estado, "Subiendo la foto…", "cargando");
+  // Un solo envío a la vez: el botón se bloquea antes del primer await, así un segundo clic mientras se reduce la
+  // imagen no sube otra copia (unaALaVez cubre también Enter en un campo y el caso de un botón que se rehabilitó).
+  const enviar = unaALaVez(async () => {
+    const gen = generacion;
+    n.boton.disabled = true;
     try {
-      await mientras([n.boton, n.archivo], () => publicarFoto({
-        api, espacio, blob: preparada.blob, alt: a.valor, visible: n.visible.checked,
-        fotosEspacio: fotosDeEspacio(fotos, espacio),
-      }));
-      n.form.reset();
-      limpiarPrevia();
-      await cargar({ silencioso: true });
-      anunciar(n.estado, `Foto agregada a ${nombreEspacio(espacio)}.`, "ok");
-    } catch (e) {
-      anunciar(n.estado, mensaje(e), "error");
+      while (preparando) await preparando.catch(() => {});   // también si eligió otro archivo mientras tanto
+      if (gen !== generacion) return;                       // se cerró la sesión mientras tanto
+      if (!preparada) {
+        anunciar(n.estado, MENSAJES_FOTO.sin_imagen, "error");
+        n.archivo.focus();
+        return;
+      }
+      const a = validarAlt(n.alt.value);
+      if (!a.ok) {
+        n.altError.textContent = MENSAJES_FOTO[a.error];
+        n.alt.setAttribute("aria-invalid", "true");
+        n.alt.focus();
+        return;
+      }
+      anunciar(n.estado, "Subiendo la foto…", "cargando");
+      try {
+        await mientras([n.archivo], () => publicarFoto({
+          api, espacio, blob: preparada.blob, alt: a.valor, visible: n.visible.checked,
+          fotosEspacio: fotosDeEspacio(fotos, espacio),
+        }));
+        if (gen !== generacion) return;
+        n.form.reset();
+        limpiarPrevia();
+        await cargar({ silencioso: true });
+        if (gen !== generacion) return;
+        anunciar(n.estado, `Foto agregada a ${nombreEspacio(espacio)}.`, "ok");
+      } catch (e) {
+        if (gen !== generacion) return;
+        anunciar(n.estado, mensaje(e), "error");
+      }
+    } finally {
+      n.boton.disabled = false;
     }
+  });
+  n.form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    enviar();
   });
 
   // ------------------------------------------------------------------ lista
@@ -151,9 +169,9 @@ export function crearVistaFotos({ raiz, api }) {
     const nombre = nombreEspacio(espacio);
     n.tituloSubir.textContent = nombre;
     n.tituloLista.textContent = `Fotos de ${nombre}`;
-    // descripciones a medio escribir: se conservan al repintar (p. ej. al cambiar la visibilidad de otra foto)
-    const borradores = new Map([...n.lista.querySelectorAll("li.foto")].map((li) => [li.dataset.id,
-      li.querySelector(".foto-alt input").value]));
+    // las descripciones a medio escribir viven en `borradores` (también las de otros espacios); aquí sólo se quitan
+    // las de fotos que ya no existen o que ya coinciden con lo guardado
+    podarBorradores(borradores, fotos);
     vaciar(n.lista);
     const lista = fotosDeEspacio(fotos, espacio);
     if (!lista.length) {
@@ -162,18 +180,19 @@ export function crearVistaFotos({ raiz, api }) {
       return;
     }
     const principal = lista.find((f) => f.visible);
-    lista.forEach((f, i) => n.lista.append(tarjeta(f, i, lista, f === principal, borradores.get(f.id))));
+    lista.forEach((f, i) => n.lista.append(tarjeta(f, i, lista, f === principal)));
   }
 
-  function tarjeta(f, i, lista, esPrincipal, borrador) {
+  function tarjeta(f, i, lista, esPrincipal) {
     const idAlt = `alt-${f.id}`, idVis = `vis-${f.id}`;
     const estado = el("p", { clase: "indicador", role: "status", "aria-live": "polite" });
     const alt = el("input", { id: idAlt, type: "text", value: f.alt, maxLength: LIMITE_ALT, autocomplete: "off" });
     const guardarAlt = el("button", { type: "submit", clase: "boton secundario chico", disabled: true }, "Guardar descripción");
-    alt.addEventListener("input", () => { guardarAlt.disabled = alt.value.trim() === f.alt; });
-    if (borrador !== undefined && borrador.trim() !== f.alt) {
-      alt.value = borrador;
-      guardarAlt.disabled = false;
+    const marcarAlt = () => { guardarAlt.disabled = !anotarBorrador(borradores, f.id, alt.value, f.alt); };
+    alt.addEventListener("input", marcarAlt);
+    if (borradores.has(f.id)) {
+      alt.value = borradores.get(f.id);
+      marcarAlt();
     }
     const formAlt = el("form", { clase: "foto-alt", novalidate: true },
       el("label", { for: idAlt, texto: "Descripción (texto alternativo)" }), alt, guardarAlt);
@@ -193,12 +212,12 @@ export function crearVistaFotos({ raiz, api }) {
       visible.checked ? "Ahora se muestra en el sitio." : "Oculta: ya no se muestra en el sitio."));
 
     const nombre = `«${f.alt}»`;
-    const subir = el("button", { type: "button", clase: "boton secundario chico", disabled: i === 0, "data-accion": "subir",
-      onclick: () => mover(f, -1, lista) }, el("span", { "aria-hidden": "true", texto: "↑ " }), "Subir", oculto(` ${nombre}`));
-    const bajar = el("button", { type: "button", clase: "boton secundario chico", disabled: i === lista.length - 1,
+    const subir = el("button", { type: "button", clase: "boton secundario chico", disabled: reordenando || i === 0, "data-accion": "subir",
+      onclick: () => mover(f, -1) }, el("span", { "aria-hidden": "true", texto: "↑ " }), "Subir", oculto(` ${nombre}`));
+    const bajar = el("button", { type: "button", clase: "boton secundario chico", disabled: reordenando || i === lista.length - 1,
       "data-accion": "bajar",
-      onclick: () => mover(f, 1, lista) }, el("span", { "aria-hidden": "true", texto: "↓ " }), "Bajar", oculto(` ${nombre}`));
-    const borrar = el("button", { type: "button", clase: "boton peligro chico", onclick: () => eliminar(f) },
+      onclick: () => mover(f, 1) }, el("span", { "aria-hidden": "true", texto: "↓ " }), "Bajar", oculto(` ${nombre}`));
+    const borrar = el("button", { type: "button", clase: "boton peligro chico", disabled: reordenando, onclick: () => eliminar(f) },
       "Borrar", oculto(` ${nombre}`));
 
     return el("li", { clase: `foto${f.visible ? "" : " oculta"}`, "data-id": f.id },
@@ -233,7 +252,10 @@ export function crearVistaFotos({ raiz, api }) {
   function anunciarEn(id, texto, tipo, enfocar = null) {
     const li = [...n.lista.querySelectorAll("li.foto")].find((x) => x.dataset.id === id);
     if (!li) return;
-    anunciar(li.querySelector(".indicador"), texto, tipo);
+    // la tarjeta (y su región aria-live) se acaba de crear: los lectores de pantalla sólo anuncian cambios en una
+    // región que ya existía, así que el texto se escribe en la tarea siguiente
+    const indicador = li.querySelector(".indicador");
+    setTimeout(() => { if (indicador.isConnected) anunciar(indicador, texto, tipo); }, 60);
     if (enfocar) {
       const b = [...li.querySelectorAll(".foto-acciones button")].find((x) => x.dataset.accion === enfocar);
       if (b && !b.disabled) b.focus();
@@ -241,18 +263,29 @@ export function crearVistaFotos({ raiz, api }) {
     }
   }
 
-  async function mover(f, delta, lista) {
+  async function mover(f, delta) {
+    // Subir, Bajar y Borrar de todas las tarjetas quedan bloqueados hasta que terminen los PATCH, y el cambio se
+    // calcula con las fotos de ahora (no con la lista del momento en que se pintó la tarjeta): así dos movimientos
+    // seguidos no parten de órdenes viejos ni dejan dos fotos con el mismo orden.
+    if (reordenando) return;
+    reordenando = true;
+    const botones = [...n.lista.querySelectorAll(".foto-acciones button")];
     anunciar(n.aviso, "Guardando el orden…", "cargando");
     try {
-      const nueva = await reordenarFoto({ api, fotosEspacio: lista, id: f.id, delta });
-      const porId = new Map(nueva.map((x) => [x.id, x.orden]));
-      fotos = fotos.map((x) => (porId.has(x.id) ? { ...x, orden: porId.get(x.id) } : x));
+      const nueva = await mientras(botones, () => reordenarFoto({
+        api, fotosEspacio: fotosDeEspacio(fotos, f.espacio), id: f.id, delta,
+      }));
+      fotos = aplicarOrden(fotos, nueva);
+      reordenando = false;
       pintar();
       anunciar(n.aviso, "");
       anunciarEn(f.id, "Orden guardado.", "ok", delta < 0 ? "subir" : "bajar");
     } catch (e) {
+      reordenando = false;
       anunciar(n.aviso, mensajeError(e), "error");
       await cargar({ silencioso: true });
+    } finally {
+      reordenando = false;
     }
   }
 
@@ -277,11 +310,15 @@ export function crearVistaFotos({ raiz, api }) {
 
   return {
     mostrar() {
-      if (!cargada && !enCurso) enCurso = cargar().finally(() => { enCurso = null; });   // una sola carga a la vez
+      if (!cargada) cargaInicial();
     },
-    hayCambios: () => Boolean(preparada) || n.alt.value.trim() !== "",
+    hayCambios: () => Boolean(preparada) || n.alt.value.trim() !== "" || borradores.size > 0,
     reiniciar() {
       generacion++;
+      cargaInicial.soltar();                 // si la carga vieja sigue colgada, el próximo ingreso carga de nuevo
+      enviar.soltar();                       // una subida vieja colgada no bloquea el formulario del próximo ingreso
+      borradores.clear();
+      n.boton.disabled = false;
       fotos = [];
       cargada = false;
       preparando = null;

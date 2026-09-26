@@ -1,5 +1,5 @@
 // Lógica de la vista de reservas (sin DOM). Fechas como texto ISO "AAAA-MM-DD"; «hoy» en el huso de la propiedad
-// (hoyIso de reserva-logica.js, el mismo criterio que public.hoy_loft()).
+// (hoyIso de reserva-logica.js, el mismo criterio que public.hoy_propiedad()).
 import { noches } from "../../js/reserva-logica.js";
 import { largo } from "./util.js";
 
@@ -117,10 +117,34 @@ export function enlaceTelefono(telefono) {
 }
 
 export function asuntoCorreo(r) {
-  return `Tu solicitud de reserva en LOFT 2D2B (código ${r.codigo || "—"})`;
+  return `Tu solicitud de reserva en Project-roomVR (código ${r.codigo || "—"})`;
 }
 
 /** Reemplaza una fila por id (devuelve una lista nueva). */
 export function reemplazar(lista, fila) {
   return lista.map((x) => (x.id === fila.id ? { ...x, ...fila } : x));
+}
+
+/**
+ * Qué hacer al pulsar una tarjeta de la lista. En computador la lista y el detalle se ven juntos, así que se puede
+ * pulsar la reserva que ya está abierta:
+ *   "enfocar"   es la misma: sólo se lleva el foco al detalle (la nota a medio escribir no se toca);
+ *   "confirmar" es otra y la nota tiene cambios sin guardar: preguntar antes de descartarlos;
+ *   "abrir"     es otra y no hay nada que perder.
+ */
+export function decidirApertura({ id, seleccion, notaSucia }) {
+  if (id === seleccion) return "enfocar";
+  return notaSucia ? "confirmar" : "abrir";
+}
+
+/**
+ * Reserva abierta al repintar el detalle. Si ya no está en la lista (p. ej. se borró desde otra sesión y se pulsó
+ * «Actualizar»), se cierra y se olvida la nota a medio escribir: ya no hay dónde guardarla.
+ * -> { reserva, seleccion, notaSucia, desaparecida, notaPerdida }
+ */
+export function resolverSeleccion(reservas, seleccion, notaSucia) {
+  const reserva = seleccion == null ? null : (reservas || []).find((x) => x.id === seleccion) || null;
+  if (reserva) return { reserva, seleccion, notaSucia: Boolean(notaSucia), desaparecida: false, notaPerdida: false };
+  const desaparecida = seleccion != null;
+  return { reserva: null, seleccion: null, notaSucia: false, desaparecida, notaPerdida: desaparecida && Boolean(notaSucia) };
 }

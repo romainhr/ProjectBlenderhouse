@@ -13,6 +13,26 @@ export const ESPERA_SUBIDA_MS = 90000;       // supuesto: subir 5 MB por una red
 export const REINTENTO_REFRESCO_MS = 30000;  // supuesto: si el refresco falla por red, reintentar en 30 s
 export const CACHE_FOTOS_S = 31536000;       // las rutas de fotos son únicas y no se sobrescriben: caché de un año
 
+/**
+ * r.text() que termina, a más tardar, cuando se aborta `signal`. fetch ya corta el cuerpo al abortar, pero la carrera
+ * no depende de eso (un fetch falso o una implementación que no lo haga tampoco deja la llamada colgada).
+ */
+function leerCuerpo(r, signal) {
+  if (!signal) return r.text();
+  return new Promise((resolver, rechazar) => {
+    const alAbortar = () => rechazar(Object.assign(new Error("tiempo_agotado"), { name: "AbortError" }));
+    if (signal.aborted) {
+      alAbortar();
+      return;
+    }
+    signal.addEventListener("abort", alAbortar, { once: true });
+    Promise.resolve()
+      .then(() => r.text())
+      .then(resolver, rechazar)
+      .finally(() => signal.removeEventListener("abort", alAbortar));
+  });
+}
+
 export function crearCliente({
   url,
   clave,
@@ -56,23 +76,36 @@ export function crearCliente({
     if (habia) alPerderSesion(motivo);
   }
 
+  /**
+   * Una llamada HTTP con tiempo máximo `espera`. El temporizador cubre también la lectura del cuerpo: si la conexión
+   * se corta a mitad de la respuesta, el abort corta r.text() y la llamada termina en «tiempo_agotado» en vez de
+   * quedar colgada (colgaría también a refrescoEnCurso y a todo lo que espere un refresco).
+   */
   async function http(ruta, { metodo = "GET", cabeceras = {}, cuerpo, espera = ESPERA_MS, origen = "rest" } = {}) {
     const control = typeof AbortController === "function" ? new AbortController() : null;
     const t = control ? setTimeout(() => control.abort(), espera) : null;
-    let r;
+    const agotado = () => new ErrorApi({ codigo: "tiempo_agotado", mensaje: "tiempo_agotado", origen });
+    let r, texto;
     try {
-      r = await pedirHttp(base + ruta, {
-        method: metodo, headers: cabeceras, body: cuerpo, signal: control ? control.signal : undefined,
-        credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer",
-      });
-    } catch (e) {
-      const agotado = e && e.name === "AbortError";
-      throw new ErrorApi({ codigo: agotado ? "tiempo_agotado" : "red", mensaje: agotado ? "tiempo_agotado" : "red", origen });
+      try {
+        r = await pedirHttp(base + ruta, {
+          method: metodo, headers: cabeceras, body: cuerpo, signal: control ? control.signal : undefined,
+          credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer",
+        });
+      } catch (e) {
+        if (e && e.name === "AbortError") throw agotado();
+        throw new ErrorApi({ codigo: "red", mensaje: "red", origen });
+      }
+      try {
+        texto = await leerCuerpo(r, control ? control.signal : null);
+      } catch (e) {
+        if (e && e.name === "AbortError") throw agotado();
+        texto = "";                                   // cuerpo ilegible: se sigue con el estado HTTP, como antes
+      }
     } finally {
       if (t) clearTimeout(t);
     }
     const tipo = (r.headers && r.headers.get && r.headers.get("content-type")) || "";
-    const texto = await r.text().catch(() => "");
     let datos = null;
     if (texto) {
       if (tipo.includes("json")) {

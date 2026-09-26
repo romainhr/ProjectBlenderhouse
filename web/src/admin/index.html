@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
-<title>Portal del propietario · LOFT 2D2B</title>
+<title>Portal del propietario · Project-roomVR</title>
 <meta name="theme-color" content="#F7F4EF">
 <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="admin.css">
@@ -18,7 +18,7 @@
 
 <header class="cabecera">
   <div class="cabecera-fila">
-    <p class="marca"><b>Loft 2D2B</b><small>Portal del propietario</small></p>
+    <p class="marca"><b>Project-roomVR</b><small>Portal del propietario</small></p>
     <div id="usuario" class="usuario" hidden>
       <span id="usuario-correo" class="usuario-correo"></span>
       <button type="button" id="cerrar-sesion" class="boton secundario chico">Cerrar sesión</button>
@@ -41,6 +41,15 @@
 
   <!-- Ingreso -->
   <section id="vista-login" class="vista vista-login" aria-labelledby="t-login" hidden>
+   <div class="login-escena">
+    <figure class="login-imagen">
+      <img src="../img/living-800.webp" srcset="../img/living-800.webp 800w, ../img/living-1600.webp 1600w"
+           sizes="(min-width: 900px) 55vw, 100vw" alt="" width="800" height="500" decoding="async">
+      <figcaption>
+        <b>Project-roomVR</b>
+        <span>Reservas, textos y fotos del departamento, en un solo lugar.</span>
+      </figcaption>
+    </figure>
     <div class="tarjeta login">
       <h1 id="t-login" tabindex="-1">Ingresar</h1>
       <p class="ayuda">Acceso sólo para el propietario. La cuenta se crea en el panel de Supabase; aquí no hay registro.</p>
@@ -59,6 +68,7 @@
         <button type="submit" id="login-boton" class="boton primario bloque">Ingresar</button>
       </form>
     </div>
+   </div>
   </section>
 
   <!-- Cuenta sin rol de propietario o base sin la migración 0003 -->
@@ -89,6 +99,12 @@
     <div id="reservas-cuerpo" class="reservas-cuerpo">
       <ul id="reservas-lista" class="lista-reservas" aria-label="Solicitudes de reserva"></ul>
       <article id="reserva-detalle" class="detalle tarjeta" tabindex="-1" aria-labelledby="detalle-titulo" hidden></article>
+      <aside class="detalle-vacio tarjeta" aria-label="Sin solicitud abierta">
+        <img src="../img/maqueta-800.webp" alt="" width="800" height="500" loading="lazy" decoding="async">
+        <h2>Elige una solicitud</h2>
+        <p>Aquí verás los datos del huésped y podrás confirmarla o rechazarla, escribirle y dejar una nota interna que
+          sólo ves tú.</p>
+      </aside>
     </div>
   </section>
 

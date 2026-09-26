@@ -45,6 +45,35 @@ export function horaCorta(d = new Date()) {
   return fHora.format(d);
 }
 
+/**
+ * Envuelve una función asíncrona para que no corra dos veces a la vez. Mientras la primera llamada sigue pendiente,
+ * las siguientes devuelven esa misma promesa y no vuelven a ejecutar la función (doble clic, doble envío, carga
+ * inicial pedida dos veces). soltar() olvida la llamada en curso (al cerrar sesión): la próxima empieza de cero y,
+ * si la vieja termina después, ya no suelta a la nueva.
+ */
+export function unaALaVez(fn) {
+  let enCurso = null;
+  const ejecutar = (...args) => {
+    if (enCurso) return enCurso;
+    let p;
+    try {
+      p = Promise.resolve(fn(...args));
+    } catch (e) {
+      p = Promise.reject(e);
+    }
+    const esta = p.finally(() => {
+      if (enCurso === esta) enCurso = null;
+    });
+    enCurso = esta;
+    return esta;
+  };
+  ejecutar.ocupada = () => enCurso !== null;
+  ejecutar.soltar = () => {
+    enCurso = null;
+  };
+  return ejecutar;
+}
+
 /** Peso legible: «850 kB», «3,2 MB». */
 export function peso(bytes) {
   const n = Number(bytes) || 0;

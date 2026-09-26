@@ -78,3 +78,54 @@ Es una prueba: las tarifas y parte del equipamiento son de ejemplo, y las imáge
     - La sesión «Modelo 3D, navegación móvil y UI» se ocupa del diseño en `web/src/`.
     - Esta sesión se ocupa del backend y la publicación: `web/supabase/`, `web/build.py` y `web/desplegar.py`.
     - La publicación en Netlify la ejecuta el usuario: en esta sesión, el modo automático bloquea el despliegue.
+
+## Adenda: portal de gestión del propietario (2026-09-26)
+
+- **Modelo de IA utilizado:** Claude Opus 5.5 (`claude-opus-5-5`), con los workflows `portal-gestion-loft` (3 constructores, 3 revisores y 3 escépticos) y `corregir-portal-gestion`.
+- **Revisor humano:** Romain Ange. Pidió «un portal de gestión con login simple para que el propietario pueda editar fotos, descripción y manejar reservas». La revisión final se hace en la PR de la rama `web/portal-gestion`.
+
+11. **Login con Supabase Auth (correo y contraseña):**
+    - Hay un solo rol, el de propietario. Se registra en `public.propietarios`, que no tiene políticas y sólo se edita desde el panel de Supabase.
+    - `public.es_propietario()` es `SECURITY DEFINER` con `search_path` fijo. Toda escritura y toda lectura privada exige ese rol: estar autenticado no basta.
+    - El registro público se cierra y la cuenta la crea el propietario en el panel. Claude no crea cuentas ni ingresa contraseñas (guía en `docs/portal-gestion.md`).
+12. **Reservas:** el propietario lee, borra y actualiza sólo `estado` y `nota_interna`, por un grant por columnas más RLS. Los datos del huésped y las fechas no se pueden cambiar desde el portal. Reactivar una reserva que choca con otra falla por la restricción de exclusión, y el portal lo informa.
+13. **Contenido y fotos:**
+    - `public.contenido` guarda textos y precios con CHECK de formato. Las fotos quedan en `public.fotos` más un bucket público `fotos` (5 MB, sólo JPEG, PNG o WebP; rutas generadas por el portal con formato cerrado).
+    - El público lee los textos y las fotos visibles. El sitio aplica lo editado con `web/src/js/contenido-publico.js`, sólo con `textContent`, y acepta sólo URL del bucket propio. Si Supabase no responde, quedan el texto y las imágenes estáticas.
+    - Los precios editados alimentan también el cálculo de la reserva, para que el total coincida con la tarifa publicada.
+14. **Portal sin librerías:**
+    - Es un cliente `fetch` de Auth, PostgREST y Storage en `web/src/admin/`. La sesión se guarda en `sessionStorage`: se borra al cerrar la pestaña y la pantalla se limpia antes de revocar el token.
+    - Tiene un modo simulado sólo en localhost, para probar sin credenciales.
+    - `/admin/*` va con `noindex` y `no-store`.
+
+15. **Consistencia entre la fila y el archivo de cada foto:**
+    - Al subir, primero va el archivo y después la fila. Si la fila falla con un rechazo definitivo del servidor (4xx, 500 o 503), se borra el archivo.
+    - Si el resultado es incierto (sin respuesta, tiempo agotado, 502 o 504), se busca la fila por su ruta: si existe, se toma como éxito, porque un reintento la duplicaría; si no aparece, el archivo queda huérfano, que no se ve en el sitio.
+    - Al borrar, primero va la fila, así el sitio deja de mostrar la foto aunque luego falle Storage, y después el archivo.
+16. **Cierre de sesión:** la pantalla con datos de huéspedes se limpia antes de avisar a Auth. `/auth/v1/logout` sin `scope` revoca todas las sesiones del usuario (supuesto, según la documentación de Supabase), así que un ingreso inmediato espera a que termine esa revocación.
+17. **Tarifas editables en un solo lugar:**
+    - `tarifa.noche` y `tarifa.limpieza` de `public.contenido` alimentan los precios publicados y el total de la reserva.
+    - La noche debe ser mayor que 0, y el portal lo exige. La limpieza puede ser 0.
+    - Sin Supabase se usan los valores de ejemplo del código.
+
+**Alternativas descartadas:**
+- **Un CMS externo (Netlify CMS, Decap):** guarda el contenido en git, exige otro login y no maneja reservas.
+- **La librería `supabase-js`:** es una dependencia de ~50 KB y el sitio no usa CDN ni librerías. Las tres API que se necesitan (Auth, PostgREST y Storage) se cubren con `fetch`.
+- **Correo con enlace mágico:** evita la contraseña, pero depende del correo saliente de Supabase, que en el plan gratuito tiene cupo bajo. Se eligió correo y contraseña, como pidió el usuario («login simple»).
+- **Rol de propietario en los metadatos del usuario (JWT):** el usuario puede editar `user_metadata` por la API. La tabla `propietarios`, sin políticas, no se puede modificar desde el sitio.
+
+**Riesgos:**
+- Una foto oculta (`visible = false`) sigue accesible por su URL pública: para retirarla hay que borrarla.
+- Una sesión robada del propietario expone los datos de los huéspedes. Mitigaciones: token de vida corta, `sessionStorage`, cierre de sesión que limpia la pantalla, y CSP estricta sin scripts en línea ni orígenes externos, salvo Supabase.
+- No hay límite de tasa propio en el login: se usa el de Supabase Auth.
+
+## Adenda: nombre del sitio (2026-09-26)
+
+- **Revisor humano:** Romain Ange. **Modelo:** Claude Opus 5.5.
+
+18. **No es un loft.** Corrección de Romain Ange: «en ningún momento dije que era un loft esto, y no lo es».
+    - El nombre visible del sitio es «Project-roomVR», escrito así, por decisión del usuario.
+    - La URL sigue siendo `loft-2d2b.netlify.app`. Cambiarla implica renombrar el sitio en Netlify y el `--sitio` del CI; queda para una decisión aparte.
+    - Las menciones de «LOFT 2D2B» en este ADR y en `docs/verificacion-sitio-2026-09-26.md` son registro histórico: no se reescriben.
+    - En el código ya no quedan referencias visibles: el portal usa «Project-roomVR», y `build.py` dejó de inyectar el visor antiguo, que decía «LOFT».
+    - La migración `0004_renombrar_hoy.sql` renombra `hoy_loft()` a `hoy_propiedad()` y cambia el comentario de la tabla `reservas`.

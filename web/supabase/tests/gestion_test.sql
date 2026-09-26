@@ -1,7 +1,7 @@
--- Pruebas del portal de gestión (0003_gestion.sql). Se ejecutan en el SQL Editor de Supabase (rol postgres), después
--- de aplicar la 0003, dentro de una transacción que se deshace: no dejan datos. Si todo pasa, el resultado es
--- «PRUEBAS_GESTION_OK»; si una falla, se aborta con el código de la prueba (A = anon, N = autenticado sin rol de
--- propietario, P = propietario, S = storage).
+-- Pruebas del portal de gestión (0003_gestion.sql). Se ejecutan en el SQL Editor de Supabase o con psql
+-- (-v ON_ERROR_STOP=1), como postgres, después de aplicar la 0003, dentro de una transacción que se deshace: no dejan
+-- datos. Si todo pasa, el resultado es «PRUEBAS_GESTION_OK»; si una falla, se aborta con el código de la prueba
+-- (E = estructura, A = anon, N = autenticado sin rol de propietario, P = propietario, S = storage, F = final).
 --
 -- Los roles se simulan como lo hacen PostgREST y la Storage API: «set local role» más los claims del JWT en
 -- request.jwt.claims (de ahí lee auth.uid()). Los usuarios son identificadores inventados: no se crean cuentas en
@@ -69,6 +69,10 @@ begin
   assert has_function_privilege('anon', 'public.es_propietario()', 'execute'), 'E3: anon no ejecuta es_propietario';
   assert (select prosecdef from pg_proc where oid = 'public.es_propietario()'::regprocedure),
          'E3: es_propietario no es SECURITY DEFINER';
+  -- Una función SECURITY DEFINER sin search_path fijo resolvería nombres con el search_path de quien la llama.
+  -- proconfig null (sin «set») hace que la comparación dé null y el assert falle.
+  assert (select proconfig from pg_proc where oid = 'public.es_propietario()'::regprocedure)
+         @> array['search_path=public'], 'E3: es_propietario no fija search_path';
   assert not has_function_privilege('anon', 'public.tg_reservas_actualizada()', 'execute')
      and not has_function_privilege('authenticated', 'public.tg_contenido_actualizado()', 'execute'),
          'E3: funciones de trigger ejecutables por clientes';
@@ -83,7 +87,7 @@ begin
      and b.allowed_mime_types @> array['image/jpeg', 'image/png', 'image/webp']
      and array_length(b.allowed_mime_types, 1) = 3, 'E5: configuración del bucket fotos';
   assert (select count(*) from pg_policies where schemaname = 'storage' and tablename = 'objects'
-          and policyname like 'loft_fotos_%') = 4, 'E5: faltan políticas de storage.objects';
+          and policyname like 'fotos_propietario_%') = 4, 'E5: faltan políticas de storage.objects';
 end $$;
 
 -- 2. Público (anon) ------------------------------------------------------------------------------------------------
@@ -130,14 +134,11 @@ begin
         raise exception 'A8: anon actualizó fotos';
   exception when insufficient_privilege then null; end;
 
-  -- storage: anon no sube (RLS de storage.objects) ni lista el bucket
+  -- storage: anon no sube (RLS de storage.objects). Que no liste, renombre ni borre se prueba en la sección 7,
+  -- cuando el bucket ya tiene un archivo de prueba: aquí puede estar vacío y la prueba no podría fallar.
   begin insert into storage.objects (bucket_id, name) values ('fotos', 'prueba-gestion/anon.webp');
         raise exception 'A9: anon subió un archivo';
   exception when insufficient_privilege then null; end;
-  begin
-    assert not exists (select 1 from storage.objects where bucket_id = 'fotos'), 'A9: anon lista el bucket fotos';
-  exception when insufficient_privilege then null;                   -- sin privilegio de tabla tampoco lista
-  end;
 
   -- lo de 0001/0002 sigue funcionando con las columnas nuevas (la fecha puede chocar con una reserva real)
   perform * from public.disponibilidad(current_date, current_date + 30);
@@ -419,7 +420,43 @@ begin
 end $$;
 reset role;
 
--- 7. Storage: el propietario borra su archivo ---------------------------------------------------------------------
+-- 7. Storage: el público (anon) no lista, renombra ni borra el archivo del propietario ----------------------------
+-- Va aquí porque ya existe «prueba-gestion/renombrada.webp» (S1 y S3), así la prueba de listado sí puede fallar; la
+-- sección 8 comprueba que el archivo siguiera ahí. Si anon no tiene privilegio de tabla, tampoco lista ni escribe.
+set local role anon;
+do $$
+declare
+  n int;
+  err text;
+begin
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+
+  begin
+    select count(*) into n from storage.objects where bucket_id = 'fotos';
+    assert n = 0, 'A11: anon lista el bucket fotos, vio ' || n || ' archivos';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    update storage.objects set name = 'prueba-gestion/anon.webp'
+    where bucket_id = 'fotos' and name = 'prueba-gestion/renombrada.webp';
+    get diagnostics n = row_count;
+    assert n = 0, 'A12: anon renombró el archivo del propietario';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    delete from storage.objects where bucket_id = 'fotos' and name = 'prueba-gestion/renombrada.webp';
+    get diagnostics n = row_count;
+    assert n = 0, 'A13: anon borró el archivo del propietario';
+  exception when insufficient_privilege then
+    get stacked diagnostics err = message_text;
+    if err like 'Direct deletion%' then
+      raise notice 'A13 omitida: el proyecto bloquea el DELETE directo en storage.objects (%)', err;
+    end if;
+  end;
+end $$;
+reset role;
+
+-- 8. Storage: el propietario borra su archivo ---------------------------------------------------------------------
 set local role authenticated;
 do $$
 declare
@@ -428,6 +465,11 @@ declare
 begin
   perform set_config('request.jwt.claims',
     '{"sub":"a0000000-0000-4000-8000-00000000000a","role":"authenticated"}', true);
+
+  -- el archivo siguió en su lugar durante S4, S5 y A11 a A13: esas pruebas corrieron contra un archivo real
+  select count(*) into n from storage.objects where bucket_id = 'fotos' and name = 'prueba-gestion/renombrada.webp';
+  assert n = 1, 'S6: el archivo de prueba desapareció antes de que el propietario lo borrara';
+
   begin
     delete from storage.objects where bucket_id = 'fotos' and name = 'prueba-gestion/renombrada.webp';
     get diagnostics n = row_count;
@@ -440,7 +482,7 @@ begin
 end $$;
 reset role;
 
--- 8. Verificación final (como postgres): nada de lo intentado por otros quedó escrito --------------------------
+-- 9. Verificación final (como postgres): nada de lo intentado por otros quedó escrito --------------------------
 do $$
 begin
   assert (select valor from public.contenido where clave = 'hero.bajada') = 'Texto editado en la prueba.',

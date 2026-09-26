@@ -1,11 +1,12 @@
 // Pruebas de web/src/js/reserva-logica.js con el ejecutor incluido en Node (sin dependencias):
 //   cd web && npm test     (node --test tests/*.test.mjs)
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
-  TARIFA, clp, codigoError, esIso, grillaMes, hoyIso, nocheOcupada, noches, salidaMaxima, solapa, sumarDias,
-  total, validarDatos, validarRango,
+  MENSAJES, PRECIO_MAX, TARIFA, clp, codigoError, esIso, fijarTarifas, grillaMes, hoyIso, nocheOcupada, noches,
+  salidaMaxima, solapa, sumarDias, tarifaVigente, total, validarDatos, validarRango,
 } from "../src/js/reserva-logica.js";
 
 const HOY = "2026-10-05";
@@ -52,6 +53,53 @@ test("total y formato en pesos chilenos", () => {
   assert.deepEqual(total(3), { noches: 3, alojamiento: 174000, limpieza: 15000, total: 189000 });
   assert.equal(total(0).total, 0);
   assert.equal(clp(189000).replace(/\s/g, " "), "CLP 189.000");
+});
+
+test("fijarTarifas: sólo enteros del rango del CHECK de la 0003 y noche mayor que 0; TARIFA no cambia", () => {
+  try {
+    assert.deepEqual(tarifaVigente(), { noche: TARIFA.noche, limpieza: TARIFA.limpieza });
+    assert.equal(PRECIO_MAX, 10_000_000);
+    for (const malo of [
+      { noche: 0, limpieza: 15000 }, { noche: -1, limpieza: 15000 }, { noche: 1.5, limpieza: 15000 },
+      { noche: "70000", limpieza: 15000 }, { noche: NaN, limpieza: 0 }, { noche: PRECIO_MAX + 1, limpieza: 0 },
+      { noche: 70000, limpieza: -1 }, { noche: 70000, limpieza: "0" }, { noche: 70000, limpieza: PRECIO_MAX + 1 },
+      { noche: 70000 }, { limpieza: 0 }, {}, null, undefined, 70000,
+    ]) {
+      assert.equal(fijarTarifas(malo), false, `debería rechazar ${JSON.stringify(malo)}`);
+      assert.deepEqual(tarifaVigente(), { noche: 58000, limpieza: 15000 }, "un rechazo no cambia nada");
+    }
+    assert.equal(fijarTarifas({ noche: 70000, limpieza: 0 }), true);      // limpieza sin cobro
+    assert.deepEqual(tarifaVigente(), { noche: 70000, limpieza: 0 });
+    assert.deepEqual(total(3), { noches: 3, alojamiento: 210000, limpieza: 0, total: 210000 });
+    assert.equal(total(0).total, 0);
+    assert.deepEqual(total(3, TARIFA), { noches: 3, alojamiento: 174000, limpieza: 15000, total: 189000 });   // pura
+    assert.equal(fijarTarifas({ noche: PRECIO_MAX, limpieza: PRECIO_MAX }), true);   // los extremos del CHECK
+    assert.throws(() => { tarifaVigente().noche = 1; }, TypeError);            // congelada: no se cambia por fuera
+    assert.deepEqual([TARIFA.noche, TARIFA.limpieza], [58000, 15000]);         // los valores por defecto siguen
+    assert.ok(Object.isFrozen(TARIFA));
+  } finally {
+    fijarTarifas(TARIFA);                                                      // vuelve a los de ejemplo
+  }
+  assert.deepEqual(total(3), { noches: 3, alojamiento: 174000, limpieza: 15000, total: 189000 });
+});
+
+test("MENSAJES no llevan precios: al fijar otras tarifas no quedan desfasados", () => {
+  try {
+    fijarTarifas({ noche: 70000, limpieza: 0 });
+    for (const [codigo, texto] of Object.entries(MENSAJES)) {
+      assert.doesNotMatch(texto, /CLP|\$|\d{1,3}\.\d{3}|\d{4,}/, `${codigo} menciona un precio fijo: «${texto}»`);
+    }
+  } finally {
+    fijarTarifas(TARIFA);
+  }
+});
+
+test("reserva.js calcula con la tarifa vigente y fija las que lee contenido-publico.js", () => {
+  const fuente = readFileSync(new URL("../src/js/reserva.js", import.meta.url), "utf8");
+  assert.match(fuente, /import \{ tarifas \} from "\.\/contenido-publico\.js";/);
+  assert.match(fuente, /tarifas\(\)\.then\(\(t\) => \{ if \(t && fijarTarifas\(t\)\) resumen\(\); \}\)\.catch\(/);
+  assert.doesNotMatch(fuente, /TARIFA\.(noche|limpieza)|TARIFA\[/, "el precio sale de tarifaVigente(), no de TARIFA");
+  assert.match(fuente, /clp\(tarifaVigente\(\)\.noche\)/);
 });
 
 test("grillaMes: semanas completas, lunes primero", () => {

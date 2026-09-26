@@ -4,11 +4,11 @@ import { hoyIso } from "../../js/reserva-logica.js";
 import { mensajeError } from "./errores.js";
 import {
   ACCIONES, ESTADOS, ETIQUETA_ESTADO, ETIQUETA_SITUACION, LIMITE_NOTA, PERIODOS, PLURAL_ESTADO, accionesPermitidas,
-  asuntoCorreo, contarPorEstado, enlaceCorreo, enlaceTelefono, filtrarReservas, nochesDe, pendientesPorResolver,
-  reemplazar, situacion, validarNota,
+  asuntoCorreo, contarPorEstado, decidirApertura, enlaceCorreo, enlaceTelefono, filtrarReservas, nochesDe,
+  pendientesPorResolver, reemplazar, resolverSeleccion, situacion, validarNota,
 } from "./logica-reservas.js";
 import { anunciar, confirmar, el, mientras, vaciar } from "./ui.js";
-import { formatearDia, formatearMomento, horaCorta, largo, rangoCorto } from "./util.js";
+import { formatearDia, formatearMomento, horaCorta, largo, rangoCorto, unaALaVez } from "./util.js";
 
 export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }) {
   const $ = (s) => raiz.querySelector(s);
@@ -18,7 +18,6 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
   };
   let reservas = [];
   let cargada = false;
-  let enCurso = null;                    // carga inicial en curso
   let generacion = 0;                    // sube al cerrar sesión: una respuesta tardía ya no se pinta
   let filtro = { estado: "todas", periodo: "proximas" };
   let seleccion = null;                   // id de la reserva abierta
@@ -49,6 +48,7 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
       el("span", { clase: "chip-cuerpo" }, PLURAL_ESTADO[estado], " ", cuenta)));
   }
   nodos.recargar.addEventListener("click", () => cargar());
+  const cargaInicial = unaALaVez(() => cargar());          // una sola carga inicial a la vez (se suelta al cerrar sesión)
 
   // ------------------------------------------------------------------ datos
   async function cargar() {
@@ -109,7 +109,12 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
 
   // ------------------------------------------------------------------ detalle
   async function abrir(id) {
-    if (id !== seleccion && notaSucia) {
+    const paso = decidirApertura({ id, seleccion, notaSucia });
+    if (paso === "enfocar") {                   // es la reserva que ya está abierta: no se rehace ni se pierde la nota
+      nodos.detalle.focus();
+      return;
+    }
+    if (paso === "confirmar") {
       const ok = await confirmar({ titulo: "Nota sin guardar", texto: "La nota interna tiene cambios sin guardar. ¿Descartarlos?",
         boton: "Descartar cambios", peligro: true });
       if (!ok) return;
@@ -140,17 +145,21 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
   }
 
   function pintarDetalle(hoy) {
-    const r = reservas.find((x) => x.id === seleccion);
+    const d = resolverSeleccion(reservas, seleccion, notaSucia);
+    seleccion = d.seleccion;
+    notaSucia = d.notaSucia;                    // si la reserva ya no existe, no queda nada sin guardar
+    const r = d.reserva;
     // si se rehace el detalle de la misma reserva con la nota a medio escribir, se conserva lo escrito
     const area = nodos.detalle.querySelector("#nota-interna");
     const borrador = r && notaSucia && area && area.dataset.id === r.id ? area.value : null;
     vaciar(nodos.detalle);
     raiz.classList.toggle("con-detalle", Boolean(r));          // en teléfono: sólo el detalle
     nodos.detalle.hidden = !r;
-    if (!r) {
-      seleccion = null;
-      return;
+    if (d.desaparecida) {
+      anunciar(nodos.aviso, "La solicitud que tenías abierta ya no está en la lista (quizá se borró desde otra sesión)" +
+        (d.notaPerdida ? "; su nota sin guardar se descartó." : "."), "info");
     }
+    if (!r) return;
     const n = nochesDe(r);
     const correo = enlaceCorreo(r.email, asuntoCorreo(r));
     const fono = enlaceTelefono(r.telefono);
@@ -181,7 +190,7 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
         dato("Teléfono", fono ? el("a", { href: fono, texto: r.telefono }) : el("span", { texto: r.telefono || "—" })),
         dato("Mensaje", el("span", { clase: "mensaje-huesped", texto: r.mensaje || "—" }), "ancho"),
         dato("Creada", formatearMomento(r.creada)),
-        dato("Última modificación", formatearMomento(r.actualizada))),
+        dato("Última modificación", el("span", { clase: "detalle-actualizada", texto: formatearMomento(r.actualizada) }))),
       correo || fono ? el("p", { clase: "contacto" },
         correo ? el("a", { clase: "boton secundario chico", href: correo }, "Escribir al huésped") : null,
         fono ? el("a", { clase: "boton secundario chico", href: fono }, "Llamar") : null) : null,
@@ -204,7 +213,7 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
     const contador = el("span", { id: "nota-contador", clase: "contador" });
     const estado = el("span", { clase: "indicador", role: "status", "aria-live": "polite" });
     const guardar = el("button", { type: "submit", clase: "boton secundario chico", texto: "Guardar nota", disabled: true });
-    const original = r.nota_interna || "";
+    let original = r.nota_interna || "";
     const actualizar = () => {
       const l = largo(area.value);
       contador.textContent = `${l.toLocaleString("es-CL")} / ${LIMITE_NOTA.toLocaleString("es-CL")}`;
@@ -233,12 +242,29 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
       try {
         const nueva = await mientras([guardar, area], () => api.reservas.guardarNota(r.id, v.valor));
         reservas = reemplazar(reservas, nueva);
-        notaSucia = false;
+        const aviso = `Nota guardada a las ${horaCorta()}.`;
+        if (!form.isConnected) {
+          // el detalle se rehízo mientras se guardaba (p. ej. «Actualizar»): si sigue abierta esta reserva, se repinta
+          // con lo guardado; si se abrió otra, no se toca su nota
+          if (seleccion === r.id) {
+            notaSucia = false;
+            mensajeDetalle = null;
+            pintar({ detalle: true });
+            anunciar(nodos.detalle.querySelector(".nota .indicador"), aviso, "ok");
+          }
+          return;
+        }
+        // Se actualiza en su lugar, sin rehacer el detalle: el aviso cae en la misma región viva que ya estaba en la
+        // página (una región creada con su texto en la misma tarea no se anuncia de forma fiable).
+        original = nueva.nota_interna || "";
+        area.value = original;
+        actualizar();                                    // deja notaSucia en false y el botón deshabilitado
         mensajeDetalle = null;
-        pintar({ detalle: true });
-        const nuevoEstado = nodos.detalle.querySelector(".nota .indicador");
-        anunciar(nuevoEstado, `Nota guardada a las ${horaCorta()}.`, "ok");
-        nodos.detalle.querySelector("#nota-interna").focus();
+        anunciar(nodos.detalle.querySelector(".aviso-accion"), "");
+        const marca = nodos.detalle.querySelector(".detalle-actualizada");
+        if (marca) marca.textContent = formatearMomento(nueva.actualizada);
+        anunciar(estado, aviso, "ok");
+        area.focus();
       } catch (e) {
         anunciar(estado, mensajeError(e), "error");
       }
@@ -296,13 +322,14 @@ export function crearVistaReservas({ raiz, api, alCambiarPendientes = () => {} }
 
   return {
     mostrar() {
-      if (!cargada && !enCurso) enCurso = cargar().finally(() => { enCurso = null; });   // una sola carga a la vez
+      if (!cargada) cargaInicial();
     },
     recargar: cargar,
     hayCambios: () => notaSucia,
     /** Al cerrar sesión: quita de la memoria y del DOM los datos de huéspedes. */
     reiniciar() {
       generacion++;
+      cargaInicial.soltar();                 // si la carga vieja sigue colgada, el próximo ingreso carga de nuevo
       reservas = [];
       cargada = false;
       seleccion = null;
