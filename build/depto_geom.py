@@ -14,6 +14,9 @@ import bpy
 
 import depto_plano as P
 
+TOPE_TRIANGULOS = 200_000   # escena visible (ADR 0004, decisión 4: de 150 000 a 200 000); única fuente: la
+                            # importan las fases 3, 4 y 5
+
 S = P.M_POR_PX
 
 
@@ -110,6 +113,7 @@ MATERIALES = {
     "Depto_Mat_MarcoVentana": ((0.06, 0.06, 0.06), 0.50, 0.3, 1.0),   # v2: aluminio negro mate (diseño industrial)
     "Depto_Mat_Vidrio": ((0.80, 0.90, 0.95), 0.02, 0.0, 0.18),
     "Depto_Mat_VidrioEsmerilado": ((0.90, 0.93, 0.95), 0.35, 0.0, 0.55),
+    "Depto_Mat_PlasticoEsmerilado": ((0.93, 0.95, 0.96), 0.45, 0.0, 0.80),   # nevera: el contenido se lee como sombra
     "Depto_Mat_Pasamanos": ((0.07, 0.07, 0.08), 0.45, 0.8, 1.0),      # v2: acero negro
     "Depto_Mat_MarcoPuerta": ((0.07, 0.07, 0.07), 0.55, 0.0, 1.0),    # v2: marco pintado negro mate
     "Depto_Mat_PuertaMadera": ((0.72, 0.55, 0.36), 0.50, 0.0, 1.0),   # enchapado de roble (fase 5: oak_veneer_01)

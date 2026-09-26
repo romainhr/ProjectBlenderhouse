@@ -228,7 +228,9 @@ def z_hombro(v, media):
     return PERCHA["z_cuello"] - PERCHA["caida_hombro"] * (min(abs(v), media * 1.15) / media) ** 1.6
 
 
-# tipo: (media anchura de hombros, largo desde el cuello, espesor al centro, espesor del canto)
+# tipo: (media anchura de hombros, largo desde el cuello, espesor al centro, espesor del canto). Diseño: talla M de
+# mercado (camisa de ~0,45 m de hombros, para una percha estándar de 0,41-0,45 m); espesores de la prenda colgada
+# con su caída, no medidos.
 PRENDAS = {
     "camisa": (0.225, 0.76, 0.024, 0.017),
     "polera": (0.235, 0.68, 0.018, 0.016),
@@ -278,9 +280,11 @@ def cuerpo_prenda(bm, tipo, largo, t, rng, n=16, niveles=7):
                 return a0 + (a1 - a0) * (f - f0) / max(f1 - f0, 1e-9)
         return anchos[-1][1]
     W1 = ancho(1.0)
+    # pantalones: el ruedo cae algo inclinado (una pierna más larga que la otra al doblarse sobre la barra)
+    inclina = rng.uniform(-0.018, 0.018) if tipo == "pantalon" else 0.0
 
     def z_bot(v):
-        return bot - curva * max(0.0, 1.0 - (v / W1) ** 2)
+        return bot - curva * max(0.0, 1.0 - (v / W1) ** 2) + inclina * v / W1
     k, fase = rng.choice((3, 4, 5)), rng.uniform(0.0, TAU)
     anillos = []
     for q in range(niveles):
@@ -417,7 +421,7 @@ def barra_colgar(col, nombre, marco, u0, u1, v, z, prendas, semilla, percha_mat=
         largo = item[2] if len(item) > 2 else None
         w = PRENDAS[tipo][0]
         t = espesor_efectivo(tipo)
-        giro = rng.uniform(-1.5, 1.5)
+        giro = rng.uniform(-3.0, 3.0) if tipo == "pantalon" else rng.uniform(-1.5, 1.5)
         barrido = t * 1.12 + 2 * (w + 0.01) * math.sin(math.radians(abs(giro)))
         paso = barrido + rng.uniform(0.004, 0.012)
         if cursor + paso > libre * llenado + 0.02:
@@ -432,7 +436,7 @@ def barra_colgar(col, nombre, marco, u0, u1, v, z, prendas, semilla, percha_mat=
     for tipo, mat, largo, giro, uc in colocadas:
         w = PRENDAS[tipo][0]
         media = 0.19 if tipo == "pantalon" else min(0.205, w - 0.016)
-        dv = rng.uniform(-0.008, 0.008)
+        dv = rng.uniform(-0.015, 0.015) if tipo == "pantalon" else rng.uniform(-0.008, 0.008)
         antes = m.marca()
         percha(m, tipo, percha_mat, gancho_mat, media, r_barra, pantalon=(tipo == "pantalon"))
         prenda(m, tipo, mat, rng, largo)
@@ -475,26 +479,76 @@ def _perfil_zapato(tipo):
                          (0.19, 0.046, 0.040), (0.235, 0.040, 0.032), (0.259, 0.028, 0.024), (0.27, 0.014, 0.014)]
 
 
+TACO = dict(alto=0.045, planta_x=0.16, x0=0.008, x1=0.056, media=0.020)   # diseño: tacón del botín (4,5 cm), el
+                                                                           # talón baja hasta la planta (x = 0,16)
+CORDONES_X = (0.118, 0.140, 0.162, 0.184)                                  # diseño: 4 pasadas sobre el empeine
+
+
+def _alza(tipo, x):
+    """Cuánto sube el pie sobre el piso en x (sólo el botín de taco: del tacón a la planta)."""
+    if tipo != "taco":
+        return 0.0
+    return TACO["alto"] * max(0.0, 1.0 - x / TACO["planta_x"])
+
+
+def _loft_cerrado(bm, secciones):
+    """Une secciones (listas de vértices del mismo largo, cerradas) y tapa los extremos."""
+    for a, b in zip(secciones[:-1], secciones[1:]):
+        for k in range(len(a)):
+            j = (k + 1) % len(a)
+            bm.faces.new((a[k], a[j], b[j], b[k]))
+    bm.faces.new(list(reversed(secciones[0])))
+    bm.faces.new(secciones[-1])
+
+
 def zapato(m, tipo, mat_capellada, mat_suela, M):
-    """Un zapato: suela (planta extruida) y capellada (loft de secciones redondeadas), teñidas con los nombres de
-    TINTES `mat_capellada` y `mat_suela`. Sistema: x hacia la punta, y a lo ancho, z arriba; apoyado en z = 0 con
-    el talón en x = 0. M: matriz al marco del mueble."""
+    """Un zapato: suela (planta extruida; en el botín, inclinada sobre un tacón) y capellada (loft de secciones
+    redondeadas), teñidas con los nombres de TINTES `mat_capellada` y `mat_suela`; las zapatillas llevan lengüeta y
+    cordones. Sistema: x hacia la punta, y a lo ancho, z arriba; apoyado en z = 0 con el talón en x = 0. M: matriz
+    al marco del mueble."""
     L, s, est = _perfil_zapato(tipo)
-    planta = [(x, b + 0.003) for x, b, _ in est] + [(x, -(b + 0.003)) for x, b, _ in reversed(est)]
     with m.parte((SUELA, mat_suela), M) as bm:
-        extruir_poligono(bm, planta, 0.0, s)
+        if tipo == "taco":
+            # suela en rampa (sigue al pie) y tacón de bloque bajo el talón (corrección 07b: parecía una pantufla)
+            secs = []
+            for x, b, _ in est:
+                a, z = b + 0.003, _alza(tipo, x)
+                secs.append([bm.verts.new(p) for p in ((x, -a, z), (x, a, z), (x, a, z + s), (x, -a, z + s))])
+            _loft_cerrado(bm, secs)
+            t = TACO
+            x_a, x_b = t["x0"], t["x1"]
+            v = [bm.verts.new(p) for p in (
+                (x_a + 0.004, -(t["media"] - 0.003), 0.0), (x_b - 0.002, -(t["media"] - 0.003), 0.0),
+                (x_b - 0.002, t["media"] - 0.003, 0.0), (x_a + 0.004, t["media"] - 0.003, 0.0),
+                (x_a, -t["media"], _alza(tipo, x_a) + 0.001), (x_b, -t["media"], _alza(tipo, x_b) + 0.001),
+                (x_b, t["media"], _alza(tipo, x_b) + 0.001), (x_a, t["media"], _alza(tipo, x_a) + 0.001))]
+            for cara in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
+                bm.faces.new([v[i] for i in cara])
+        else:
+            planta = [(x, b + 0.003) for x, b, _ in est] + [(x, -(b + 0.003)) for x, b, _ in reversed(est)]
+            extruir_poligono(bm, planta, 0.0, s)
     with m.parte((CALZADO, mat_capellada), M, suave=True) as bm:
         anillos = []
         for x, b, h in est:
             sec = [(-b, 0.0), (-b, 0.45 * h), (-0.72 * b, 0.86 * h), (0.0, h), (0.72 * b, 0.86 * h), (b, 0.45 * h),
                    (b, 0.0)]
-            anillos.append([bm.verts.new((x, y, s + z)) for y, z in sec])
+            z0 = s + _alza(tipo, x)
+            anillos.append([bm.verts.new((x, y, z0 + z)) for y, z in sec])
         for a, b in zip(anillos[:-1], anillos[1:]):
             for k in range(len(a) - 1):
                 bm.faces.new((a[k], a[k + 1], b[k + 1], b[k]))
             bm.faces.new((a[-1], a[0], b[0], b[-1]))                                  # base (sobre la suela)
         bm.faces.new(list(reversed(anillos[0])))
         bm.faces.new(anillos[-1])
+        if tipo == "zapatilla":
+            # lengüeta: lámina que asoma sobre la boca, delante del tobillo (corrección 07b: se leía como pantufla)
+            xl0, xl1, bl = est[2][0] + 0.012, est[2][0] + 0.046, 0.55 * est[2][1]
+            secs = []
+            for xl, dz in ((xl0, 0.016), (xl1, 0.002)):
+                zc = _z_capellada(est, s, xl, 0.0)
+                secs.append([bm.verts.new(p) for p in ((xl, -bl, zc - 0.004), (xl, bl, zc - 0.004),
+                                                        (xl, bl, zc + dz), (xl, -bl, zc + dz))])
+            _loft_cerrado(bm, secs)
     if tipo != "bota":
         # boca del zapato: óvalo oscuro (el forro) pegado 1 mm sobre la capellada, entre el talón y el medio pie
         x0b, x1b = est[0][0] + 0.014, est[2][0] + 0.03
@@ -503,8 +557,26 @@ def zapato(m, tipo, mat_capellada, mat_suela, M):
             for i in range(12):
                 x = x0b + (x1b - x0b) * (0.5 + 0.5 * math.cos(TAU * i / 12))
                 y = 0.60 * est[1][1] * math.sin(TAU * i / 12)
-                pts.append(bm.verts.new((x, y, _z_capellada(est, s, x, y) + 0.001)))
+                pts.append(bm.verts.new((x, y, _z_capellada(est, s, x, y) + _alza(tipo, x) + 0.001)))
             bm.faces.new(pts)
+    if tipo == "zapatilla":
+        # cordones: 4 pasadas finas sobre el empeine, cada una siguiendo la curva de la capellada
+        with m.parte((SUELA, mat_suela), M) as bm:
+            for xc in CORDONES_X:
+                b = next(bb for xa, bb, _ in est if xa >= xc - 0.03)
+                ys = [0.5 * b * f for f in (-1.0, -0.5, 0.0, 0.5, 1.0)]
+                arriba = [bm.verts.new((xc - 0.002, y, _z_capellada(est, s, xc, y) + 0.0035)) for y in ys]
+                arriba2 = [bm.verts.new((xc + 0.002, y, _z_capellada(est, s, xc, y) + 0.0035)) for y in ys]
+                abajo = [bm.verts.new((xc - 0.002, y, _z_capellada(est, s, xc, y) - 0.001)) for y in ys]
+                abajo2 = [bm.verts.new((xc + 0.002, y, _z_capellada(est, s, xc, y) - 0.001)) for y in ys]
+                for k in range(len(ys) - 1):
+                    bm.faces.new((arriba[k], arriba[k + 1], arriba2[k + 1], arriba2[k]))
+                    bm.faces.new((abajo2[k], abajo2[k + 1], abajo[k + 1], abajo[k]))
+                    bm.faces.new((abajo[k], abajo[k + 1], arriba[k + 1], arriba[k]))
+                    bm.faces.new((arriba2[k], arriba2[k + 1], abajo2[k + 1], abajo2[k]))
+                for k in (0, len(ys) - 1):
+                    q = (arriba[k], arriba2[k], abajo2[k], abajo[k])
+                    bm.faces.new(q if k == 0 else tuple(reversed(q)))
 
 
 def _z_capellada(est, s, x, y):

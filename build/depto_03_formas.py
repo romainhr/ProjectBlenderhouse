@@ -141,6 +141,8 @@ CLOSET_CAJON_JUNTA = 0.004   # diseño: junta entre frentes de cajón
 CLOSET_CAJONES = {"D1": 2, "D2": 3}
 CLOSET_CAJON_RECORRIDO = 0.30
 CLOSET_REPISAS_PASO = 0.36   # diseño: distancia entre repisas de las columnas (ropa doblada de 3-5 capas)
+MALETERO_CAJA = (0.36, 0.34, 0.22)      # diseño: caja de guardado de tela (~27 L: ancho, hondo, alto) en el maletero
+MALETERO_MANTAS = (0.36, 0.34, 3, 0.06)  # diseño: pila de mantas (ancho, hondo, capas, alto de capa)
 CLOSETS = [
     # (id, x0, x1, y_fondo, y_frente)  frente = línea gris medida (CL*), fondo = muro o tabique
     ("D1_Norte", X["T3_E"], X["T4_W"], Y["N_I"], Y["CL1_N"]),
@@ -220,6 +222,8 @@ NEVERA_CAJON_VERDURA_ALTO = 0.16         # supuesto: cajón de verduras (no inte
 NEVERA_BALCON_ALTO = 0.09                # supuesto: balcones de la contrapuerta
 NEVERA_BALCONES_Z = (0.22, 0.72)         # diseño: balcón bajo (botellas altas, 0,41 m libres) y alto (salsas)
 NEVERA_LACTEOS_Z = 1.02                  # diseño: compartimento de lácteos con tapa, arriba en la contrapuerta
+PLASTICO_ESMERILADO = "Depto_Mat_PlasticoEsmerilado"   # corrección 07b: frente del cajón de verduras, tapa de
+                                                        # lácteos y táperes (el vidrio esmerilado dejaba ver nítido)
 TAPA_AZUL = ("Depto_Mat_Alimento", "Depto_Mat_RopaAzul")          # tapas y bandejas de plástico teñidas
 TAPA_CELESTE = ("Depto_Mat_Alimento", "Depto_Mat_RopaCeleste")
 
@@ -263,7 +267,7 @@ RESPALDO_ALTO = 0.08             # supuesto
 # Versión 2: lavamanos, grifería y espejo son piezas de la decoración (build/deco_cocina_bano.py, fase 4).
 
 TOL_PENETRACION = 0.001          # m: dos piezas no pueden solaparse más que esto en los tres ejes
-TOPE_TRIANGULOS = 200_000        # escena visible (ADR 0004, decisión 4: de 150 000 a 200 000)
+TOPE_TRIANGULOS = G.TOPE_TRIANGULOS
 HOLGURA_CAMARA = 0.20            # m: distancia mínima (3D) de cada cámara de ambiente a todo sólido
 
 
@@ -356,9 +360,9 @@ def _tramos(eje, u_ini, u_fin, w_frente, s, z0, z1, modulo):
 
 
 def _tirador(col, nombre, eje, u0, u1, w_cara, s, z0, z1, origen, padre, vertical=False):
-    """Manilla de barra (dos soportes, como tiradores()), delante de la cara w_cara, hija de `padre` (mismo
-    origen que la hoja). Horizontal (cajones): centrada en u0..u1, cerca del borde superior z1. Vertical
-    (puertas de bisagra): centrada en z0..z1, en el punto medio de u0..u1 (canto de la hoja)."""
+    """Manilla de barra (dos soportes y la barra que los une, como tiradores()), delante de la cara w_cara, hija de
+    `padre` (mismo origen que la hoja). Horizontal (cajones): centrada en u0..u1, cerca del borde superior z1.
+    Vertical (puertas de bisagra): centrada en z0..z1, en el punto medio de u0..u1 (canto de la hoja)."""
     T = TIRADOR
     sec, sep = px(T["seccion"]), px(T["separacion"])
     p = Pieza(nombre, "Depto_Mat_MetalNegroMate")
@@ -369,6 +373,8 @@ def _tirador(col, nombre, eje, u0, u1, w_cara, s, z0, z1, origen, padre, vertica
         for ze in (zc - largo / 2 + T["seccion"], zc + largo / 2 - T["seccion"]):
             p.caja(*uw(eje, uc - sec / 2, uc + sec / 2, w_cara, w_cara + s * (sep - sec)),
                    ze - T["seccion"] / 2, ze + T["seccion"] / 2)
+        p.caja(*uw(eje, uc - sec / 2, uc + sec / 2, w_cara + s * (sep - sec), w_cara + s * sep),
+               zc - largo / 2, zc + largo / 2)                                    # barra (faltaba: corrección 07b)
     else:
         zh = z1 - T["desde_borde"]
         largo = min(px(T["largo_max"]), 0.6 * (u1 - u0))
@@ -376,6 +382,8 @@ def _tirador(col, nombre, eje, u0, u1, w_cara, s, z0, z1, origen, padre, vertica
         for ue in (uc - largo / 2 + sec, uc + largo / 2 - sec):
             p.caja(*uw(eje, ue - sec / 2, ue + sec / 2, w_cara, w_cara + s * (sep - sec)),
                    zh - T["seccion"] / 2, zh + T["seccion"] / 2)
+        p.caja(*uw(eje, uc - largo / 2, uc + largo / 2, w_cara + s * (sep - sec), w_cara + s * sep),
+               zh - T["seccion"] / 2, zh + T["seccion"] / 2)                     # barra (faltaba: corrección 07b)
     return p.crear(col, origen=origen, padre=padre)
 
 
@@ -636,9 +644,12 @@ CLOSET_COLGADO = {
             ("polera", "Depto_Mat_RopaCrudo"), ("camisa", "Depto_Mat_RopaVerde"), ("sueter", "Depto_Mat_RopaVino"),
             ("camisa", "Depto_Mat_RopaBlanco"), ("polera", "Depto_Mat_RopaGris"), ("camisa", "Depto_Mat_RopaAzul"),
             ("chaqueta", "Depto_Mat_RopaCarbon")],
-           [("pantalon", "Depto_Mat_RopaDenim"), ("pantalon", "Depto_Mat_RopaCarbon"), ("pantalon", "Depto_Mat_RopaGris"),
-            ("pantalon", "Depto_Mat_RopaVerde"), ("pantalon", "Depto_Mat_RopaCrudo"),
-            ("pantalon", "Depto_Mat_RopaDenim"), ("pantalon", "Depto_Mat_RopaNegro")]],
+           # pantalones con largo propio (0,52-0,64 m colgando de la barra; corrección 07b: con el mismo largo los
+           # ruedos quedaban alineados al milímetro y se leían como tablas)
+           [("pantalon", "Depto_Mat_RopaDenim", 0.60), ("pantalon", "Depto_Mat_RopaCarbon", 0.55),
+            ("pantalon", "Depto_Mat_RopaGris", 0.63), ("pantalon", "Depto_Mat_RopaVerde", 0.52),
+            ("pantalon", "Depto_Mat_RopaCrudo", 0.58), ("pantalon", "Depto_Mat_RopaDenim", 0.64),
+            ("pantalon", "Depto_Mat_RopaNegro", 0.56)]],
 }
 # Paletas de la ropa doblada por dormitorio (cada capa elige un material de la lista).
 CLOSET_DOBLADA = {
@@ -753,9 +764,11 @@ def closets(col):
                 barras.append((ob.name, n, ocup))
             # maletero: cajas de guardado y mantas dobladas
             z_m = zr + E
-            DI.caja_guardado(cont, 0.24, D / 2, z_m, 0.36, 0.34, 0.22, "Depto_Mat_RopaCrudo", "Depto_Mat_RopaCrudo")
-            DI.pila_doblada(cont, W - 0.22, D / 2 - 0.02, z_m, 0.36, 0.34, 3,
-                            ("Depto_Mat_RopaCarbon", "Depto_Mat_RopaCrudo", "Depto_Mat_RopaGris"), rng, alto_capa=0.06)
+            ca, ch, cz = MALETERO_CAJA
+            DI.caja_guardado(cont, 0.24, D / 2, z_m, ca, ch, cz, "Depto_Mat_RopaCrudo", "Depto_Mat_RopaCrudo")
+            ma, mh, mn, mc = MALETERO_MANTAS
+            DI.pila_doblada(cont, W - 0.22, D / 2 - 0.02, z_m, ma, mh, mn,
+                            ("Depto_Mat_RopaCarbon", "Depto_Mat_RopaCrudo", "Depto_Mat_RopaGris"), rng, alto_capa=mc)
             # piso: zapatos en fila, puntas hacia el frente
             zs = CLOSET_ZAPATOS[cid]
             paso_u = (W - 2 * E - 0.06) / len(zs)
@@ -770,6 +783,7 @@ def closets(col):
             # columna izquierda: cajones abajo, cubierta y repisas
             n_caj = CLOSET_CAJONES[did]
             z_c = E + 0.003
+            cajones = []
             for k in range(n_caj):
                 z1c = z_c + CLOSET_CAJON_ALTO
                 (xa, ya), (xb, _) = a_px(E + 0.003, Dr), a_px(u_div0 - 0.003, Dr)
@@ -777,6 +791,7 @@ def closets(col):
                 ob_c, ref_c = _cajon(col, f"Depto_Closet_{cid}_Cajon{k + 1}", "Depto_Mat_FrenteCloset", "x",
                                      xa, xb, ya, -s, prof, z_c, z1c, 0.015, CLOSET_CAJON_RECORRIDO, False,
                                      dict(clase="cajon", etiqueta="Cajón del clóset", recinto=recinto))
+                cajones.append(ob_c)
                 uc = (xa + xb) / 2
                 Pieza(f"Depto_Closet_{cid}_Cajon{k + 1}_Tirador", "Depto_Mat_Manilla").caja(
                     uc - px(0.06), uc + px(0.06), ya, ya + s * px(0.002), z1c - 0.030, z1c - 0.018
@@ -797,6 +812,13 @@ def closets(col):
                                         alto_capa=0.045)
                 dm.crear(col, f"Depto_Closet_{cid}_Cajon{k + 1}_Ropa", marco, origen=ref_c, padre=ob_c)
                 z_c = z1c + CLOSET_CAJON_JUNTA
+            # Contrato v2, sección 1 (corrección 07b): los cajones quedan detrás de las hojas. Un cajón sólo abre con
+            # su hoja A corrida (depende_de) y la B cerrada; mover cualquiera de las dos hojas cierra antes los
+            # cajones que tapa (bloquea). Sin esto, la hoja atravesaba el frente de un cajón abierto.
+            for ob_c in cajones:
+                ob_c["depende_de"] = hoja_a.name
+            for hoja in (hoja_a, hoja_b):
+                hoja["bloquea"] = ",".join(o.name for o in cajones)
             z_cub = z_c + 0.002
             _caja_uv(inte, a_px, E, u_div0, 0.0, Dr, z_cub, z_cub + E)                        # cubierta de cajones
             rep_izq = _repisas(z_cub + E, z_techo_bot, CLOSET_REPISAS_PASO)
@@ -1128,7 +1150,7 @@ def nevera(col):
     for u_a, u_b in ((ua, ua + px(0.004)), (ub - px(0.004), ub)):
         lac.caja(*uw("y", u_a, u_b, forro_w1, forro_w1 + px(0.085)), zl, zl + 0.10)
     lac.crear(col, origen=piv_p, padre=puerta)
-    Pieza("Depto_Cocina_NeveraLacteosTapa", "Depto_Mat_VidrioEsmerilado").caja(
+    Pieza("Depto_Cocina_NeveraLacteosTapa", PLASTICO_ESMERILADO).caja(
         *uw("y", ua + px(0.004), ub - px(0.004), forro_w1 + px(0.081), forro_w1 + px(0.085)), zl + 0.006, zl + 0.10
     ).crear(col, origen=piv_p, padre=puerta)
     botellas.crear(col, "Depto_Cocina_NeveraPuertaAlimentos", mp, origen=piv_p, padre=puerta)
@@ -1195,7 +1217,7 @@ def nevera(col):
     verd.caja(xa, xb, yb - px(0.006), yb, z_cv0, z_cv1)
     verd.caja(xb - px(0.006), xb, ya, yb, z_cv0, z_cv1)                                       # fondo
     verd.crear(col)
-    Pieza("Depto_Cocina_NeveraCajonVerduraFrente", "Depto_Mat_VidrioEsmerilado").caja(
+    Pieza("Depto_Cocina_NeveraCajonVerduraFrente", PLASTICO_ESMERILADO).caja(
         xa - px(0.015), xa, ya, yb, z_cv0, z_cv1).crear(col)
     Pieza("Depto_Cocina_NeveraCajonVerduraTapa", "Depto_Mat_Vidrio").caja(
         xa - px(0.015), xb, ya, yb, z_cv1, z_cv1 + NEVERA_ESTANTE_ESP).crear(col)
@@ -1222,7 +1244,7 @@ def nevera(col):
             B_.cilindro(bm, u_y, v_y, zt, zt + 0.075, 0.025, seg=12)
         with ali.parte("Depto_Mat_ComidaRoja") as bm:
             B_.cilindro(bm, u_y, v_y, zt + 0.075, zt + 0.078, 0.026, seg=12)
-    DI.caja_guardado(ali, ui0 + 0.42, vi0 + 0.12, zt, 0.16, 0.12, 0.08, "Depto_Mat_VidrioEsmerilado",
+    DI.caja_guardado(ali, ui0 + 0.42, vi0 + 0.12, zt, 0.16, 0.12, 0.08, PLASTICO_ESMERILADO,
                      TAPA_AZUL, tapa=0.018)
     # estante 1: cartón de huevos, fuente con fruta y táper
     z1 = z_div_top + NEVERA_ESTANTES_Z[0] + NEVERA_ESTANTE_ESP
@@ -1235,7 +1257,7 @@ def nevera(col):
     for du, dv, mat, r in ((-0.035, -0.02, "Depto_Mat_ComidaRoja", 0.036), (0.035, -0.015, "Depto_Mat_ComidaVerde", 0.035),
                            (0.0, 0.04, "Depto_Mat_ComidaNaranja", 0.038)):
         DI.fruta(ali, uf + du, vf + dv, z1 + 0.012, r, mat, aplastar=0.95)
-    DI.caja_guardado(ali, ui0 + 0.13, vi0 + 0.10, z1, 0.18, 0.13, 0.09, "Depto_Mat_VidrioEsmerilado",
+    DI.caja_guardado(ali, ui0 + 0.13, vi0 + 0.10, z1, 0.18, 0.13, 0.09, PLASTICO_ESMERILADO,
                      TAPA_CELESTE, tapa=0.02)
     # estante 2: leche y jugo en cartón, frascos y una botella al fondo
     z2 = z_div_top + NEVERA_ESTANTES_Z[1] + NEVERA_ESTANTE_ESP
@@ -1284,6 +1306,9 @@ def tina(col, bid, x0, x1, ym, s):
     t.crear(col)
 
 
+WC_SEGMENTOS = 32            # corrección 07b: con 20 lados la tapa se leía facetada en primer plano (+24 triángulos)
+
+
 def inodoro(col, bid, wc, repisa):
     wx0, wx1, wy0, wy1 = wc["bbox"]
     d = -1 if wc["muro"] == "E" else +1                              # del muro del estanque hacia el baño
@@ -1299,7 +1324,8 @@ def inodoro(col, bid, wc, repisa):
                 *WC["estanque_z"])
     pz.caja(fondo + d * px(0.20), fondo, wyc - px(0.11), wyc + px(0.11), 0.0, WC["pedestal_alto"])   # pedestal
     rx = px(WC["taza_largo"]) / 2
-    pz.cilindro(fondo + d * rx, wyc, rx, px(WC["taza_ancho"]) / 2, WC["pedestal_alto"], WC["taza_alto"], seg=20)
+    pz.cilindro(fondo + d * rx, wyc, rx, px(WC["taza_ancho"]) / 2, WC["pedestal_alto"], WC["taza_alto"],
+                seg=WC_SEGMENTOS)
     pz.crear(col)
 
 
