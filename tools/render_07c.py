@@ -8,7 +8,8 @@ Uso:
 
 Usa la maquinaria de tools/render_07b.py (mundo HDRI de día, horneado de luz rebotada y cubemaps por recinto, vidrio
 de revisión, LED interior de la nevera sólo de revisión); nada va al GLB. Todas las vistas son de día: las de la
-cocina con sus colgantes encendidos y el resto con las luces apagadas (dos horneados). Escribe <out>/<vista>.png, <out>/renders.json = [{archivo, que_muestra}]
+cocina con su luz encendida (riel de focos y luz lineal bajo los altos, ronda 1), las de control de color, nevera y
+clósets con las luces apagadas y la del hall con sus focos (tres horneados). Escribe <out>/<vista>.png, <out>/renders.json = [{archivo, que_muestra}]
 y <out>/renders_detalle.json (cámara, lo abierto, exposición y resolución de cada vista).
 """
 import json
@@ -26,50 +27,75 @@ P = R.P
 N = [f"Depto_Mueble_Cocina_PuertaAlta{h}" for h in ("N1", "N2", "N3")]
 E = [f"Depto_Mueble_Cocina_PuertaAlta{h}" for h in ("E1", "E2", "E3")]
 LAVA = ["Depto_Mueble_Cocina_PuertaLavaplatos1", "Depto_Mueble_Cocina_PuertaLavaplatos2"]
+TORRE = ["Depto_Mueble_Cocina_PuertaTorreBaja", "Depto_Mueble_Cocina_PuertaDespensa"]
 NEVERA = "Depto_Mueble_Nevera_Puerta"
 CAM_COCINA = ((316.0, 262.0), 1.62, (360.0, 172.0), 1.45, 14.0)
-COCINA = ("cocina_techo",)   # vistas de cocina con sus dos colgantes (3000 K) encendidos: de día, con la luz apagada,
-                             # los frentes carbón quedaban casi negros (primera tanda)
+COCINA = ("cocina_techo",)   # vistas de cocina con su luz encendida (3000 K): desde la ronda 1, riel de tres focos y luz
+                             # lineal bajo los altos (antes, dos colgantes de jaula); de día, con la luz apagada, los
+                             # frentes carbón quedaban casi negros
 VISTAS = {
     "cocina_altos": dict(
         cam=CAM_COCINA, mundo="dia", luces=COCINA, expo=0.9, cerrar_muebles=True,
         texto="Cocina en L, todo cerrado: muebles altos en los dos tramos como marca el plano (discontinuas ALTOS_Y y "
               "ALTOS_X, de 1,50 a 2,10 m), con rellenadores de 5 cm contra T3 y en la esquina, y el módulo de 0,60 m "
-              "sobre el anafe con la campana telescópica (visera de acero cepillado al ras de las hojas). Sin las "
-              "repisas abiertas de la versión 2 ni la campana de chimenea; el azulejo llega hasta la cara inferior de "
-              "los altos."),
+              "sobre el anafe con la campana telescópica (visera de acero cepillado al ras de las hojas). Luz de la "
+              "ronda 1: riel de tres focos casi verticales en el cielo y luz lineal bajo los altos (en vez de los "
+              "colgantes de jaula, que lavaban las hojas). Torre de horno y despensa como mueble."),
     "cocina_altos_abiertos": dict(
         cam=CAM_COCINA, mundo="dia", luces=COCINA, expo=0.9, cerrar_muebles=True, abrir=(*N, *E),
         texto="La misma vista con las seis hojas de los muebles altos abiertas (bisagra en la arista de la cara vista, "
-              "95°; la de la torre a 90°): platos, boles, vasos, tazas, fuentes y frascos de despensa en los pisos y "
-              "las repisas medias. Ninguna hoja toca muro, torre ni otra hoja (prueba de aperturas de la fase 6)."),
+              "95°; la de la torre a 90°): cada hoja cuelga de un costado o divisor de 18 mm, con el piso, la repisa y "
+              "el techo partidos por módulo; platos, boles, vasos, tazas, fuentes y frascos de despensa dentro de su "
+              "módulo. Ninguna hoja toca muro, torre ni otra hoja (prueba de aperturas de la fase 6)."),
     "altos_norte_izquierda": dict(
         cam=((311.0, 207.0), 1.45, (311.0, 160.0), 1.72, 18.0), mundo="dia", luces=COCINA, expo=1.0, cerrar_muebles=True,
         abrir=(N[0],),
-        texto="Mueble alto de la izquierda del tramo norte abierto (hoja de 0,57 m con la bisagra en T3, detrás del "
-              "rellenador): platos llanos en dos pilas abajo; boles y platos de postre en la repisa media."),
+        texto="Mueble alto de la izquierda del tramo norte abierto (hoja de 0,57 m con la bisagra del lado de T3, en el "
+              "costado que queda detrás del rellenador): platos llanos en dos pilas abajo; boles y platos de postre en "
+              "la repisa media. A la derecha, la visera de acero de la campana con el cepillado a lo largo."),
     "altos_norte_derecha": dict(
         cam=((384.0, 211.0), 1.40, (376.0, 160.0), 1.72, 18.0), mundo="dia", luces=COCINA, expo=1.0, cerrar_muebles=True,
         abrir=(N[1], N[2]),
-        texto="Mueble alto de la derecha del tramo norte con sus dos hojas abiertas (bisagras al oeste): vasos bajos y "
-              "altos abajo; tazas con el asa hacia adelante y boles en la repisa. A la izquierda, la visera de la "
-              "campana."),
+        texto="Mueble alto de la derecha del tramo norte con sus dos hojas abiertas (bisagras al oeste): la de N3 en el "
+              "divisor de la junta, que parte el piso, la repisa y el techo. Vasos bajos (N2) y altos (N3) abajo; "
+              "tazas con el asa hacia adelante y boles en la repisa. A la izquierda, la visera de la campana."),
     "altos_este": dict(
         cam=((352.0, 202.0), 1.50, (398.0, 202.0), 1.72, 16.0), mundo="dia", luces=COCINA, expo=1.0, cerrar_muebles=True,
         abrir=tuple(E),
-        texto="Tramo este de los altos con las tres hojas abiertas (bisagras al sur): fuentes y boles junto al rincón "
-              "ciego de la esquina, frascos de despensa, vasos y tazas. La hoja junto a la torre se detiene a 90°, "
-              "paralela a su cara."),
+        texto="Tramo este de los altos con las tres hojas abiertas (bisagras al sur, cada una en su divisor o en el "
+              "costado de la torre): fuentes y boles junto al rincón ciego de la esquina, frascos de despensa, vasos y "
+              "tazas. La hoja junto a la torre se detiene a 90°, paralela a su cara."),
     "cocina_esquina": dict(
         cam=((350.0, 236.0), 1.62, (394.0, 180.0), 1.10, 14.0), mundo="dia", luces=COCINA, expo=0.9, cerrar_muebles=True,
         abrir=(N[2], E[0], *LAVA),
         texto="Esquina de la L con la hoja de la esquina de cada tramo alto abierta y las dos puertas bajo el "
-              "lavaplatos abiertas (bisagras al sur): la hoja 1 ya no choca con los frentes ni los tiradores de Cajon3, "
-              "y la 2 pasa delante de la torre sin tocar el horno."),
+              "lavaplatos abiertas (bisagras al sur): el mueble del lavaplatos ya es hueco, con el sifón bajo la cubeta, "
+              "y la hoja 2 pasa delante de la torre sin tocar sus puertas ni el horno."),
+    "lavaplatos_abierto": dict(
+        cam=((345.0, 196.0), 1.05, (402.0, 206.0), 0.45, 18.0), mundo="dia", luces=COCINA, expo=1.1,
+        cerrar_muebles=True, abrir=tuple(LAVA),
+        texto="Mueble del lavaplatos abierto (corrección 07c, ronda 1): cascarón hueco con piso, fondo, costados, "
+              "travesaño bajo la cubierta y el montante de 18 mm de la junta donde se atornilla la bisagra de la hoja 1; "
+              "sifón de botella cromado bajo el centro de la cubeta con su salida al muro, basurero con tapa del lado "
+              "de la hoja 1 y productos de limpieza del lado de la hoja 2. El rincón ciego de la esquina sigue macizo."),
+    "torre": dict(
+        cam=((318.0, 243.1), 1.15, (386.7, 243.1), 1.10, 14.0), mundo="dia", luces=COCINA, expo=0.9,
+        cerrar_muebles=True,
+        texto="Torre de horno y despensa como mueble (corrección 07c, ronda 1; inferido): zócalo retranqueado como el "
+              "resto de la cocina, puerta bajo el horno, horno empotrado con marco de acero cepillado, vidrio negro, "
+              "franja de mandos con dos perillas y manilla de barra a 4,5 cm, y puerta de despensa arriba; tiradores "
+              "junto al canto libre (bisagras al sur, del lado de la nevera)."),
+    "torre_abierta": dict(
+        cam=((318.0, 243.1), 1.15, (386.7, 243.1), 1.10, 14.0), mundo="dia", luces=COCINA, expo=0.9,
+        cerrar_muebles=True, abrir=tuple(TORRE),
+        texto="La torre con sus dos puertas abiertas al tope de 80° (más allá entrarían en la puerta de la nevera "
+              "abierta): bajo el horno, bandejas, una olla, una fuente de vidrio y la tabla de picar; en la despensa, "
+              "frascos, cajas de cereal, leche, aceite y cajas de guardado en tres niveles."),
     "cocina_cajones_cerrados": dict(
         cam="Depto_Cam_Cocina", mundo="dia", luces=COCINA, expo=0.9,
-        texto="Estado inicial del modelo desde la cámara de la cocina: todos los cajones cerrados por defecto "
-              "(también el de cubiertos y el de ollas, que hasta la 07c venían abiertos)."),
+        texto="Estado inicial del modelo desde la cámara de la cocina (a 1-2 m de la nevera): todos los cajones y "
+              "puertas cerrados por defecto. Aquí se mide el paso alto del acero de la nevera (criterio: sigma < 1,5 "
+              "niveles)."),
     "nevera_boca": dict(
         cam=((352.0, 322.0), 1.60, (366.0, 250.0), 1.10, 14.0), mundo="dia", luces=COCINA, expo=0.9, cerrar_muebles=True,
         abrir=(NEVERA,),
@@ -78,9 +104,20 @@ VISTAS = {
               "T_COC_S), que queda libre."),
     "acero_primer_plano": dict(
         cam=((364.0, 292.0), 1.42, (386.7, 282.0), 1.22, 30.0), mundo="dia", luces=COCINA, expo=1.0, cerrar_muebles=True,
-        texto="Primer plano de la puerta de la nevera: acero inoxidable cepillado rehecho (gris frío claro, vetas "
-              "rectas muy finas y parejas, contraste bajo, metálico 1, rugosidad de 0,25 a 0,35) con la manilla de "
-              "barra. En la 07b la textura se leía como madera clara veteada."),
+        texto="Primer plano de la puerta de la nevera con la luz de la cocina (3000 K) y la adaptación cromática de las "
+              "vistas con lámparas: acero inoxidable cepillado de la ronda 1 (sólo el rayado submilimétrico y una nube "
+              "suave; sin la capa de pasadas de 3-8 mm que se leía como vidrio acanalado) y la manilla de barra. El tono "
+              "de esta vista lo pone la luz cálida: la cromaticidad se mide en acero_neutro."),
+    "visera_primer_plano": dict(
+        cam=((342.0, 194.0), 1.38, (342.0, 170.5), 1.53, 35.0), mundo="dia", luces=COCINA, expo=1.1, cerrar_muebles=True,
+        texto="Primer plano de la visera de la campana (0,60 × 0,045 m) con el UV girado: el cepillado corre a lo largo "
+              "de la tira, como en una campana real; en la ronda 0 las vetas la cruzaban y se leía como roble."),
+    "acero_neutro": dict(
+        cam=((360.0, 292.0), 1.20, (386.7, 272.0), 0.85, 22.0), mundo="dia", luces=(), expo=1.8, cerrar_muebles=True,
+        abrir=(NEVERA,), balance=None,
+        texto="Control de color del acero, sólo con la luz del día (sin lámparas y sin adaptación cromática): el frente "
+              "del cajón freezer y los cantos de acero de la nevera junto al blanco de referencia de la contrapuerta y "
+              "el forro interior, en el mismo cuadro. La cromaticidad medida va en la bitácora."),
     "nevera_interior": dict(
         cam=((342.0, 294.0), 1.50, (400.0, 270.0), 1.00, 14.0), mundo="dia", luces=(), expo=1.0,
         abrir=(NEVERA, "Depto_Mueble_Nevera_Freezer"), cerrar_muebles=True, led_nevera=True,
@@ -98,6 +135,12 @@ VISTAS = {
         abrir=("Depto_Closet_D2_Sur_PuertaA", "Depto_Closet_D2_Sur_Cajon3", "Depto_Closet_D2_Sur_Cajon1"),
         texto="Clóset de repisas del segundo dormitorio, hoja A corrida y los cajones de arriba y de abajo abiertos: "
               "salen por la columna de la hoja A, con la B cerrada."),
+    "hall_entrada": dict(
+        cam=((360.0, 318.0), 1.55, (412.0, 352.0), 1.30, 16.0), mundo="dia", luces=("hall_techo",), expo=1.0,
+        abrir=("Depto_Puerta_Entrada_Hoja",),
+        texto="Hall con la puerta de entrada abierta a 87° contra T9 (el plano la dibuja a 90°; a 88° la manilla de "
+              "palanca ya entra en el muro) y el reloj en la cara sur de T_COC_S, sobre el interruptor, fuera del "
+              "barrido de la hoja."),
 }
 
 
@@ -123,7 +166,7 @@ PLANTA_OBJETOS = {
                          "Depto_Cocina_AltosRellenos", "Depto_Cocina_CampanaVisera", "Depto_Cocina_CampanaFrente",
                          *N, *E),
     (0.95, 0.45, 0.05): ("Depto_Cocina_NeveraCuerpo", NEVERA, "Depto_Mueble_Nevera_Freezer"),
-    (0.10, 0.65, 0.25): ("Depto_Cocina_Cubierta", "Depto_Cocina_Torre"),
+    (0.10, 0.65, 0.25): ("Depto_Cocina_Cubierta", "Depto_Cocina_Torre", *TORRE),
 }
 
 
@@ -168,9 +211,9 @@ def planta_cocina(out):
     print("PLANTA_COCINA", ruta)
     return {"vista": "planta_cocina", "archivo": "planta_cocina.png", "que_muestra": (
         "Planta de la cocina sobre el plano (recorte ampliado 6 veces): contorno de cada pieza del modelo, cerrada, "
-        "en azul los muebles altos (tramo norte hasta la discontinua ALTOS_Y, este hasta ALTOS_X, rellenadores y "
-        "campana), en naranja la nevera (contorno del plano de y 261,5 a 296,0 px, frente en la discontinua) y en verde "
-        "la cubierta y la torre.")}
+        "en azul los muebles altos (tramo norte hasta la discontinua ALTOS_Y, este hasta ALTOS_X, rellenadores, "
+        "divisores y campana), en naranja la nevera (contorno del plano de y 261,5 a 296,0 px, frente en la "
+        "discontinua) y en verde la cubierta, la torre y sus puertas.")}
 
 
 def main():
