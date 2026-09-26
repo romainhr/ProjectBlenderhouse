@@ -54,12 +54,16 @@ TOL_PENETRACION = 0.001
 TOPE_TRIANGULOS = G.TOPE_TRIANGULOS
 HOLGURA_CAMARA = 0.20
 TOL_BBOX = 2.5
-POTENCIA = dict(colgante=40.0, arco=25.0, mesa=12.0, aplique=10.0, foco=8.0, paso=25.0, balcon=30.0)   # W de las
-# luces de revisión por lámpara (supuesto; paso y balcón: fase 07b; arco de 35 a 25 W en la corrección 07b: quemaba
-# el cuadro)
+POTENCIA = dict(colgante=40.0, arco=25.0, mesa=12.0, aplique=10.0, foco=8.0, paso=25.0, balcon=30.0,
+                bajo_altos=8.0, foco_cocina=12.0)   # W de las luces de revisión por lámpara (supuesto; paso y balcón:
+# fase 07b; arco de 35 a 25 W en la corrección 07b: quemaba el cuadro; bajo_altos: cada tramo de la luz lineal de la
+# cocina y foco_cocina: cada foco de su riel, corrección 07c, ronda 1: con 8 W, como en el hall, la cocina quedaba
+# en penumbra sin los 80 W de los colgantes)
 CONO_DOMO = 60.0                 # grados (semiángulo): boca del domo vista desde la ampolleta (Ø 0,28-0,36, ~0,10 m
                                  # bajo el borde); diseño, no medido
 CONO_FOCO = 35.0                 # grados (semiángulo): foco del riel del hall (boca Ø 0,06); diseño
+CONO_LINEAL = 60.0               # grados (semiángulo): luz lineal bajo los altos de la cocina (perfil con difusor
+                                 # opalino hacia abajo, ~120° de apertura); diseño
 RADIO_PANTALLA_CHICA = 0.012     # m: radio de la fuente dentro de las pantallas cerradas del velador y los apliques
                                  # (con 0,03 las muestras de sombra suave salían por encima del tapón: rayos en el muro)
 # Grupos de luz (contrato de interacción v2, sección 2; fase 07b): uno por luminaria o conjunto que se prende junto.
@@ -105,6 +109,19 @@ PERCHERO_Z = 1.55         # diseño: base de la tabla del perchero
 RIEL_HALL = (371.0, HALL_EJE_Y)   # diseño: riel de focos en el cielo del hall, a lo largo de x (reemplaza al
                                   # colgante de domo, que quedaba sobre la cámara del hall y la encandilaba)
 UTENSILIOS_Z = 1.30       # diseño: eje de la barra de utensilios, bajo los muebles altos (1,50) y sobre la cubierta
+# Luz de la cocina (corrección 07c, ronda 1). Los dos colgantes de jaula de la v2 estaban pensados para las repisas
+# abiertas: con los muebles altos de vuelta colgaban a su altura y a 0,56 m de sus hojas, y las lavaban (frentes carbón
+# color topo, más claros que el azulejo). Ahora: riel de tres focos en el cielo, como el del hall, dirigido a la cubierta
+# y a los frentes base, y una luz lineal bajo los altos como luz de trabajo (mismo grupo cocina_techo, 3000 K).
+RIEL_COCINA = dict(xy=(340.0, 212.0), largo=1.00,          # diseño: a lo largo de x, a 0,80 m de las hojas altas
+                   giros=(180.0, 180.0, 116.0),            # del norte; dos focos al norte y el del este hacia el
+                   inclinaciones=(10.0, 10.0, 5.0))        # lavaplatos (NE), casi verticales: bañan el borde de la
+# cubierta y el piso frente a los muebles base (que rebota en sus frentes) y dejan las hojas altas a más de 40° del eje.
+# Pruebas (render de revisión, luminancia lineal de frentes altos / base del mismo material): con 25° de inclinación,
+# 2,1 en el norte; con 10° y 12°, 1,4 en el norte y 1,6 en el este, así que el del este baja a 5°.
+LUZ_BAJO_ALTOS = dict(perfil=(0.016, 0.008), retranqueo=0.03, margen=0.03)   # diseño: perfil de aluminio negro de
+# 16 × 8 mm con difusor opalino, bajo el piso de los altos, 3 cm detrás de las hojas y a 3 cm de cada costado; un tramo
+# por módulo (N1, N2-N3 y E1-E3; no bajo la campana, que tiene su propio filtro)
 TOALLERO_Z = 0.62         # diseño: eje del toallero en el frente del vanitorio (bajo la cubierta a 0,80)
 BALCON_DOMO_SOBRE_MESA = 0.80   # diseño (corrección 07b): borde del domo del balcón sobre la cubierta de la mesa
 BISTRO = dict(x=(X["BAL_F"] + X["W_O"]) / 2, y=285.0)   # diseño: mesa del balcón en el extremo sur (la silla sur
@@ -399,12 +416,45 @@ def cocina(c):
                   holgura=0.0, largo=min(0.45, (x1 - x0) * S - 0.04))
     g = c.construir(CB.grifo_cocina, "Cocina_Grifo")
     c.poner("Cocina_Grifo", "adorno", g, F3.BACHA[1] + 0.035 / S, (F3.BACHA[2] + F3.BACHA[3]) / 2, F3.MESON_Z, "O")
-    for i, x in enumerate((310.0, 368.0)):
-        # corrección 07b (ronda 2): cable corto, como en los pasos. Con el cable de 0,8 m recortado a ALTURA_LIBRE, el
-        # fondo de la jaula quedaba a 1,86 m y a 0,33 m del frente de la cubierta: a la altura de la cabeza de quien
-        # cocina. Con COLGANTE_CABLE_CORTO queda a ≈ 2,0 m.
-        col = c.colgante(OB.colgante_jaula, f"Cocina_Colgante{i + 1}", x, 200.0, cable_pref=COLGANTE_CABLE_CORTO)
-        marcar_ampolletas(col, POTENCIA["colgante"], grupo="cocina_techo")
+    # corrección 07c (ronda 1): riel de focos y luz lineal bajo los altos en vez de los dos colgantes de jaula
+    R_ = RIEL_COCINA
+    riel = c.construir(HA.riel_focos, "Cocina_Riel", largo=R_["largo"], giros=R_["giros"],
+                       inclinaciones=R_["inclinaciones"])
+    c.poner("Cocina_Riel", "adorno", riel, *R_["xy"], H, "S")          # "S": el riel (x local) corre según x
+    marcar_ampolletas(riel, POTENCIA["foco_cocina"], radio=0.02, grupo="cocina_techo", cono=CONO_FOCO)
+    led = c.mundo(luz_bajo_altos, "Cocina_LuzBajoAltos", "adorno")
+    marcar_ampolletas(led, POTENCIA["bajo_altos"], radio=0.03, grupo="cocina_techo", cono=CONO_LINEAL)
+
+
+def luz_bajo_altos(col, prefijo):
+    """Luz lineal de trabajo bajo los muebles altos de la cocina (corrección 07c, ronda 1): por cada tramo, un perfil
+    negro pegado a la cara inferior de los altos y su difusor emisivo (una ampolleta por tramo: la fase 5 le pone una
+    luz puntual en el centro y el visor un foco hacia abajo). Se arma en coordenadas del mundo."""
+    L = LUZ_BAJO_ALTOS
+    ancho, alto = L["perfil"]
+    z1 = F3.ALTOS_Z[0]
+    e, rel, f = F3.px(F3.ALTOS_ESP), F3.px(F3.ALTOS_RELLENO), F3.px(F3.FRENTE_ESP)
+    ret, mg, a = F3.px(L["retranqueo"]), F3.px(L["margen"]), F3.px(ancho)
+    xc = (F3.ANAFE[0] + F3.ANAFE[1]) / 2
+    h0, h1 = xc - F3.px(F3.CAMPANA["ancho"]) / 2, xc + F3.px(F3.CAMPANA["ancho"]) / 2
+    yf = F3.ALTOS_Y - f                                     # cara de atrás de las hojas del norte
+    xe = F3.ALTOS_X + f                                     # idem, tramo este
+    tramos = [("N1", (X["T3_E"] + rel + mg, h0 - e / 2 - mg, yf - ret - a, yf - ret)),
+              ("N2", (h1 + e / 2 + mg, F3.ALTOS_X - rel - mg, yf - ret - a, yf - ret)),
+              ("E", (xe + ret, xe + ret + a, F3.ALTOS_Y + rel + mg, F3.TORRE_Y[0] - e - mg))]
+    objs = []
+    for k, (x0, x1, y0, y1) in tramos:
+        perfil = G.Pieza(f"{prefijo}_{k}_Perfil", "Depto_Mat_MetalNegroMate")
+        perfil.caja(x0, x1, y0, y1, z1 - alto, z1)
+        objs.append(perfil.crear(col))
+        dz = 0.001
+        difusor = G.Pieza(f"{prefijo}_{k}", "Depto_Mat_Bombilla")    # difusor opalino encendido (ampolleta)
+        if k == "E":
+            difusor.caja(x0 + F3.px(0.002), x1 - F3.px(0.002), y0, y1, z1 - alto - dz, z1 - alto)
+        else:
+            difusor.caja(x0, x1, y0 + F3.px(0.002), y1 - F3.px(0.002), z1 - alto - dz, z1 - alto)
+        objs.append(difusor.crear(col))
+    return objs
 
 
 def alturas_repisa(objs):
@@ -450,7 +500,10 @@ def banos(c):
 
 
 def hall(c):
-    c.contra_muro(OB.reloj_pared, "Hall_Reloj", "solido", Y["T9_N"], 398.0, "N", z=1.65, holgura=0.0)
+    # reloj (corrección 07c, ronda 1): en la cara sur de T_COC_S, sobre el interruptor del hall. En T9 (x = 398) quedaba
+    # a 0,42 m de la bisagra de la entrada, dentro del barrido de la hoja de 1,00 m, y obligaba a un tope de 84°; el plano
+    # dibuja la hoja abierta a 90° contra T9. Aquí su esquina más cercana queda a 1,05 m de la bisagra.
+    c.contra_muro(OB.reloj_pared, "Hall_Reloj", "solido", Y["COC_S"], 398.0, "S", z=1.65, holgura=0.0)
     c.contra_muro(LV.cuadro, "Hall_Cuadro", "solido", Y["T9_N"], 356.0, "N", z=1.20, holgura=0.0,
                   arte=3)
     col = c.colgante(OB.colgante_domo, "Living_Colgante", 205.0, 246.0)
@@ -554,9 +607,7 @@ def conductos(c):
     # balcón: del muro de la fachada al florón del colgante, por la losa del balcón de arriba
     c.mundo(OB.conducto, "Balcon_Conducto", "adorno", normal_muro=(0.0, 0.0, 1.0), cajas=(),
             puntos=(pt(X["W_O"] - 0.001 / S, BISTRO["y"], zc), pt(BISTRO["x"] + florn, BISTRO["y"], zc)))
-    # cocina: entre los dos colgantes de jaula, con caja de derivación al medio
-    c.mundo(OB.conducto, "Cocina_Conducto", "adorno", normal_muro=(0.0, 0.0, 1.0), cajas=(1,),
-            puntos=(pt(310.0 + florn, 200.0, zc), pt(339.0, 200.0, zc), pt(368.0 - florn, 200.0, zc)))
+    # cocina: sin conducto desde la corrección 07c (ronda 1); el riel de focos se alimenta por su caja, como el del hall
 
 
 # ---------------------------------------------------------------------------
