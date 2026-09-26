@@ -1,12 +1,12 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 16656124,
-    "md5": "3ba187316a078f7240eb11beebf08d4c",
+    "bytes": 16611340,
+    "md5": "32663918e9fefd75a6135e9fa4655c06",
     "web": {
       "carpeta": "web",
       "archivos": 55,
-      "bytes": 18599840,
+      "bytes": 18555056,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
@@ -25,8 +25,8 @@
       "02": "c39a78c706ba",
       "03": "dc7403a96497",
       "04": "903d0853c72a",
-      "05": "5dc34d58d15a",
-      "06": "4e60ae25f402"
+      "05": "6c66dff31d4a",
+      "06": "201d7f910ca4"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
