@@ -32,10 +32,11 @@ import shutil
 import sys
 
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RAIZ, "build"))
+import depto_03_formas as F3  # noqa: E402  (sólo constantes: F3.CLOSETS)
 import depto_geom as G  # noqa: E402
 import depto_plano as P  # noqa: E402
 import depto_recorrido as R  # noqa: E402
@@ -279,13 +280,10 @@ def prueba_transformacion(datos):
 
 
 CLASES_MUEBLE = {"cajon", "closet", "nevera", "mueble"}  # docs/contrato-interaccion.md: no bloquean el recorrido
-# Excepciones documentadas (fase "07 detalle interactivo"): el canto de estas hojas, abiertas, sí invade el paso
-# frente a la pieza. Es el comportamiento esperado de un electrodoméstico o mueble real (no se circula con la
-# puerta abierta); lo que sigue exigiendo la prueba es que, CERRADAS, no rompan nada (ya lo cubre `cerradas`).
-EXCLUIR_ABIERTO = {
-    "Depto_Mueble_Nevera_Puerta": "el paso de la cocina frente a la nevera es angosto; a más de ~50° el canto "
-                                  "exterior lo tapa (medido en la prueba de recorrido de la fase 6).",
-}
+# Excepciones documentadas: móviles cuyo canto, abiertos, sí invade el paso frente a la pieza (lo que sigue exigiendo la
+# prueba es que, CERRADOS, no rompan nada: ya lo cubre `cerradas`). Corrección 07c: vacía. La nevera estaba aquí hasta
+# que su bisagra pasó al norte; ahora abierta deja pasar (prueba_muebles) y no toca la boca del hall (prueba_nevera).
+EXCLUIR_ABIERTO = {}
 
 
 def prueba_muebles(datos):
@@ -314,6 +312,168 @@ def prueba_muebles(datos):
         if not alc[recinto]:
             fallos.append(f"{m['nodo']} abierto deja inalcanzable {recinto}")
     return fallos
+
+
+# ---------------------------------------------------------------------------
+# Prueba de aperturas (corrección 07c): cada hoja o cajón, abierto en el estado que permite el contrato (con las hojas
+# de su depende_de corridas), no entra más de TOL_APERTURA en ninguna caja estática (mallas visibles que no son móviles)
+# ni en los demás móviles en su estado de referencia: los de mueble (cajón, clóset, nevera, mueble) cerrados, y las
+# puertas y el ventanal como en el modelo. Además, dos hojas de bisagra de mueble abiertas a la vez no se tocan.
+# Cada isla de malla es su caja local llevada al mundo (exacta para las piezas de cajas; giro sólo en Z) y el choque se
+# mide con ejes separadores en planta y el solape en altura.
+# ---------------------------------------------------------------------------
+TOL_APERTURA = 0.001
+
+
+def _solo_giro_z(M):
+    R = M.to_3x3()
+    return (abs(R[2][2] - 1.0) < 1e-6 and abs(R[0][2]) < 1e-6 and abs(R[1][2]) < 1e-6
+            and abs(R.determinant() - 1.0) < 1e-5)
+
+
+def _cajas(o, M):
+    """Islas de la malla de o con la matriz M -> [(4 esquinas en planta, z0, z1, aabb de mundo)]."""
+    out = []
+    for isla in G.islas_locales(o):
+        x0, x1, y0, y1, z0, z1 = G.aabb(isla)
+        if _solo_giro_z(M):
+            esq = [(M @ Vector((x, y, 0.0)))[:2] for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1))]
+            zs = (z0 + M.translation.z, z1 + M.translation.z)
+        else:
+            pts = [M @ v for v in isla]
+            bx0, bx1, by0, by1, bz0, bz1 = G.aabb(pts)
+            esq, zs = [(bx0, by0), (bx1, by0), (bx1, by1), (bx0, by1)], (bz0, bz1)
+        xs, ys = [p[0] for p in esq], [p[1] for p in esq]
+        out.append((esq, zs[0], zs[1], (min(xs), max(xs), min(ys), max(ys))))
+    return out
+
+
+def _pen_planta(A, B):
+    """Solape mínimo de dos cuadriláteros convexos en los ejes normales a sus lados (<= 0: separados)."""
+    m = float("inf")
+    for Q in (A, B):
+        for i in range(4):
+            ex, ey = Q[(i + 1) % 4][0] - Q[i][0], Q[(i + 1) % 4][1] - Q[i][1]
+            n = math.hypot(ex, ey)
+            if n < 1e-9:
+                continue
+            nx, ny = -ey / n, ex / n
+            pa, pb = [x * nx + y * ny for x, y in A], [x * nx + y * ny for x, y in B]
+            m = min(m, min(max(pa), max(pb)) - max(min(pa), min(pb)))
+            if m <= 0:
+                return m
+    return m
+
+
+def _pen(a, b):
+    if a[3][1] <= b[3][0] or b[3][1] <= a[3][0] or a[3][3] <= b[3][2] or b[3][3] <= a[3][2]:
+        return 0.0
+    dz = min(a[2], b[2]) - max(a[1], b[1])
+    if dz <= 0:
+        return 0.0
+    return min(dz, _pen_planta(a[0], b[0]))
+
+
+def _matriz_movil(o, abierta):
+    """Matriz de mundo del móvil o (sin padre) abierto o cerrado, como lo mueve el visor."""
+    if "puerta" in o:
+        ang = math.radians(o["angulo_abierta_deg"]) if abierta else 0.0
+        return Matrix.Translation(o.location) @ Matrix.Rotation(ang, 4, "Z")
+    eje = Vector(o["eje_apertura"]) * o["recorrido_m"]
+    cerrada = o.location - (eje if o.get("abierta") else Vector())
+    return Matrix.Translation(cerrada + (eje if abierta else Vector()))
+
+
+def _cajas_movil(o, M):
+    """Cajas del móvil y de todo lo que cuelga de él (mismo origen), con la matriz M del móvil."""
+    out = []
+
+    def rec(ob, Mo):
+        out.extend(_cajas(ob, Mo))
+        for h in ob.children:
+            if h.type == "MESH":
+                rec(h, Mo @ h.matrix_parent_inverse @ h.matrix_basis)
+    rec(o, M)
+    return out
+
+
+def prueba_aperturas(root):
+    bpy.context.view_layer.update()
+    moviles = [o for o in exportables(root) if o.parent is None and ("puerta" in o or "recorrido_m" in o)]
+    propios = set(moviles) | {h for o in moviles for h in descendientes(o)}
+    estaticos = [(o, c) for o in exportables(root) if o not in propios for c in _cajas(o, o.matrix_world)]
+    ref = {o.name: (False if o.get("clase") in CLASES_MUEBLE else bool(o.get("abierta"))) for o in moviles}
+    por_nombre = {o.name: o for o in moviles}
+    cache = {}
+
+    def cajas(o, abierta):
+        k = (o.name, abierta)
+        if k not in cache:
+            cache[k] = _cajas_movil(o, _matriz_movil(o, abierta))
+        return cache[k]
+    fallos, peor = [], {}
+    for m in moviles:
+        estado = dict(ref)
+        estado[m.name] = True
+        for n in [n for n in str(m.get("depende_de", "")).split(",") if n]:
+            estado[n] = True
+        mias = cajas(m, True)
+        caja = (min(a[3][0] for a in mias), max(a[3][1] for a in mias), min(a[3][2] for a in mias),
+                max(a[3][3] for a in mias), min(a[1] for a in mias), max(a[2] for a in mias))
+        cerca = [(ob, b) for ob, b in [(o.name, c) for o, c in estaticos]
+                 + [(o.name, c) for o in moviles if o is not m for c in cajas(o, estado[o.name])]
+                 if b[3][0] < caja[1] and caja[0] < b[3][1] and b[3][2] < caja[3] and caja[2] < b[3][3]
+                 and b[1] < caja[5] and caja[4] < b[2]]
+        for a in mias:
+            for ob, b in cerca:
+                p = _pen(a, b)
+                if p > peor.get(m.name, (0.0, ""))[0]:
+                    peor[m.name] = (p, ob)
+        if m.name in peor and peor[m.name][0] > TOL_APERTURA:
+            p, ob = peor[m.name]
+            fallos.append(f"{m.name} abierto entra {p * 1000:.1f} mm en {ob}")
+    hojas = [o for o in moviles if "puerta" in o and o.get("clase") in CLASES_MUEBLE]
+    pares = 0
+    for i, a in enumerate(hojas):
+        for b in hojas[i + 1:]:
+            pa = max((_pen(x, y) for x in cajas(a, True) for y in cajas(b, True)), default=0.0)
+            pares += 1
+            if pa > TOL_APERTURA:
+                fallos.append(f"{a.name} y {b.name} abiertas a la vez se cruzan {pa * 1000:.1f} mm")
+    informe = {"moviles": len(moviles), "estaticos": len(estaticos), "pares_de_hojas": pares,
+               "max_mm": round(max((p for p, _ in peor.values()), default=0.0) * 1000, 2)}
+    return fallos, informe
+
+
+def prueba_nevera(root):
+    """Corrección 07c: la hoja de la nevera abierta queda en la cocina, a >= RADIO de la boca entre el hall y la cocina
+    (la cara norte de T_COC_S, y = COC_N, de T3 al remate COC_W). Devuelve (fallos, distancia en m)."""
+    o = bpy.data.objects["Depto_Mueble_Nevera_Puerta"]
+    ys = [P.a_plano(*p[:2])[1] for c in _cajas_movil(o, _matriz_movil(o, True)) for p in c[0]]
+    xs = [P.a_plano(*p[:2])[0] for c in _cajas_movil(o, _matriz_movil(o, True)) for p in c[0]]
+    d = (P.Y["COC_N"] - max(ys)) * P.M_POR_PX
+    fallos = []
+    if d < RADIO:
+        fallos.append(f"la nevera abierta queda a {d:.2f} m de la boca hall-cocina (mínimo {RADIO})")
+    return fallos, {"distancia_boca_m": round(d, 3), "x_px": [round(min(xs), 1), round(max(xs), 1)],
+                    "y_px": [round(min(ys), 1), round(max(ys), 1)]}
+
+
+def prueba_closets(datos):
+    """Corrección 07c: la huella de cada clóset del plano (x0..x1, del fondo al frente CL*) está cubierta por las cajas
+    estáticas de colisión (lo que dibuja el minimapa y choca en el visor), muestreada cada 2 cm."""
+    fallos, cub = [], {}
+    for cid, x0, x1, yf, yfr in F3.CLOSETS:
+        a, b = P.a_blender(x0, yf), P.a_blender(x1, yfr)
+        gx = sorted((a[0], b[0]))
+        gz = sorted((-a[1], -b[1]))
+        pts = [(gx[0] + 0.01 + 0.02 * i, gz[0] + 0.01 + 0.02 * k)
+               for i in range(int((gx[1] - gx[0] - 0.02) / 0.02) + 1) for k in range(int((gz[1] - gz[0] - 0.02) / 0.02) + 1)]
+        dentro = sum(any(c[0] <= x <= c[1] and c[2] <= z <= c[3] for c in datos["estaticos"]) for x, z in pts)
+        cub[cid] = round(dentro / len(pts), 4)
+        if cub[cid] < 0.999:
+            fallos.append(f"clóset {cid}: la colisión cubre sólo el {cub[cid] * 100:.1f} % de su huella")
+    return fallos, cub
 
 
 def pruebas(datos):
@@ -423,6 +583,12 @@ def main():
     }
     fallos, informe = pruebas(datos)
     fallos += prueba_luces(datos, objs)
+    f_ap, informe["aperturas"] = prueba_aperturas(root)
+    f_nev, informe["nevera_abierta"] = prueba_nevera(root)
+    f_cl, informe["closets_cubiertos"] = prueba_closets(datos)
+    fallos += f_ap + f_nev + f_cl
+    print("CHECK aperturas:", informe["aperturas"], "nevera:", informe["nevera_abierta"],
+          "clósets cubiertos:", informe["closets_cubiertos"])
     for f in fallos:
         print("FALLA", f)
     if fallos:

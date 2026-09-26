@@ -23,6 +23,12 @@ Reglas del modelo:
 - El origen del objeto es el eje de giro (bisagra) o el punto de reposo (corredera). El giro de bisagra es en torno a +Z de Blender (+Y de glTF).
 - El contenido que debe moverse con la pieza (manilla, ropa en un cajón, estantes de la puerta de la nevera) se emparenta al objeto móvil y aparece en `hijos`.
 - Un cajón es una caja abierta arriba (frente + fondo + laterales + piso), no un bloque macizo, para que se vea su interior al abrirse.
+- Corrección 07c: todos los cajones y puertas de mueble nacen cerrados (`abierta: false`). En las hojas de mueble y de
+  la nevera el eje de giro va en la arista de la cara vista (la que mira hacia donde abre), como una bisagra de
+  cazoleta, y la bisagra va del lado que no tiene muro, torre ni esquina. La fase 6 prueba que ninguna hoja ni cajón,
+  abierto en el estado que permite este contrato (con las hojas de su `depende_de` corridas y las demás como en el
+  modelo), entre más de 1 mm en una caja estática o en otro móvil, y que dos hojas de mueble abiertas a la vez no se
+  crucen (`prueba_aperturas` en `build/depto_06_exportar.py`).
 - Cajones detrás de correderas (corrección 07b): un móvil con `depende_de` sólo se abre si esas hojas están corridas
   del todo y cualquier otra hoja que lo nombre en `bloquea` está cerrada (en un clóset de dos hojas, la B corrida tapa
   la columna de cajones). Antes de mover una hoja con `bloquea`, el visor cierra los cajones abiertos que tapa y la
