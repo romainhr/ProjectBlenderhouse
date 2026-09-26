@@ -1,4 +1,4 @@
-/* LOFT 2D2B: estilos del sitio. Dirección "luz de tarde": claro, cálido, editorial, sereno.
+/* Departamento 2D2B: estilos del sitio. Dirección "luz de tarde": claro, cálido, editorial, sereno.
    Los tokens de color y las fuentes viven en tokens.css (compartido con el visor 3D). Mobile-first: la base es
    el teléfono y @media (min-width) agrega el computador. */
 @import url("tokens.css");
