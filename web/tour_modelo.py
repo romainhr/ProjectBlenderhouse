@@ -50,7 +50,18 @@ TEX_MOVIL = 512  # px: mismo tamaño que usaba build.py para el teléfono (tour(
 # Calidad del WEBP por tipo de mapa (0-100, con el método de compresión más lento/mejor de Pillow). Los
 # normales toleran mal la compresión fuerte (aparecen bloques en zonas lisas): 88. Difuso y rugosidad
 # valen menos por píxel, 80 no se nota en el contact sheet de revisión.
-CALIDAD_WEBP = {"normal": 88, "rough": 80, "diff": 80}
+CALIDAD_WEBP = {"normal": 88, "rough": 80, "diff": 88}
+# diff 80 → 88 (2026-09-26): con 80, microcemento conservaba 22 % del detalle fino y cuero 33 %; con 88, 78 %
+# y 109 % (varianza del laplaciano contra el JPG de 1024), a cambio de ~1 MB más en escritorio.
+
+# Superficies grandes vistas de cerca (pisos, muros, mesón, puertas): mantienen 1024 px también en el teléfono
+# (difuso y normal) y su rugosidad no baja en escritorio; a 512 px el piso de roble quedaba en 213 px/m.
+SUPERFICIES_GRANDES = ("piso_roble", "microcemento", "concreto_encofrado", "losa_hormigon", "ladrillo",
+                       "roble_ahumado", "oak_veneer_01")
+
+
+def _es_grande(nombre):
+    return any(clave in nombre for clave in SUPERFICIES_GRANDES)
 
 # Los mapas de rugosidad son de muy baja frecuencia (casi un solo tono con algo de ruido): medido sobre
 # las 16 texturas _rough del depto, el .webp de escritorio a 1024 px (calidad 80) pesa 933.0 KB en total;
@@ -212,7 +223,7 @@ def construir(origen_web=ORIGEN_WEB, origen_colisiones=ORIGEN_COLISIONES, destin
 
         # .webp de escritorio: mismo tamaño que el JPG, salvo rugosidad (ver RUGOSIDAD_ESCRITORIO_WEBP).
         im_esc = Image.open(ruta)
-        if tipo == "rough" and max(im_esc.size) > RUGOSIDAD_ESCRITORIO_WEBP:
+        if tipo == "rough" and not _es_grande(nombre) and max(im_esc.size) > RUGOSIDAD_ESCRITORIO_WEBP:
             im_esc = im_esc.resize(
                 (RUGOSIDAD_ESCRITORIO_WEBP, round(im_esc.height * RUGOSIDAD_ESCRITORIO_WEBP / im_esc.width)),
                 Image.LANCZOS,
@@ -222,8 +233,9 @@ def construir(origen_web=ORIGEN_WEB, origen_colisiones=ORIGEN_COLISIONES, destin
 
         # móvil: el JPG a 512 px (como ya hacía) y su .webp a partir de la misma imagen ya reescalada.
         im = Image.open(ruta)
-        if max(im.size) > TEX_MOVIL:
-            im = im.resize((TEX_MOVIL, round(im.height * TEX_MOVIL / im.width)), Image.LANCZOS)
+        lado_movil = TEX_MOVIL if (tipo == "rough" or not _es_grande(nombre)) else max(im.size)
+        if max(im.size) > lado_movil:
+            im = im.resize((lado_movil, round(im.height * lado_movil / im.width)), Image.LANCZOS)
         destino_img = os.path.join(tex_movil_dst, nombre)
         im.convert("RGB").save(destino_img, quality=80, optimize=True)
         peso_tex_movil += os.path.getsize(destino_img)

@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project-roomVR — Arriendo turístico</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&amp;family=Public+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+      --paper: #F6F1EA;
+      --sand: #EDE3D6;
+      --ink: #1F1B17;
+      --secondary-ink: #5F574E;
+      --hairline: #E0D6C8;
+      --terracotta: #A4471E;
+      --dark-terracotta: #7F3515;
+      --olive: #5E6B52;
+      --charcoal: #26221E;
+      --radius-img: 12px;
+      --radius-btn: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--paper);
+      color: var(--ink);
+      font-family: 'Public Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .brand-nowrap {
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .font-fraunces {
+      font-family: 'Fraunces', serif;
+      font-feature-settings: "opsz" auto;
+    }
+
+    .container-1280 {
+      max-width: 1280px;
+      margin-left: auto;
+      margin-right: auto;
+      padding-left: 32px;
+      padding-right: 32px;
+      width: 100%;
+    }
+
+    /* Botones */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 48px;
+      min-height: 48px;
+      padding: 0 28px;
+      background-color: var(--terracotta);
+      color: #ffffff;
+      font-family: 'Public Sans', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      border-radius: var(--radius-btn);
+      border: none;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(31,27,23,0.06);
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+    .btn-primary:hover {
+      background-color: var(--dark-terracotta);
+    }
+
+    .btn-secondary-white {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 48px;
+      min-height: 48px;
+      padding: 0 24px;
+      background-color: transparent;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: var(--radius-btn);
+      text-decoration: none;
+      font-family: 'Public Sans', sans-serif;
+      font-weight: 500;
+      font-size: 15px;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-secondary-white:hover {
+      background-color: rgba(255, 255, 255, 0.12);
+      border-color: #ffffff;
+    }
+
+    /* 1. HEADER */
+    .site-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 72px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(20, 16, 12, 0.5) 0%, rgba(20, 16, 12, 0) 100%);
+    }
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-brand {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      text-decoration: none;
+      color: #ffffff;
+    }
+    .brand-title {
+      font-size: 24px;
+      font-weight: 500;
+    }
+    .brand-tag {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 400;
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+    .nav-link {
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      opacity: 0.92;
+      transition: opacity 0.15s ease;
+    }
+    .nav-link:hover {
+      opacity: 1;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    /* 2. HERO */
+    .hero-section {
+      position: relative;
+      width: 100%;
+      height: 88vh;
+      min-height: 640px;
+      overflow: hidden;
+      background-color: var(--charcoal);
+    }
+    .hero-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 60%;
+      display: block;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(20, 16, 12, 0.82) 0%, rgba(20, 16, 12, 0.5) 30%, rgba(20, 16, 12, 0) 55%);
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 56px;
+    }
+    .hero-content {
+      color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+    }
+    .hero-text-block {
+      max-width: 900px;
+    }
+    .hero-h1 {
+      font-size: 112px;
+      font-weight: 400;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+    .hero-subtitle-serif {
+      font-size: 36px;
+      font-style: italic;
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      color: #f6f1ea;
+    }
+    .hero-description {
+      font-size: 18px;
+      line-height: 1.5;
+      max-width: 60ch;
+      color: rgba(255, 255, 255, 0.92);
+      margin-bottom: 28px;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .hero-link-dates {
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 6px;
+      cursor: pointer;
+    }
+    .hero-link-dates:hover {
+      color: var(--sand);
+    }
+    .hero-caption {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      white-space: nowrap;
+      padding-bottom: 6px;
+    }
+
+    /* 3. FACTS LINE */
+    .facts-bar {
+      background-color: var(--paper);
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+      height: 72px;
+      display: flex;
+      align-items: center;
+    }
+    .facts-inner {
+      text-align: center;
+      width: 100%;
+      font-size: 16px;
+      color: var(--ink);
+      letter-spacing: 0.01em;
+    }
+    .facts-num {
+      font-family: 'Fraunces', serif;
+      font-style: italic;
+      font-size: 26px;
+      color: var(--terracotta);
+      font-weight: 400;
+      margin: 0 3px;
+      line-height: 1;
+    }
+    .facts-dot {
+      color: var(--hairline);
+      margin: 0 14px;
+      font-weight: 300;
+    }
+
+    /* 4. ESPACIOS */
+    .espacios-section {
+      background-color: var(--paper);
+      padding-top: 140px;
+      padding-bottom: 130px;
+    }
+    .section-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 72px;
+      gap: 48px;
+    }
+    .section-title-large {
+      font-size: 88px;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+    .section-header-desc {
+      font-size: 18px;
+      color: var(--secondary-ink);
+      max-width: 42ch;
+      line-height: 1.5;
+    }
+
+    /* Grid Asimétrico */
+    .grid-12 {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+    }
+    .espacio-card img {
+      width: 100%;
+      border-radius: var(--radius-img);
+      display: block;
+      object-fit: cover;
+    }
+    .card-caption {
+      margin-top: 16px;
+    }
+    .caption-title {
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 4px;
+      line-height: 1.25;
+    }
+    .caption-sub {
+      font-size: 15px;
+      color: var(--secondary-ink);
+      line-height: 1.5;
+    }
+
+    /* Row A */
+    .row-a-living {
+      grid-column: span 7;
+    }
+    .row-a-living img {
+      aspect-ratio: 4 / 3;
+    }
+    .row-a-cocina {
+      grid-column: span 5;
+      margin-top: 96px;
+    }
+    .row-a-cocina img {
+      aspect-ratio: 4 / 5;
+    }
+
+    /* Row B */
+    .row-b-wrap {
+      margin-top: 80px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+      align-items: center;
+    }
+    .row-b-dorm1 {
+      grid-column: span 5;
+    }
+    .row-b-dorm1 img {
+      aspect-ratio: 4 / 5;
+    }
+    .row-b-quote-block {
+      grid-column: 7 / span 6;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .quote-rule {
+      width: 48px;
+      height: 2px;
+      background-color: var(--terracotta);
+      margin-bottom: 24px;
+    }
+    .pull-quote {
+      font-size: 44px;
+      font-style: italic;
+      color: var(--dark-terracotta);
+      line-height: 1.22;
+      margin-bottom: 32px;
+      letter-spacing: -0.01em;
+    }
+
+    /* Row C */
+    .row-c-wrap {
+      margin-top: 96px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+    }
+    .row-c-col {
+      grid-column: span 4;
+    }
+    .row-c-col img {
+      aspect-ratio: 3 / 2;
+    }
+
+    /* Row D */
+    .row-d-wrap {
+      margin-top: 72px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 24px;
+    }
+    .row-d-recibidor {
+      grid-column: 2 / span 4;
+    }
+    .row-d-recibidor img {
+      aspect-ratio: 4 / 3;
+    }
+
+    /* 5. MATERIALES */
+    .materiales-section {
+      background-color: var(--sand);
+      padding-top: 120px;
+      padding-bottom: 120px;
+    }
+    .materiales-intro {
+      margin-bottom: 56px;
+      max-width: 860px;
+    }
+    .materiales-title {
+      font-size: 64px;
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 16px;
+      color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .materiales-desc {
+      font-size: 18px;
+      color: var(--secondary-ink);
+      line-height: 1.6;
+    }
+    .swatches-row {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+    .swatch-item {
+      width: 180px;
+    }
+    .swatch-box {
+      width: 180px;
+      height: 180px;
+      border-radius: var(--radius-img);
+      overflow: hidden;
+      background-color: #dfd7cc;
+      box-shadow: 0 1px 2px rgba(31,27,23,0.06);
+    }
+    .swatch-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scale(3);
+      display: block;
+    }
+    .swatch-name {
+      margin-top: 14px;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .swatch-loc {
+      margin-top: 4px;
+      font-size: 14px;
+      color: var(--secondary-ink);
+      line-height: 1.4;
+    }
+
+    /* 6. RECORRIDO 3D */
+    .tour-section {
+      background-color: var(--charcoal);
+      color: var(--paper);
+      padding-top: 140px;
+      padding-bottom: 140px;
+    }
+    .tour-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 48px;
+      align-items: center;
+    }
+    .tour-media-col {
+      grid-column: span 7;
+    }
+    .tour-img-wrap {
+      border-radius: var(--radius-img);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      background-color: #1f1b17;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+    }
+    .tour-img-wrap img {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+      display: block;
+    }
+    .tour-img-caption {
+      margin-top: 12px;
+      font-style: italic;
+      font-size: 14px;
+      color: rgba(246, 241, 234, 0.7);
+    }
+    .tour-info-col {
+      grid-column: span 5;
+    }
+    .tour-h2 {
+      font-size: 72px;
+      font-weight: 400;
+      line-height: 1;
+      margin-bottom: 20px;
+      color: var(--paper);
+      letter-spacing: -0.02em;
+    }
+    .tour-lead {
+      font-size: 18px;
+      line-height: 1.5;
+      color: var(--paper);
+      margin-bottom: 32px;
+    }
+    .tour-instructions {
+      margin-bottom: 36px;
+    }
+    .tour-inst-line {
+      padding: 16px 0;
+      border-top: 1px solid rgba(246, 241, 234, 0.16);
+      font-size: 15px;
+      line-height: 1.5;
+      color: rgba(246, 241, 234, 0.9);
+    }
+    .tour-inst-line:last-child {
+      border-bottom: 1px solid rgba(246, 241, 234, 0.16);
+    }
+    .tour-inst-bold {
+      font-weight: 600;
+      color: var(--paper);
+    }
+    .tour-disclaimer {
+      margin-top: 24px;
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(246, 241, 234, 0.7);
+    }
+
+    /* 7. LO QUE HAY */
+    .equip-section {
+      background-color: var(--paper);
+      padding-top: 120px;
+      padding-bottom: 120px;
+    }
+    .equip-header {
+      margin-bottom: 56px;
+    }
+    .equip-h2 {
+      font-size: 64px;
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1.1;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+    .equip-sub {
+      font-size: 18px;
+      color: var(--secondary-ink);
+    }
+    .equip-cols {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      column-gap: 48px;
+      row-gap: 0;
+    }
+    .equip-item {
+      padding: 20px 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .equip-item-title {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 4px;
+      line-height: 1.25;
+    }
+    .equip-item-desc {
+      font-size: 15px;
+      color: var(--secondary-ink);
+      line-height: 1.4;
+    }
+
+    /* 8. TARIFAS */
+    .tarifas-section {
+      background-color: var(--dark-terracotta);
+      color: var(--paper);
+      padding-top: 120px;
+      padding-bottom: 120px;
+    }
+    .tarifas-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 48px;
+      align-items: start;
+    }
+    .tarifas-left {
+      grid-column: span 6;
+    }
+    .tarifas-h2 {
+      font-size: 72px;
+      font-weight: 400;
+      line-height: 1;
+      margin-bottom: 18px;
+      color: var(--paper);
+      letter-spacing: -0.02em;
+    }
+    .tarifas-hero-price {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .price-num {
+      font-size: 64px;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--paper);
+    }
+    .price-note {
+      font-size: 17px;
+      color: rgba(246, 241, 234, 0.85);
+    }
+    .tarifas-intro {
+      font-size: 17px;
+      line-height: 1.5;
+      color: rgba(246, 241, 234, 0.9);
+      margin-bottom: 36px;
+      max-width: 52ch;
+    }
+    .tarifas-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .tarifas-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-top: 1px solid rgba(246, 241, 234, 0.25);
+    }
+    .tarifas-row:last-child {
+      border-bottom: 1px solid rgba(246, 241, 234, 0.25);
+    }
+    .tarifas-lbl {
+      font-size: 16px;
+      color: var(--paper);
+    }
+    .tarifas-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--paper);
+      text-align: right;
+    }
+
+    /* Card de formulario a la derecha */
+    .tarifas-right {
+      grid-column: 8 / span 5;
+    }
+    .booking-card {
+      background-color: var(--paper);
+      color: var(--ink);
+      border-radius: var(--radius-img);
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .card-title {
+      font-size: 26px;
+      font-weight: 500;
+      margin-bottom: 24px;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+    .form-group-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-field label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--secondary-ink);
+    }
+    .form-field input, .form-field select {
+      height: 48px;
+      padding: 0 14px;
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      font-family: 'Public Sans', sans-serif;
+      font-size: 15px;
+      color: var(--ink);
+      background-color: #ffffff;
+    }
+    .form-field input:focus, .form-field select:focus {
+      outline: none;
+      border-color: var(--terracotta);
+    }
+    .form-field-full {
+      margin-bottom: 24px;
+    }
+    .booking-card .btn-primary {
+      width: 100%;
+      height: 52px;
+      font-size: 16px;
+    }
+    .card-subtext {
+      margin-top: 14px;
+      font-size: 13px;
+      text-align: center;
+      color: var(--secondary-ink);
+      line-height: 1.4;
+    }
+
+    /* 9. PREGUNTAS */
+    .preguntas-section {
+      background-color: var(--paper);
+      padding-top: 120px;
+      padding-bottom: 130px;
+    }
+    .preguntas-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 48px;
+      align-items: start;
+    }
+    .preguntas-left {
+      grid-column: span 4;
+    }
+    .preguntas-h2 {
+      font-size: 64px;
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1;
+      letter-spacing: -0.01em;
+    }
+    .preguntas-right {
+      grid-column: span 8;
+    }
+    .accordion-item {
+      border-bottom: 1px solid var(--hairline);
+      padding: 24px 0;
+    }
+    .accordion-item:first-child {
+      border-top: 1px solid var(--hairline);
+    }
+    .accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .accordion-q {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.3;
+    }
+    .accordion-icon {
+      font-size: 24px;
+      color: var(--secondary-ink);
+      font-weight: 300;
+      margin-left: 20px;
+    }
+    .accordion-body {
+      margin-top: 14px;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--secondary-ink);
+      max-width: 68ch;
+    }
+
+    /* 10. FOOTER */
+    .site-footer {
+      background-color: var(--sand);
+      padding: 64px 0;
+      border-top: 1px solid var(--hairline);
+    }
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-brand {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .footer-note {
+      font-size: 14px;
+      color: var(--secondary-ink);
+      text-align: center;
+    }
+    .footer-copy {
+      font-size: 14px;
+      color: var(--secondary-ink);
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+<!-- 1. HEADER (slim 72px, transparent over hero) -->
+<header class="site-header">
+<div class="container-1280 header-inner">
+<a class="header-brand" href="#">
+<span class="brand-title font-fraunces brand-nowrap">Project-roomVR</span>
+<span class="brand-tag">Arriendo turístico</span>
+</a>
+<nav class="header-nav">
+<a class="nav-link" href="#espacios">Espacios</a>
+<a class="nav-link" href="#tour">Recorrido 3D</a>
+<a class="nav-link" href="#tarifas">Tarifas</a>
+<a class="nav-link" href="#preguntas">Preguntas</a>
+<a class="btn-primary" href="#tarifas">Reservar</a>
+</nav>
+</div>
+</header>
+<!-- 2. HERO (full bleed, 88vh tall, edge to edge) -->
+<section class="hero-section">
+<img alt="Living luminoso con muro de ladrillo y balcón al fondo" class="hero-img" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="hero-overlay">
+<div class="container-1280 hero-content">
+<div class="hero-text-block">
+<h1 class="hero-h1 font-fraunces brand-nowrap">Project-roomVR</h1>
+<div class="hero-subtitle-serif font-fraunces">Ladrillo, roble y luz cálida.</div>
+<p class="hero-description">
+            Departamento de dos dormitorios con living luminoso y balcón. Recórrelo en 3D desde el navegador antes de reservar.
+          </p>
+<div class="hero-actions">
+<a class="btn-primary" href="#tour">Recorrer en 3D</a>
+<a class="hero-link-dates" href="#tarifas">Ver fechas</a>
+</div>
+</div>
+<div class="hero-caption">
+          Portada: el living, con el balcón al fondo
+        </div>
+</div>
+</div>
+</section>
+<!-- 3. FACTS LINE (72px, centered single line, hairlines) -->
+<section class="facts-bar">
+<div class="container-1280 facts-inner">
+<span class="facts-num">2</span> dormitorios 
+      <span class="facts-dot">·</span>
+<span class="facts-num">2</span> baños 
+      <span class="facts-dot">·</span> 
+      balcón 
+      <span class="facts-dot">·</span> 
+      hasta <span class="facts-num">4</span> huéspedes 
+      <span class="facts-dot">·</span> 
+      ≈ <span class="facts-num">54</span> m² construidos
+    </div>
+</section>
+<!-- 4. ESPACIOS (asymmetric magazine gallery) -->
+<section class="espacios-section" id="espacios">
+<div class="container-1280">
+<div class="section-header-row">
+<h2 class="section-title-large font-fraunces">Espacios</h2>
+<div class="section-header-desc">
+          Un living-cocina integrado entre dos dormitorios, cada uno con su baño cerca y closet corredero.
+        </div>
+</div>
+<!-- Row A: Living 7 cols + Cocina 5 cols (+96px shift) -->
+<div class="grid-12">
+<div class="espacio-card row-a-living">
+<img alt="Living con sofá de cuero y mueble de TV de roble" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="card-caption">
+<div class="caption-title font-fraunces">Living</div>
+<div class="caption-sub">Muro de ladrillo a la vista, mueble de TV flotante de roble, sofá de cuero y lámpara de arco. Ventanal corredero al balcón.</div>
+</div>
+</div>
+<div class="espacio-card row-a-cocina">
+<img alt="Cocina integrada con cubierta de concreto y repisas de roble" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="card-caption">
+<div class="caption-title font-fraunces">Cocina</div>
+<div class="caption-sub">En L, con frentes carbón, cubierta de concreto, anafe con campana de acero, horno y refrigerador. Repisas abiertas de roble.</div>
+</div>
+</div>
+</div>
+<!-- Row B: Dormitorio 1 (5 cols) + Pull Quote (6 cols) -->
+<div class="row-b-wrap">
+<div class="espacio-card row-b-dorm1">
+<img alt="Dormitorio 1 con cama king y veladores de acero y roble" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="card-caption">
+<div class="caption-title font-fraunces">Dormitorio 1</div>
+<div class="caption-sub">Cama king de 1,80 × 2,00 con cabecero tapizado, veladores de acero y roble y closet corredero.</div>
+</div>
+</div>
+<div class="row-b-quote-block">
+<div class="quote-rule"></div>
+<div class="pull-quote font-fraunces">
+            «Ladrillo, concreto y roble: materiales nobles, sin nada de más.»
+          </div>
+</div>
+</div>
+<!-- Row C: 3 columnas de 4 cols c/u (Dormitorio 2, Dos baños, Balcón) -->
+<div class="row-c-wrap">
+<div class="espacio-card row-c-col">
+<img alt="Dormitorio 2 con cabecero de cuero y apliques" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="card-caption">
+<div class="caption-title font-fraunces">Dormitorio 2</div>
+<div class="caption-sub">Cama king con cabecero de cuero, apliques de brazo para leer y closet corredero.</div>
+</div>
+</div>
+<div class="espacio-card row-c-col">
+<img alt="Dos baños con lavabo de concreto y vanitorio de roble" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="card-caption">
+<div class="caption-title font-fraunces">Dos baños</div>
+<div class="caption-sub">Tina con ducha de tubería vista y mampara, lavabo de concreto sobre vanitorio de roble y espejo redondo.</div>
+</div>
+</div>
+<div class="espacio-card row-c-col">
+<img alt="Balcón con mesa bistró de acero y sillas de roble" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="card-caption">
+<div class="caption-title font-fraunces">Balcón</div>
+<div class="caption-sub">Mesa bistró de acero y dos sillas plegables de roble, con baranda de vidrio.</div>
+</div>
+</div>
+</div>
+<!-- Row D: Recibidor (4 cols, offset col 2) -->
+<div class="row-d-wrap">
+<div class="espacio-card row-d-recibidor">
+<img alt="Recibidor con banca para zapatos y perchero de cañería negra" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+<div class="card-caption">
+<div class="caption-title font-fraunces">Recibidor</div>
+<div class="caption-sub">Banca con repisa para zapatos y perchero de cañería negra junto a la entrada.</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. MATERIALES (banda arena #EDE3D6, swatches 180x180 scale 3) -->
+<section class="materiales-section">
+<div class="container-1280">
+<div class="materiales-intro">
+<h2 class="materiales-title font-fraunces">Materiales</h2>
+<div class="materiales-desc">
+          Ladrillo a la vista, concreto, acero negro, roble y cuero: las mismas texturas del modelo 3D que ves en las imágenes y en el recorrido.
+        </div>
+</div>
+<div class="swatches-row">
+<!-- 1. Ladrillo a la vista -->
+<div class="swatch-item">
+<div class="swatch-box">
+<img alt="Muestra de textura de ladrillo a la vista" class="swatch-img" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg" style="transform-origin: 85% 40%;"/>
+</div>
+<div class="swatch-name font-fraunces">Ladrillo a la vista</div>
+<div class="swatch-loc">Muro del living</div>
+</div>
+<!-- 2. Concreto visto -->
+<div class="swatch-item">
+<div class="swatch-box">
+<img alt="Muestra de cielo de concreto visto" class="swatch-img" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg" style="transform-origin: 50% 5%;"/>
+</div>
+<div class="swatch-name font-fraunces">Concreto visto</div>
+<div class="swatch-loc">Cielo raso, con marcas de encofrado</div>
+</div>
+<!-- 3. Tablas de roble -->
+<div class="swatch-item">
+<div class="swatch-box">
+<img alt="Muestra de tablas de roble" class="swatch-img" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg" style="transform-origin: 75% 88%;"/>
+</div>
+<div class="swatch-name font-fraunces">Tablas de roble</div>
+<div class="swatch-loc">Mueble de TV y repisas</div>
+</div>
+<!-- 4. Cuero coñac -->
+<div class="swatch-item">
+<div class="swatch-box">
+<img alt="Muestra de cuero coñac" class="swatch-img" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg" style="transform-origin: 62% 68%;"/>
+</div>
+<div class="swatch-name font-fraunces">Cuero coñac</div>
+<div class="swatch-loc">Sofá y cabecero del dormitorio 2</div>
+</div>
+<!-- 5. Acero negro -->
+<div class="swatch-item">
+<div class="swatch-box">
+<img alt="Muestra de acero negro" class="swatch-img" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg" style="transform-origin: 50% 60%;"/>
+</div>
+<div class="swatch-name font-fraunces">Acero negro</div>
+<div class="swatch-loc">Veladores, mesa bistró y marcos</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 6. RECORRIDO 3D (sección carbón #26221E) -->
+<section class="tour-section" id="tour">
+<div class="container-1280 tour-grid">
+<div class="tour-media-col">
+<div class="tour-img-wrap">
+<img alt="Maqueta axonométrica 3D del departamento vista desde arriba" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="tour-img-caption font-fraunces">
+          La maqueta completa, vista desde arriba y sin cielo.
+        </div>
+</div>
+<div class="tour-info-col">
+<h2 class="tour-h2 font-fraunces">Recorrido 3D</h2>
+<div class="tour-lead">
+          Camina por el departamento en primera persona, en el computador o en el teléfono.
+        </div>
+<div class="tour-instructions">
+<div class="tour-inst-line">
+<span class="tour-inst-bold">En computador</span> — se camina con el teclado y se mira con el ratón.
+          </div>
+<div class="tour-inst-line">
+<span class="tour-inst-bold">En teléfono</span> — se camina y se mira arrastrando la pantalla.
+          </div>
+<div class="tour-inst-line">
+<span class="tour-inst-bold">Puertas y ventanal</span> — se abren con un clic o un toque.
+          </div>
+</div>
+<a class="btn-primary" href="#tour">Entrar al recorrido</a>
+<div class="tour-disclaimer">
+          Modelo hecho desde el plano de arquitectura, sin cotas: las alturas y las terminaciones son una propuesta de decoración.
+        </div>
+</div>
+</div>
+</section>
+<!-- 7. LO QUE HAY (3 columnas de texto sin cajas) -->
+<section class="equip-section">
+<div class="container-1280">
+<div class="equip-header">
+<h2 class="equip-h2 font-fraunces">Lo que hay</h2>
+<div class="equip-sub">Lo que se ve en el modelo, más lo marcado como ejemplo.</div>
+</div>
+<div class="equip-cols">
+<!-- Columna 1 -->
+<div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">Cocina equipada</div>
+<div class="equip-item-desc">Anafe, campana, horno y refrigerador.</div>
+</div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">Lavadora</div>
+<div class="equip-item-desc">En un nicho con puerta plegable.</div>
+</div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">TV de 55"</div>
+<div class="equip-item-desc">Sobre el mueble flotante del living.</div>
+</div>
+</div>
+<!-- Columna 2 -->
+<div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">Dos baños</div>
+<div class="equip-item-desc">Tina con ducha y mampara en cada uno.</div>
+</div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">Closets</div>
+<div class="equip-item-desc">Correderos, en los dos dormitorios.</div>
+</div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">Balcón</div>
+<div class="equip-item-desc">Mesa bistró y dos sillas.</div>
+</div>
+</div>
+<!-- Columna 3 -->
+<div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">Wi-Fi</div>
+<div class="equip-item-desc">ejemplo</div>
+</div>
+<div class="equip-item">
+<div class="equip-item-title font-fraunces">Ropa de cama</div>
+<div class="equip-item-desc">Sábanas y toallas: ejemplo.</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 8. TARIFAS (franja terracota oscura #7F3515 + card) -->
+<section class="tarifas-section" id="tarifas">
+<div class="container-1280 tarifas-grid">
+<div class="tarifas-left">
+<h2 class="tarifas-h2 font-fraunces">Tarifas</h2>
+<div class="tarifas-hero-price">
+<span class="price-num font-fraunces">CLP 58.000</span>
+<span class="price-note">/ noche · ejemplo</span>
+</div>
+<p class="tarifas-intro">
+          Envías una solicitud con tus fechas y te respondemos por correo para confirmarla. No se cobra nada en línea.
+        </p>
+<div class="tarifas-table">
+<div class="tarifas-row">
+<span class="tarifas-lbl">Noche (ejemplo)</span>
+<span class="tarifas-val font-fraunces">CLP 58.000</span>
+</div>
+<div class="tarifas-row">
+<span class="tarifas-lbl">Limpieza, una vez (ejemplo)</span>
+<span class="tarifas-val font-fraunces">CLP 15.000</span>
+</div>
+<div class="tarifas-row">
+<span class="tarifas-lbl">Estadía</span>
+<span class="tarifas-val font-fraunces">de 2 a 30 noches</span>
+</div>
+<div class="tarifas-row">
+<span class="tarifas-lbl">Huéspedes</span>
+<span class="tarifas-val font-fraunces">hasta 4</span>
+</div>
+<div class="tarifas-row">
+<span class="tarifas-lbl">Llegada / salida (ejemplo)</span>
+<span class="tarifas-val font-fraunces">desde 15:00 / hasta 11:00</span>
+</div>
+<div class="tarifas-row">
+<span class="tarifas-lbl">Pago</span>
+<span class="tarifas-val font-fraunces">se acuerda al confirmar</span>
+</div>
+</div>
+</div>
+<div class="tarifas-right">
+<div class="booking-card">
+<div class="card-title font-fraunces">Solicitar reserva</div>
+<form onsubmit="event.preventDefault();">
+<div class="form-group-row">
+<div class="form-field">
+<label for="llegada">Llegada</label>
+<input id="llegada" type="date" value="2026-04-10"/>
+</div>
+<div class="form-field">
+<label for="salida">Salida</label>
+<input id="salida" type="date" value="2026-04-14"/>
+</div>
+</div>
+<div class="form-field form-field-full">
+<label for="huespedes">Huéspedes</label>
+<select id="huespedes">
+<option value="1">1 huésped</option>
+<option selected="" value="2">2 huéspedes</option>
+<option value="3">3 huéspedes</option>
+<option value="4">4 huéspedes</option>
+</select>
+</div>
+<button class="btn-primary" type="submit">Ver disponibilidad</button>
+</form>
+<div class="card-subtext">
+            Sin cobro en línea: te confirmamos por correo.
+          </div>
+</div>
+</div>
+</div>
+</section>
+<!-- 9. PREGUNTAS (acordeón tipográfico) -->
+<section class="preguntas-section" id="preguntas">
+<div class="container-1280 preguntas-grid">
+<div class="preguntas-left">
+<h2 class="preguntas-h2 font-fraunces">Preguntas</h2>
+</div>
+<div class="preguntas-right">
+<!-- Q1 Abierta -->
+<div class="accordion-item">
+<div class="accordion-header">
+<div class="accordion-q font-fraunces">¿Las imágenes son fotos del departamento?</div>
+<div class="accordion-icon">−</div>
+</div>
+<div class="accordion-body">
+            No. Son renders de un modelo 3D construido desde el plano de arquitectura, que no trae cotas: las medidas se infirieron con un margen de ± 5 % y las alturas, los muebles y las terminaciones son una propuesta de decoración.
+          </div>
+</div>
+<!-- Q2 -->
+<div class="accordion-item">
+<div class="accordion-header">
+<div class="accordion-q font-fraunces">¿Cómo se confirma una reserva?</div>
+<div class="accordion-icon">+</div>
+</div>
+</div>
+<!-- Q3 -->
+<div class="accordion-item">
+<div class="accordion-header">
+<div class="accordion-q font-fraunces">¿Se paga en línea?</div>
+<div class="accordion-icon">+</div>
+</div>
+</div>
+<!-- Q4 -->
+<div class="accordion-item">
+<div class="accordion-header">
+<div class="accordion-q font-fraunces">¿Dónde está?</div>
+<div class="accordion-icon">+</div>
+</div>
+</div>
+<!-- Q5 -->
+<div class="accordion-item">
+<div class="accordion-header">
+<div class="accordion-q font-fraunces">¿El tour funciona en el teléfono?</div>
+<div class="accordion-icon">+</div>
+</div>
+</div>
+<!-- Q6 -->
+<div class="accordion-item">
+<div class="accordion-header">
+<div class="accordion-q font-fraunces">¿Qué hacen con mis datos?</div>
+<div class="accordion-icon">+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 10. FOOTER -->
+<footer class="site-footer">
+<div class="container-1280 footer-inner">
+<a class="footer-brand font-fraunces brand-nowrap" href="#">Project-roomVR</a>
+<div class="footer-note">
+        Imágenes renderizadas desde un modelo 3D · tarifas de ejemplo
+      </div>
+<div class="footer-copy">
+        © 2026 Project-roomVR · Privacidad
+      </div>
+</div>
+</footer>
+</body>
+</html>

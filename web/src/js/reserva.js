@@ -1,9 +1,10 @@
 // Página de reserva: calendario de disponibilidad, datos del huésped, resumen y envío de la solicitud.
 import {
-  MENSAJES, TARIFA, clp, codigoError, esIso, grillaMes, hoyIso, nocheOcupada, salidaMaxima, sumarDias, total,
-  validarDatos, validarRango,
+  MENSAJES, TARIFA, clp, codigoError, esIso, fijarTarifas, grillaMes, hayMesSiguiente, hoyIso, mesesPorPagina,
+  nocheOcupada, noches, salidaMaxima, sumarDias, tarifaVigente, total, validarDatos, validarRango,
 } from "./reserva-logica.js";
 import { disponibilidad, simulado, solicitar } from "./reservas-api.js";
+import { tarifas } from "./contenido-publico.js";
 
 const $ = (s) => document.querySelector(s);
 const HOY = hoyIso();
@@ -15,6 +16,12 @@ const fMes = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric", 
 const fDia = new Intl.DateTimeFormat("es-CL", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
 const fLargo = new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const aFecha = (s) => new Date(s + "T00:00:00Z");
+/** Ancho disponible para los meses: el de contenido de #calendario. No se mide #meses: con un solo mes, el CSS lo
+ *  angosta a 392 px (.cal-cuerpo:has(.mes:only-child)) y la cuenta se quedaba en 1 aunque la ventana creciera. */
+function anchoMeses() {
+  const c = $("#calendario"), s = getComputedStyle(c);
+  return c.clientWidth - parseFloat(s.paddingLeft) - parseFloat(s.paddingRight);
+}
 
 const estado = {
   ocupados: [],
@@ -22,6 +29,7 @@ const estado = {
   salida: null,
   huespedes: 2,
   mes: (() => { const d = aFecha(HOY); return { anio: d.getUTCFullYear(), mes: d.getUTCMonth() }; })(),
+  porPagina: mesesPorPagina(anchoMeses()),   // 1 o 2 según el ancho del contenedor, no del viewport
   enviando: false,
 };
 
@@ -61,10 +69,11 @@ function motivo(d) {
 }
 
 function pintar() {
-  const foco = document.activeElement?.dataset?.dia;
+  const previo = document.activeElement, foco = previo?.dataset?.dia;
   const cont = $("#meses");
   cont.replaceChildren();
-  for (let k = 0; k < 2; k++) {
+  cont.style.setProperty("--meses", String(estado.porPagina));
+  for (let k = 0; k < estado.porPagina; k++) {
     const fecha = new Date(Date.UTC(estado.mes.anio, estado.mes.mes + k, 1));
     const anio = fecha.getUTCFullYear(), mes = fecha.getUTCMonth();
     const bloque = document.createElement("div");
@@ -100,7 +109,10 @@ function pintar() {
         const esEntrada = dia === estado.entrada, esSalida = dia === estado.salida;
         const enRango = estado.entrada && estado.salida && dia > estado.entrada && dia < estado.salida;
         if (esEntrada || esSalida) b.classList.add("extremo");
+        if (esEntrada) b.classList.add("llegada");
+        if (esSalida) b.classList.add("salida");
         if (enRango) b.classList.add("en-rango");
+        if (dia === HOY) { b.classList.add("hoy"); b.setAttribute("aria-current", "date"); }
         if (esEntrada || esSalida) b.setAttribute("aria-pressed", "true");
         const extra = esEntrada ? ", llegada elegida" : esSalida ? ", salida elegida" : enRango ? ", dentro de tu estadía"
           : !habilitado ? `, no disponible: ${motivo(dia)}` : "";
@@ -114,16 +126,20 @@ function pintar() {
   const inicio = new Date(Date.UTC(estado.mes.anio, estado.mes.mes, 1));
   const hoy = aFecha(HOY);
   $("#mes-ant").disabled = estado.enviando || inicio <= new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1));
-  // la última página alcanzable es la que contiene HASTA (dos meses por página)
-  $("#mes-sig").disabled = estado.enviando || new Date(Date.UTC(estado.mes.anio, estado.mes.mes + 2, 1)) > aFecha(HASTA);
+  // la última página alcanzable es la que contiene HASTA (con uno o dos meses por página)
+  $("#mes-sig").disabled = estado.enviando || !hayMesSiguiente(estado.mes.anio, estado.mes.mes, estado.porPagina, HASTA);
   $("#rango-texto").textContent = !estado.entrada ? "Elige la llegada"
     : !estado.salida ? `Llegada ${fDia.format(aFecha(estado.entrada))} · elige la salida`
-      : `${fDia.format(aFecha(estado.entrada))} → ${fDia.format(aFecha(estado.salida))}`;
-  // conservar el foco: el mismo día si sigue habilitado, o un botón de navegación que siga activo
+      : `${fDia.format(aFecha(estado.entrada))} → ${fDia.format(aFecha(estado.salida))} · ` +
+        `${noches(estado.entrada, estado.salida)} noches`;
+  // conservar el foco (ESPEC-v4 §8.3). replaceChildren() lo deja en el body, así que se decide con lo que había antes:
+  // el mismo día si sigue habilitado; si no (una salida que no sirve de llegada queda deshabilitada), #rango-texto, que
+  // anuncia el rango; y si una flecha llegó al tope, la otra flecha.
   const mismo = foco && document.querySelector(`button.dia[data-dia="${foco}"]`);
   if (mismo && !mismo.disabled) mismo.focus();
-  else if (document.activeElement?.disabled || (foco && !mismo)) {
-    (["#mes-sig", "#mes-ant"].map((s) => $(s)).find((b) => !b.disabled) || $("#rango-texto")).focus?.();
+  else if (foco) $("#rango-texto").focus();
+  else if (previo?.disabled && previo.closest(".cal-nav")) {
+    (["#mes-sig", "#mes-ant"].map((s) => $(s)).find((b) => !b.disabled) || $("#rango-texto")).focus();
   }
   resumen();
 }
@@ -151,6 +167,13 @@ function moverMes(delta) {
 }
 $("#mes-ant").addEventListener("click", () => moverMes(-1));
 $("#mes-sig").addEventListener("click", () => moverMes(1));
+// meses por página según el ancho real del calendario (con el resumen al lado, dos meses caben desde unos 1.230 px)
+if ("ResizeObserver" in window) {
+  new ResizeObserver(() => {
+    const n = mesesPorPagina(anchoMeses());
+    if (n !== estado.porPagina) { estado.porPagina = n; pintar(); }
+  }).observe($("#calendario"));
+}
 
 // ---------------------------------------------------------------- huéspedes y resumen
 function huespedes(n) {
@@ -173,16 +196,23 @@ function resumen() {
   const t = total(v.ok ? v.noches : 0);
   $("#s-entrada").textContent = estado.entrada ? fDia.format(aFecha(estado.entrada)) : "—";
   $("#s-salida").textContent = estado.salida ? fDia.format(aFecha(estado.salida)) : "—";
-  $("#s-noches-txt").textContent = v.ok ? `${v.noches} noches × ${clp(TARIFA.noche)} (ejemplo)` : "Noches";
+  $("#s-noches-txt").textContent = v.ok ? `${v.noches} noches × ${clp(tarifaVigente().noche)}` : "Noches";
   $("#s-alojamiento").textContent = v.ok ? clp(t.alojamiento) : "—";
   $("#s-limpieza").textContent = v.ok ? clp(t.limpieza) : "—";
   $("#s-total").textContent = v.ok ? clp(t.total) : "—";
-  $("#m-total").textContent = v.ok ? clp(t.total) : "—";
-  $("#m-noches").textContent = v.ok ? `${v.noches} noches · ejemplo` : "elige fechas";
+  $("#m-total").textContent = v.ok ? clp(t.total) : "Elige tus fechas";
+  $("#m-total").classList.toggle("vacio", !v.ok);
+  $("#m-noches").textContent = v.ok ? `${v.noches} noches · total de ejemplo` : "sin cobro en línea";
   if (estado.entrada && estado.salida && !v.ok && v.error) mostrarError($("#cal-error"), MENSAJES[v.error]);
-  const listo = v.ok && !estado.enviando;
-  $("#enviar").disabled = !listo;
-  $("#enviar-movil").disabled = !listo;
+  // sin fechas válidas los botones siguen activos (aria-disabled): al tocarlos, el envío explica qué falta y lleva al
+  // calendario. disabled de verdad, solo mientras se envía.
+  for (const b of [$("#enviar"), $("#enviar-movil")]) {
+    b.disabled = estado.enviando;
+    b.setAttribute("aria-disabled", String(!v.ok));
+  }
+}
+function rotuloEnvio(texto) {
+  for (const b of [$("#enviar"), $("#enviar-movil")]) b.textContent = texto;
 }
 
 // ---------------------------------------------------------------- envío
@@ -191,17 +221,28 @@ function mostrarError(el, texto) {
   el.textContent = texto;
   el.hidden = !texto;
 }
+/** Lleva al calendario con #cal-error a la vista. Si la tarjeta entera no cabe entre el encabezado y la barra fija
+ *  (teléfono), manda el mensaje, que va al final de la tarjeta: con block "start" quedaba tapado por la barra. */
+function verCalendario() {
+  const cal = $("#calendario"), raiz = getComputedStyle(document.documentElement);
+  const libre = innerHeight - (parseFloat(raiz.scrollPaddingTop) || 0) - (parseFloat(raiz.scrollPaddingBottom) || 0);
+  if (cal.getBoundingClientRect().height <= libre) cal.scrollIntoView({ block: "start" });
+  else $("#cal-error").scrollIntoView({ block: "end" });
+}
 
 $("#formulario").addEventListener("submit", async (ev) => {
   ev.preventDefault();
   if (estado.enviando) return;
+  // desde dónde se envió (Safari no enfoca un botón al hacer clic): mientras se envía, el botón queda disabled y el
+  // foco cae al body; si hay error, vuelve aquí
+  const origen = document.activeElement && document.activeElement !== document.body ? document.activeElement : ev.submitter;
   const datos = Object.fromEntries(campos.map((c) => [c, $("#" + c).value]));
   datos.huespedes = estado.huespedes;
   datos.acepta = $("#acepta").checked;
   const v = rangoActual();
   if (!v.ok) {
     mostrarError($("#cal-error"), MENSAJES[v.error || "fechas_requeridas"]);
-    $("#calendario").scrollIntoView({ block: "start" });
+    verCalendario();
     return;
   }
   const errores = validarDatos(datos);
@@ -219,21 +260,27 @@ $("#formulario").addEventListener("submit", async (ev) => {
   if ($("#sitio").value) { exito("—", v.noches, pedido); return; }   // campo trampa lleno: un bot; no se envía nada
   estado.enviando = true;
   pintar();
-  $("#enviar").textContent = "Enviando…";
+  rotuloEnvio("Enviando…");
   let r;
   try {
     [r] = await solicitar(pedido);
   } catch (err) {
     const c = codigoError(err);
     estado.enviando = false;
-    $("#enviar").textContent = "Solicitar reserva";
+    rotuloEnvio("Solicitar");
     if (c === "fechas_ocupadas") await cargarDisponibilidad();
-    mostrarError(c === "fechas_ocupadas" || c.startsWith("fecha") ? $("#cal-error") : $("#form-error"), MENSAJES[c]);
+    const aviso = c === "fechas_ocupadas" || c.startsWith("fecha") ? $("#cal-error") : $("#form-error");
+    mostrarError(aviso, MENSAJES[c]);
     pintar();
+    if (!document.activeElement || document.activeElement === document.body) {
+      origen?.focus({ preventScroll: true });
+      if (document.activeElement !== origen) aviso.focus({ preventScroll: true });   // p. ej. #enviar oculto (< 1000 px)
+    }
+    if (aviso.id === "cal-error") verCalendario();
     return;
   }
   estado.enviando = false;
-  $("#enviar").textContent = "Solicitar reserva";
+  rotuloEnvio("Solicitar");
   exito(r.codigo, r.noches, pedido);
 });
 
@@ -263,3 +310,6 @@ async function cargarDisponibilidad() {
 huespedes(estado.huespedes);
 pintar();
 cargarDisponibilidad();
+// Tarifas que editó el propietario (public.contenido, vía contenido-publico.js). Si no llegan (sin configuración,
+// Supabase caído o la migración 0003 sin aplicar), el resumen sigue con las de ejemplo de TARIFA.
+tarifas().then((t) => { if (t && fijarTarifas(t)) resumen(); }).catch(() => {});

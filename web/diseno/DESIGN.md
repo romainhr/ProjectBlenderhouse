@@ -1,5 +1,7 @@
 # LOFT 2D2B: sistema de diseño (arriendo turístico)
 
+> **Nota (2026-09-26):** la propiedad no es un loft y el nombre visible del sitio es «Project-roomVR» (decisión de Romain Ange). Este archivo se conserva tal como se le dio a Stitch para generar las pantallas de referencia.
+
 ## Concepto
 Ultra moderno e industrial. El sitio se siente como el propio departamento: concreto visto, acero negro pavonado,
 roble ahumado, una sola pared de ladrillo y luz cálida de ampolletas Edison. Estética de plano técnico: retículas

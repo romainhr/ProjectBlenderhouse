@@ -3,44 +3,68 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Privacidad · LOFT 2D2B</title>
-<meta name="theme-color" content="#F7F4EF">
+<title>Privacidad · Project-roomVR</title>
+<meta name="description" content="Qué datos pide la solicitud de reserva, para qué se usan y dónde se guardan.">
+<meta name="theme-color" content="#F6F1EA">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/loft.css">
+<link rel="preload" as="font" type="font/woff2" href="fonts/fraunces-var.woff2" crossorigin>
+<link rel="stylesheet" href="css/sitio.css">
 <script type="module" src="js/sitio.js"></script>
-<noscript><style>.aparece { opacity: 1 !important; transform: none !important; }</style></noscript>
+<noscript><style>.aparece { opacity: 1 !important; transform: none !important; } .hamburguesa { display: none !important; }</style></noscript>
 </head>
 <body>
+
 <a class="saltar" href="#contenido">Saltar al contenido</a>
 <header class="barra">
   <div class="contenedor">
-    <a class="marca" href="./" aria-label="LOFT 2D2B, inicio">
-      <b>Loft 2D2B</b><small>Arriendo turístico</small>
-    </a>
-    <a class="boton primario" href="reserva.html">Reservar</a>
+    <a class="marca" href="./" aria-label="Project-roomVR, inicio"><b>Project-roomVR</b><small>Arriendo turístico</small></a>
+    <nav class="menu-nav" aria-label="Principal"><ul class="menu">
+      <li><a href="./#espacios">Espacios</a></li>
+      <li><a href="./#tour">Recorrido 3D</a></li>
+      <li><a href="./#tarifas">Tarifas</a></li>
+      <li><a href="./#preguntas">Preguntas</a></li>
+    </ul></nav>
+    <a class="boton primario reservar" href="reserva.html">Reservar</a>
+    <button class="hamburguesa" type="button" aria-label="Abrir menú" aria-controls="panel-menu" aria-expanded="false">
+      <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
   </div>
 </header>
+<nav id="panel-menu" class="panel-menu" hidden aria-label="Menú">
+  <a href="./">Inicio</a>
+  <a href="./#espacios">Espacios</a>
+  <a href="./#tour">Recorrido 3D</a>
+  <a href="./#tarifas">Tarifas</a>
+  <a href="./#preguntas">Preguntas</a>
+  <a href="reserva.html">Reservar</a>
+</nav>
+
 <main id="contenido" class="pagina">
   <div class="contenedor texto">
-    <nav class="migas" aria-label="Migas"><a href="./">Inicio</a><span aria-hidden="true">/</span><span aria-current="page">Privacidad</span></nav>
-    <h1 style="font-size: clamp(32px, 6vw, 48px)">Privacidad</h1>
-    <p class="mensaje" style="margin-top: 18px; max-width: 60ch">Sitio de demostración: por favor no envíes datos reales.</p>
+    <header class="intro">
+      <nav class="migas" aria-label="Migas"><a href="./">Inicio</a><span aria-hidden="true">/</span><span aria-current="page">Privacidad</span></nav>
+      <h1 class="t-reserva">Privacidad</h1>
+      <p class="bajada">Qué datos pide la solicitud de reserva, para qué se usan y dónde se guardan.</p>
+    </header>
+    <p class="mensaje">Sitio de demostración: por favor no envíes datos reales.</p>
     <h2>Qué datos pedimos</h2>
     <p>Para una solicitud de reserva: nombre, correo, fechas, cantidad de huéspedes y, si quieres, un teléfono y un mensaje. No pedimos ni guardamos datos de pago.</p>
     <h2>Para qué</h2>
-    <p>Sólo para responder tu solicitud y, si se confirma, coordinar la estadía. No los usamos para publicidad ni los compartimos con terceros.</p>
+    <p>Solo para responder tu solicitud y, si se confirma, coordinar la estadía. No los usamos para publicidad ni los compartimos con terceros.</p>
     <h2>Dónde se guardan</h2>
-    <p>En una base de datos de Supabase a la que el público no tiene acceso: el sitio sólo puede crear solicitudes y consultar qué noches están ocupadas, sin ver datos de otras personas.</p>
+    <p>En una base de datos de Supabase a la que el público no tiene acceso: el sitio solo puede crear solicitudes y consultar qué noches están ocupadas, sin ver datos de otras personas.</p>
     <h2>Cuánto tiempo</h2>
     <p>Mientras dure el sitio de demostración. Puedes pedir que borremos tu solicitud en cualquier momento, respondiendo el correo de confirmación.</p>
     <h2>Cookies</h2>
-    <p>El sitio no usa cookies de seguimiento. Las tipografías se sirven desde este mismo sitio y el visor 3D, desde jsDelivr.</p>
+    <p>El sitio no usa cookies de seguimiento. Las tipografías y el visor 3D se sirven desde este mismo sitio.</p>
   </div>
 </main>
+
 <footer class="pie">
   <div class="contenedor">
-    <p class="nota-demo">Sitio de demostración: imágenes renderizadas desde un modelo 3D; tarifas de ejemplo.</p>
-    <p class="derechos">© <span id="anio"></span> LOFT 2D2B</p>
+    <a class="pie-marca" href="./">Project-roomVR</a>
+    <p class="nota-pie">Imágenes renderizadas desde un modelo 3D · tarifas de ejemplo</p>
+    <p class="derechos">© <span id="anio">2026</span> <span class="nombre">Project-roomVR</span> · <a href="privacidad.html" aria-current="page">Privacidad</a></p>
   </div>
 </footer>
 </body>

@@ -1,11 +1,13 @@
 // Pruebas de web/src/js/reserva-logica.js con el ejecutor incluido en Node (sin dependencias):
 //   cd web && npm test     (node --test tests/*.test.mjs)
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import {
-  TARIFA, clp, codigoError, esIso, grillaMes, hoyIso, nocheOcupada, noches, salidaMaxima, solapa, sumarDias,
-  total, validarDatos, validarRango,
+  CELDA_MIN, MENSAJES, PRECIO_MAX, SEPARACION_MESES, TARIFA, clp, codigoError, esIso, fijarTarifas, grillaMes,
+  hayMesSiguiente, hoyIso, mesesPorPagina, nocheOcupada, noches, salidaMaxima, solapa, sumarDias, tarifaVigente, total,
+  validarDatos, validarRango,
 } from "../src/js/reserva-logica.js";
 
 const HOY = "2026-10-05";
@@ -54,11 +56,77 @@ test("total y formato en pesos chilenos", () => {
   assert.equal(clp(189000).replace(/\s/g, " "), "CLP 189.000");
 });
 
+test("fijarTarifas: sólo enteros del rango del CHECK de la 0003 y noche mayor que 0; TARIFA no cambia", () => {
+  try {
+    assert.deepEqual(tarifaVigente(), { noche: TARIFA.noche, limpieza: TARIFA.limpieza });
+    assert.equal(PRECIO_MAX, 10_000_000);
+    for (const malo of [
+      { noche: 0, limpieza: 15000 }, { noche: -1, limpieza: 15000 }, { noche: 1.5, limpieza: 15000 },
+      { noche: "70000", limpieza: 15000 }, { noche: NaN, limpieza: 0 }, { noche: PRECIO_MAX + 1, limpieza: 0 },
+      { noche: 70000, limpieza: -1 }, { noche: 70000, limpieza: "0" }, { noche: 70000, limpieza: PRECIO_MAX + 1 },
+      { noche: 70000 }, { limpieza: 0 }, {}, null, undefined, 70000,
+    ]) {
+      assert.equal(fijarTarifas(malo), false, `debería rechazar ${JSON.stringify(malo)}`);
+      assert.deepEqual(tarifaVigente(), { noche: 58000, limpieza: 15000 }, "un rechazo no cambia nada");
+    }
+    assert.equal(fijarTarifas({ noche: 70000, limpieza: 0 }), true);      // limpieza sin cobro
+    assert.deepEqual(tarifaVigente(), { noche: 70000, limpieza: 0 });
+    assert.deepEqual(total(3), { noches: 3, alojamiento: 210000, limpieza: 0, total: 210000 });
+    assert.equal(total(0).total, 0);
+    assert.deepEqual(total(3, TARIFA), { noches: 3, alojamiento: 174000, limpieza: 15000, total: 189000 });   // pura
+    assert.equal(fijarTarifas({ noche: PRECIO_MAX, limpieza: PRECIO_MAX }), true);   // los extremos del CHECK
+    assert.throws(() => { tarifaVigente().noche = 1; }, TypeError);            // congelada: no se cambia por fuera
+    assert.deepEqual([TARIFA.noche, TARIFA.limpieza], [58000, 15000]);         // los valores por defecto siguen
+    assert.ok(Object.isFrozen(TARIFA));
+  } finally {
+    fijarTarifas(TARIFA);                                                      // vuelve a los de ejemplo
+  }
+  assert.deepEqual(total(3), { noches: 3, alojamiento: 174000, limpieza: 15000, total: 189000 });
+});
+
+test("MENSAJES no llevan precios: al fijar otras tarifas no quedan desfasados", () => {
+  try {
+    fijarTarifas({ noche: 70000, limpieza: 0 });
+    for (const [codigo, texto] of Object.entries(MENSAJES)) {
+      assert.doesNotMatch(texto, /CLP|\$|\d{1,3}\.\d{3}|\d{4,}/, `${codigo} menciona un precio fijo: «${texto}»`);
+    }
+  } finally {
+    fijarTarifas(TARIFA);
+  }
+});
+
+test("reserva.js calcula con la tarifa vigente y fija las que lee contenido-publico.js", () => {
+  const fuente = readFileSync(new URL("../src/js/reserva.js", import.meta.url), "utf8");
+  assert.match(fuente, /import \{ tarifas \} from "\.\/contenido-publico\.js";/);
+  assert.match(fuente, /tarifas\(\)\.then\(\(t\) => \{ if \(t && fijarTarifas\(t\)\) resumen\(\); \}\)\.catch\(/);
+  assert.doesNotMatch(fuente, /TARIFA\.(noche|limpieza)|TARIFA\[/, "el precio sale de tarifaVigente(), no de TARIFA");
+  assert.match(fuente, /clp\(tarifaVigente\(\)\.noche\)/);
+});
+
 test("grillaMes: semanas completas, lunes primero", () => {
   const oct = grillaMes(2026, 9);                        // octubre 2026 empieza en jueves
   assert.deepEqual(oct[0].slice(0, 4), [null, null, null, "2026-10-01"]);
   assert.ok(oct.every((s) => s.length === 7));
   assert.equal(oct.flat().filter(Boolean).length, 31);
+});
+
+test("mesesPorPagina: dos meses solo si caben 2 × 7 días de 48 px más la separación", () => {
+  assert.equal(2 * 7 * CELDA_MIN + SEPARACION_MESES, 704);
+  assert.equal(mesesPorPagina(320), 1);
+  assert.equal(mesesPorPagina(703), 1);
+  assert.equal(mesesPorPagina(704), 2);
+  assert.equal(mesesPorPagina(738), 2);                  // #meses a 1280 px, con el resumen al lado
+  assert.equal(mesesPorPagina(0), 1);                    // sin medir (display: none) se pinta uno
+});
+
+test("hayMesSiguiente: la última página alcanzable es la que contiene `hasta`", () => {
+  const HASTA = "2027-10-26";
+  assert.equal(hayMesSiguiente(2027, 8, 2, HASTA), false);   // septiembre + octubre: octubre ya contiene HASTA
+  assert.equal(hayMesSiguiente(2027, 8, 1, HASTA), true);    // septiembre solo: falta octubre
+  assert.equal(hayMesSiguiente(2027, 9, 1, HASTA), false);   // octubre contiene HASTA
+  assert.equal(hayMesSiguiente(2027, 7, 2, HASTA), true);    // agosto + septiembre: falta octubre
+  assert.equal(hayMesSiguiente(2026, 11, 1, "2027-01-01"), true);   // cruza de año
+  assert.equal(hayMesSiguiente(2026, 11, 2, "2027-01-31"), false);
 });
 
 test("validarDatos replica los CHECK de la tabla", () => {

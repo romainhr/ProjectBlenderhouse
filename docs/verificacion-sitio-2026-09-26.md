@@ -196,3 +196,7 @@ Descartados por el escéptico: H5 (Parámetros de la portada: una salida inváli
 - Al final de pintar(), agregar `if (document.activeElement?.disabled) (…el otro botón de mes…).focus();`. Otra opción: usar aria-disabled e ignorar el clic.
 
 Descartados por el escéptico: RA-09 (Días del calendario de menos de 44 px en teléfonos y en tableta horizontal); RA-14 (Cabecera entre 320 y unos 370 px: se desborda o parte la marca, y el botón mide ); RA-19 (Reglas de ejemplo y detalles inferidos presentados como hechos); RA-20 (Privacidad: no hay canal de contacto para pedir el borrado).
+
+---
+
+**Nota posterior (2026-09-26):** la propiedad no es un loft. Romain Ange lo corrigió y el nombre visible del sitio es «Project-roomVR». Este registro conserva el nombre que se usaba al momento de la verificación. Ver ADR 0003, decisión 18.

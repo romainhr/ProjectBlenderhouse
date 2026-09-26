@@ -4,16 +4,17 @@
 import { THREE } from "./three.js";
 
 export const MOMENTOS = {
-  // entorno: intensidad del mapa de entorno (RoomEnvironment) en los materiales; sin él el PBR queda plano y
-  // oscuro. Valores ajustados a ojo sobre el render de Blender (review/depto_06_v3ind), no medidos.
+  // entorno: intensidad del mapa de entorno (RoomEnvironment) en los materiales: sin él el PBR queda plano y
+  // oscuro; con demasiado, lavado (0,42 en la tarde era demasiado). Ajustados a ojo contra review/depto_06_t2 (la v2
+  // publicada), no medidos.
   dia: {
     etiqueta: "Día", cielo: { arriba: "#7fadd8", abajo: "#eaf3fa" },
-    sol: { color: 0xfff7ec, intensidad: 3.4 }, ambiente: 0.45, entorno: 0.7, exposicion: 1.0, fondoIntensidad: 1,
+    sol: { color: 0xfff7ec, intensidad: 3.4 }, ambiente: 0.45, entorno: 0.35, exposicion: 1.0, fondoIntensidad: 1,
     lucesEncendidas: false,
   },
   tarde: {
     etiqueta: "Tarde", cielo: { arriba: "#9aa9c9", abajo: "#f3cfa4" },
-    sol: { color: 0xffc58f, intensidad: 1.8 }, ambiente: 0.32, entorno: 0.42, exposicion: 1.0, fondoIntensidad: 0.95,
+    sol: { color: 0xffc58f, intensidad: 1.8 }, ambiente: 0.32, entorno: 0.22, exposicion: 0.95, fondoIntensidad: 0.95,
     lucesEncendidas: true,
   },
   noche: {

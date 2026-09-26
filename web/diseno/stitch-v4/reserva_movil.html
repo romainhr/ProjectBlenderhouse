@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Reserva — Project-roomVR</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&amp;family=Public+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#F6F1EA',
+            sand: '#EDE3D6',
+            'card-bg': '#FBF8F3',
+            ink: '#1F1B17',
+            'secondary-ink': '#5F574E',
+            hairline: '#E0D6C8',
+            terracota: '#A4471E',
+            'terracota-dark': '#7F3515',
+            'terracota-soft': '#F2DDD2',
+            olive: '#5E6B52',
+            charcoal: '#26221E'
+          },
+          fontFamily: {
+            serif: ['Fraunces', 'serif'],
+            sans: ['Public Sans', 'sans-serif']
+          },
+          borderRadius: {
+            'card': '12px',
+            'btn': '10px'
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: #F6F1EA;
+      color: #1F1B17;
+      font-family: 'Public Sans', sans-serif;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    .brand-nowrap {
+      white-space: nowrap !important;
+    }
+    .hatch-pattern {
+      background: repeating-linear-gradient(
+        45deg,
+        #E0D6C8,
+        #E0D6C8 2px,
+        #FBF8F3 2px,
+        #FBF8F3 6px
+      );
+    }
+    input:focus, textarea:focus, button:focus {
+      outline: none;
+    }
+  </style>
+</head>
+<body class="bg-paper text-ink antialiased min-h-screen pb-32">
+<!-- 1. HEADER (Paper, compact 60px, 1px hairline below) -->
+<header class="sticky top-0 z-40 bg-paper border-b border-hairline h-[60px] px-4 flex items-center justify-between max-w-[390px] mx-auto">
+<div class="flex flex-col justify-center">
+<a class="font-serif text-[21px] leading-tight text-ink font-normal brand-nowrap tracking-tight" href="#">Project-roomVR</a>
+<span class="text-[12px] text-secondary-ink font-sans leading-none mt-0.5">Arriendo turístico</span>
+</div>
+<div class="flex items-center gap-2.5">
+<a class="inline-flex items-center justify-center h-[40px] px-3.5 border border-ink text-ink font-sans font-medium text-[13px] rounded-btn hover:bg-sand transition-colors" href="#">
+        Tour 3D
+      </a>
+<button aria-label="Abrir menú" class="w-10 h-10 flex flex-col items-center justify-center gap-1 text-ink rounded-btn hover:bg-sand transition-colors" type="button">
+<span class="w-5 h-[1.5px] bg-ink block"></span>
+<span class="w-5 h-[1.5px] bg-ink block"></span>
+<span class="w-5 h-[1.5px] bg-ink block"></span>
+</button>
+</div>
+</header>
+<!-- MAIN CONTAINER (390px max-width, 16px side gutters, no horizontal scroll) -->
+<main class="w-full max-w-[390px] mx-auto px-4 pt-4 flex flex-col gap-6">
+<!-- 2. INTRO -->
+<section class="flex flex-col">
+<!-- Full-width image (aspect 16:10, 12px radius, full color) -->
+<div class="w-full aspect-[16/10] rounded-card overflow-hidden bg-sand mb-4 relative shadow-sm">
+<div aria-label="Dormitorio 1 con cama king y closet corredero" class="w-full aspect-[16/10] overflow-hidden" role="img" style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuABw5It-pdGW3mLievz1ANm9Vd0p-leGMN4SKcsVYIUfLTte4rKcuz7-i1gn6zNVTsarn5YUmipueRfB9dU853NhTDCO1z3C4TUG4jU7ye4eCHED7OY6k0pLeFEKRN6wbVDhE-QQV4ekyttbLeWY8xI3oAdPOBU5LUSqYBZL3sIcf7QLuPq9urIPVeG0LEpkrwmAz-9vLsj5Dery1GVx9X7XtkwWX7wRhSZtRiqM0jglNb70d5qyDUZ7o1hPeaiuqw6Di27ZtdZJsc'); aspect-ratio: 16/10; border-radius: 12px; background-size: cover; background-position: center;"></div>
+</div>
+<!-- Breadcrumb -->
+<nav aria-label="Miga de pan" class="mb-2">
+<p class="text-[13px] text-secondary-ink font-sans">
+<a class="hover:text-ink transition-colors" href="#">Inicio</a>
+<span class="mx-1 text-hairline">/</span>
+<span class="text-ink font-medium">Reserva</span>
+</p>
+</nav>
+<!-- H1 & subtitle -->
+<h1 class="font-serif text-[52px] leading-[1.05] text-ink font-normal tracking-tight">
+        Reserva
+      </h1>
+<span class="font-serif italic text-[26px] text-terracota font-normal leading-tight mt-1 mb-2.5">
+        sin cobro en línea.
+      </span>
+<p class="text-[16px] text-secondary-ink font-sans leading-relaxed">
+        Elige tus noches y envía la solicitud. Queda pendiente hasta que te confirmamos por correo.
+      </p>
+</section>
+<!-- 3. CARD "Fechas" -->
+<section class="bg-card-bg border border-hairline rounded-card p-5 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-serif text-[28px] text-ink font-normal leading-tight">Fechas</h2>
+</div>
+<!-- Month navigation row -->
+<div class="flex items-center justify-between mb-4">
+<button aria-label="Mes anterior" class="w-10 h-10 rounded-full border border-hairline flex items-center justify-center text-ink hover:bg-sand transition-colors" type="button">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+</button>
+<span class="font-serif text-[22px] text-ink font-normal lowercase tracking-tight">octubre 2026</span>
+<button aria-label="Mes siguiente" class="w-10 h-10 rounded-full border border-hairline flex items-center justify-center text-ink hover:bg-sand transition-colors" type="button">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24" width="18">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</button>
+</div>
+<!-- Weekday headers -->
+<div class="grid grid-cols-7 gap-1 text-center mb-2">
+<span class="text-[12px] text-secondary-ink font-medium">lu</span>
+<span class="text-[12px] text-secondary-ink font-medium">ma</span>
+<span class="text-[12px] text-secondary-ink font-medium">mi</span>
+<span class="text-[12px] text-secondary-ink font-medium">ju</span>
+<span class="text-[12px] text-secondary-ink font-medium">vi</span>
+<span class="text-[12px] text-secondary-ink font-medium">sá</span>
+<span class="text-[12px] text-secondary-ink font-medium">do</span>
+</div>
+<!-- Calendar Grid (October 2026 starts Thursday) -->
+<div class="grid grid-cols-7 gap-1 text-center font-sans">
+<!-- Mon, Tue, Wed empty in first row -->
+<div class="w-full aspect-square"></div>
+<div class="w-full aspect-square"></div>
+<div class="w-full aspect-square"></div>
+<!-- 1: Disponible -->
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">1</button>
+<!-- 2: Ocupado -->
+<div class="w-full aspect-square rounded-[10px] hatch-pattern border border-hairline/60 flex items-center justify-center text-[15px] tabular-nums text-secondary-ink/60 line-through">2</div>
+<!-- 3: Ocupado -->
+<div class="w-full aspect-square rounded-[10px] hatch-pattern border border-hairline/60 flex items-center justify-center text-[15px] tabular-nums text-secondary-ink/60 line-through">3</div>
+<!-- 4: Ocupado -->
+<div class="w-full aspect-square rounded-[10px] hatch-pattern border border-hairline/60 flex items-center justify-center text-[15px] tabular-nums text-secondary-ink/60 line-through">4</div>
+<!-- Row 2: 5 to 11 -->
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">5</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">6</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">7</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">8</button>
+<!-- 9: Selected start (Solid Terracotta) -->
+<button class="w-full aspect-square rounded-l-[10px] rounded-r-none bg-terracota flex items-center justify-center text-[15px] tabular-nums text-white font-semibold shadow-sm" type="button">9</button>
+<!-- 10: Selected middle (Soft Terracotta Tint) -->
+<button class="w-full aspect-square rounded-none bg-terracota-soft flex items-center justify-center text-[15px] tabular-nums text-terracota-dark font-medium" type="button">10</button>
+<!-- 11: Selected middle (Soft Terracotta Tint) -->
+<button class="w-full aspect-square rounded-none bg-terracota-soft flex items-center justify-center text-[15px] tabular-nums text-terracota-dark font-medium" type="button">11</button>
+<!-- Row 3: 12 to 18 -->
+<!-- 12: Selected end (Solid Terracotta) -->
+<button class="w-full aspect-square rounded-r-[10px] rounded-l-none bg-terracota flex items-center justify-center text-[15px] tabular-nums text-white font-semibold shadow-sm" type="button">12</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">13</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">14</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">15</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">16</button>
+<!-- 17: Ocupado -->
+<div class="w-full aspect-square rounded-[10px] hatch-pattern border border-hairline/60 flex items-center justify-center text-[15px] tabular-nums text-secondary-ink/60 line-through">17</div>
+<!-- 18: Ocupado -->
+<div class="w-full aspect-square rounded-[10px] hatch-pattern border border-hairline/60 flex items-center justify-center text-[15px] tabular-nums text-secondary-ink/60 line-through">18</div>
+<!-- Row 4: 19 to 25 -->
+<!-- 19: Ocupado -->
+<div class="w-full aspect-square rounded-[10px] hatch-pattern border border-hairline/60 flex items-center justify-center text-[15px] tabular-nums text-secondary-ink/60 line-through">19</div>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">20</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">21</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">22</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">23</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">24</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">25</button>
+<!-- Row 5: 26 to 31 -->
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">26</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">27</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">28</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">29</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">30</button>
+<button class="w-full aspect-square rounded-[10px] border border-hairline flex items-center justify-center text-[15px] tabular-nums text-ink font-normal hover:bg-sand" type="button">31</button>
+<div class="w-full aspect-square"></div>
+</div>
+<!-- Status line under the grid -->
+<div class="mt-4 pt-3 border-t border-hairline flex items-center justify-between">
+<p class="text-[14px] text-ink font-medium">Vie 9 oct → lun 12 oct · 3 noches</p>
+</div>
+<!-- Legend -->
+<div class="mt-3 flex items-center gap-4 text-[13px] text-secondary-ink">
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded-[3px] border border-hairline bg-card-bg inline-block"></span>
+<span>Disponible</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded-[3px] border border-hairline/80 hatch-pattern inline-block"></span>
+<span>Ocupado</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-3.5 h-3.5 rounded-[3px] bg-terracota inline-block"></span>
+<span>Tu selección</span>
+</div>
+</div>
+</section>
+<!-- 4. COMPACT SUMMARY (Sand #EDE3D6 block, 12px radius, 20px padding) -->
+<section class="bg-sand rounded-card p-5 shadow-sm">
+<h2 class="font-serif text-[24px] text-ink font-normal mb-3 leading-tight">Resumen</h2>
+<div class="flex flex-col gap-2.5 text-[15px]">
+<div class="flex justify-between items-center py-1 border-b border-hairline">
+<span class="text-secondary-ink">Llegada</span>
+<span class="text-ink font-medium">vie 9 oct</span>
+</div>
+<div class="flex justify-between items-center py-1 border-b border-hairline">
+<span class="text-secondary-ink">Salida</span>
+<span class="text-ink font-medium">lun 12 oct</span>
+</div>
+<div class="flex justify-between items-center py-1 border-b border-hairline">
+<span class="text-secondary-ink">3 noches × CLP 58.000</span>
+<span class="text-ink font-medium tabular-nums">CLP 174.000</span>
+</div>
+<div class="flex justify-between items-center py-1 border-b border-hairline">
+<span class="text-secondary-ink">Limpieza (ejemplo)</span>
+<span class="text-ink font-medium tabular-nums">CLP 15.000</span>
+</div>
+<div class="flex justify-between items-baseline pt-2">
+<span class="text-ink font-medium">Total estimado</span>
+<span class="font-serif text-[28px] text-ink font-normal tabular-nums leading-none">CLP 189.000</span>
+</div>
+</div>
+<p class="mt-4 text-[13px] text-secondary-ink leading-normal">
+        Valores de ejemplo. Sin cobro en línea.
+      </p>
+</section>
+<!-- 5. CARD "Tus datos" (same card style) -->
+<section class="bg-card-bg border border-hairline rounded-card p-5 shadow-sm">
+<h2 class="font-serif text-[28px] text-ink font-normal leading-tight mb-1">Tus datos</h2>
+<p class="text-[13px] text-secondary-ink leading-relaxed mb-5">
+        Es un sitio de demostración: usa un nombre y un correo inventados.
+      </p>
+<form class="flex flex-col gap-5" onsubmit="event.preventDefault()">
+<!-- Huéspedes stepper -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[14px] font-medium text-ink">Huéspedes</label>
+<div class="flex items-center justify-between h-[48px] px-3 bg-paper border border-[#CFC3B3] rounded-btn">
+<button aria-label="Disminuir huéspedes" class="w-[44px] h-[44px] -ml-2 rounded-btn flex items-center justify-center text-ink hover:bg-sand text-lg font-medium" type="button">−</button>
+<span class="text-[15px] font-medium tabular-nums text-ink">2 huéspedes</span>
+<button aria-label="Aumentar huéspedes" class="w-[44px] h-[44px] -mr-2 rounded-btn flex items-center justify-center text-ink hover:bg-sand text-lg font-medium" type="button">+</button>
+</div>
+</div>
+<!-- Nombre (FOCUS state: 2px terracotta ring with 2px offset, value "Ana Pérez") -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[14px] font-medium text-ink" for="nombre">Nombre</label>
+<input class="h-[48px] px-3.5 bg-paper border border-[#CFC3B3] rounded-btn text-[15px] text-ink ring-2 ring-terracota ring-offset-2 transition-shadow" id="nombre" type="text" value="Ana Pérez"/>
+</div>
+<!-- Correo -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[14px] font-medium text-ink" for="correo">Correo</label>
+<input class="h-[48px] px-3.5 bg-paper border border-[#CFC3B3] rounded-btn text-[15px] text-ink placeholder:text-secondary-ink/50 focus:border-terracota" id="correo" placeholder="ana.perez@ejemplo.com" type="email"/>
+</div>
+<!-- Teléfono (opcional) -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[14px] font-medium text-ink" for="telefono">Teléfono (opcional)</label>
+<input class="h-[48px] px-3.5 bg-paper border border-[#CFC3B3] rounded-btn text-[15px] text-ink placeholder:text-secondary-ink/50 focus:border-terracota" id="telefono" placeholder="+56 9 1234 5678" type="tel"/>
+</div>
+<!-- Mensaje (opcional) -->
+<div class="flex flex-col gap-1.5">
+<label class="text-[14px] font-medium text-ink" for="mensaje">Mensaje (opcional)</label>
+<textarea class="p-3.5 bg-paper border border-[#CFC3B3] rounded-btn text-[15px] text-ink placeholder:text-secondary-ink/50 focus:border-terracota resize-none" id="mensaje" placeholder="Hora estimada de llegada, preguntas…" rows="3"></textarea>
+</div>
+<!-- Checkbox de privacidad -->
+<div class="flex items-start gap-2.5 pt-1">
+<input checked="" class="w-5 h-5 mt-0.5 rounded-[4px] border-[#CFC3B3] text-terracota accent-terracota focus:ring-0 cursor-pointer" id="privacidad" type="checkbox"/>
+<label class="text-[13px] text-secondary-ink leading-snug cursor-pointer" for="privacidad">
+            Acepto que usen mis datos sólo para responder esta solicitud (<a class="text-terracota underline hover:text-terracota-dark" href="#">privacidad</a>).
+          </label>
+</div>
+</form>
+</section>
+<!-- 6. "Qué pasa después" -->
+<section class="py-2">
+<h3 class="font-serif text-[24px] text-ink font-normal mb-4 leading-tight">Qué pasa después</h3>
+<div class="flex flex-col divide-y divide-hairline">
+<!-- Row 1 -->
+<div class="py-3.5 flex flex-col gap-1">
+<h4 class="font-serif text-[18px] text-ink font-normal leading-snug">Queda pendiente</h4>
+<p class="text-[14px] text-secondary-ink font-sans leading-relaxed">
+            Tu solicitud bloquea esas noches mientras la revisamos.
+          </p>
+</div>
+<!-- Row 2 -->
+<div class="py-3.5 flex flex-col gap-1">
+<h4 class="font-serif text-[18px] text-ink font-normal leading-snug">Te escribimos</h4>
+<p class="text-[14px] text-secondary-ink font-sans leading-relaxed">
+            Te respondemos al correo para confirmarla o proponer otras fechas.
+          </p>
+</div>
+<!-- Row 3 -->
+<div class="py-3.5 flex flex-col gap-1">
+<h4 class="font-serif text-[18px] text-ink font-normal leading-snug">Acordamos el pago</h4>
+<p class="text-[14px] text-secondary-ink font-sans leading-relaxed">
+            Al confirmar acordamos el pago y te enviamos la dirección.
+          </p>
+</div>
+</div>
+</section>
+<!-- 7. FOOTER sand (with 96px bottom padding to clear the fixed bottom bar) -->
+<footer class="bg-sand -mx-4 px-4 pt-8 pb-24 border-t border-hairline mt-4">
+<div class="flex flex-col gap-3">
+<span class="font-serif text-[20px] text-ink font-normal brand-nowrap">Project-roomVR</span>
+<p class="text-[13px] text-secondary-ink leading-relaxed">
+          Imágenes renderizadas desde un modelo 3D · tarifas de ejemplo
+        </p>
+<div class="pt-2 border-t border-hairline/60 flex items-center justify-between text-[13px] text-secondary-ink">
+<span>© 2026 <span class="brand-nowrap">Project-roomVR</span></span>
+<a class="hover:text-ink transition-colors" href="#">Privacidad</a>
+</div>
+</div>
+</footer>
+</main>
+<!-- 8. FIXED BOTTOM BAR (fixed to bottom of viewport, paper background, 1px top hairline, safe-area padding) -->
+<aside class="fixed bottom-0 left-0 right-0 z-50 bg-paper border-t border-hairline px-4 py-3 shadow-[0_-4px_16px_rgba(31,27,23,0.06)] max-w-[390px] mx-auto">
+<div class="max-w-[390px] mx-auto flex items-center justify-between">
+<div class="flex flex-col justify-center">
+<span class="font-serif text-[22px] text-ink font-normal leading-none tabular-nums">CLP 189.000</span>
+<span class="text-[12px] text-secondary-ink font-sans mt-1">3 noches · total de ejemplo</span>
+</div>
+<button class="h-[48px] px-6 bg-terracota hover:bg-terracota-dark active:bg-terracota-dark text-white font-sans font-medium text-[15px] rounded-btn shadow-sm transition-colors flex items-center justify-center" type="button">
+        Solicitar
+      </button>
+</div>
+</aside>
+</body>
+</html>
