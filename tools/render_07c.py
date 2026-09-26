@@ -136,7 +136,7 @@ VISTAS = {
         texto="Clóset de repisas del segundo dormitorio, hoja A corrida y los cajones de arriba y de abajo abiertos: "
               "salen por la columna de la hoja A, con la B cerrada."),
     "hall_entrada": dict(
-        cam=((360.0, 318.0), 1.55, (412.0, 352.0), 1.30, 16.0), mundo="dia", luces=("hall_techo",), expo=1.0,
+        cam=((350.0, 346.0), 1.55, (404.0, 316.0), 1.45, 16.0), mundo="dia", luces=("hall_techo",), expo=1.0,
         abrir=("Depto_Puerta_Entrada_Hoja",),
         texto="Hall con la puerta de entrada abierta a 87° contra T9 (el plano la dibuja a 90°; a 88° la manilla de "
               "palanca ya entra en el muro) y el reloj en la cara sur de T_COC_S, sobre el interruptor, fuera del "
