@@ -67,7 +67,10 @@ def luces(col, root, grupos):
         if o.type != "MESH" or not w:
             continue
         pts = [o.matrix_world @ v.co for v in o.data.vertices]
-        centro = sum(pts, Vector()) / len(pts)
+        # luz_dz (fase 4, opcional): la luz baja o sube respecto del centro de la ampolleta. La luz lineal bajo los altos
+        # de la cocina (corrección 07c, ronda 1) la baja 3 cm: pegada al piso del mueble (8,5 mm), Eevee dejaba pasar
+        # su luz a través del tablero y la vajilla de adentro se veía iluminada desde abajo
+        centro = sum(pts, Vector()) / len(pts) + Vector((0.0, 0.0, float(o.get("luz_dz", 0.0))))
         ld = bpy.data.lights.new(f"Depto_Luz_{o.name}", "POINT")
         ld.energy = float(w)
         g = grupos.get(o.get("luz_grupo"), {})

@@ -119,7 +119,7 @@ RIEL_COCINA = dict(xy=(340.0, 212.0), largo=1.00,          # diseño: a lo largo
 # cubierta y el piso frente a los muebles base (que rebota en sus frentes) y dejan las hojas altas a más de 40° del eje.
 # Pruebas (render de revisión, luminancia lineal de frentes altos / base del mismo material): con 25° de inclinación,
 # 2,1 en el norte; con 10° y 12°, 1,4 en el norte y 1,6 en el este, así que el del este baja a 5°.
-LUZ_BAJO_ALTOS = dict(perfil=(0.016, 0.008), retranqueo=0.03, margen=0.03)   # diseño: perfil de aluminio negro de
+LUZ_BAJO_ALTOS = dict(perfil=(0.016, 0.008), retranqueo=0.03, margen=0.03, luz_dz=-0.03)   # diseño: perfil negro de
 # 16 × 8 mm con difusor opalino, bajo el piso de los altos, 3 cm detrás de las hojas y a 3 cm de cada costado; un tramo
 # por módulo (N1, N2-N3 y E1-E3; no bajo la campana, que tiene su propio filtro)
 TOALLERO_Z = 0.62         # diseño: eje del toallero en el frente del vanitorio (bajo la cubierta a 0,80)
@@ -423,9 +423,12 @@ def cocina(c):
     c.poner("Cocina_Riel", "adorno", riel, *R_["xy"], H, "S")          # "S": el riel (x local) corre según x
     marcar_ampolletas(riel, POTENCIA["foco_cocina"], radio=0.02, grupo="cocina_techo", cono=CONO_FOCO)
     led = c.mundo(luz_bajo_altos, "Cocina_LuzBajoAltos", "adorno")
-    # radio de 4 mm: la luz queda 8,5 mm bajo el piso de los altos; con el radio de 0,03 de las demás, sus sombras
-    # suaves partían de dentro del mueble y la vajilla se veía iluminada desde abajo, a través del tablero
+    # radio de 4 mm y la luz 3 cm bajo el difusor (luz_dz, fase 5): pegada al piso de los altos (8,5 mm) y con el radio
+    # de 0,03 de las demás, la vajilla de adentro se veía iluminada desde abajo, a través del tablero
     marcar_ampolletas(led, POTENCIA["bajo_altos"], radio=0.004, grupo="cocina_techo", cono=CONO_LINEAL)
+    for o in led:
+        if o.get("luz_w"):
+            o["luz_dz"] = LUZ_BAJO_ALTOS["luz_dz"]
 
 
 def luz_bajo_altos(col, prefijo):
