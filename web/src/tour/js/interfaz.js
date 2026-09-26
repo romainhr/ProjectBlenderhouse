@@ -1,5 +1,7 @@
 // Paneles, textos y controles de la interfaz (no toca three.js). Traduce las acciones del usuario a
 // llamadas de vuelta hacia main.js/interaccion.js; no conoce la escena 3D.
+import { gruposDelPanel } from "./luces.js";
+
 const $ = (s) => document.querySelector(s);
 
 export function marcarTactil(tactil) {
@@ -38,7 +40,7 @@ export function iniciarPaneles() {
 export function pintarGruposLuz(gruposLuz, { onCambiar, onTodo }) {
   const lista = $("#lista-grupos-luz");
   lista.innerHTML = "";
-  for (const grupo of gruposLuz.values()) {
+  for (const grupo of gruposDelPanel(gruposLuz)) {   // sin los que manda un móvil (la luz de la nevera)
     const fila = document.createElement("div");
     fila.className = "grupo-luz";
     const nombre = document.createElement("span");
@@ -60,7 +62,7 @@ export function pintarGruposLuz(gruposLuz, { onCambiar, onTodo }) {
 }
 export function refrescarGruposLuzUI(gruposLuz) {
   const filas = Array.from(document.querySelectorAll("#lista-grupos-luz .grupo-luz"));
-  Array.from(gruposLuz.values()).forEach((grupo, i) => {
+  gruposDelPanel(gruposLuz).forEach((grupo, i) => {
     filas[i]?.querySelector(".interruptor")?.setAttribute("aria-pressed", String(grupo.encendido));
   });
 }

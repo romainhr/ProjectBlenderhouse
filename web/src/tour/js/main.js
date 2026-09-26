@@ -8,7 +8,7 @@ import { crearControles } from "./controles.js";
 import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo, MOTIVO_CAMINO } from "./interaccion.js";
 import { MOMENTOS, MOMENTO_POR_DEFECTO, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
 import { RoomEnvironment } from "../../vendor/three/jsm/environments/RoomEnvironment.js";
-import { NOMBRES_RECINTO, estadoGruposParaMomento } from "./luces.js";
+import { NOMBRES_RECINTO, estadoGruposParaMomento, gruposDelPanel } from "./luces.js";
 import { prepararMinimapa, dibujarMinimapa, recintoTocado } from "./minimapa.js";
 import { crearCalidad, activarDepuracion, textoDepuracion } from "./calidad.js";
 import * as ui from "./interfaz.js";
@@ -31,7 +31,9 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 500); // 72°: el mismo de la v2 y de los renders
 camera.rotation.order = "YXZ";
 
-const ambiente = new THREE.HemisphereLight(0xe7ecef, 0x746a5c, 0.4);
+// Suelo del hemisferio neutro (corrección 07c, ronda 2): con 0x746a5c (marrón) teñía de cálido todo lo que mira hacia
+// abajo, como el cielo de concreto, que se leía como terciado de pino. La intensidad la fija cada momento (cielo.js).
+const ambiente = new THREE.HemisphereLight(0xe7ecef, 0x6c6c6a, 0.4);
 scene.add(ambiente);
 // Mapa de entorno neutro (un cuarto con paneles emisivos) para el reflejo difuso y especular del PBR; se
 // genera una sola vez (PMREM de 256 px) y su intensidad por material la fija cada momento del día.
@@ -39,7 +41,9 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 // Con `renderer`, three r160 sube la luz interna de RoomEnvironment de 5 a 900: es el relleno que reemplaza la
 // luz rebotada (sin él el cielo queda negro). Pero a envMapIntensity 0,42 lavaba las texturas (≈7 veces el
 // relleno de la v2; diagnóstico del 2026-09-26): la intensidad por momento (cielo.js) queda a la mitad.
-scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+// Sigma 0,1 (corrección 07c, ronda 2; antes 0,04): el estudio genérico se refleja más difuso y no dibuja sus cajas en
+// los metales pulidos que no tienen entorno local (D.entornos, carga.js).
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.1).texture;
 pmrem.dispose();
 let panoramas = {};
 
@@ -67,8 +71,12 @@ function aplicarMomento(id, estadoInteraccion) {
     if (!o.isMesh) return;
     for (const mat of Array.isArray(o.material) ? o.material : [o.material]) {
       if (!mat || !("envMapIntensity" in mat)) continue;
-      // metales y espejos reflejan más; el resto recibe un relleno suave
-      mat.envMapIntensity = m.entorno * (mat.metalness > 0.5 ? 1.8 : 1);
+      // entorno local (la cocina, contrato 2.2): su propia intensidad por momento. Si no, los metales pulidos y los
+      // espejos reflejan más y el resto recibe un relleno suave. Corrección 07c (ronda 2): el refuerzo de 1,8 era para
+      // todo metal y hacía del acero cepillado (rugosidad 0,25-0,35) un espejo del estudio; queda sólo bajo 0,25. Un
+      // material con mapa de rugosidad trae roughness = 1 (el factor de glTF): queda en 1 también.
+      if (mat.userData && mat.userData.entornoLocal) mat.envMapIntensity = m.entornoLocal;
+      else mat.envMapIntensity = m.entorno * (mat.metalness > 0.5 && mat.roughness < 0.25 ? 1.8 : 1);
     }
   });
   ambiente.intensity = m.ambiente;
@@ -119,7 +127,8 @@ async function iniciar() {
       }
     }
   });
-  const preparado = carga.prepararEscena(gltf.scene, D);
+  const entornos = await carga.cargarEntornos(renderer, D);
+  const preparado = carga.prepararEscena(gltf.scene, D, { entornos });
   estado = crearInteraccion(preparado);
   scene.add(estado.estaticoFusionado);
   for (const nodo of estado.sueltos) scene.attach(nodo);
@@ -146,7 +155,7 @@ async function iniciar() {
 
   ui.pintarGruposLuz(estado.gruposLuz, {
     onCambiar: (id, encendido) => { fijarGrupo(estado, id, encendido); sucio = true; },
-    onTodo: (encendido) => { for (const id of estado.gruposLuz.keys()) fijarGrupo(estado, id, encendido); sucio = true; },
+    onTodo: (encendido) => { for (const g of gruposDelPanel(estado.gruposLuz)) fijarGrupo(estado, g.id, encendido); sucio = true; },
   });
   ui.iniciarMomento(MOMENTO_POR_DEFECTO, (id) => aplicarMomento(id, estado));
   ui.iniciarPantallaCompleta();
@@ -302,6 +311,40 @@ cuadro();
 // Con ?debug, permite avanzar el mundo "a mano" desde la consola (rAF se pausa si la pestaña queda oculta,
 // p. ej. en pruebas automatizadas): window.__tour.paso(1/60) simula exactamente un cuadro de esa duración.
 if (debug) window.__tour.paso = (dt) => pasoCuadro(dt);
+// Con ?debug, captura la vista desde una cámara dada, para compararla con un render de revisión de Blender desde la
+// misma cámara (corrección 07c, ronda 2; tools/servidor_captura.py guarda el PNG). op = { pos: [x, y, z], mirar:
+// [x, y, z] (glTF), fov (vertical, grados), ancho, alto, momento, grupos: {id: bool}, abrir: [nodo...], nombre }.
+// Deja el momento, los grupos y las piezas como los pide; la cámara vuelve a la del recorrido en el cuadro siguiente.
+if (debug) {
+  window.__tour.capturar = async (op) => {
+    const lejos = { x: 1e3, z: 1e3, radio: D.radio };
+    if (op.momento) aplicarMomento(op.momento, estado);
+    for (const [id, on] of Object.entries(op.grupos || {})) fijarGrupo(estado, id, on);
+    for (const v of estado.moviles) {
+      const quiere = (op.abrir || []).includes(v.m.nodo);
+      if (v.m.clase !== "puerta" && v.m.clase !== "corredera" && (v.objetivo >= 1) !== quiere) {
+        activar(estado, { tipo: "movil", ref: v }, lejos);
+      }
+    }
+    for (let i = 0; i < 80; i++) pasoMundo(estado, 0.05, lejos);     // animaciones y fundidos terminados
+    ui.refrescarGruposLuzUI(estado.gruposLuz);
+    renderer.setPixelRatio(1);
+    renderer.setSize(op.ancho || 1280, op.alto || 800, false);
+    camera.aspect = (op.ancho || 1280) / (op.alto || 800);
+    camera.fov = op.fov || 72;
+    camera.position.set(...op.pos);
+    camera.lookAt(...op.mirar);
+    camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+    const blob = await new Promise((r) => renderer.domElement.toBlob(r, "image/png"));
+    let respuesta = "sin nombre";
+    if (op.nombre) respuesta = await (await fetch(`/__captura/${op.nombre}.png`, { method: "POST", body: blob })).text();
+    camera.fov = 72;
+    calidad.aplicar(true);
+    ajustarTamano();
+    return respuesta;
+  };
+}
 // Con ?debug, mide el costo real de dibujar la vista actual (sirve también en un teléfono con depuración remota):
 // `n` renders seguidos, cada uno esperando a la GPU con un readPixels de 1 px. Devuelve ms por cuadro (mediana, p90)
 // y cuántas luces de three.js hay visibles. No cambia nada de la escena.

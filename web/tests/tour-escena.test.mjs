@@ -98,3 +98,34 @@ test("crearLucesTHREE: un domo con cono_deg da un solo foco hacia abajo con toda
   assert.equal(sola.length, 1);
   assert.equal(intensidadBase(sola[0]), 40 * INTENSIDAD_POR_WATT);
 });
+
+test("crearLucesTHREE: alcance_m corta la luz (contrato 2.2: la de la nevera no alumbra a través de su cuerpo)", async () => {
+  const { crearLucesTHREE, DISTANCIA_LUZ } = await import("../src/tour/js/luces.js");
+  const l = { nombre: "Depto_Luz_Nevera", tipo: "puntual", posicion: [0, 1.7, 0], potencia_w: 4, color: [1, 0.8, 0.63] };
+  assert.equal(crearLucesTHREE(THREE, l)[0].distance, DISTANCIA_LUZ);
+  assert.equal(crearLucesTHREE(THREE, { ...l, alcance_m: 0.9 })[0].distance, 0.9);
+});
+
+test("prepararEscena: un entorno local (contrato 2.2, sección 6) va sólo a sus materiales dentro de su caja", async () => {
+  const { enEntorno } = await import("../src/tour/js/carga.js");
+  const { raiz, D } = escena();
+  const acero = new THREE.MeshStandardMaterial({ name: "Depto_Mat_NeveraAcero", metalness: 1, roughness: 1 });
+  const dentro = malla("Depto_Cocina_NeveraCuerpo", acero, raiz);
+  dentro.position.set(1, 1, 1);
+  const fuera = malla("Depto_Bano_Grifo", acero, raiz);
+  fuera.position.set(9, 1, 9);
+  const muro = malla("Depto_Cocina_Muro", new THREE.MeshStandardMaterial({ name: "Depto_Mat_Muro" }), raiz);
+  muro.position.set(1, 1, 1);
+  D.entornos = [{ id: "cocina", imagen: "tex/entorno_cocina.jpg", caja: [0, 2, 0, 2], materiales: ["Depto_Mat_NeveraAcero"] }];
+  assert.equal(enEntorno(D.entornos[0], acero, 1, 1), true);
+  assert.equal(enEntorno(D.entornos[0], acero, 9, 9), false);
+  const tex = new THREE.Texture();
+  const p = prepararEscena(raiz, D, { entornos: new Map([["cocina", tex]]) });
+  const conEntorno = p.estaticoFusionado.children.filter((m) => m.material.envMap === tex);
+  assert.equal(conEntorno.length, 1);
+  assert.equal(conEntorno[0].material.userData.entornoLocal, "cocina");
+  assert.equal(conEntorno[0].material.name, "Depto_Mat_NeveraAcero");
+  // el grifo del baño (fuera de la caja) y el muro (otro material) siguen con el entorno general
+  assert.equal(p.estaticoFusionado.children.filter((m) => m.material.envMap === null).length >= 2, true);
+  assert.equal(acero.envMap, null);              // el material original no se toca
+});

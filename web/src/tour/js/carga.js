@@ -71,11 +71,72 @@ function arreglarVidrios(raiz) {
   });
 }
 
+// Entornos locales (contrato 2.2, sección 6; corrección 07c, ronda 2). `D.entornos[]` trae un equirectangular
+// renderizado en Blender desde el centro de un recinto (la cocina), la caja [xmin, xmax, zmin, zmax] de glTF donde vale y
+// los materiales que lo usan. Con el RoomEnvironment genérico de three.js (un estudio con cajas y paneles) el acero
+// cepillado de la nevera reflejaba cajas que no existen en la cocina y la visera de la campana se leía como latón.
+// ¿La malla de centro (x, z) y material `material` usa el entorno `e`?
+export function enEntorno(e, material, x, z) {
+  const [x0, x1, z0, z1] = e.caja;
+  return Boolean(material) && e.materiales.includes(material.name) && x >= x0 && x <= x1 && z >= z0 && z <= z1;
+}
+
+// Carga cada imagen de D.entornos como mapa prefiltrado (PMREM). -> Map id -> textura; los que fallen quedan fuera
+// (esas mallas siguen con el entorno general).
+export async function cargarEntornos(renderer, D, rutaBase = RUTA_MODELO) {
+  const out = new Map();
+  if (!D.entornos || !D.entornos.length) return out;
+  const pm = new THREE.PMREMGenerator(renderer);
+  const cargador = new THREE.TextureLoader();
+  for (const e of D.entornos) {
+    try {
+      const tex = await cargador.loadAsync(rutaBase + e.imagen);
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      out.set(e.id, pm.fromEquirectangular(tex).texture);
+      tex.dispose();
+    } catch (err) {
+      console.warn("[tour] entorno local no disponible", e.imagen, err);
+    }
+  }
+  pm.dispose();
+  return out;
+}
+
+// Un clon del material por entorno (no por malla: la fusión de abajo los sigue juntando) con envMap = el del entorno y
+// userData.entornoLocal = su id (aplicarMomento le da su propia intensidad). Va antes de registrar los móviles: la
+// puerta de la nevera también lo usa.
+function aplicarEntornos(raiz, entornos, texturas) {
+  const clones = new Map();
+  const caja = new THREE.Box3();
+  const c = new THREE.Vector3();
+  raiz.traverse((o) => {
+    if (!o.isMesh || Array.isArray(o.material)) return;
+    caja.setFromObject(o).getCenter(c);
+    for (const e of entornos) {
+      const tex = texturas.get(e.id);
+      if (!tex || !enEntorno(e, o.material, c.x, c.z)) continue;
+      const k = `${e.id}|${o.material.uuid}`;
+      if (!clones.has(k)) {
+        const clon = o.material.clone();
+        clon.envMap = tex;
+        clon.userData = { ...clon.userData, entornoLocal: e.id };
+        clones.set(k, clon);
+      }
+      o.material = clones.get(k);
+      break;
+    }
+  });
+  return clones.size;
+}
+
 // Arma { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables } a partir de
-// `raiz` (gltf.scene) y `D` (depto_colisiones.json ya parseado).
-export function prepararEscena(raiz, D) {
+// `raiz` (gltf.scene) y `D` (depto_colisiones.json ya parseado). `opciones.entornos`: Map id -> textura de
+// cargarEntornos (opcional).
+export function prepararEscena(raiz, D, opciones = {}) {
   arreglarVidrios(raiz);
   raiz.updateWorldMatrix(true, true);
+  if (opciones.entornos && D.entornos) aplicarEntornos(raiz, D.entornos, opciones.entornos);
 
   const excluidos = new Set();
   const tocables = [];              // Mesh[] — únicos objetos contra los que hace raycast interaccion.js

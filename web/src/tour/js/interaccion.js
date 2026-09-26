@@ -4,7 +4,7 @@
 import { THREE } from "./three.js";
 import { estadoMovil, chocaMovil } from "./colision.js";
 import { iniciarToggle, pasoAnimacion, congelar, duracionPorClase, valorFundido } from "./animacion.js";
-import { intensidadBase, FUNDIDO_MS, TILT_TECLA_DEG, interruptorEncendido, textoInterruptor } from "./luces.js";
+import { intensidadBase, FUNDIDO_MS, TILT_TECLA_DEG, interruptorEncendido, textoInterruptor, gruposDeMovil } from "./luces.js";
 import { puedeAbrir, cajonesQueCerrar, ESPERA_HOJA_S } from "./bloqueos.js";
 
 export const MOTIVO_CAMINO = "Estás en el camino: retrocede un paso";
@@ -111,9 +111,14 @@ export function activar(estado, entrada, walker) {
     }
     // una hoja que tapa cajones abiertos los cierra primero y espera a que terminen (la hoja no los atraviesa)
     const aCerrar = cajonesQueCerrar(v, porNodo);
-    for (const c of aCerrar) Object.assign(c, iniciarToggle(c, 0));
+    for (const c of aCerrar) {
+      Object.assign(c, iniciarToggle(c, 0));
+      for (const [id, on] of gruposDeMovil(c.m, 0)) fijarGrupo(estado, id, on);
+    }
     Object.assign(v, nuevo);
     v.espera = aCerrar.length ? ESPERA_HOJA_S : 0;
+    // contrato 2.2: la pieza prende sus grupos al abrirse y los apaga al cerrarse (la luz de la nevera)
+    for (const [id, on] of gruposDeMovil(v.m, nuevo.objetivo)) fijarGrupo(estado, id, on);
     return true;
   }
   const reg = entrada.ref;

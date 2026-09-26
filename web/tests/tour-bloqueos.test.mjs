@@ -59,3 +59,32 @@ test("activar: mover una hoja cierra antes sus cajones abiertos y la hoja espera
   assert.equal(c.c1.t, 0);
   assert.equal(c.A.t, 0);
 });
+
+test("activar: la puerta de la nevera prende su grupo al abrirse y lo apaga al cerrarse (contrato 2.2, enciende)", () => {
+  const puerta = movil("Nevera_Puerta", { clase: "nevera", tipo: "bisagra", angulo_abierto: 1.7, enciende: ["cocina_nevera"] });
+  const grupo = { id: "cocina_nevera", movil: "Nevera_Puerta", encendido: false, intensidad: 0, _desde: 0, _hasta: 0,
+    faseMs: 150, luces: [], clones: new Map() };
+  const estado = { moviles: [puerta], porNodo: new Map([["Nevera_Puerta", puerta]]),
+    gruposLuz: new Map([["cocina_nevera", grupo]]), interruptores: [] };
+  assert.equal(activar(estado, { tipo: "movil", ref: puerta }, lejos), true);
+  assert.equal(puerta.objetivo, 1);
+  assert.equal(grupo.encendido, true);
+  for (let i = 0; i < 10; i++) pasoMundo(estado, 0.05, lejos);
+  assert.equal(grupo.intensidad, 1);
+  assert.equal(activar(estado, { tipo: "movil", ref: puerta }, lejos), true);
+  assert.equal(puerta.objetivo, 0);
+  assert.equal(grupo.encendido, false);
+});
+
+test("activar: PuertaLavaplatos1 cierra antes los cajones del módulo 3 que bloquea (se cruzaban al girar)", () => {
+  const c3s = movil("Cajon3Sup", { clase: "cajon" }, true);
+  const c3i = movil("Cajon3Inf", { clase: "cajon" });
+  const hoja = movil("PuertaLavaplatos1", { clase: "mueble", tipo: "bisagra", angulo_abierto: 1.66,
+    bloquea: ["Cajon3Sup", "Cajon3Inf"] });
+  const moviles = [c3s, c3i, hoja];
+  const estado = { moviles, porNodo: new Map(moviles.map((v) => [v.m.nodo, v])), gruposLuz: new Map(), interruptores: [] };
+  assert.equal(activar(estado, { tipo: "movil", ref: hoja }, lejos), true);
+  assert.equal(c3s.objetivo, 0);                 // el cajón abierto empieza a cerrarse
+  assert.equal(hoja.espera, ESPERA_HOJA_S);      // y la hoja espera a que termine
+  assert.equal(c3i.objetivo, 0);
+});
