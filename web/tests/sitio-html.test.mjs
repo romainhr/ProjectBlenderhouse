@@ -182,9 +182,7 @@ test("imágenes con width y height, srcset con sizes y el hero con fetchpriority
   const hero = (html["index.html"].match(/<img class="hero-img"[^>]*>/) || [])[0];
   assert.match(hero, /fetchpriority="high"/);
   assert.doesNotMatch(hero, /loading="lazy"/);
-  for (const m of ["ladrillo", "concreto", "roble", "cuero", "acero"]) {
-    for (const ext of ["jpg", "webp"]) assert.ok(existsSync(join(SRC, "img", `material-${m}-360.${ext}`)), `falta material-${m}-360.${ext}`);
-  }
+  // las muestras img/material-*-{360,720} las genera web/build.py desde las texturas propias (web/tests/test_build.py)
 });
 
 test("fuentes: todas las de tokens.css existen y no queda ninguna sin uso", () => {

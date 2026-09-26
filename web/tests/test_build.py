@@ -75,5 +75,29 @@ class Politicas(unittest.TestCase):
         self.assertIn("worker-src 'self' blob:", csp)
 
 
+class Muestras(unittest.TestCase):
+    def test_materiales_de_la_portada(self):
+        """Los cinco nombres que usa web/src/index.html, en 360 y 720 px, desde texturas propias (no desde renders)."""
+        self.assertEqual(sorted(build.MUESTRAS), ["acero", "concreto", "cuero", "ladrillo", "roble"])
+        self.assertNotIn("acero_cepillado", {tid for tid, _ in build.MUESTRAS.values()})   # la rehace la fase 07c
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "img"))
+            viejo, build.DIST = build.DIST, d
+            try:
+                build.muestras()
+            finally:
+                build.DIST = viejo
+            from PIL import Image
+            for nombre in build.MUESTRAS:
+                for lado in build.LADOS_MUESTRA:
+                    for ext in ("jpg", "webp"):
+                        with Image.open(os.path.join(d, "img", f"material-{nombre}-{lado}.{ext}")) as im:
+                            self.assertEqual(im.size, (lado, lado), f"{nombre} {lado} {ext}")
+        with open(os.path.join(build.SRC, "index.html"), encoding="utf-8") as fh:
+            html = fh.read()
+        for nombre in build.MUESTRAS:
+            self.assertIn(f"img/material-{nombre}-360.webp", html)
+
+
 if __name__ == "__main__":
     unittest.main()
