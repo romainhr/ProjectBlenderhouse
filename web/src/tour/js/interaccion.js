@@ -6,15 +6,15 @@ import { estadoMovil, chocaMovil } from "./colision.js";
 import { iniciarToggle, pasoAnimacion, congelar, duracionPorClase, valorFundido } from "./animacion.js";
 import { intensidadBase, FUNDIDO_MS, TILT_TECLA_DEG, interruptorEncendido, textoInterruptor } from "./luces.js";
 import { puedeAbrir, cajonesQueCerrar, ESPERA_HOJA_S } from "./bloqueos.js";
+import { t } from "../../js/i18n.js";
+import { nombrePieza } from "./textos.js";
 
-export const MOTIVO_CAMINO = "Estás en el camino: retrocede un paso";
-export const MOTIVO_HOJA = "Corre primero la puerta del clóset";
+// Por qué no se pudo activar algo: claves de los diccionarios (web/src/i18n/*.json). `estado.motivo` guarda la clave y
+// quien muestra el aviso la traduce con t() en ese momento, ya con el idioma de la página cargado.
+export const MOTIVO_CAMINO = "js.tour.motivo.camino";
+export const MOTIVO_HOJA = "js.tour.motivo.hoja";
 
 const DISTANCIA_MAXIMA = 2.5;
-
-const TEXTO_POR_CLASE = {
-  puerta: "puerta", ventana: "ventana", cajon: "cajón", closet: "clóset", nevera: "nevera", mueble: "mueble",
-};
 
 export function crearInteraccion(preparado) {
   const rayo = new THREE.Raycaster();
@@ -25,7 +25,7 @@ export function crearInteraccion(preparado) {
   return {
     ...preparado,
     porNodo: new Map((preparado.moviles || []).filter((v) => v.m).map((v) => [v.m.nodo, v])),
-    motivo: null,     // por qué no se pudo activar lo último (texto del aviso)
+    motivo: null,     // por qué no se pudo activar lo último (clave del aviso: MOTIVO_CAMINO o MOTIVO_HOJA)
     rayo,
     apuntado: null,
     _resaltados: resaltados,
@@ -86,15 +86,14 @@ export function quitarResaltado(estado) {
   estado.objetoApuntado = null;
 }
 
-// Texto de la pista/chip para una entrada de `mapaTocable`; `gruposLuz` (opcional) pone la etiqueta del grupo en la
-// pista de un interruptor ("Encender Living · techo").
+// Texto de la pista/chip para una entrada de `mapaTocable`, en el idioma de la página; `gruposLuz` (opcional) pone
+// la etiqueta del grupo en la pista de un interruptor ("Encender Living · techo"). Una pieza móvil: «Abrir {cosa}» o
+// «Cerrar {cosa}», con la cosa de nombrePieza() ("Abrir puerta del clóset", "Open the closet door").
 export function etiquetaAccion(entrada, gruposLuz) {
   if (entrada.tipo === "interruptor") return textoInterruptor(entrada.ref.grupos, gruposLuz, entrada.ref.encendido);
   const v = entrada.ref;
   const abrir = v.objetivo < 0.5;
-  if (v.m.etiqueta) return (abrir ? "Abrir " : "Cerrar ") + v.m.etiqueta.replace(/^(Abrir|Cerrar)\s+/i, "").toLowerCase();
-  const cosa = TEXTO_POR_CLASE[v.m.clase] || "pieza";
-  return `${abrir ? "Abrir" : "Cerrar"} ${cosa}`;
+  return t(abrir ? "js.tour.accion.abrir" : "js.tour.accion.cerrar", { cosa: nombrePieza(v.m) });
 }
 
 // Activa lo que se está apuntando/tocando (clic, E o toque corto). `walker` = { x, z, radio }.

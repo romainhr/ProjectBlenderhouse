@@ -1,6 +1,33 @@
 // Paneles, textos y controles de la interfaz (no toca three.js). Traduce las acciones del usuario a
-// llamadas de vuelta hacia main.js/interaccion.js; no conoce la escena 3D.
+// llamadas de vuelta hacia main.js/interaccion.js; no conoce la escena 3D. Los textos propios salen de t()
+// (claves js.tour.* de web/src/i18n/*.json) y se insertan con textContent o setAttribute, nunca como HTML.
+import { IDIOMAS, t } from "../../js/i18n.js";
+
 const $ = (s) => document.querySelector(s);
+
+// --- selector de idioma ---------------------------------------------------------------------------------------
+// <a data-i18n-alternar="es|en|fr"> (web/build.py le pone el href a este tour en ese idioma). Al elegir se guarda la
+// cookie nf_lang, que en Netlify reemplaza la detección por el idioma del navegador (ADR 0007, decisión 4), antes de
+// que el enlace navegue. El tour no carga js/sitio.js, que hace lo mismo en el resto del sitio.
+export const MAX_EDAD_IDIOMA_S = 31536000;   // un año
+
+/** Texto de document.cookie para recordar `idioma`, o null si no es es, en ni fr. */
+export function cookieIdioma(idioma) {
+  if (!IDIOMAS.includes(idioma)) return null;
+  return `nf_lang=${idioma}; path=/; max-age=${MAX_EDAD_IDIOMA_S}; SameSite=Lax; Secure`;
+}
+
+/** Escucha los clics (y el clic central, que abre otra pestaña) sobre el selector y guarda la cookie. */
+export function iniciarSelectorIdioma(doc = document) {
+  const guardar = (e) => {
+    if (e.type === "auxclick" && e.button !== 1) return;
+    const enlace = e.target && typeof e.target.closest === "function" ? e.target.closest("a[data-i18n-alternar]") : null;
+    const cookie = enlace ? cookieIdioma(enlace.getAttribute("data-i18n-alternar")) : null;
+    if (cookie) doc.cookie = cookie;
+  };
+  doc.addEventListener("click", guardar);
+  doc.addEventListener("auxclick", guardar);
+}
 
 export function marcarTactil(tactil) {
   document.body.classList.toggle("tactil", tactil);
@@ -45,7 +72,7 @@ export function pintarGruposLuz(gruposLuz, { onCambiar, onTodo }) {
     nombre.textContent = grupo.etiqueta;
     const interruptor = document.createElement("button");
     interruptor.type = "button"; interruptor.className = "interruptor"; interruptor.setAttribute("role", "switch");
-    interruptor.setAttribute("aria-label", `Luz: ${grupo.etiqueta}`);
+    interruptor.setAttribute("aria-label", t("js.tour.luz.interruptor", { nombre: grupo.etiqueta }));
     interruptor.setAttribute("aria-pressed", String(grupo.encendido));
     interruptor.addEventListener("click", () => {
       const nuevo = !grupo.encendido;

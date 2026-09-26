@@ -1,8 +1,13 @@
 // Plano dibujado desde depto_colisiones.json (igual que exports/depto_tour.html): u = z de glTF (izquierda
 // = balcón), v = -x (arriba = dormitorio 1). Los colores se leen UNA vez de getComputedStyle (antes se leían
 // en cada cuadro) y solo se redibuja cuando la posición o la mirada cambiaron.
+// Los nombres de recinto van en el idioma de la página (textos.js); uno más largo que el español (p. ej. «Placards
+// de la chambre principale») se achica hasta caber en ANCHO_ETIQUETA del plano, sin bajar de TAM_MIN px.
 import { estadoMovil } from "./colision.js";
-import { NOMBRES_RECINTO } from "./luces.js";
+import { nombreRecinto } from "./textos.js";
+
+const ANCHO_ETIQUETA = 0.42;   // fracción del ancho del plano (supuesto: así dos recintos vecinos no se pisan)
+const TAM_MIN = 10;
 
 export function prepararMinimapa(canvas, D) {
   let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
@@ -22,7 +27,24 @@ export function prepararMinimapa(canvas, D) {
       tintaSuave: leer("--tinta-2", "#5E5850"), acento: leer("--acento", "#A8481F"),
     },
     ultX: null, ultZ: null, ultYaw: null,
+    etiquetas: null,                 // [{ texto, x, y, font }] de los recintos, medidas la primera vez que se dibujan
   };
+}
+
+// Texto, posición y tipografía de cada recinto: el tamaño base es W/26 y baja hasta que el texto quepa.
+function etiquetasRecintos(M, D) {
+  const { ctx, W, a } = M;
+  const base = Math.round(W / 26), maximo = W * ANCHO_ETIQUETA;
+  return Object.entries(D.recintos || {}).map(([k, p]) => {
+    const texto = nombreRecinto(k, D.recintos_etiquetas);
+    let tam = base, font;
+    do {
+      font = `500 ${tam}px "Public Sans", sans-serif`;
+      ctx.font = font;
+    } while (ctx.measureText(texto).width > maximo && --tam >= TAM_MIN);
+    const [x, y] = a(p[0], p[1]);
+    return { texto, x, y, font };
+  });
 }
 
 export function dibujarMinimapa(M, D, moviles, yo, forzar) {
@@ -50,12 +72,12 @@ export function dibujarMinimapa(M, D, moviles, yo, forzar) {
     });
     ctx.fill();
   }
-  ctx.font = `500 ${Math.round(W / 26)}px "Public Sans", sans-serif`;
+  M.etiquetas ??= etiquetasRecintos(M, D);
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillStyle = colores.tintaSuave;
-  for (const [k, p] of Object.entries(D.recintos || {})) {
-    const [px, py] = a(p[0], p[1]);
-    ctx.fillText((D.recintos_etiquetas && D.recintos_etiquetas[k]) || NOMBRES_RECINTO[k] || k, px, py);
+  for (const e of M.etiquetas) {
+    ctx.font = e.font;
+    ctx.fillText(e.texto, e.x, e.y);
   }
   const [px, py] = a(yo.x, yo.z);
   const dx = -Math.sin(yo.yaw), dz = -Math.cos(yo.yaw);

@@ -50,6 +50,18 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .btn-reservar { background: var(--acento); color: #fff; border-radius: var(--radio); font-weight: 600; }
 .btn-reservar:hover { background: var(--acento-2); }
 
+/* selector de idioma (ADR 0007): <a data-i18n-alternar> con aria-current="true" en el idioma de la página (lo pone
+   web/build.py). En la barra superior desde 641 px; en la tarjeta de inicio siempre (la barra queda bajo su velo). */
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.idiomas { display: flex; align-items: center; }
+.idiomas a { display: inline-grid; place-items: center; min-width: 36px; min-height: 44px; padding: 0 4px;
+  border-radius: calc(var(--radio) - 3px); font-size: 12.5px; font-weight: 600; letter-spacing: .05em;
+  color: var(--tinta-2); text-decoration: none; }
+.idiomas a:hover { color: var(--acento); }
+.idiomas a[aria-current] { color: var(--tinta); text-decoration: underline; text-underline-offset: 4px; }
+#barra-superior .idiomas { padding: 0 4px; }
+#pantalla-inicio .idiomas { justify-content: flex-end; margin: -18px -16px 2px 0; }
+
 /* ------------------------------------------------------------------ botonera inferior */
 #botonera {
   position: fixed; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
@@ -139,6 +151,8 @@ body.tactil .solo-raton { display: none; }
   position: fixed; left: 50%; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
   padding: 8px 14px; font-size: 13px; white-space: nowrap; pointer-events: none; z-index: 8;
 }
+/* avisos y chips más largos en inglés o francés: en el teléfono parten en dos líneas en vez de salirse de la pantalla */
+#aviso, #chip-tactil { max-width: calc(100vw - 20px); }
 
 /* ------------------------------------------------------------------ joystick táctil */
 #joystick {
@@ -182,6 +196,8 @@ body.tactil .solo-raton { display: none; }
 /* ------------------------------------------------------------------ chico */
 @media (max-width: 640px) {
   #nombre-lugar { display: none; }
+  #barra-superior .idiomas { display: none; }
+  #aviso { white-space: normal; width: max-content; text-align: center; }
   .flotante { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 20px); }
   #pantalla-inicio h1 { font-size: 25px; }
 }

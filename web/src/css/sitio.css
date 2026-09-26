@@ -122,14 +122,45 @@ a:not(.boton):focus-visible, summary:focus-visible { border-radius: 4px; }
 .panel-menu { position: fixed; inset: var(--barra-alto) 0 auto; z-index: 49; max-height: calc(100svh - var(--barra-alto));
   overflow: auto; padding: 4px var(--margen) 16px; background: var(--papel); border-bottom: 1px solid var(--linea);
   box-shadow: var(--sombra); }
-.panel-menu a { display: block; padding: 14px 0; border-bottom: 1px solid var(--linea); text-decoration: none;
+/* sólo los enlaces directos: el selector de idioma del final (.idiomas) tiene su propio estilo */
+.panel-menu > a { display: block; padding: 14px 0; border-bottom: 1px solid var(--linea); text-decoration: none;
   font: 500 20px/1.2 var(--f-titulo); color: var(--tinta); }
-.panel-menu a:last-child { border-bottom: 0; color: var(--terracota); }
+.panel-menu > a:last-of-type { border-bottom: 0; color: var(--terracota); }
 @media (min-width: 1000px) {
   .menu-nav { display: block; }
   .barra .reservar { display: inline-flex; margin-left: 24px; }
   .hamburguesa, .panel-menu { display: none !important; }
 }
+/* selector de idioma (ADR 0007): <a data-i18n-alternar>, con lang, hreflang y aria-current="true" en el idioma de la
+   página (los pone web/build.py). En el encabezado sólo desde 1000 px (en el teléfono va al final del panel del
+   menú); en el panel y en el 404, como pastillas de 48 × 44 px. */
+.idiomas { display: flex; align-items: center; }
+.idiomas a { display: inline-grid; place-items: center; min-width: 40px; min-height: 44px; padding: 0 6px;
+  border-radius: var(--radio); font: 500 14px/1 var(--f-texto); letter-spacing: .06em; color: var(--tinta-2);
+  text-decoration: none; transition: color .2s, background-color .2s; }
+.idiomas a:hover { color: var(--terracota); }
+.idiomas a[aria-current] { color: var(--tinta); text-decoration: underline; text-decoration-thickness: 1px;
+  text-underline-offset: 6px; }
+.barra .idiomas { display: none; }
+.idiomas.pastillas { gap: 8px; }
+.idiomas.pastillas a { min-width: 48px; border: 1px solid var(--linea); font-size: 15px; }
+.idiomas.pastillas a:hover { border-color: var(--terracota); }
+.idiomas.pastillas a[aria-current] { background: var(--tinta); border-color: var(--tinta); color: var(--papel);
+  text-decoration: none; }
+.panel-menu .idiomas { margin-top: 4px; padding-top: 16px; border-top: 1px solid var(--linea); }
+.no-encontrada .idiomas { justify-content: center; margin-top: 16px; }
+@media (min-width: 1000px) {
+  .barra .idiomas { display: flex; gap: 2px; margin-left: 24px; padding-left: 18px; border-left: 1px solid var(--linea); }
+  .menu a { white-space: nowrap; }
+}
+/* con el selector, de 1000 a 1199 px no caben la bajada de la marca y el menú en francés o español (medido: «Location
+   saisonnière» pisaba el menú a 1000 px); desde 1200 px sí */
+@media (min-width: 1000px) and (max-width: 1199px) { .barra .marca small { display: none; } }
+.barra.sobre-hero .idiomas { border-left-color: rgba(255, 255, 255, .4); }
+.barra.sobre-hero .idiomas a { color: rgba(255, 255, 255, .85); }
+.barra.sobre-hero .idiomas a:hover, .barra.sobre-hero .idiomas a[aria-current] { color: #fff; }
+body:has(#panel-menu:not([hidden])) .barra.sobre-hero .idiomas a { color: var(--tinta-2); }
+
 /* sobre el hero de la portada: transparente, sin marca (el H1 ya es la marca); el velo superior asegura el contraste.
    La clase viene en el HTML de index.html, así el encabezado no parpadea de papel a transparente al cargar. Sin JS lo
    vuelve sólido el <noscript> de index.html, y sitio.js la quita si no hay IntersectionObserver (ESPEC-v4 §2.2). */
@@ -192,6 +223,10 @@ body:has(#panel-menu:not([hidden])) .barra.sobre-hero .hamburguesa:hover { backg
 @media (max-width: 759px) { .sep.corte-1 { display: block; height: 0; overflow: hidden; } }
 /* a 360 px (Android) «hasta 4 huéspedes · ≈ 54 m² construidos» necesita unos 330 px y hay 328: corta hasta 374 */
 @media (max-width: 374px) { .sep.corte-2 { display: block; height: 0; overflow: hidden; } }
+/* en francés la línea es más larga («jusqu'à 4 voyageurs · ≈ 54 m² de surface construite»): medido, el punto quedaba
+   colgando bajo 560 px y de 760 a 999 px, así que los mismos cortes rigen en esos anchos */
+@media (max-width: 559px) { :lang(fr) .sep.corte-2 { display: block; height: 0; overflow: hidden; } }
+@media (min-width: 760px) and (max-width: 999px) { :lang(fr) .sep.corte-1 { display: block; height: 0; overflow: hidden; } }
 @media (min-width: 700px) { .sep { margin-inline: 12px; } }
 @media (min-width: 1000px) { .datos .contenedor { min-height: 72px; padding: 20px 0; line-height: 32px; } }
 
@@ -426,7 +461,11 @@ body.con-barra-movil:has(> .barra-movil[hidden]) { --pie-extra: 0px; }        /*
   .migas { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font: 500 var(--t-meta)/1.4 var(--f-texto); }
   .migas a { display: inline-block; padding-block: 12px; }
 }
-.t-reserva { font: 400 var(--t-reserva)/.95 var(--f-titulo); letter-spacing: -0.02em; }
+.t-reserva { font: 400 var(--t-reserva)/.95 var(--f-titulo); letter-spacing: -0.02em; overflow-wrap: break-word; }
+/* títulos de una palabra más largos que en español: «Confidentialité» mide ≈ 6,8 em y a 52 px desbordaba bajo
+   390 px de ancho (medido a 375 px: 351 px de texto en 343 px). En francés el tamaño baja lo justo para que quepa; en
+   cualquier idioma, una palabra que aun así no cabe se parte en vez de salirse de la pantalla. */
+:lang(fr) .t-reserva { font-size: min(var(--t-reserva), calc((100vw - 2 * var(--margen)) / 6.9)); }
 .lema-reserva { margin-top: 4px; font: italic 400 var(--t-cursiva-reserva)/1.15 var(--f-titulo); color: var(--terracota); }
 .intro { margin-bottom: 24px; }
 .intro .bajada { margin-top: 10px; max-width: 52ch; }
@@ -477,6 +516,7 @@ body.con-barra-movil:has(> .barra-movil[hidden]) { --pie-extra: 0px; }        /*
 .cal-nav button:disabled { opacity: .35; cursor: default; }
 #meses { display: grid; grid-template-columns: repeat(var(--meses, 1), minmax(0, 1fr)); column-gap: 32px; }
 .mes h3 { margin: 0 0 8px; font: 400 22px/48px var(--f-titulo); text-transform: lowercase; text-align: center; letter-spacing: 0; }
+:lang(en) .mes h3 { text-transform: none; }      /* en inglés los meses van con mayúscula: «September 2026» */
 .mes table { width: 100%; max-width: 392px; margin-inline: auto; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
 .mes th { padding: 6px 0; font: 500 var(--t-meta)/1.4 var(--f-texto); color: var(--tinta-2); text-align: center; }
 .mes td { padding: 0; height: 48px; }

@@ -195,8 +195,10 @@ const ANTES_ES = Object.freeze({
 });
 
 test("textos de reserva.js y contenido-publico.js en español: los mismos que antes de pasarlos a es.json (hallazgo JS-5)", () => {
-  // toda clave js.* de es.json que no es un mensaje (CODIGOS) está en la tabla, y al revés
-  const noMensajes = Object.keys(DICCIONARIOS.es).filter((k) => k.startsWith("js.") && !CODIGOS.includes(k.slice(PREFIJO_MENSAJES.length)));
+  // toda clave js.reserva.* y js.contenido.* de es.json que no es un mensaje (CODIGOS) está en la tabla, y al revés
+  // (las del tour, js.tour.*, son de otro módulo: web/tests/tour-textos.test.mjs)
+  const noMensajes = Object.keys(DICCIONARIOS.es).filter((k) => /^js\.(reserva|contenido)\./.test(k)
+    && !CODIGOS.includes(k.slice(PREFIJO_MENSAJES.length)));
   assert.deepEqual(noMensajes.sort(), Object.keys(ANTES_ES).sort(), "falta o sobra un texto en la tabla ANTES_ES");
   for (const [k, texto] of Object.entries(ANTES_ES)) {
     assert.equal(DICCIONARIOS.es[k], texto, `es.json: ${k}`);
