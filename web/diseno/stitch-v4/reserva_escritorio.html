@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reserva — Project-roomVR</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..600&amp;family=Public+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    :root {
+      --color-paper: #F6F1EA;
+      --color-sand: #EDE3D6;
+      --color-surface-card: #FBF8F3;
+      --color-ink: #1F1B17;
+      --color-ink-secondary: #5F574E;
+      --color-line: #E0D6C8;
+      --color-line-input: #CFC3B3;
+      --color-terracotta: #A4471E;
+      --color-terracotta-dark: #7F3515;
+      --color-terracotta-tint: #F2DDD2;
+    }
+
+    body {
+      background-color: var(--color-paper);
+      color: var(--color-ink);
+      font-family: 'Public Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.6;
+    }
+
+    .font-serif {
+      font-family: 'Fraunces', Georgia, serif;
+      font-variation-settings: "opsz" 72;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Patrón de líneas diagonales para noches ocupadas */
+    .day-occupied {
+      background: repeating-linear-gradient(
+        45deg,
+        #E0D6C8,
+        #E0D6C8 1.5px,
+        transparent 1.5px,
+        transparent 6px
+      );
+      color: #9C9388;
+      text-decoration: line-through;
+      border: 1px solid #E0D6C8;
+    }
+
+    .day-available {
+      border: 1px solid var(--color-line);
+      color: var(--color-ink);
+      background-color: #FFFFFF;
+      transition: background-color 0.15s ease;
+    }
+
+    .day-available:hover {
+      background-color: #F8F3EC;
+      border-color: #CFC3B3;
+    }
+
+    .day-past {
+      color: #B5ACA1;
+      border: 1px solid transparent;
+      background: transparent;
+    }
+
+    .day-selected-end {
+      background-color: var(--color-terracotta);
+      color: #FFFFFF !important;
+      font-weight: 600;
+      border: 1px solid var(--color-terracotta);
+    }
+
+    .day-selected-between {
+      background-color: var(--color-terracotta-tint);
+      color: var(--color-terracotta-dark) !important;
+      font-weight: 500;
+      border-top: 1px solid #E4B8A5;
+      border-bottom: 1px solid #E4B8A5;
+      border-left: none;
+      border-right: none;
+      border-radius: 0 !important;
+    }
+
+    /* Focus ring for input specified in prompt */
+    .input-focused {
+      box-shadow: 0 0 0 2px #F6F1EA, 0 0 0 4px #A4471E;
+      border-color: #A4471E !important;
+      outline: none;
+    }
+
+    .card-border {
+      border: 1px solid var(--color-line);
+      background-color: var(--color-surface-card);
+      border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(31, 27, 23, 0.05);
+    }
+
+    .btn-primary {
+      background-color: var(--color-terracotta);
+      color: #FFFFFF;
+      border-radius: 10px;
+      transition: background-color 0.15s ease;
+    }
+    .btn-primary:hover {
+      background-color: var(--color-terracotta-dark);
+    }
+
+    .btn-secondary {
+      border: 1px solid var(--color-ink);
+      background: transparent;
+      color: var(--color-ink);
+      border-radius: 10px;
+      transition: all 0.15s ease;
+    }
+    .btn-secondary:hover {
+      background-color: rgba(31, 27, 23, 0.04);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- 1. HEADER (Paper, slim 72px with 1px hairline below) -->
+<header class="w-full h-[72px] bg-[#F6F1EA] border-b border-[#E0D6C8] sticky top-0 z-50 px-6 sm:px-12 flex items-center justify-between">
+<div class="flex items-baseline gap-3">
+<a class="font-serif text-[24px] text-[#1F1B17] font-normal tracking-tight" href="#">
+<span style="white-space:nowrap">Project-roomVR</span>
+</a>
+<span class="text-[13px] text-[#5F574E] font-normal tracking-normal border-l border-[#E0D6C8] pl-3 py-0.5">
+        Arriendo turístico
+      </span>
+</div>
+<!-- Navigation links -->
+<nav class="hidden md:flex items-center gap-8 text-[15px] text-[#1F1B17]">
+<a class="hover:text-[#A4471E] transition-colors" href="#">Espacios</a>
+<a class="hover:text-[#A4471E] transition-colors" href="#">Recorrido 3D</a>
+<a class="hover:text-[#A4471E] transition-colors" href="#">Tarifas</a>
+<a class="hover:text-[#A4471E] transition-colors" href="#">Preguntas</a>
+</nav>
+<!-- Secondary button right -->
+<div>
+<a class="btn-secondary h-10 px-5 text-[14px] font-medium inline-flex items-center justify-center" href="#">
+        Tour 3D
+      </a>
+</div>
+</header>
+<!-- Main Content Wrapper -->
+<main class="flex-1 w-full max-w-[1280px] mx-auto px-6 lg:px-8 pt-10 pb-24">
+<!-- 2. INTRO SECTION (two columns) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pb-12 border-b border-[#E0D6C8]">
+<!-- Left 6 columns -->
+<div class="lg:col-span-6 flex flex-col">
+<nav class="text-[14px] text-[#5F574E] mb-3">
+<a class="hover:underline" href="#">Inicio</a>
+<span class="mx-1 text-[#A99F94]">/</span>
+<span class="text-[#1F1B17] font-medium">Reserva</span>
+</nav>
+<h1 class="font-serif text-[#1F1B17] text-[72px] sm:text-[96px] lg:text-[104px] font-normal leading-[0.95] tracking-tight">
+          Reserva
+        </h1>
+<p class="font-serif italic text-[32px] sm:text-[40px] text-[#A4471E] leading-tight mt-1 mb-5">
+          sin cobro en línea.
+        </p>
+<p class="text-[18px] text-[#5F574E] leading-relaxed max-w-[52ch]">
+          Elige tus noches en el calendario y envía la solicitud. Queda pendiente hasta que te confirmamos por correo.
+        </p>
+</div>
+<!-- Right 6 columns: dorm1-1600.jpg 16:10 -->
+<div class="lg:col-span-6">
+<div class="relative overflow-hidden rounded-[12px] bg-[#EFE8DD] border border-[#E0D6C8] aspect-[16/10]">
+<img alt="Dormitorio 1, con cama king y closet corredero" class="w-full h-full object-cover" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<p class="font-serif italic text-[14px] text-[#5F574E] mt-2.5">
+          Dormitorio 1, con cama king y closet corredero.
+        </p>
+</div>
+</section>
+<!-- 3. MAIN GRID (12 columns, 32px gap) -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-10 items-start">
+<!-- LEFT: 8 COLUMNS -->
+<div class="lg:col-span-8 flex flex-col gap-8">
+<!-- 3.a) CARD FECHAS -->
+<div class="card-border p-8">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-[#E0D6C8] gap-4">
+<h2 class="font-serif text-[32px] font-normal text-[#1F1B17] leading-none">
+              Fechas
+            </h2>
+<!-- Navigation row with chevrons and live text -->
+<div class="flex items-center gap-3">
+<button aria-label="Mes anterior" class="w-10 h-10 rounded-full border border-[#E0D6C8] bg-white flex items-center justify-center text-[#1F1B17] hover:border-[#1F1B17] transition-colors" type="button">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewbox="0 0 24 24" width="18">
+<polyline points="15 18 9 12 15 6"></polyline>
+</svg>
+</button>
+<span class="text-[15px] font-medium text-[#1F1B17] px-2 text-center">
+                Vie 9 oct → lun 12 oct · 3 noches
+              </span>
+<button aria-label="Mes siguiente" class="w-10 h-10 rounded-full border border-[#E0D6C8] bg-white flex items-center justify-center text-[#1F1B17] hover:border-[#1F1B17] transition-colors" type="button">
+<svg fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" viewbox="0 0 24 24" width="18">
+<polyline points="9 18 15 12 9 6"></polyline>
+</svg>
+</button>
+</div>
+</div>
+<!-- Two months side by side -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Month 1: septiembre 2026 -->
+<div>
+<div class="font-serif text-[22px] text-[#1F1B17] mb-4 text-center font-normal">
+                septiembre 2026
+              </div>
+<!-- Weekday header (Monday first) -->
+<div class="grid grid-cols-7 gap-1.5 text-center text-[13px] text-[#5F574E] font-medium pb-2">
+<span>lu</span><span>ma</span><span>mi</span><span>ju</span><span>vi</span><span>sá</span><span>do</span>
+</div>
+<!-- September 2026: Starts Tuesday (col 2), 30 days -->
+<div class="grid grid-cols-7 gap-1.5 tabular-nums text-[15px]">
+<!-- Empty Monday -->
+<div></div>
+<!-- 1 to 25: Past days -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">1</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">2</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">3</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">4</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">5</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">6</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">7</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">8</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">9</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">10</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">11</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">12</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">13</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">14</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">15</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">16</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">17</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">18</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">19</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">20</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">21</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">22</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">23</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">24</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-past">25</div>
+<!-- 26 September: Today with a small terracotta dot under number -->
+<div class="w-[44px] h-[44px] mx-auto flex flex-col items-center justify-center rounded-[10px] day-available relative font-medium">
+<span>26</span>
+<span class="w-1.5 h-1.5 rounded-full bg-[#A4471E] absolute bottom-1"></span>
+</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">27</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">28</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">29</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">30</div>
+</div>
+</div>
+<!-- Month 2: octubre 2026 -->
+<div>
+<div class="font-serif text-[22px] text-[#1F1B17] mb-4 text-center font-normal">
+                octubre 2026
+              </div>
+<!-- Weekday header -->
+<div class="grid grid-cols-7 gap-1.5 text-center text-[13px] text-[#5F574E] font-medium pb-2">
+<span>lu</span><span>ma</span><span>mi</span><span>ju</span><span>vi</span><span>sá</span><span>do</span>
+</div>
+<!-- October 2026: Starts Thursday (col 4), 31 days -->
+<div class="grid grid-cols-7 gap-1.5 tabular-nums text-[15px]">
+<!-- Empty Mon, Tue, Wed -->
+<div></div>
+<div></div>
+<div></div>
+<!-- 1 oct: Available -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">1</div>
+<!-- 2, 3, 4 oct: OCCUPIED (hatched & strike) -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-occupied">2</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-occupied">3</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-occupied">4</div>
+<!-- 5, 6, 7, 8 oct: Available -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">5</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">6</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">7</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">8</div>
+<!-- 9 oct: Selected start end (terracotta solid) -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-selected-end cursor-pointer">9</div>
+<!-- 10, 11 oct: Range between (terracotta soft tint) -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center day-selected-between cursor-pointer">10</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center day-selected-between cursor-pointer">11</div>
+<!-- 12 oct: Selected end (terracotta solid) -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-selected-end cursor-pointer">12</div>
+<!-- 13, 14, 15, 16 oct: Available -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">13</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">14</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">15</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">16</div>
+<!-- 17, 18, 19 oct: OCCUPIED (hatched & strike) -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-occupied">17</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-occupied">18</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-occupied">19</div>
+<!-- 20 to 31 oct: Available -->
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">20</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">21</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">22</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">23</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">24</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">25</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">26</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">27</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">28</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">29</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">30</div>
+<div class="w-[44px] h-[44px] mx-auto flex items-center justify-center rounded-[10px] day-available cursor-pointer">31</div>
+</div>
+</div>
+</div>
+<!-- Calendar legend -->
+<div class="flex items-center gap-6 mt-8 pt-5 border-t border-[#E0D6C8] text-[14px] text-[#5F574E]">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-[4px] border border-[#E0D6C8] bg-white inline-block"></span>
+<span>Disponible</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-[4px] border border-[#E0D6C8] day-occupied inline-block"></span>
+<span>Ocupado</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-[4px] bg-[#A4471E] inline-block"></span>
+<span>Tu selección</span>
+</div>
+</div>
+</div>
+<!-- 3.b) CARD TUS DATOS -->
+<div class="card-border p-8">
+<div class="mb-6">
+<h2 class="font-serif text-[32px] font-normal text-[#1F1B17] leading-none mb-2">
+              Tus datos
+            </h2>
+<p class="text-[14px] text-[#5F574E]">
+              Es un sitio de demostración: usa un nombre y un correo inventados.
+            </p>
+</div>
+<form class="space-y-6" onsubmit="return false;">
+<!-- Huéspedes stepper -->
+<div>
+<label class="block text-[14px] font-medium text-[#1F1B17] mb-2">
+                Huéspedes
+              </label>
+<div class="inline-flex items-center bg-[#F6F1EA] border border-[#CFC3B3] rounded-[10px] h-[48px] px-3 gap-4">
+<button aria-label="Disminuir huéspedes" class="w-8 h-8 rounded-full flex items-center justify-center text-[#1F1B17] hover:bg-[#EDE3D6] transition-colors text-[18px] font-medium" type="button">
+                  −
+                </button>
+<span class="text-[16px] font-semibold text-[#1F1B17] w-6 text-center tabular-nums">2</span>
+<button aria-label="Aumentar huéspedes" class="w-8 h-8 rounded-full flex items-center justify-center text-[#1F1B17] hover:bg-[#EDE3D6] transition-colors text-[18px] font-medium" type="button">
+                  +
+                </button>
+</div>
+</div>
+<!-- Nombre (in FOCUS state) -->
+<div>
+<label class="block text-[14px] font-medium text-[#1F1B17] mb-2" for="input-nombre">
+                Nombre
+              </label>
+<input class="w-full h-[48px] bg-[#F6F1EA] border border-[#CFC3B3] rounded-[10px] px-4 text-[16px] text-[#1F1B17] input-focused" id="input-nombre" type="text" value="Ana Pérez"/>
+</div>
+<!-- Correo and Teléfono side by side -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+<div>
+<label class="block text-[14px] font-medium text-[#1F1B17] mb-2" for="input-correo">
+                  Correo
+                </label>
+<input class="w-full h-[48px] bg-[#F6F1EA] border border-[#CFC3B3] rounded-[10px] px-4 text-[16px] text-[#1F1B17] focus:outline-none focus:border-[#A4471E]" id="input-correo" placeholder="ejemplo@correo.com" type="email"/>
+</div>
+<div>
+<label class="block text-[14px] font-medium text-[#1F1B17] mb-2" for="input-tel">
+                  Teléfono (opcional)
+                </label>
+<input class="w-full h-[48px] bg-[#F6F1EA] border border-[#CFC3B3] rounded-[10px] px-4 text-[16px] text-[#1F1B17] focus:outline-none focus:border-[#A4471E]" id="input-tel" placeholder="+56 9 1234 5678" type="tel"/>
+</div>
+</div>
+<!-- Mensaje -->
+<div>
+<label class="block text-[14px] font-medium text-[#1F1B17] mb-2" for="input-mensaje">
+                Mensaje (opcional)
+              </label>
+<textarea class="w-full h-[120px] bg-[#F6F1EA] border border-[#CFC3B3] rounded-[10px] p-4 text-[16px] text-[#1F1B17] resize-none focus:outline-none focus:border-[#A4471E]" id="input-mensaje" placeholder="Hora estimada de llegada, preguntas…" rows="4"></textarea>
+</div>
+<!-- Checkbox privacidad -->
+<div class="flex items-start gap-3 pt-1">
+<input checked="" class="mt-1 w-4 h-4 rounded text-[#A4471E] border-[#CFC3B3] focus:ring-[#A4471E] accent-[#A4471E] cursor-pointer" id="check-privacidad" type="checkbox"/>
+<label class="text-[14px] text-[#5F574E] cursor-pointer select-none" for="check-privacidad">
+                Acepto que usen mis datos sólo para responder esta solicitud (<a class="text-[#A4471E] underline hover:text-[#7F3515]" href="#">privacidad</a>).
+              </label>
+</div>
+</form>
+</div>
+<!-- 3.c) QUÉ PASA DESPUÉS -->
+<div class="pt-4 pb-2">
+<h3 class="font-serif text-[28px] font-normal text-[#1F1B17] mb-6">
+            Qué pasa después
+          </h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-0">
+<!-- Column 1 -->
+<div class="md:pr-8">
+<h4 class="font-serif text-[20px] font-normal text-[#1F1B17] mb-2">
+                Queda pendiente
+              </h4>
+<p class="text-[15px] text-[#5F574E] leading-relaxed">
+                Tu solicitud bloquea esas noches mientras la revisamos.
+              </p>
+</div>
+<!-- Column 2 -->
+<div class="md:px-8 md:border-l md:border-[#E0D6C8]">
+<h4 class="font-serif text-[20px] font-normal text-[#1F1B17] mb-2">
+                Te escribimos
+              </h4>
+<p class="text-[15px] text-[#5F574E] leading-relaxed">
+                Te respondemos al correo para confirmarla o proponer otras fechas.
+              </p>
+</div>
+<!-- Column 3 -->
+<div class="md:pl-8 md:border-l md:border-[#E0D6C8]">
+<h4 class="font-serif text-[20px] font-normal text-[#1F1B17] mb-2">
+                Acordamos el pago
+              </h4>
+<p class="text-[15px] text-[#5F574E] leading-relaxed">
+                Al confirmar acordamos el pago y te enviamos la dirección.
+              </p>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT: 4 COLUMNS (STICKY SUMMARY CARD) -->
+<div class="lg:col-span-4">
+<aside class="sticky top-[96px] card-border overflow-hidden">
+<!-- Top image living-1600.jpg 16:10 rounded top corners -->
+<div class="aspect-[16/10] bg-[#EFE8DD] border-b border-[#E0D6C8] overflow-hidden">
+<img alt="Living con ventanal al balcón y muro de ladrillo" class="w-full h-full object-cover" src="https://www.gstatic.com/labs-code/stitch/stitch-placeholder-300x300.svg"/>
+</div>
+<div class="p-6">
+<h2 class="font-serif text-[28px] font-normal text-[#1F1B17] mb-4">
+              Resumen
+            </h2>
+<!-- Breakdown rows -->
+<div class="space-y-3 pb-5 text-[15px]">
+<div class="flex justify-between items-center text-[#5F574E]">
+<span>Llegada</span>
+<span class="text-[#1F1B17] font-medium">vie 9 oct 2026</span>
+</div>
+<div class="w-full h-[1px] bg-[#E0D6C8]"></div>
+<div class="flex justify-between items-center text-[#5F574E]">
+<span>Salida</span>
+<span class="text-[#1F1B17] font-medium">lun 12 oct 2026</span>
+</div>
+<div class="w-full h-[1px] bg-[#E0D6C8]"></div>
+<div class="flex justify-between items-center text-[#5F574E]">
+<span>3 noches × CLP 58.000</span>
+<span class="text-[#1F1B17] font-medium">CLP 174.000</span>
+</div>
+<div class="w-full h-[1px] bg-[#E0D6C8]"></div>
+<div class="flex justify-between items-center text-[#5F574E]">
+<span>Limpieza (ejemplo)</span>
+<span class="text-[#1F1B17] font-medium">CLP 15.000</span>
+</div>
+</div>
+<!-- Strong total row -->
+<div class="pt-2 pb-5 border-t border-[#E0D6C8] flex justify-between items-baseline">
+<span class="text-[17px] font-semibold text-[#1F1B17]">Total estimado</span>
+<span class="font-serif text-[34px] font-normal text-[#1F1B17] leading-none">CLP 189.000</span>
+</div>
+<p class="text-[13px] text-[#5F574E] leading-snug mb-6">
+              Valores de ejemplo. Sin cobro en línea: te confirmamos por correo.
+            </p>
+<!-- Primary button -->
+<button class="w-full h-[52px] btn-primary text-[16px] font-semibold flex items-center justify-center shadow-sm" type="button">
+              Solicitar reserva
+            </button>
+<!-- Small text link below -->
+<div class="mt-4 text-center">
+<a class="text-[14px] text-[#5F574E] hover:text-[#A4471E] transition-colors underline underline-offset-4 decoration-[#CFC3B3] hover:decoration-[#A4471E]" href="#">
+                ¿Dudas? Revisa las preguntas frecuentes
+              </a>
+</div>
+</div>
+</aside>
+</div>
+</section>
+</main>
+<!-- 4. FOOTER (Sand #EDE3D6) -->
+<footer class="w-full bg-[#EDE3D6] border-t border-[#E0D6C8] py-8 px-6 sm:px-12 text-[14px] text-[#5F574E]">
+<div class="max-w-[1280px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+<div class="flex items-center gap-2">
+<span class="font-serif text-[18px] text-[#1F1B17]">
+<span style="white-space:nowrap">Project-roomVR</span>
+</span>
+</div>
+<p class="text-center text-[13px]">
+        Imágenes renderizadas desde un modelo 3D · tarifas de ejemplo
+      </p>
+<div class="text-right text-[13px]">
+        © 2026 <span style="white-space:nowrap">Project-roomVR</span> · <a class="hover:underline" href="#">Privacidad</a>
+</div>
+</div>
+</footer>
+</body>
+</html>
