@@ -29,7 +29,7 @@ Aplica a todas las sesiones de Claude, las actuales y las futuras. Repositorio p
 - **Secretos:** `NETLIFY_TOKEN`, `SUPABASE_URL` y `SUPABASE_CLAVE_PUBLICA` son secretos de GitHub Actions y los administra el usuario. Nunca van en archivos, commits, PR ni logs. El CI falla si encuentra algo con forma de secreto.
 - **Qué se versiona:** lo define `.gitignore`. No se versionan `review/`, `web/dist/`, `build/*.blend` ni `ref/depto/`. Si el worktree necesita el maestro, se copia `build/depto.blend` desde la carpeta principal o se regenera con `bash build/depto_run.sh`.
 - **Binarios generados que sí se versionan** (`exports/web/`, `web/renders_png/`, `assets/texturas/propias/`): se commitean sólo en la PR que cambió el script que los produce. Si dos ramas los tocan, se regeneran; no se fusionan a mano.
-- **Migraciones SQL:** el CI no tiene base de datos. Una PR que toca `web/supabase/` dice en su descripción qué pruebas de `web/supabase/tests/` correr; el usuario las corre en el SQL Editor antes de aplicar la migración.
+- **Migraciones SQL:** el job «Pruebas SQL» aplica `web/supabase/migrations/` y corre `web/supabase/tests/` en un Supabase local del runner. Cada migración nueva va con sus pruebas. El CI no toca el proyecto real: la PR dice qué migración debe aplicar el usuario en el SQL Editor después de fusionar.
 - **Atribución:** cada commit termina con `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (si la sesión corre con otro modelo, se nombra ese modelo con la misma forma), y cada PR termina con `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 - Una decisión de arquitectura va con su ADR en `docs/adr/`, en la misma PR.
 

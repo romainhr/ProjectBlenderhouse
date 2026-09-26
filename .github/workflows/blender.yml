@@ -1,0 +1,84 @@
+# Pipeline de Blender (bash build/depto_run.sh) en un runner de GitHub, sólo a pedido (Actions → Run workflow).
+# Es pesado y no corre en cada PR. Blender 3.6.23, la versión de la máquina local (CLAUDE.md), sin GPU: Workbench y
+# Eevee sobre OpenGL por software (Mesa llvmpipe) dentro de un X virtual (Xvfb).
+# Sube el maestro, los exports y los renders como artefacto. No commitea nada: los binarios regenerados entran por PR.
+# Estado: no se había corrido en un runner al escribirlo (docs/adr/0005-git-github-pipeline.md).
+name: Pipeline de Blender
+
+on:
+  workflow_dispatch:
+    inputs:
+      hasta:
+        description: Última fase a construir
+        type: choice
+        options: ["02", "03", "04", "05", "06"]
+        default: "06"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blender-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  BLENDER_VERSION: 3.6.23
+  # blender-3.6.23-linux-x64.tar.xz según https://download.blender.org/release/Blender3.6/blender-3.6.23.sha256
+  BLENDER_SHA256: 0e9a18af4d0060b825e9617e24a775f759e0f9f67271c062f3d53a539030af00
+
+jobs:
+  blender:
+    name: depto_run.sh
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verificar entradas
+        run: |
+          test -f ref/plano/plano_depto.png || { echo "::error::Falta ref/plano/plano_depto.png (entrada de la fase 1)"; exit 1; }
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+      - name: Pillow para las comprobaciones sin Blender (compare_plan.py, verificar_lineas.py)
+        run: python3 -m pip install -r .github/requirements-ci.txt
+      - name: Caché del instalador de Blender
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/blender.tar.xz
+          key: blender-${{ env.BLENDER_VERSION }}-linux-x64-${{ env.BLENDER_SHA256 }}
+      - name: Descargar, verificar e instalar Blender
+        run: |
+          archivo="$HOME/blender.tar.xz"
+          if [ ! -f "$archivo" ]; then
+            curl -fsSL --retry 3 -o "$archivo" \
+              "https://download.blender.org/release/Blender3.6/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+          fi
+          echo "${BLENDER_SHA256}  ${archivo}" | sha256sum -c -
+          mkdir -p "$HOME/blender"
+          tar -xJf "$archivo" -C "$HOME/blender" --strip-components=1
+          echo "$HOME/blender" >> "$GITHUB_PATH"
+      - name: X virtual y OpenGL por software
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb libgl1 libglx-mesa0 libgl1-mesa-dri libegl1 \
+            libxi6 libxxf86vm1 libxfixes3 libxrender1 libxkbcommon0 libsm6 libice6
+      - run: blender -b --version | head -1
+      - name: bash build/depto_run.sh ${{ inputs.hasta }}
+        env:
+          HASTA: ${{ inputs.hasta }}
+        run: xvfb-run -a -s "-screen 0 1920x1080x24" bash build/depto_run.sh "$HASTA"
+      - name: Subir maestro, exports y renders
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blender-fase-${{ inputs.hasta }}
+          path: |
+            build/depto.blend
+            exports/
+            review/
+          if-no-files-found: warn
+          retention-days: 3
