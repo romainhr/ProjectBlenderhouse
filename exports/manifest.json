@@ -1,18 +1,18 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 16255344,
-    "md5": "735627d7562ce59c1887ccaf30eb670a",
+    "bytes": 16443668,
+    "md5": "b632e53db81ed546b63f2215388fbbaa",
     "web": {
       "carpeta": "web",
       "archivos": 54,
-      "bytes": 18066919,
+      "bytes": 18317262,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 48716,
-      "estaticos": 820,
+      "bytes": 50759,
+      "estaticos": 833,
       "moviles": 33,
       "luces": 18,
       "grupos_luz": 14,
@@ -21,12 +21,12 @@
     "fecha": "2026-09-26",
     "fase": "06",
     "sellos": {
-      "01": "a9069c93bbea",
-      "02": "ff4fcb577699",
-      "03": "0e1b5ba432e0",
-      "04": "f87361a46a90",
-      "05": "ff7d5a727b7f",
-      "06": "f2113c3752dd"
+      "01": "de20a5bc79fb",
+      "02": "b3dc3936366e",
+      "03": "f6af5532090a",
+      "04": "1d5c76e93898",
+      "05": "de4e10ceac76",
+      "06": "d1f18820144f"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -48,7 +48,7 @@
       ]
     },
     "mallas": 407,
-    "triangulos": 180064,
+    "triangulos": 182292,
     "materiales": [
       "Depto_Mat_Acero",
       "Depto_Mat_AceroInox",
@@ -109,6 +109,7 @@
       "Depto_Mat_PisoBalcon",
       "Depto_Mat_PisoCeramico",
       "Depto_Mat_PisoMadera",
+      "Depto_Mat_PlasticoEsmerilado",
       "Depto_Mat_PuertaEntrada",
       "Depto_Mat_PuertaMadera",
       "Depto_Mat_Suela",
