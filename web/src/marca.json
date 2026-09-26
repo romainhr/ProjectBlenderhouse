@@ -1,5 +1,5 @@
 {
-  "nombre": "Departamento 2D2B",
+  "nombre": "Project-roomVR",
   "bajada": "Arriendo turístico",
-  "nota": "Nombre descriptivo provisorio mientras el dueño elige uno (pedido del 2026-09-26: no es un loft). Para cambiarlo: editar este archivo y reemplazar el texto en las páginas; web/tests/marca.test.mjs verifica que no quede ninguna página con otro nombre."
+  "nota": "Nombre visible elegido por el dueño el 2026-09-26 (escrito exactamente así; no es un loft). La URL sigue siendo loft-2d2b.netlify.app. Para cambiarlo: editar este archivo y reemplazar el texto en las páginas; web/tests/marca.test.mjs verifica que no quede ninguna página con otro nombre."
 }
