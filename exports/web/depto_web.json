@@ -152,7 +152,15 @@
   },
   {
    "uri": "tex/acero_cepillado_nor_gl_1k.jpg",
-   "bytes": 23384
+   "bytes": 36884
+  },
+  {
+   "uri": "tex/acero_cepillado_diff_1k.jpg",
+   "bytes": 143543
+  },
+  {
+   "uri": "tex/acero_cepillado_rough_1k.jpg",
+   "bytes": 65860
   },
   {
    "uri": "tex/roble_ahumado_nor_gl_1k.jpg",
@@ -199,5 +207,5 @@
    "bytes": 460509
   }
  ],
- "total_bytes": 18270347
+ "total_bytes": 18599840
 }

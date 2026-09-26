@@ -1,19 +1,19 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 16354332,
-    "md5": "c8db789b5ce69f9a9a00a59ad789b93b",
+    "bytes": 16656124,
+    "md5": "3ba187316a078f7240eb11beebf08d4c",
     "web": {
       "carpeta": "web",
-      "archivos": 53,
-      "bytes": 18270347,
+      "archivos": 55,
+      "bytes": 18599840,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 52312,
-      "estaticos": 844,
-      "moviles": 33,
+      "bytes": 52807,
+      "estaticos": 829,
+      "moviles": 35,
       "luces": 19,
       "grupos_luz": 15,
       "interruptores": 29
@@ -22,11 +22,11 @@
     "fase": "06",
     "sellos": {
       "01": "de20a5bc79fb",
-      "02": "daaee164b2dd",
-      "03": "fcf0b224a134",
-      "04": "222ba6b49d41",
-      "05": "9449da310590",
-      "06": "df5bd9673663"
+      "02": "c39a78c706ba",
+      "03": "dc7403a96497",
+      "04": "903d0853c72a",
+      "05": "5dc34d58d15a",
+      "06": "4e60ae25f402"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -47,8 +47,8 @@
         2.55
       ]
     },
-    "mallas": 410,
-    "triangulos": 189240,
+    "mallas": 400,
+    "triangulos": 190200,
     "materiales": [
       "Depto_Mat_Acero",
       "Depto_Mat_AceroInox",
@@ -75,8 +75,6 @@
       "Depto_Mat_Espejo",
       "Depto_Mat_FrenteCloset",
       "Depto_Mat_FrenteCocina",
-      "Depto_Mat_GranoClaro",
-      "Depto_Mat_GranoOscuro",
       "Depto_Mat_GresArena",
       "Depto_Mat_GresBlanco",
       "Depto_Mat_GresNegro",
@@ -253,6 +251,29 @@
         "Balcon": true,
         "Palier": true,
         "Nicho_LV": false
+      },
+      "aperturas": {
+        "moviles": 35,
+        "estaticos": 1824,
+        "pares_de_hojas": 36,
+        "max_mm": 0.0
+      },
+      "nevera_abierta": {
+        "distancia_boca_m": 0.527,
+        "x_px": [
+          355.0,
+          386.7
+        ],
+        "y_px": [
+          257.1,
+          270.9
+        ]
+      },
+      "closets_cubiertos": {
+        "D1_Norte": 1.0,
+        "D1_Sur": 1.0,
+        "D2_Norte": 1.0,
+        "D2_Sur": 1.0
       }
     },
     "fuente": "ref/plano/plano_depto.png (plano del usuario); medidas en asset-brief-depto.md"
