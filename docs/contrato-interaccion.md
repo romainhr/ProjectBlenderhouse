@@ -25,7 +25,12 @@ Reglas del modelo:
 - Un cajón es una caja abierta arriba (frente + fondo + laterales + piso), no un bloque macizo, para que se vea su interior al abrirse.
 - Corrección 07c: todos los cajones y puertas de mueble nacen cerrados (`abierta: false`). En las hojas de mueble y de
   la nevera el eje de giro va en la arista de la cara vista (la que mira hacia donde abre), como una bisagra de
-  cazoleta, y la bisagra va del lado que no tiene muro, torre ni esquina. La fase 6 prueba que ninguna hoja ni cajón,
+  cazoleta, y la hoja cuelga de un costado, divisor o montante del mueble. La bisagra va del lado libre cuando se
+  puede; si del lado de la bisagra hay muro, torre o esquina, se agrega un rellenador (`ALTOS_RELLENO`,
+  `RELLENO_ESQUINA`) o se limita el ángulo (`ANGULO_MUEBLE_TORRE`, `ANGULO_TORRE`), y `prueba_aperturas` lo verifica.
+  Excepciones con nombre (corrección 07c, ronda 1): `PuertaAltaN1` (bisagra del lado de T3, detrás del rellenador),
+  `PuertaAltaE3` (junto a la torre, tope a 90°), `PuertaLavaplatos2` (junto a la torre) y las dos puertas de la torre,
+  `PuertaTorreBaja` y `PuertaDespensa` (junto a la nevera, tope a 80°). La fase 6 prueba que ninguna hoja ni cajón,
   abierto en el estado que permite este contrato (con las hojas de su `depende_de` corridas y las demás como en el
   modelo), entre más de 1 mm en una caja estática o en otro móvil, y que dos hojas de mueble, o una hoja y un cajón del
   mismo recinto, abiertos a la vez no se crucen (`prueba_aperturas` en `build/depto_06_exportar.py`).
@@ -51,8 +56,9 @@ Cada luz puntual trae además `grupo` (id de `grupos_luz`), `color` [r, g, b] li
   3000 K ≈ [1.0, 0.48, 0.15]. Hasta la corrección 07b se escribía [1.0, 0.72, 0.42], que es el sRGB codificado de
   ~3000 K: usado como lineal daba ~4200 K.
 - 2700 K en general; cocina y baños a 3000 K.
-- Luces con pantalla (domos de techo, lámpara de arco, colgante del balcón y focos del riel): `cono_deg`
-  (semiángulo, 60° en domos y 35° en focos) y `direccion` (vector glTF del eje; hacia abajo en los domos). El
+- Luces con pantalla (domos de techo, lámpara de arco, colgante del balcón, focos de los rieles y los tramos de la
+  luz lineal bajo los altos de la cocina): `cono_deg` (semiángulo, 60° en domos y en la luz lineal, 35° en focos) y
+  `direccion` (vector glTF del eje; hacia abajo en los domos y en la luz lineal). El
   visor, que no calcula sombras, las arma como un foco (SpotLight) con toda la intensidad; sin eso el cielo sobre un
   domo cerrado recibía ~20 veces la luz del piso. Hasta la ronda 2 de la corrección 07b llevaban además una puntual
   con el 15 % para el rebote en el cielo: se quitó porque cada luz cuesta ~1,3-1,7 ms por cuadro en una GPU
@@ -74,7 +80,7 @@ desde los pies de la cama.
 |---|---|---|---|---|
 | `living_techo` | colgante de domo | Living | 2700 K | sí |
 | `living_lampara_pie` | lámpara de arco | Living | 2700 K | no |
-| `cocina_techo` | 2 colgantes de jaula | Cocina | 3000 K | sí |
+| `cocina_techo` | riel de 3 focos y luz lineal bajo los muebles altos (3 tramos); hasta la corrección 07c, 2 colgantes de jaula | Cocina | 3000 K | sí |
 | `hall_techo` | riel de 3 focos | Hall | 2700 K | sí |
 | `dorm1_techo` | colgante de domo | Dorm1 | 2700 K | sí |
 | `dorm1_velador_izq`, `dorm1_velador_der` | lámparas de mesa (veladores oeste y este; hasta la ronda 2 de la corrección 07b había una sola, `dorm1_velador`) | Dorm1 | 2700 K | no |

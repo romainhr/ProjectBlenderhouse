@@ -170,7 +170,12 @@ que habían quedado sin lugar. Mismas convenciones que arriba.
   muro libre de 0,50 para la escalera de toallas: `escalera_toallas` queda sólo en la vitrina.
 - **Dormitorio 2**: apliques de brazo sobre los dos veladores (en vez de la lámpara de mesa) y un jarrón.
 - **Conductos vistos**: del colgante del living por el cielo hasta el muro de ladrillo, bajando a una caja a
-  1,10; y entre los dos colgantes de la cocina, con caja de derivación al medio.
+  1,10. El de la cocina, entre sus dos colgantes, salió con ellos en la corrección 07c (ronda 1).
+- **Luz de la cocina** (corrección 07c, ronda 1): riel de tres focos en el cielo (x 340, y 212 px, a 0,80 m de las
+  hojas altas), casi verticales (5-10°) hacia el borde de la cubierta y el piso frente a los muebles base, y luz
+  lineal de trabajo bajo los muebles altos (perfil negro de 16 × 8 mm con difusor, en tres tramos: N1, N2-N3 y el
+  tramo este), todo en el grupo `cocina_techo`. Los colgantes de jaula de la v2 colgaban a la altura de los altos y a
+  0,56 m de sus hojas, y las lavaban.
 - **Sin comedor interior**: el espacio libre entre living, cocina y hall es circulación (el plano no dibuja
   comedor). Una mesa de 0,80 con dos sillas dejaba 0,6 a 0,7 m frente a la cocina o cortaba el paso del hall al
   living. La mesa y la silla de comedor quedan en la vitrina; el comedor para dos es el del balcón.

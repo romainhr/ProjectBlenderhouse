@@ -137,12 +137,39 @@ Decisiones:
    `ALTOS_Y`, de T3 a la esquina, sobre el anafe) y se quitan las repisas abiertas y la campana de chimenea de
    `docs/deco-industrial.md`. La campana pasa a ser telescópica, integrada en el módulo de 0,60 m sobre el anafe
    (su cara inferior queda a 0,59 m del vidrio; el valor que piden los fabricantes no está verificado).
-2. **Regla de bisagras de mueble** (contrato, sección 1): el eje de giro va en la arista de la cara vista y la bisagra
-   del lado sin muro, torre ni esquina; dos hojas vecinas no comparten la junta de la bisagra. Lo prueba la fase 6
+2. **Regla de bisagras de mueble** (contrato, sección 1; redacción corregida en la ronda 1): el eje de giro va en la
+   arista de la cara vista y la hoja cuelga de un costado, divisor o montante. La bisagra va del lado libre cuando se
+   puede; si del lado de la bisagra hay muro, torre o esquina, se agrega un rellenador (`ALTOS_RELLENO`,
+   `RELLENO_ESQUINA`) o se limita el ángulo (`ANGULO_MUEBLE_TORRE`, `ANGULO_TORRE`). Excepciones con nombre:
+   `PuertaAltaN1`, `PuertaAltaE3`, `PuertaLavaplatos2` y las dos puertas de la torre. Dos hojas vecinas no comparten
+   la junta de la bisagra. Lo prueba la fase 6
    (`prueba_aperturas`), que abre cada móvil como lo permite el contrato. Es un cambio del modelo, no del esquema
    (sigue `"contrato": "2.1"`): cambian el `posicion`/`cajas_locales` de las hojas y los nombres de las hojas altas
    (`Depto_Mueble_Cocina_PuertaAlta{N1..N3,E1..E3}` en vez de `PuertaAlta1..4`).
 3. **Nevera medida en el plano:** 0,656 m de ancho y el frente en la discontinua; el fondo sigue inferido (0,58 m).
    La bisagra pasa al norte para que la hoja abierta no ocupe la boca entre el hall y la cocina, y sale de la lista de
    excepciones de la prueba de recorrido.
-4. **Tope de la puerta de entrada a 84°:** a 90° entraba en el reloj del hall.
+4. **Tope de la puerta de entrada** (corregido en la ronda 1): 87°, no 84°. El reloj del hall sale del barrido de la
+   hoja (va a la cara sur de T_COC_S) y deja de ser la causa; lo que queda es la manilla de palanca, que sale 6,2 cm de
+   la cara de la hoja: a 90° entra 15 mm en T9 y a 88°, 1 mm. El plano dibuja la hoja a 90°: la desviación de −3° está
+   en la tabla de la bitácora.
+
+### Ronda 1 de la corrección 07c (2026-09-26)
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 07c. **Revisor humano:** Romain Ange,
+  pendiente.
+
+5. **Muebles de cocina como muebles:** los altos llevan un costado o divisor de 18 mm en cada canto con bisagra y en
+   cada junta, con el piso, la repisa y el techo partidos por módulo; el mueble del lavaplatos es un cascarón hueco con
+   montante en la junta (un divisor de fondo completo cortaría el sifón), sifón y contenido; la torre de horno y
+   despensa (inferida) es un cascarón con zócalo, horno empotrado y dos puertas interactivas con la bisagra al sur y
+   tope de 80° (al norte chocaban con los tiradores de `PuertaLavaplatos2` o `PuertaAltaE3`; a 90° con la nevera
+   abierta). Pasan de 35 a 37 móviles; el esquema del contrato no cambia.
+6. **Luz de la cocina:** los dos colgantes de jaula de la v2 se reemplazan por un riel de tres focos (como el del
+   hall) y una luz lineal bajo los altos en tres tramos, en el mismo grupo `cocina_techo`. Con los altos de vuelta,
+   los colgantes quedaban a su altura y a 0,56 m de sus hojas. El visor pasa de 18 a 22 luces puntuales: por la
+   medición de la decisión 5 de la ronda 2 de la 07b (~1,3 ms por luz en una GPU integrada) son ~5 ms más por cuadro;
+   no se midió.
+7. **Acero cepillado:** sólo el rayado submilimétrico (paso alto de 0,5 mm) y una nube suave; la visera de la campana
+   y el marco del horno llevan el UV girado 90° para que el cepillado corra a lo largo de la pieza
+   (`depto_geom.uv_mundo(girar=True)`).
