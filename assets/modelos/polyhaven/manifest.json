@@ -1,0 +1,7 @@
+{
+  "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+  "descargado": "2026-09-26",
+  "formato": "glTF 1k (texturas 1024 px)",
+  "modelos": ["potted_plant_04", "anthurium_botany_01", "fern_02", "calathea_orbifolia_01"],
+  "uso": "plantas de interior; CLAUDE.md pide no modelar orgánicos con bpy"
+}
