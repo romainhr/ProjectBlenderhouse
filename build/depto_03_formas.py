@@ -63,8 +63,11 @@ MANILLA = dict(roseta=(0.025, 0.008), cuello=(0.008, 0.052), palanca=(0.12, 0.01
 # Ángulo de las hojas abiertas. D1 y D2: a 90° la manilla del lado de la bisagra toca el tabique T3 (≈86°),
 # así que quedan a 84°. B1 y B2: del lado de la bisagra no hay muro (la tina queda a 0,07 m de la manilla) y a
 # 90° la hoja deja 0,61 m de paso frente a la jamba opuesta; a 84° dejaba 0,53 (recorrido de 0,25 m: no pasa).
-ANGULO_ABIERTA = dict(D1=84.0, D2=84.0, B1=90.0, B2=90.0,
-                      Entrada=84.0)   # corrección 07c: a 90° su cara entraba 1,6 cm en el reloj del muro T9 del hall (tope)
+# Entrada (corrección 07c, ronda 1): el plano la dibuja abierta a 90° a lo largo de T9. La hoja queda donde la dibuja
+# (su cara sur a 3,2 cm de T9), pero la manilla de palanca sale 6,2 cm de esa cara: a 90° entra 15 mm en T9 y a 88°,
+# 1 mm; a 87° queda a 13 mm (tope de puerta, diseño). El tope de 84° de la ronda 0 se atribuía al reloj del hall, que
+# ahora está fuera del barrido; la desviación de −3° va en la tabla de la bitácora.
+ANGULO_ABIERTA = dict(D1=84.0, D2=84.0, B1=90.0, B2=90.0, Entrada=87.0)
 # (id, muro: 'x'|'y' = eje del muro en el plano, a, b [px a lo largo del eje], c0, c1 [px espesor del muro],
 #  hoja px, lado bisagra 'a'|'b', abre hacia: +1/-1 en el eje perpendicular, abierta, opciones)
 PUERTAS = [
@@ -180,8 +183,35 @@ FRENTE_ESP = 0.018                       # supuesto: melamina de 18 mm
 RELLENO_ESQUINA = 0.05                   # supuesto: rellenador en la esquina de la L (los frentes no chocan)
 ALTOS_Z = P.MUEBLES_ALTOS_Z              # brief: 1,50 a 2,10
 TORRE_ALTO = 2.10                        # brief (inferido): torre de horno y despensa hasta 2,10
-HORNO_Z = (0.75, 1.35)                   # supuesto: frente de horno empotrado en la torre
-TORRE_COSTADO = 0.018                    # supuesto: costados de la torre a cada lado del horno
+HORNO_Z = (0.75, 1.35)                   # supuesto: nicho del horno empotrado en la torre (horno de 0,60 m)
+TORRE_COSTADO = 0.018                    # supuesto: costados, fondo, piso, techo y entrepaños de la torre (melamina)
+# Torre como mueble (corrección 07c, ronda 1; inferido: el plano sólo da la huella, con rayado interior y un símbolo de
+# dos hojas en su frente). Zócalo retranqueado como el resto de la cocina, puerta bajo el horno (0,10-0,75) con una
+# repisa para bandejas, horno con marco de acero, vidrio, franja de mandos y manilla de barra, y puerta de despensa
+# arriba (1,35-2,10) con dos repisas. Las dos puertas llevan la bisagra al sur (del lado de la nevera): con la bisagra
+# al norte chocaban, abiertas, con el tirador de PuertaLavaplatos2 o de PuertaAltaE3, que sobresale 7 cm delante de la
+# torre. Al sur, a 90° la hoja entra en la puerta de la nevera abierta a 100°: se detienen a ANGULO_TORRE.
+ANGULO_TORRE = 80.0                      # diseño: a 80° el tirador queda a ~5 cm de la cara de la nevera abierta a
+                                         # 100° (a 85° quedaba a 7 mm; a 90° chocaban). Lo verifica prueba_aperturas
+TORRE_REPISA_BAJA = 0.42                 # diseño: repisa bajo el horno (bandejas abajo, fuentes y tabla arriba)
+TORRE_REPISAS_DESPENSA = (1.605, 1.845)  # diseño: dos repisas en la despensa (tres niveles de ~0,22 m)
+TORRE_RETRANQUEO_REPISA = 0.02           # diseño: repisas 2 cm detrás de la cara interior de la puerta
+HORNO = dict(marco=0.020, sale=0.002, vidrio=0.004, margen=0.035, z_vidrio=(0.775, 1.235),
+             z_mandos=(1.255, 1.330), perilla_r=0.017, perilla_sale=0.022, perilla_desde=0.08,
+             manilla_r=0.008, manilla_sale=0.045, manilla_largo=0.46, manilla_z=1.205)
+# supuesto: horno empotrable de 0,60 m (catálogo usual): marco de acero cepillado de 2 cm al ras de los frentes (2 mm
+# por delante), puerta de vidrio negro con 3,5 cm de marco a la vista, franja de mandos de 7,5 cm arriba con dos
+# perillas, y manilla de barra Ø 16 mm de 0,46 m a 4,5 cm de la puerta (encargo 07c: «4-5 cm»)
+# Mueble bajo el lavaplatos (corrección 07c, ronda 1): cascarón hueco en vez del bloque macizo, con el rincón ciego de
+# la esquina macizo (de T5 al canto norte de la hoja 1).
+LAVA_TRAVESANO = (0.06, 0.08)            # supuesto: travesaño frontal bajo la cubierta (fondo, alto)
+LAVA_MONTANTE = 0.06                     # diseño: fondo del montante de 18 mm en la junta de las dos hojas, donde se
+                                         # atornilla la bisagra de la hoja 1 (un divisor de todo el fondo cortaría el
+                                         # sifón, que baja al centro de la cubeta, a 1 cm de la junta)
+SIFON = dict(r_tubo=0.020, r_botella=0.034, z_botella=(0.40, 0.58), z_salida=0.53, r_roseta=0.032)
+# supuesto: sifón de botella cromado de 1 1/2" (Ø 40 mm) bajo el centro de la cubeta, con la salida horizontal al muro
+# (roseta en el fondo del mueble) y la válvula con canastillo en el fondo de la cubeta
+BASURERO = (0.24, 0.26, 0.40)            # supuesto: basurero de ~22 L con tapa (ancho, hondo, alto)
 ANAFE = (326.0, 358.0, 155.0, 178.4)     # medido (re-medición fase 3): centros del contorno (x0, x1, y0, y1)
 BACHA = (390.9, 413.0, 193.7, 218.1)     # medido (re-medición fase 3): centros del contorno del lavaplatos; la
                                          # extracción (392,5-416) estaba corrida 2-3 px al este
@@ -546,7 +576,7 @@ def puertas(col):
         # Giro: del sentido cerrado (bisagra -> canto libre) hacia el lado en que abre, en coordenadas de mundo.
         dc, do = mundo(eje, ub + du, cara) - piv, mundo(eje, ub, cara + sentido) - piv
         signo = 1 if dc.x * do.y - dc.y * do.x > 0 else -1
-        ang_max = ANGULO_ABIERTA.get(pid, 90.0) * signo          # la entrada (cerrada) abre a 84°
+        ang_max = ANGULO_ABIERTA.get(pid, 90.0) * signo          # la entrada (cerrada) abre a 87°
         ang = math.radians(ang_max) if abierta else 0.0
         etiqueta, recinto = PUERTA_CONTRATO[pid]
         ob = h.crear(col, {"puerta": pid, "abierta": abierta, "angulo_deg": round(math.degrees(ang), 2),
@@ -974,17 +1004,20 @@ def cocina(col):
     basen.caja(X["T3_E"], COC_FRENTE_X + f, Y["T5_S"], Y["T5_S"] + e_bn, ZOCALO_ALTO, zc)          # fondo (muro)
     basen.caja(X["T3_E"], COC_FRENTE_X + f, Y["T5_S"], COC_FRENTE_Y - f, ZOCALO_ALTO, ZOCALO_ALTO + CAJON_ESP)
     basen.crear(col)                          # el techo lo cierra la cubierta de arriba (sin panel propio)
-    base = Pieza("Depto_Cocina_BaseEste", "Depto_Mat_MuebleCocina")
-    base.caja_con_hueco(COC_FRENTE_X + f, X["E_FORRO"], Y["T5_S"], TORRE_Y[0], ZOCALO_ALTO, zc,
-                        hueco, z_fondo_cubeta - 0.01)
-    base.crear(col)
+    # Tramo este: rincón ciego macizo de la esquina (de T5 al canto norte de la hoja 1) y, al sur, el mueble del
+    # lavaplatos como cascarón hueco (corrección 07c, ronda 1: antes era un bloque macizo con sólo el hueco de la cubeta)
+    zf = (ZOCALO_ALTO, zc - 0.003)
+    t_e = _tramos("y", COC_FRENTE_Y + rel, TORRE_Y[0], COC_FRENTE_X + f, -1, *zf, MODULO_BACHA)
+    assert len(t_e) == 2, t_e
+    Pieza("Depto_Cocina_BaseEste", "Depto_Mat_MuebleCocina").caja(
+        COC_FRENTE_X + f, X["E_FORRO"], Y["T5_S"], COC_FRENTE_Y + rel, ZOCALO_ALTO, zc).crear(col)
+    mueble_lavaplatos(col, COC_FRENTE_Y + rel, (t_e[0][1] + t_e[1][0]) / 2, zc, hueco, z_fondo_cubeta)
     zoc = Pieza("Depto_Cocina_Zocalo", "Depto_Mat_Zocalo")
     zr = px(ZOCALO_RETRANQUEO)
     zoc.caja(X["T3_E"], COC_FRENTE_X + zr, Y["T5_S"], COC_FRENTE_Y - zr, 0.0, ZOCALO_ALTO)
-    zoc.caja(COC_FRENTE_X + zr, X["E_FORRO"], COC_FRENTE_Y - zr, TORRE_Y[0], 0.0, ZOCALO_ALTO)
+    zoc.caja(COC_FRENTE_X + zr, X["E_FORRO"], COC_FRENTE_Y - zr, TORRE_Y[1], 0.0, ZOCALO_ALTO)   # sigue bajo la torre
     zoc.crear(col)
     relle = Pieza("Depto_Cocina_Rellenos", "Depto_Mat_FrenteCocina")     # esquina de la L: no son cajón ni puerta
-    zf = (ZOCALO_ALTO, zc - 0.003)
     relle.caja(COC_FRENTE_X - rel + px(JUNTA) / 2, COC_FRENTE_X + f, COC_FRENTE_Y - f, COC_FRENTE_Y, *zf)
     relle.caja(COC_FRENTE_X, COC_FRENTE_X + f, COC_FRENTE_Y, COC_FRENTE_Y + rel - px(JUNTA) / 2, *zf)
     relle.crear(col)
@@ -1019,10 +1052,9 @@ def cocina(col):
                             z_inf[0] + CAJON_ESP, ref_i, ob_i)
     # Puertas bajo el lavaplatos: bisagra (mueble). Corrección 07c: las dos con la bisagra al sur. Con la bisagra junto
     # a la esquina, la hoja 1 abierta a ANGULO_MUEBLE chocaba con los frentes y los tiradores de Cajon3 (el último del
-    # tramo norte); con las dos bisagras al centro, abiertas a la vez, sus tiradores se cruzaban. La hoja 2 abierta
-    # pasa delante de la torre, al ras de su frente, sin tocar el horno.
-    t_e = _tramos("y", COC_FRENTE_Y + rel, TORRE_Y[0], COC_FRENTE_X + f, -1, *zf, MODULO_BACHA)
-    assert len(t_e) == 2, t_e
+    # tramo norte); con las dos bisagras al centro, abiertas a la vez, sus tiradores se cruzaban. La hoja 1 se atornilla
+    # al montante de la junta y la 2 (excepción a la regla: bisagra junto a la torre) al costado sur del mueble; abierta
+    # pasa delante de la torre, al ras de su frente, sin tocar sus puertas ni el horno.
     for i, (u0, u1) in enumerate(t_e):
         ub = u1
         ob, piv = _bisagra(col, f"Depto_Mueble_Cocina_PuertaLavaplatos{i + 1}", "Depto_Mat_FrenteCocina", "y",
@@ -1061,22 +1093,158 @@ def cocina(col):
     sal.caja(X["T3_E"], X["E_FORRO"], y0, y0 + e, MESON_Z, ALTOS_Z[0])
     sal.caja(X["E_FORRO"] - e, X["E_FORRO"], y0 + e, TORRE_Y[0], MESON_Z, ALTOS_Z[0])
     sal.crear(col)
-    torre = Pieza("Depto_Cocina_Torre", "Depto_Mat_MuebleCocina")
-    torre.caja(COC_FRENTE_X, X["E_FORRO"], TORRE_Y[0], TORRE_Y[1], 0.0, TORRE_ALTO)
-    torre.crear(col)
-    tc = px(TORRE_COSTADO)
-    Pieza("Depto_Cocina_Horno", "Depto_Mat_VidrioNegro").caja(COC_FRENTE_X - px(0.004), COC_FRENTE_X,
-                                                              TORRE_Y[0] + tc, TORRE_Y[1] - tc, *HORNO_Z).crear(col)
+    torre_cocina(col)
     # La nevera (cuerpo, puerta y cajón freezer interactivos) se arma en nevera(), más abajo.
+
+
+def mueble_lavaplatos(col, y0, y_junta, zc, hueco, z_fondo_cubeta):
+    """Mueble bajo el lavaplatos (corrección 07c, ronda 1): cascarón hueco de y0 (canto norte de la hoja 1, contra el
+    rincón ciego) a la torre, con piso, fondo, costado sur, travesaño frontal bajo la cubierta y montante en la junta
+    de las hojas (bisagra de la hoja 1); sifón de botella bajo la cubeta con su salida al muro, y adentro un basurero
+    (lado de la hoja 1) y productos de limpieza (lado de la hoja 2), lejos del sifón."""
+    e, E = px(TORRE_COSTADO), TORRE_COSTADO
+    xf0, xb, y1 = COC_FRENTE_X + px(FRENTE_ESP), X["E_FORRO"], TORRE_Y[0]
+    tf, ta = LAVA_TRAVESANO
+    zp = ZOCALO_ALTO + E                                                   # cara de arriba del piso
+    m = Pieza("Depto_Cocina_BaseLavaplatos", "Depto_Mat_MuebleCocina")
+    m.caja(xf0, xb - e, y0, y1 - e, ZOCALO_ALTO, zp)                                   # piso
+    m.caja(xb - e, xb, y0, y1 - e, ZOCALO_ALTO, zc)                                    # fondo (forro)
+    m.caja(xf0, xb, y1 - e, y1, ZOCALO_ALTO, zc)                                       # costado sur (bisagra de la hoja 2)
+    m.caja(xf0, xf0 + px(tf), y0, y1 - e, zc - ta, zc)                                 # travesaño frontal
+    m.caja(xf0, xf0 + px(LAVA_MONTANTE), y_junta - e / 2, y_junta + e / 2, zp, zc - ta)   # montante (bisagra hoja 1)
+    m.crear(col)
+    # sifón: marco con origen bajo el centro del desagüe, u hacia el muro (+x del plano), v según +y del plano
+    xd, yd = (hueco[0] + hueco[1]) / 2, (hueco[2] + hueco[3]) / 2
+    sif = DI.Mallas()
+    mk = _marco_px((xd, yd), (1.0, 0.0), (0.0, 1.0))
+    Sf = SIFON
+    rt, rbo = Sf["r_tubo"], Sf["r_botella"]
+    zb0, zb1 = Sf["z_botella"]
+    u_muro = (xb - e - xd) * S
+    with sif.parte("Depto_Mat_Acero", suave=True) as bm:
+        B_.cilindro(bm, 0.0, 0.0, z_fondo_cubeta + BACHA_PARED, z_fondo_cubeta + BACHA_PARED + 0.003, 0.045, seg=20)
+        B_.cilindro(bm, 0.0, 0.0, zb1, z_fondo_cubeta, rt, seg=14)                       # válvula y tubo de bajada
+        B_.cilindro(bm, 0.0, 0.0, zb0, zb1, rbo, seg=18)                                 # botella del sifón
+        B_.cilindro(bm, 0.0, 0.0, zb1 - 0.004, zb1 + 0.012, rbo + 0.004, seg=18)         # tuerca de la botella
+        B_.tubo(bm, [Vector((rbo - 0.004, 0.0, Sf["z_salida"])), Vector((u_muro - 0.004, 0.0, Sf["z_salida"]))],
+                rt * 0.8, seg=12)                                                        # salida horizontal al muro
+        DI.cilindro_eje(bm, (u_muro - 0.004, 0.0, Sf["z_salida"]), (u_muro, 0.0, Sf["z_salida"]), Sf["r_roseta"],
+                        seg=18)                                                          # roseta en el fondo
+    sif.crear(col, "Depto_Cocina_Sifon", mk, props={"colision": False})
+    # contenido: marco con origen en la esquina interior (frente, norte) del mueble; u según +y, v hacia el fondo
+    mc = _marco_px((xf0 + px(tf), y0), (0.0, 1.0), (1.0, 0.0))
+    fondo = (xb - e - xf0 - px(tf)) * S
+    cont = DI.Mallas()
+    bw, bd, bh = BASURERO
+    u_bas = (y_junta - e / 2 - y0) * S / 2 - 0.01                                        # centrado en la hoja 1
+    DI.caja_guardado(cont, u_bas, 0.03 + bd / 2, zp, bw, bd, bh, "Depto_Mat_MuebleBlanco",
+                     "Depto_Mat_MetalNegroMate", tapa=0.03)
+    u2 = (y_junta + e / 2 - y0) * S                                                      # comienzo del lado de la hoja 2
+    for du, dv, r, alto, cuerpo, tapa in ((0.06, 0.07, 0.038, 0.27, ("Depto_Mat_Alimento", "Depto_Mat_RopaCeleste"),
+                                           "Depto_Mat_MuebleBlanco"),                   # lavalozas
+                                          (0.15, 0.06, 0.042, 0.30, ("Depto_Mat_Alimento", "Depto_Mat_ComidaNaranja"),
+                                           "Depto_Mat_MetalNegroMate"),                 # detergente
+                                          (0.25, 0.08, 0.035, 0.24, ("Depto_Mat_Alimento", "Depto_Mat_RopaVerde"),
+                                           "Depto_Mat_MuebleBlanco")):                  # limpiador
+        DI.botella(cont, u2 + du, dv, zp, r, alto, cuerpo, None, cuello=0.22, tapa_mat=tapa)
+    DI.caja_guardado(cont, u2 + 0.16, fondo - 0.10, zp, 0.24, 0.16, 0.12, ("Depto_Mat_Alimento", "Depto_Mat_RopaAzul"))
+    cont.crear(col, "Depto_Cocina_LavaplatosContenido", mc, props={"colision": False})
+
+
+def torre_cocina(col):
+    """Torre de horno y despensa como mueble (corrección 07c, ronda 1; antes una caja lisa de 2,10 m con una placa
+    negra): cascarón hueco de melamina sobre el zócalo de la cocina, puerta bajo el horno con una repisa, horno
+    empotrado y puerta de despensa con dos repisas y contenido. Las dos puertas son interactivas (clase "mueble"), con
+    la bisagra al sur y tope en ANGULO_TORRE (ver la constante)."""
+    e, E, f, j = px(TORRE_COSTADO), TORRE_COSTADO, px(FRENTE_ESP), px(JUNTA)
+    x0, xf0, xb = COC_FRENTE_X, COC_FRENTE_X + px(FRENTE_ESP), X["E_FORRO"]
+    y0, y1 = TORRE_Y
+    hz0, hz1 = HORNO_Z
+    t = Pieza("Depto_Cocina_Torre", "Depto_Mat_MuebleCocina")
+    t.caja(xf0, xb, y0, y0 + e, ZOCALO_ALTO, TORRE_ALTO)                              # costado norte
+    t.caja(xf0, xb, y1 - e, y1, ZOCALO_ALTO, TORRE_ALTO)                              # costado sur
+    t.caja(xb - e, xb, y0 + e, y1 - e, ZOCALO_ALTO, TORRE_ALTO)                       # fondo (forro)
+    for za_, zb_ in ((ZOCALO_ALTO, ZOCALO_ALTO + E), (hz0 - E, hz0), (hz1, hz1 + E), (TORRE_ALTO - E, TORRE_ALTO)):
+        t.caja(xf0, xb - e, y0 + e, y1 - e, za_, zb_)                                  # piso, entrepaños y techo
+    xr = xf0 + px(TORRE_RETRANQUEO_REPISA)
+    for zr_ in (TORRE_REPISA_BAJA, *TORRE_REPISAS_DESPENSA):
+        t.caja(xr, xb - e, y0 + e, y1 - e, zr_, zr_ + E)                               # repisas
+    t.crear(col)
+    # horno: marco de acero cepillado (UV girado: el cepillado corre a lo ancho), vidrio, franja de mandos, perillas
+    Hn = HORNO
+    xm = x0 - px(Hn["sale"])
+    ym0, ym1 = y0 + j / 2, y1 - j / 2
+    Pieza("Depto_Cocina_HornoMarco", "Depto_Mat_NeveraAcero", uv_girado=True).caja(
+        xm, xf0, ym0, ym1, hz0 + JUNTA, hz1 - JUNTA).crear(col)
+    xv = xm - px(Hn["vidrio"])
+    mg = px(Hn["margen"])
+    Pieza("Depto_Cocina_Horno", "Depto_Mat_VidrioNegro").caja(
+        xv, xm, ym0 + mg, ym1 - mg, *Hn["z_vidrio"]).crear(col)
+    Pieza("Depto_Cocina_HornoMandos", "Depto_Mat_VidrioNegro").caja(
+        xv, xm, ym0 + mg, ym1 - mg, *Hn["z_mandos"]).crear(col)
+    # perillas y manilla: marco con origen en el centro del frente del horno, u según +y del plano, v hacia afuera (-x)
+    yc = (y0 + y1) / 2
+    mh = _marco_px((xv, yc), (0.0, 1.0), (-1.0, 0.0))
+    ph = DI.Mallas()
+    zm = sum(Hn["z_mandos"]) / 2
+    ua = (y1 - y0) * S / 2 - Hn["perilla_desde"]
+    zh, rm, sm, lm = Hn["manilla_z"], Hn["manilla_r"], Hn["manilla_sale"], Hn["manilla_largo"]
+    with ph.parte("Depto_Mat_Acero", suave=True) as bm:
+        for u in (-ua, ua):
+            DI.cilindro_eje(bm, (u, 0.0, zm), (u, Hn["perilla_sale"], zm), Hn["perilla_r"], seg=16)
+        for u in (-lm / 2 + 0.03, lm / 2 - 0.03):                                         # soportes de la manilla
+            DI.cilindro_eje(bm, (u, 0.0, zh), (u, sm - rm, zh), 0.006, seg=10)
+        DI.cilindro_eje(bm, (-lm / 2, sm, zh), (lm / 2, sm, zh), rm, seg=14)              # barra
+    ph.crear(col, "Depto_Cocina_HornoManilla", mh, props={"colision": False})   # 4,5 cm: no angosta el recorrido
+    # puertas (bisagra al sur, cara vista en x0, tirador vertical junto al canto libre del norte)
+    for nombre, (za_, zb_), etq in (("PuertaTorreBaja", (ZOCALO_ALTO, hz0 - JUNTA), "Puerta bajo el horno (bandejas y fuentes)"),
+                                    ("PuertaDespensa", (hz1 + JUNTA, TORRE_ALTO - JUNTA), "Puerta de la despensa")):
+        _hoja_alta(col, f"Depto_Mueble_Cocina_{nombre}", "y", ym0, ym1, x0, -1, (za_, zb_), ym1, etq, ANGULO_TORRE)
+    # contenido (fijo): bajo el horno, bandejas y una olla; sobre la repisa, fuente de vidrio y tabla. Despensa:
+    # frascos, cajas y botellas en los tres niveles. Marco con origen en la esquina interior (frente, norte).
+    mt = _marco_px((xf0, y0 + e), (0.0, 1.0), (1.0, 0.0))
+    W = (y1 - y0 - 2 * e) * S
+    ct = DI.Mallas()
+    zp = ZOCALO_ALTO + E
+    with ct.parte("Depto_Mat_AceroNegro") as bm:                                          # dos bandejas de horno
+        B_.caja(bm, 0.04, W - 0.04, 0.05, 0.47, zp, zp + 0.022)
+        B_.caja(bm, 0.05, W - 0.05, 0.06, 0.46, zp + 0.024, zp + 0.044)
+    with ct.parte("Depto_Mat_Acero", suave=True) as bm:                                   # olla grande sobre ellas
+        B_.cilindro(bm, W / 2, 0.26, zp + 0.046, zp + 0.226, 0.13, seg=18)
+    zr1 = TORRE_REPISA_BAJA + E
+    with ct.parte("Depto_Mat_Vidrio") as bm:                                              # fuente de vidrio
+        B_.caja(bm, 0.05, 0.37, 0.08, 0.30, zr1, zr1 + 0.06)
+    with ct.parte("Depto_Mat_MaderaMueble") as bm:                                        # tabla de picar
+        B_.caja(bm, 0.40, W - 0.03, 0.06, 0.44, zr1, zr1 + 0.022)
+    niveles = (hz1 + E, TORRE_REPISAS_DESPENSA[0] + E, TORRE_REPISAS_DESPENSA[1] + E)
+    for k, u in zip((0, 1, 3), (0.08, 0.19, 0.30)):                                      # frascos (nivel 1, < 0,22 m)
+        r, alto, contenido = FRASCOS_DESPENSA[k]
+        DI.frasco(ct, u, 0.12, niveles[0], r, alto, "Depto_Mat_Vidrio", contenido, "Depto_Mat_MaderaMueble")
+    for u, tinte in ((0.43, "Depto_Mat_ComidaRoja"), (0.49, "Depto_Mat_RopaCrudo")):      # cajas de cereal y galletas
+        DI.caja_guardado(ct, u, 0.18, niveles[0], 0.05, 0.19, 0.21, ("Depto_Mat_Alimento", tinte), tapa=0.008)
+    for k, u in enumerate((0.07, 0.15, 0.23)):                                            # nivel 2: leche y jugo
+        DI.carton(ct, u, 0.10, niveles[1], 0.07, 0.07, 0.16, "Depto_Mat_MuebleBlanco",
+                  TAPA_AZUL if k < 2 else TAPA_CELESTE)
+    DI.botella(ct, 0.36, 0.12, niveles[1], 0.035, 0.20, "Depto_Mat_Vidrio", "Depto_Mat_ComidaAmarilla", llenado=0.7,
+               tapa_mat="Depto_Mat_MetalNegroMate")                                       # aceite
+    DI.botella(ct, 0.46, 0.12, niveles[1], 0.032, 0.18, "Depto_Mat_GresNegro", None, cuello=0.35,
+               tapa_mat="Depto_Mat_Acero")                                                # vinagre
+    for u, tinte in ((0.10, "Depto_Mat_RopaVino"), (0.26, "Depto_Mat_CajaZapatos")):      # nivel 3: cajas de guardado
+        DI.caja_guardado(ct, u, 0.20, niveles[2], 0.14, 0.30, 0.18, ("Depto_Mat_Alimento", tinte))
+    ct.crear(col, "Depto_Cocina_TorreContenido", mt, props={"colision": False})
 
 
 # ---------------------------------------------------------------------------
 # Muebles altos en L (corrección 07c). Tramo norte de T3 a la esquina (cara vista en la discontinua ALTOS_Y) y tramo
-# este de la esquina a la torre (cara vista en ALTOS_X), de ALTOS_Z[0] a ALTOS_Z[1]: cascarones huecos (fondo,
-# costados, piso, techo y repisa media), rellenadores contra T3 y a cada lado de la esquina, campana telescópica en el
-# módulo sobre el anafe y hojas de bisagra (clase "mueble") con la bisagra del lado que no tiene muro, torre ni
-# esquina (así abren a ANGULO_MUEBLE sin entrar en nada: prueba de aperturas de la fase 6). Vajilla en los pisos y
-# las repisas (estática: sólo se mueven las hojas).
+# este de la esquina a la torre (cara vista en ALTOS_X), de ALTOS_Z[0] a ALTOS_Z[1]: cascarones huecos con un costado o
+# divisor en cada canto con bisagra y en cada junta (piso, repisa media y techo partidos por módulo; ronda 1),
+# rellenadores contra T3 y a cada lado de la esquina, campana telescópica en el módulo sobre el anafe y hojas de
+# bisagra (clase "mueble"). Regla de bisagras de mueble (contrato, sección 1): la bisagra va del lado libre cuando se
+# puede; si del lado de la bisagra hay muro, torre o esquina, se agrega un rellenador (ALTOS_RELLENO, RELLENO_ESQUINA)
+# o se limita el ángulo (ANGULO_MUEBLE_TORRE, ANGULO_TORRE), y prueba_aperturas (fase 6) lo verifica. Excepciones con
+# nombre: PuertaAltaN1 (bisagra del lado de T3, en el costado que queda detrás del rellenador), PuertaAltaE3 (junto a
+# la torre, tope a 90°), PuertaLavaplatos2 (junto a la torre) y las dos puertas de la torre (junto a la nevera, tope a
+# ANGULO_TORRE). Vajilla en los pisos y las repisas (estática: sólo se mueven las hojas).
 # ---------------------------------------------------------------------------
 def _marco_px(p0, du, dv):
     """Marco métrico de deco_interiores con origen en el punto p0 (px del plano); u hacia du y v hacia dv, vectores
@@ -1122,25 +1290,47 @@ def altos_cocina(col):
     h0, h1 = xc - px(CAMPANA["ancho"]) / 2, xc + px(CAMPANA["ancho"]) / 2   # módulo de la campana, sobre el anafe
     C = CAMPANA
 
-    # --- cascarones
+    # --- tramos de las hojas (sus juntas definen dónde van los costados y divisores del cascarón)
+    t_l = _tramos("x", xw + rel, h0, yn, +1, *za, C["ancho"])
+    t_r = _tramos("x", h1, xa - rel, yn, +1, *za, MODULO_ALTO)
+    t_e = _tramos("y", yn + rel, TORRE_Y[0], xe, -1, *za, MODULO_ALTO)
+    assert (len(t_l), len(t_r), len(t_e)) == (1, 2, 3), (t_l, t_r, t_e)
+    jn = (t_r[0][1] + t_r[1][0]) / 2                        # junta N2/N3 (bisagra de N3): x ≈ 376,8 px
+    je = [(t_e[k][1] + t_e[k + 1][0]) / 2 for k in range(2)]   # juntas E1/E2 y E2/E3 (bisagras de E1 y E2)
+
+    # --- cascarones (corrección 07c, ronda 1): un costado o divisor de ALTOS_ESP, de alto completo, detrás de cada
+    # canto con bisagra y en cada junta entre hojas, con el piso, la repisa media y el techo partidos en ellos (antes
+    # las hojas N3, E1 y E2 colgaban de la nada y las repisas corrían sin apoyo 0,72 y 1,42 m). Los costados de los
+    # extremos del tramo norte van al ras del canto de la hoja, detrás de su rellenador (la bisagra de N1 se atornilla
+    # ahí); el hueco de 3,2 cm entre ese costado y T3 o la esquina se cierra abajo y arriba con una tira.
     cn = Pieza("Depto_Cocina_AltosNorteCascaron", "Depto_Mat_MuebleCocina")
+    xo, xf_ = xw + rel, xa - rel                                                   # caras interiores de los extremos
     cn.caja(xw, xa, yb, yb + e, z0, z1)                                            # fondo (muro T5)
-    cn.caja(xw, xw + e, yb + e, yf, z0, z1)                                        # costado oeste (contra T3)
-    cn.caja(xa - e, xa, yb + e, yf, z0, z1)                                        # costado este (esquina)
-    cn.caja(xw + e, xa - e, yb + e, yf, z1 - E, z1)                                # techo
-    for xd in (h0, h1):                                                            # costados del módulo de la campana
-        cn.caja(xd - e / 2, xd + e / 2, yb + e, yf, z0, z1 - E)
-    for a, b in ((xw + e, h0 - e / 2), (h1 + e / 2, xa - e)):                     # piso y repisa media (la campana
-        cn.caja(a, b, yb + e, yf, z0, z0 + E)                                      # lleva su propio fondo)
-        cn.caja(a, b, yb + e, yf, z_rep, z_rep + E)
-    cn.crear(col)
+    cn.caja(xo - e, xo, yb + e, yf, z0, z1)                                        # costado oeste (bisagra de N1)
+    cn.caja(xf_, xf_ + e, yb + e, yf, z0, z1)                                      # costado este (junto a la esquina)
+    for a, b in ((xw, xo - e), (xf_ + e, xa)):                                     # tiras bajo y sobre el hueco del
+        cn.caja(a, b, yb + e, yf, z0, z0 + E)                                      # rellenador
+        cn.caja(a, b, yb + e, yf, z1 - E, z1)
+    for xd in (h0, h1, jn):                                                        # campana (h0, h1) y junta N2/N3
+        cn.caja(xd - e / 2, xd + e / 2, yb + e, yf, z0, z1)
+    bahias_n = ((xo, h0 - e / 2), (h1 + e / 2, jn - e / 2), (jn + e / 2, xf_))    # N1, N2 y N3
+    for a, b in bahias_n:
+        cn.caja(a, b, yb + e, yf, z0, z0 + E)                                      # piso
+        cn.caja(a, b, yb + e, yf, z_rep, z_rep + E)                                # repisa media
+        cn.caja(a, b, yb + e, yf, z1 - E, z1)                                      # techo
+    cn.caja(h0 + e / 2, h1 - e / 2, yb + e, yf, z1 - E, z1)                        # techo del módulo de la campana
+    cn.crear(col)                                                                  # (la campana lleva su propio fondo)
     ce = Pieza("Depto_Cocina_AltosEsteCascaron", "Depto_Mat_MuebleCocina")
     ce.caja(xb - e, xb, yb, TORRE_Y[0], z0, z1)                                    # fondo (forro)
     ce.caja(xe + f, xb - e, yb, yb + e, z0, z1)                                    # costado norte (muro T5)
-    ce.caja(xe + f, xb - e, TORRE_Y[0] - e, TORRE_Y[0], z0, z1)                    # costado sur (torre)
-    ce.caja(xe + f, xb - e, yb + e, TORRE_Y[0] - e, z1 - E, z1)                    # techo
-    ce.caja(xe + f, xb - e, yb + e, TORRE_Y[0] - e, z0, z0 + E)                    # piso
-    ce.caja(xe + f, xb - e, yb + e, TORRE_Y[0] - e, z_rep, z_rep + E)              # repisa media
+    ce.caja(xe + f, xb - e, TORRE_Y[0] - e, TORRE_Y[0], z0, z1)                    # costado sur (torre; bisagra de E3)
+    for yd in je:                                                                  # divisores (bisagras de E1 y E2)
+        ce.caja(xe + f, xb - e, yd - e / 2, yd + e / 2, z0, z1)
+    bahias_e = ((yb + e, je[0] - e / 2), (je[0] + e / 2, je[1] - e / 2), (je[1] + e / 2, TORRE_Y[0] - e))
+    for a, b in bahias_e:                                                          # E1 (con el rincón ciego), E2, E3
+        ce.caja(xe + f, xb - e, a, b, z1 - E, z1)                                  # techo
+        ce.caja(xe + f, xb - e, a, b, z0, z0 + E)                                  # piso
+        ce.caja(xe + f, xb - e, a, b, z_rep, z_rep + E)                            # repisa media
     ce.crear(col)
     # --- rellenadores: contra T3, a cada lado de la esquina (el del este tapa también el rincón ciego)
     rl = Pieza("Depto_Cocina_AltosRellenos", "Depto_Mat_FrenteCocina")
@@ -1154,65 +1344,68 @@ def altos_cocina(col):
     Pieza("Depto_Cocina_CampanaFiltro", "Depto_Mat_MetalNegroMate").caja(
         h0 + e / 2 + px(0.015), h1 - e / 2 - px(0.015), yb + e + px(0.015), yf - px(0.015), z0,
         z0 + C["filtro"]).crear(col)
-    Pieza("Depto_Cocina_CampanaVisera", "Depto_Mat_NeveraAcero").caja(
+    # visera con el UV girado (corrección 07c, ronda 1): el cepillado corre a lo largo de sus 0,60 m, como en una
+    # campana real; con el UV de caja la V iba en vertical y las vetas cruzaban la tira de 4,5 cm (se leía como roble)
+    Pieza("Depto_Cocina_CampanaVisera", "Depto_Mat_NeveraAcero", uv_girado=True).caja(
         h0 + j / 2, h1 - j / 2, yf, yn, za[0], za[0] + C["visera"]).crear(col)
     Pieza("Depto_Cocina_CampanaFrente", "Depto_Mat_FrenteCocina").caja(
         h0 + j / 2, h1 - j / 2, yf, yn, za[0] + C["visera"] + JUNTA, za[1]).crear(col)
     # --- hojas. Dos hojas vecinas no llevan la bisagra en la misma junta: abiertas a la vez, sus caras vistas quedan
-    # enfrentadas y los tiradores se cruzan (prueba de pares de la fase 6). Norte: la de la izquierda con bisagra en T3
-    # (con rellenador) y las dos de la derecha con la bisagra al oeste (con la de la esquina al este, abierta, su
-    # tirador entraba 11 mm en la hoja E1). Este: las tres con la bisagra al sur; con la bisagra en la esquina, abierta,
-    # la hoja E1 barría con su tirador la hoja norte vecina. La de la torre abre sólo a ANGULO_MUEBLE_TORRE: más allá
-    # de 90° su canto entra en la cara norte de la torre, que sobresale 0,22 m (PuertaAlta4 entraba 6,7 cm).
-    t_l = _tramos("x", xw + rel, h0, yn, +1, *za, C["ancho"])
-    t_r = _tramos("x", h1, xa - rel, yn, +1, *za, MODULO_ALTO)
-    t_e = _tramos("y", yn + rel, TORRE_Y[0], xe, -1, *za, MODULO_ALTO)
-    assert (len(t_l), len(t_r), len(t_e)) == (1, 2, 3), (t_l, t_r, t_e)
+    # enfrentadas y los tiradores se cruzan (prueba de pares de la fase 6). Norte: la de la izquierda (N1) con bisagra
+    # del lado de T3, en el costado que queda detrás del rellenador (excepción a la regla: ver el encabezado), y las
+    # dos de la derecha con la bisagra al oeste (con la de la esquina al este, abierta, su tirador entraba 11 mm en la
+    # hoja E1). Este: las tres con la bisagra al sur; con la bisagra en la esquina, abierta, la hoja E1 barría con su
+    # tirador la hoja norte vecina. La de la torre (E3, excepción) abre sólo a ANGULO_MUEBLE_TORRE: más allá de 90° su
+    # canto entra en la cara norte de la torre, que sobresale 0,22 m (PuertaAlta4 entraba 6,7 cm).
     hojas = [("N1", "x", t_l[0], yn, +1, 0, ANGULO_MUEBLE, "Puerta del mueble alto (platos y boles)"),
              ("N2", "x", t_r[0], yn, +1, 0, ANGULO_MUEBLE, "Puerta del mueble alto (vasos y tazas)"),
-             ("N3", "x", t_r[1], yn, +1, 0, ANGULO_MUEBLE, "Puerta del mueble alto (vasos y tazas)"),
+             ("N3", "x", t_r[1], yn, +1, 0, ANGULO_MUEBLE, "Puerta del mueble alto (vasos altos, taza y boles)"),
              ("E1", "y", t_e[0], xe, -1, 1, ANGULO_MUEBLE, "Puerta del mueble alto de la esquina (fuentes y boles)"),
              ("E2", "y", t_e[1], xe, -1, 1, ANGULO_MUEBLE, "Puerta del mueble alto (despensa y vasos)"),
              ("E3", "y", t_e[2], xe, -1, 1, ANGULO_MUEBLE_TORRE, "Puerta del mueble alto (despensa y tazas)")]
     for hid, eje, (u0, u1), w, s, lado, ang, etq in hojas:
         _hoja_alta(col, f"Depto_Mueble_Cocina_PuertaAlta{hid}", eje, u0, u1, w, s, za, (u0, u1)[lado], etq, ang)
 
-    # --- vajilla. Marcos: u a lo largo del tramo desde la cara interior del costado de partida, v del fondo hacia las
-    # hojas. Tramo norte: L = módulo de la izquierda, R = el de la derecha; tramo este: el rincón ciego va de u = 0 a
-    # la hoja E1 (0,40 m).
+    # --- vajilla (corrección 07c, ronda 1: cada pieza dentro de su módulo, entre sus costados o divisores). Marcos: u a
+    # lo largo del tramo, v del fondo hacia las hojas. Tramo norte: u desde la cara interior del fondo en xw + e; cada
+    # módulo va de a_k a b_k. Tramo este: u desde yb + e; el rincón ciego (u 0 a 0,40 m) es parte del módulo de E1.
     mn = _marco_px((xw + e, yb + e), (1.0, 0.0), (0.0, 1.0))
     Dn = (yf - yb - e) * S
-    uR = (h1 + e / 2 - xw - e) * S                         # comienzo del módulo derecho
+    (a1, b1), (a2, b2), (a3, b3) = [((a - xw - e) * S, (b - xw - e) * S) for a, b in bahias_n]
     vn = DI.Mallas()
-    DI.pila_platos(vn, 0.16, Dn / 2, zb, 6, 0.13)                                     # platos llanos
-    DI.pila_platos(vn, 0.44, Dn / 2, zb, 4, 0.13)
-    for u in (0.10, 0.27):
+    DI.pila_platos(vn, a1 + 0.14, Dn / 2, zb, 6, 0.13)                                # N1: platos llanos
+    DI.pila_platos(vn, b1 - 0.14, Dn / 2, zb, 4, 0.13)
+    for u in (a1 + 0.09, a1 + 0.26):
         DI.pila_boles(vn, u, Dn / 2, zs, 3, 0.075, 0.065)                             # boles
-    DI.pila_platos(vn, 0.47, Dn / 2, zs, 5, 0.10)                                     # platos de postre
-    for k, u in enumerate((0.07, 0.16, 0.25)):                                        # vasos: dos filas de tres
+    DI.pila_platos(vn, b1 - 0.115, Dn / 2, zs, 5, 0.10)                               # platos de postre
+    for u in (0.07, 0.16, 0.25):                                                      # N2: vasos en dos filas de tres
         for dv in (-0.065, 0.065):
-            DI.vaso(vn, uR + u + (0.012 if dv > 0 else 0.0), Dn / 2 + dv, zb, 0.037, 0.12)
-    for u in (0.40, 0.48, 0.56):                                                      # vasos altos
-        DI.vaso(vn, uR + u, Dn / 2, zb, 0.033, 0.15)
-    for k, (u, giro) in enumerate(((0.08, 80.0), (0.19, 100.0), (0.30, 70.0), (0.41, 95.0))):   # tazas, asa adelante
-        DI.taza(vn, uR + u, Dn / 2 - 0.03, zs, 0.042, 0.095, "Depto_Mat_Ceramica" if k % 2 == 0 else
+            DI.vaso(vn, a2 + u + (0.012 if dv > 0 else 0.0), Dn / 2 + dv, zb, 0.037, 0.12)
+    for k, (u, giro) in enumerate(((0.07, 80.0), (0.17, 100.0), (0.27, 70.0))):      # tazas, asa adelante
+        DI.taza(vn, a2 + u, Dn / 2 - 0.03, zs, 0.042, 0.095, "Depto_Mat_Ceramica" if k % 2 == 0 else
                 "Depto_Mat_GresNegro", giro=giro)
-    DI.pila_boles(vn, uR + 0.58, Dn / 2, zs, 3, 0.075, 0.065)
+    for u in (0.08, 0.17, 0.26):                                                      # N3: vasos altos
+        DI.vaso(vn, a3 + u, Dn / 2, zb, 0.033, 0.15)
+    DI.taza(vn, a3 + 0.07, Dn / 2 - 0.03, zs, 0.042, 0.095, "Depto_Mat_GresNegro", giro=95.0)
+    DI.pila_boles(vn, a3 + 0.24, Dn / 2, zs, 3, 0.075, 0.065)
     vn.crear(col, "Depto_Cocina_AltosNorteVajilla", mn, props={"colision": False})
     me = _marco_px((xb - e, yb + e), (0.0, 1.0), (-1.0, 0.0))
     De = (xb - e - xe - f) * S
+    ue = [((a - yb - e) * S, (b - yb - e) * S) for a, b in bahias_e]
     ve = DI.Mallas()
-    DI.pila_platos(ve, 0.57, De / 2, zb, 4, 0.15)                                     # fuentes
-    DI.pila_boles(ve, 0.50, De / 2, zs, 3, 0.075, 0.065)
-    DI.pila_boles(ve, 0.66, De / 2, zs, 2, 0.075, 0.065, mat="Depto_Mat_GresNegro")
-    for k, u in enumerate((0.80, 0.90, 1.00, 1.16, 1.26, 1.36)):                     # despensa: frascos con tapa
+    DI.pila_platos(ve, 0.57, De / 2, zb, 4, 0.15)                                     # E1: fuentes
+    DI.pila_boles(ve, 0.46, De / 2, zs, 3, 0.075, 0.065)
+    DI.pila_boles(ve, 0.63, De / 2, zs, 2, 0.075, 0.065, mat="Depto_Mat_GresNegro")
+    for k, u in enumerate((0.81, 0.91, 1.01, 1.16, 1.26, 1.36)):                     # E2 y E3: frascos con tapa
         r, alto, cont = FRASCOS_DESPENSA[k % len(FRASCOS_DESPENSA)]
         DI.frasco(ve, u, De / 2, zb, r, alto, "Depto_Mat_Vidrio", cont, "Depto_Mat_MaderaMueble")
-    for u in (0.80, 0.89, 0.98):
+    for u in (0.81, 0.90, 0.99):
         DI.vaso(ve, u, De / 2, zs, 0.037, 0.12)
     for u, giro in ((1.17, 85.0), (1.30, 105.0)):
         DI.taza(ve, u, De / 2 - 0.03, zs, 0.042, 0.095, giro=giro)
     ve.crear(col, "Depto_Cocina_AltosEsteVajilla", me, props={"colision": False})
+    print("CHECK altos de cocina: módulos norte (m)", [(round(a, 3), round(b, 3)) for a, b in ((a1, b1), (a2, b2), (a3, b3))],
+          "este", [(round(a, 3), round(b, 3)) for a, b in ue])
     print("CHECK altos de cocina: hojas", {h[0]: round((h[2][1] - h[2][0]) * S, 3) for h in hojas},
           f"fondo útil norte {Dn:.3f} m, este {De:.3f} m; campana a {z0 - MESON_Z - 0.006:.3f} m del anafe")
 
