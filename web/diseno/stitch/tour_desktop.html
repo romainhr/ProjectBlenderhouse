@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="h-full w-full bg-[#121316] text-[#E5E7EB]" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tour Virtual 3D · LOFT 2D2B</title>
+<!-- Tailwind CSS v3 CDN with forms & container queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Barlow Condensed, IBM Plex Sans, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,600&amp;family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            loft: {
+              charcoal: '#121316',
+              surface: 'rgba(18, 19, 22, 0.78)',
+              rust: '#C0562F',
+              'rust-hover': '#A84824',
+              brass: '#B8862B',
+              slate: '#8E929B',
+              border: 'rgba(255, 255, 255, 0.12)'
+            }
+          },
+          fontFamily: {
+            display: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          borderRadius: {
+            'loft': '2px'
+          },
+          boxShadow: {
+            'hud': '0 8px 32px 0 rgba(0, 0, 0, 0.65)',
+            'rust-glow': '0 0 15px rgba(192, 86, 47, 0.45)'
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Architectural HUD Styles -->
+<style data-purpose="hud-effects">
+    .hud-panel {
+      background: rgba(18, 19, 22, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 2px;
+    }
+
+    .key-badge {
+      font-family: 'JetBrains Mono', monospace;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 2px;
+      padding: 1px 6px;
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.6; }
+    }
+
+    .pulsing-rust {
+      animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .blueprint-grid {
+      background-size: 14px 14px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+  </style>
+<!-- END: Custom Architectural HUD Styles -->
+</head>
+<body class="relative h-screen w-screen overflow-hidden font-sans select-none bg-[#121316]">
+<!-- BEGIN: Immersive Background Canvas -->
+<!-- Fullscreen 3D rendered viewport of the industrial loft living room -->
+<div class="absolute inset-0 z-0">
+<img alt="Render 3D interactivo en primera persona del living de LOFT 2D2B" class="w-full h-full object-cover object-center pointer-events-none filter brightness-95 contrast-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA80KKryu8vo2B8a-MuCWZrlzRnWxpZeGeIHCSCkw8Mp4btLM2aRjBGM07Pehlc6t9LYSnr-kGyI13eELXRiGYS6qqS7ulVcj-d8xGw0pEhbW59yv53HJTGlaWTiRfErfGQGhuNL6HIF4tCAw-c4YqsZukkVb6jgHsFcB5RTuAh10VXdKL27fP28OTSq7O-B0Tw45AINmUxiPKqzjkzTKBiiPcl2cBhuR8mdkEKn58LN9NuVwA38tIS_tmJiAhwJXT7OE5lFxOrzNct"/>
+<!-- Subtle architectural vignette for depth -->
+<div class="absolute inset-0 bg-gradient-to-t from-[#121316]/90 via-transparent to-[#121316]/75 pointer-events-none"></div>
+</div>
+<!-- END: Immersive Background Canvas -->
+<!-- BEGIN: HUD Layer Overlay -->
+<div class="relative z-10 w-full h-full flex flex-col justify-between p-4 md:p-6 pointer-events-none">
+<!-- BEGIN: Top Navigation Header -->
+<header class="flex items-center justify-between w-full pointer-events-auto">
+<!-- Top Left: Project Identity & Current Room Breadcrumb -->
+<div class="hud-panel px-4 py-2.5 flex items-center space-x-3.5 shadow-hud border-l-2 border-l-[#C0562F]">
+<div class="flex items-center space-x-2">
+<span class="font-display uppercase tracking-widest text-lg font-bold text-white">LOFT 2D2B</span>
+<span class="text-neutral-500 font-mono text-xs">/</span>
+</div>
+<div class="flex items-center space-x-2 pl-1">
+<span class="relative flex h-2.5 w-2.5">
+<span class="pulsing-rust absolute inline-flex h-full w-full rounded-full bg-[#C0562F] opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#C0562F]"></span>
+</span>
+<div class="flex flex-col">
+<span class="font-display uppercase text-sm tracking-wider font-semibold text-neutral-100">
+              RECINTO: 02 LIVING
+            </span>
+<span class="font-mono text-[10px] text-neutral-400 leading-none">SUP: 21.4 m² · PLANTA 01</span>
+</div>
+</div>
+<div class="hidden sm:block border-l border-white/10 pl-3">
+<span class="font-mono text-[10px] text-[#B8862B] bg-[#B8862B]/10 px-1.5 py-0.5 border border-[#B8862B]/30 rounded-loft">
+            CÁMARA VIRTUAL ACTIVA
+          </span>
+</div>
+</div>
+<!-- Top Right: Action Controls -->
+<div class="flex items-center space-x-2.5">
+<a class="hud-panel px-4 py-2 text-xs font-display uppercase tracking-wider font-bold text-white bg-[#C0562F] hover:bg-[#A84824] transition-colors border border-[#C0562F] flex items-center space-x-2 shadow-rust-glow rounded-loft cursor-pointer" href="#reservar">
+<svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>RESERVAR ESTADÍA · CLP 58.000<span class="text-white/70 font-normal font-sans text-[11px]">/noche</span></span>
+</a>
+<button class="hud-panel px-3 py-2 text-xs font-mono uppercase text-neutral-300 hover:text-white hover:bg-white/5 transition-colors border border-white/15 rounded-loft flex items-center space-x-1.5" onclick="window.history.back();" title="Salir del Tour" type="button">
+<span>SALIR</span>
+<span class="key-badge text-[10px]">ESC</span>
+</button>
+</div>
+</header>
+<!-- END: Top Navigation Header -->
+<!-- BEGIN: Reticle & Interactive Waypoint -->
+<div class="relative w-full flex-1 flex items-center justify-center">
+<!-- Architectural Aim Reticle -->
+<div class="relative flex items-center justify-center pointer-events-none">
+<div class="w-10 h-10 border border-white/25 rounded-full flex items-center justify-center">
+<div class="w-1 h-1 bg-[#C0562F] rounded-full"></div>
+</div>
+<!-- Crosshairs lines -->
+<div class="absolute -top-3 w-[1px] h-2 bg-white/40"></div>
+<div class="absolute -bottom-3 w-[1px] h-2 bg-white/40"></div>
+<div class="absolute -left-3 h-[1px] w-2 bg-white/40"></div>
+<div class="absolute -right-3 h-[1px] w-2 bg-white/40"></div>
+<!-- Realtime Coordinate Meta -->
+<div class="absolute -bottom-7 font-mono text-[9px] text-neutral-400 tracking-wider whitespace-nowrap bg-black/60 px-1.5 py-0.5 rounded-loft border border-white/10">
+          FOV 75° / YAW 180° / PITCH -2°
+        </div>
+</div>
+<!-- Hotspot waypoint in 3D perspective towards the integrated kitchen -->
+<div class="absolute right-[24%] top-[42%] pointer-events-auto">
+<button class="group hud-panel flex items-center space-x-2 px-3 py-1.5 rounded-loft border border-white/25 hover:border-[#C0562F] hover:bg-[#121316]/95 transition-all shadow-hud text-left" type="button">
+<span class="key-badge text-neutral-300 group-hover:border-[#C0562F] group-hover:text-[#C0562F] transition-colors">E</span>
+<span class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-[#B8862B]"></span>
+<span class="font-display uppercase tracking-wide text-xs text-neutral-200 group-hover:text-white font-medium">
+              03 · IR A COCINA INTEGRADA
+            </span>
+</span>
+<svg class="w-3.5 h-3.5 text-neutral-400 group-hover:text-[#C0562F] transform group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- BEGIN: Initial Welcome Tour Card Modal (Dismissible) -->
+<div class="absolute left-6 top-1/2 -translate-y-1/2 w-80 md:w-96 hud-panel p-5 shadow-2xl border border-white/20 pointer-events-auto z-20 backdrop-blur-xl" data-purpose="welcome-modal-dialog" id="welcome-modal">
+<div class="flex items-start justify-between border-b border-white/10 pb-3 mb-3">
+<div>
+<span class="text-[10px] font-mono uppercase text-[#B8862B] tracking-wider block">EXPERIENCIA INMERSIVA</span>
+<h2 class="font-display uppercase text-xl font-bold tracking-wide text-white leading-tight">
+              RECORRIDO DEL DEPARTAMENTO
+            </h2>
+</div>
+<button class="text-neutral-400 hover:text-white p-1 hover:bg-white/10 rounded-loft transition-colors" onclick="document.getElementById('welcome-modal').style.display='none'" title="Minimizar panel" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Architectural Loft Specs -->
+<div class="grid grid-cols-2 gap-2 text-xs font-mono mb-4 text-neutral-300">
+<div class="bg-black/40 p-2 rounded-loft border border-white/5">
+<span class="text-[10px] text-neutral-500 block">SUPERFICIE</span>
+<span class="text-neutral-100 font-semibold">54 m² Útiles</span>
+</div>
+<div class="bg-black/40 p-2 rounded-loft border border-white/5">
+<span class="text-[10px] text-neutral-500 block">CAPACIDAD</span>
+<span class="text-neutral-100 font-semibold">4 Huéspedes</span>
+</div>
+<div class="bg-black/40 p-2 rounded-loft border border-white/5">
+<span class="text-[10px] text-neutral-500 block">DORMITORIOS</span>
+<span class="text-neutral-100 font-semibold">2 Camas King</span>
+</div>
+<div class="bg-black/40 p-2 rounded-loft border border-white/5">
+<span class="text-[10px] text-neutral-500 block">SERVICIOS</span>
+<span class="text-neutral-100 font-semibold">2 Baños Full</span>
+</div>
+</div>
+<!-- Progress status indicator -->
+<div class="space-y-1 mb-4">
+<div class="flex justify-between text-[10px] font-mono text-neutral-400">
+<span>MOTOR 3D WEBGL</span>
+<span class="text-[#C0562F]">CARGANDO TEXTURAS 3D 100%</span>
+</div>
+<div class="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+<div class="h-full bg-[#C0562F] w-full rounded-full"></div>
+</div>
+</div>
+<!-- Modal Entry CTA -->
+<button class="w-full bg-[#C0562F] hover:bg-[#A84824] text-white py-2.5 px-4 font-display uppercase tracking-wider text-sm font-bold flex items-center justify-center space-x-2 transition-colors rounded-loft shadow-rust-glow cursor-pointer" onclick="document.getElementById('welcome-modal').style.display='none'" type="button">
+<span>ENTRAR AL TOUR 3D</span>
+<span>→</span>
+</button>
+</div>
+<!-- END: Initial Welcome Tour Card Modal -->
+</div>
+<!-- END: Reticle & Interactive Waypoint -->
+<!-- BEGIN: Floating Right Room Navigator -->
+<aside class="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 pointer-events-auto z-10">
+<nav aria-label="Navegación de recintos" class="hud-panel p-2 flex flex-col space-y-1 min-w-[170px]">
+<div class="px-2 py-1 border-b border-white/10 mb-1 flex items-center justify-between">
+<span class="font-mono text-[9px] uppercase tracking-wider text-neutral-400">RECINTOS (8)</span>
+<span class="w-1.5 h-1.5 rounded-full bg-[#B8862B]"></span>
+</div>
+<!-- Room 01 -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase text-neutral-400 hover:text-white hover:bg-white/5 transition-colors flex items-center space-x-2" type="button">
+<span class="font-mono text-[10px] text-neutral-500">01</span>
+<span>HALL ACCESO</span>
+</button>
+<!-- Room 02 (Active) -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase bg-[#C0562F] text-white font-bold transition-all shadow-rust-glow flex items-center justify-between" type="button">
+<div class="flex items-center space-x-2">
+<span class="font-mono text-[10px] text-white/80">02</span>
+<span>LIVING</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+</button>
+<!-- Room 03 -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase text-neutral-300 hover:text-white hover:bg-white/5 transition-colors flex items-center space-x-2" type="button">
+<span class="font-mono text-[10px] text-neutral-500">03</span>
+<span>COCINA</span>
+</button>
+<!-- Room 04 -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase text-neutral-400 hover:text-white hover:bg-white/5 transition-colors flex items-center space-x-2" type="button">
+<span class="font-mono text-[10px] text-neutral-500">04</span>
+<span>DORMITORIO 1</span>
+</button>
+<!-- Room 05 -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase text-neutral-400 hover:text-white hover:bg-white/5 transition-colors flex items-center space-x-2" type="button">
+<span class="font-mono text-[10px] text-neutral-500">05</span>
+<span>DORMITORIO 2</span>
+</button>
+<!-- Room 06 -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase text-neutral-400 hover:text-white hover:bg-white/5 transition-colors flex items-center space-x-2" type="button">
+<span class="font-mono text-[10px] text-neutral-500">06</span>
+<span>BAÑO 1</span>
+</button>
+<!-- Room 07 -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase text-neutral-400 hover:text-white hover:bg-white/5 transition-colors flex items-center space-x-2" type="button">
+<span class="font-mono text-[10px] text-neutral-500">07</span>
+<span>BAÑO 2</span>
+</button>
+<!-- Room 08 -->
+<button class="w-full text-left px-2 py-1.5 rounded-loft font-display text-xs tracking-wider uppercase text-neutral-400 hover:text-white hover:bg-white/5 transition-colors flex items-center space-x-2" type="button">
+<span class="font-mono text-[10px] text-neutral-500">08</span>
+<span>BALCÓN</span>
+</button>
+</nav>
+</aside>
+<!-- END: Floating Right Room Navigator -->
+<!-- BEGIN: Bottom HUD Section -->
+<div class="w-full flex flex-col md:flex-row items-end justify-between gap-4 pointer-events-auto">
+<!-- Bottom Left: Blueprint Floorplan Minimap -->
+<div class="hud-panel p-3 shadow-hud w-56 flex flex-col relative" data-purpose="minimap-blueprint">
+<div class="flex items-center justify-between pb-1 mb-1 border-b border-white/10 font-mono text-[9px] text-neutral-400">
+<span class="text-white font-semibold">PLANO GENERAL · 54 m²</span>
+<div class="flex items-center space-x-1">
+<span class="text-[8px] text-[#B8862B]">NORTE</span>
+<svg class="w-2.5 h-2.5 text-[#B8862B]" fill="currentColor" viewbox="0 0 24 24">
+<polygon points="12 2, 19 21, 12 17, 5 21"></polygon>
+</svg>
+</div>
+</div>
+<!-- 2D Architectural Floorplan Blueprint Drawing -->
+<div class="w-full h-32 blueprint-grid relative border border-white/20 bg-[#121316]/90 p-1 flex items-center justify-center overflow-hidden">
+<!-- Outer Loft Boundary -->
+<div class="w-full h-full border-2 border-white/60 relative">
+<!-- Interior Wall Partitions -->
+<!-- Bedroom 1 Divider -->
+<div class="absolute top-0 right-0 w-[42%] h-[50%] border-l-2 border-b-2 border-white/40 flex items-center justify-center">
+<span class="font-mono text-[7px] text-neutral-400">DORM 1</span>
+</div>
+<!-- Bedroom 2 & Bathrooms Divider -->
+<div class="absolute bottom-0 right-0 w-[42%] h-[46%] border-l-2 border-white/40">
+<div class="h-1/2 w-full border-b border-white/30 flex items-center justify-center">
+<span class="font-mono text-[7px] text-neutral-400">B1 / B2</span>
+</div>
+<div class="h-1/2 w-full flex items-center justify-center">
+<span class="font-mono text-[7px] text-neutral-400">DORM 2</span>
+</div>
+</div>
+<!-- Kitchen Nook Area -->
+<div class="absolute top-0 left-0 w-[40%] h-[35%] border-b border-r border-white/30 border-dashed flex items-center justify-center">
+<span class="font-mono text-[7px] text-[#B8862B]">COCINA</span>
+</div>
+<!-- Balcony Line -->
+<div class="absolute bottom-0 left-0 w-[55%] h-[12%] border-t border-dashed border-white/40 flex items-center justify-center">
+<span class="font-mono text-[6px] text-neutral-400">BALCÓN</span>
+</div>
+<!-- Living Room Center Indicator & Radar View Cone -->
+<div class="absolute top-[48%] left-[28%] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+<!-- Radial Vision Cone -->
+<div class="w-16 h-16 bg-gradient-to-tr from-[#C0562F]/35 to-transparent rounded-full -rotate-45 pointer-events-none origin-bottom-left"></div>
+<!-- Camera Point Dot -->
+<span class="absolute w-2.5 h-2.5 rounded-full bg-[#C0562F] ring-4 ring-[#C0562F]/30 animate-pulse"></span>
+<span class="absolute -top-4 font-mono text-[8px] font-bold text-white whitespace-nowrap bg-[#121316] px-1 border border-white/20">
+                02 LIVING
+              </span>
+</div>
+</div>
+<!-- Dimension Cotas -->
+<div class="absolute bottom-0.5 right-1 font-mono text-[7px] text-neutral-400 tracking-tighter">
+            9.00m × 6.00m
+          </div>
+</div>
+</div>
+<!-- Bottom Center: Legal/Contextual Disclaimer Strip -->
+<div class="text-center pb-1 max-w-xl mx-auto hidden lg:block">
+<p class="font-mono text-[10px] text-neutral-300 tracking-wide bg-[#121316]/90 px-3 py-1.5 border border-white/10 rounded-loft">
+          Sitio de prueba · imágenes renderizadas desde un modelo 3D | Reservas son solicitudes sin cobro en línea: confirmación por correo | Mínimo 2 noches · Limpieza CLP 15.000
+        </p>
+</div>
+<!-- Bottom Right: Keyboard & Mouse Interaction Badges -->
+<div class="hud-panel p-2.5 shadow-hud flex flex-col space-y-1.5" data-purpose="hud-controls-helper">
+<div class="font-mono text-[9px] uppercase tracking-wider text-neutral-400 border-b border-white/10 pb-1">
+          CONTROLES DE NAVEGACIÓN
+        </div>
+<div class="flex items-center space-x-2 text-xs">
+<div class="flex space-x-0.5">
+<span class="key-badge">W</span>
+<span class="key-badge">A</span>
+<span class="key-badge">S</span>
+<span class="key-badge">D</span>
+</div>
+<span class="font-mono text-[11px] text-neutral-300">Caminar</span>
+</div>
+<div class="flex items-center space-x-2 text-xs">
+<span class="key-badge">Ratón</span>
+<span class="font-mono text-[11px] text-neutral-300">Mirar 360°</span>
+</div>
+<div class="flex items-center space-x-2 text-xs">
+<span class="key-badge">Clic</span>
+<span class="font-mono text-[11px] text-neutral-300">Abrir puertas / Interactuar</span>
+</div>
+</div>
+</div>
+<!-- END: Bottom HUD Section -->
+<!-- Mobile view disclaimer notice -->
+<div class="block lg:hidden text-center mt-2 pointer-events-auto">
+<p class="font-mono text-[9px] text-neutral-400 bg-black/80 px-2 py-1 rounded-loft border border-white/10">
+        Sitio de prueba · Modelo 3D · Mínimo 2 noches · Limpieza CLP 15.000
+      </p>
+</div>
+</div>
+<!-- END: HUD Layer Overlay -->
+<!-- BEGIN: Simple Interactive Simulation Scripts -->
+<script data-purpose="tour-event-handlers">
+    // Allow keyboard ESC key to trigger dismiss or back
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const welcomeModal = document.getElementById('welcome-modal');
+        if (welcomeModal && welcomeModal.style.display !== 'none') {
+          welcomeModal.style.display = 'none';
+        } else {
+          window.history.back();
+        }
+      }
+    });
+  </script>
+<!-- END: Simple Interactive Simulation Scripts -->
+</body></html>

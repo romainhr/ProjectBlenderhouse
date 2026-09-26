@@ -1,0 +1,2644 @@
+{
+ "extract": {
+  "bbox_exterior_px": {
+   "x0": 113,
+   "y0": 13,
+   "x1": 432,
+   "y1": 487.5
+  },
+  "walls": [
+   {
+    "id": "EXT_N1",
+    "kind": "exterior",
+    "x0": 113,
+    "y0": 13,
+    "x1": 342.5,
+    "y1": 27.5,
+    "notes": "Muro norte, desde esquina NO hasta jamba izq. de la ventana del Baño 1. Espesor 14,5 px. Sobre closet/baño la línea interior (y 23-26) se funde con el contorno de esos recintos."
+   },
+   {
+    "id": "EXT_N2",
+    "kind": "exterior",
+    "x0": 372,
+    "y0": 13,
+    "x1": 432,
+    "y1": 27.5,
+    "notes": "Muro norte, desde jamba der. de la ventana del Baño 1 hasta esquina NE."
+   },
+   {
+    "id": "EXT_E1",
+    "kind": "exterior",
+    "x0": 418,
+    "y0": 27.5,
+    "x1": 432,
+    "y1": 308,
+    "notes": "Muro este tramo superior (Baño 1, shaft 1, cocina) hasta jamba norte de la puerta de entrada. Relleno gris x 421-430; x 418-420 es una línea interior adicional (revestimiento) en baño 1 y cocina."
+   },
+   {
+    "id": "EXT_E2",
+    "kind": "exterior",
+    "x0": 420,
+    "y0": 362,
+    "x1": 432,
+    "y1": 474.5,
+    "notes": "Muro este tramo inferior (Baño 2, shaft 2) desde jamba sur de la puerta de entrada. Espesor 12 px."
+   },
+   {
+    "id": "EXT_S",
+    "kind": "exterior",
+    "x0": 113,
+    "y0": 474.5,
+    "x1": 432,
+    "y1": 487.5,
+    "notes": "Muro sur completo, sin vanos. Espesor 13 px."
+   },
+   {
+    "id": "EXT_W1",
+    "kind": "exterior",
+    "x0": 113,
+    "y0": 27.5,
+    "x1": 128.5,
+    "y1": 57.5,
+    "notes": "Muro oeste, tramo sobre la ventana del Dormitorio 1. Espesor 15,5 px."
+   },
+   {
+    "id": "PIL_W1",
+    "kind": "pilar",
+    "x0": 113,
+    "y0": 151,
+    "x1": 128.5,
+    "y1": 175,
+    "notes": "Machón entre ventana Dormitorio 1 y ventanal del living (relleno gris). Recibe el tabique Dorm1/Living."
+   },
+   {
+    "id": "PIL_W2",
+    "kind": "pilar",
+    "x0": 113,
+    "y0": 327,
+    "x1": 128.5,
+    "y1": 350.5,
+    "notes": "Machón entre ventanal del living y ventana Dormitorio 2. Recibe el tabique Living/Dorm2."
+   },
+   {
+    "id": "EXT_W2",
+    "kind": "exterior",
+    "x0": 113,
+    "y0": 458,
+    "x1": 128.5,
+    "y1": 474.5,
+    "notes": "Muro oeste, tramo bajo la ventana del Dormitorio 2 (continúa en EXT_S)."
+   },
+   {
+    "id": "T_D1_LIV",
+    "kind": "interior",
+    "x0": 128.5,
+    "y0": 169,
+    "x1": 251,
+    "y1": 175,
+    "notes": "Tabique Dormitorio 1 / Living. Termina en x=251 (jamba oeste de la puerta del Dorm. 1)."
+   },
+   {
+    "id": "T_LIV_D2",
+    "kind": "interior",
+    "x0": 128.5,
+    "y0": 327,
+    "x1": 251,
+    "y1": 333,
+    "notes": "Tabique Living / Dormitorio 2. Termina en x=251 (jamba oeste de la puerta del Dorm. 2)."
+   },
+   {
+    "id": "T3_A",
+    "kind": "tabique_closet",
+    "x0": 288.5,
+    "y0": 27.5,
+    "x1": 294.5,
+    "y1": 59.5,
+    "notes": "Eje x≈291,5. Lado oeste del closet superior del Dorm. 1."
+   },
+   {
+    "id": "T3_B",
+    "kind": "tabique_closet",
+    "x0": 288.5,
+    "y0": 122,
+    "x1": 294.5,
+    "y1": 146,
+    "notes": "Lado oeste del closet inferior del Dorm. 1."
+   },
+   {
+    "id": "T3_C",
+    "kind": "interior",
+    "x0": 288.5,
+    "y0": 146,
+    "x1": 294.5,
+    "y1": 181.5,
+    "notes": "Remate del tabique junto a la cocina: jamba este de la puerta del Dorm. 1; la cocina queda abierta al living bajo y=181,5."
+   },
+   {
+    "id": "T3_D",
+    "kind": "interior",
+    "x0": 288.5,
+    "y0": 324,
+    "x1": 294.5,
+    "y1": 362,
+    "notes": "Lado oeste del nicho LV / jamba este de la puerta del Dorm. 2."
+   },
+   {
+    "id": "T3_E",
+    "kind": "tabique_closet",
+    "x0": 288.5,
+    "y0": 362,
+    "x1": 294.5,
+    "y1": 399.5,
+    "notes": "Lado oeste del closet superior del Dorm. 2."
+   },
+   {
+    "id": "T3_F",
+    "kind": "tabique_closet",
+    "x0": 288.5,
+    "y0": 451,
+    "x1": 294.5,
+    "y1": 474.5,
+    "notes": "Lado oeste del closet inferior del Dorm. 2."
+   },
+   {
+    "id": "T4_A",
+    "kind": "interior",
+    "x0": 336.5,
+    "y0": 27.5,
+    "x1": 342,
+    "y1": 71.5,
+    "notes": "Tabique closet sup. Dorm1 / Baño 1, hasta jamba norte de la puerta del Baño 1."
+   },
+   {
+    "id": "T4_B",
+    "kind": "interior",
+    "x0": 336.5,
+    "y0": 105.5,
+    "x1": 342,
+    "y1": 146,
+    "notes": "Tabique closet inf. Dorm1 / Baño 1, desde jamba sur de la puerta del Baño 1."
+   },
+   {
+    "id": "T5",
+    "kind": "interior",
+    "x0": 294.5,
+    "y0": 146,
+    "x1": 418,
+    "y1": 152.5,
+    "notes": "Tabique horizontal que separa closet inf. Dorm1 + Baño 1 + shaft 1 (norte) de la cocina (sur). Doble línea y 146-148 / 150-152."
+   },
+   {
+    "id": "T9",
+    "kind": "interior",
+    "x0": 294.5,
+    "y0": 362,
+    "x1": 420,
+    "y1": 368,
+    "notes": "Tabique horizontal que separa nicho LV + hall (norte) de closet sup. Dorm2 + Baño 2 (sur)."
+   },
+   {
+    "id": "T10_A",
+    "kind": "interior",
+    "x0": 338.5,
+    "y0": 368,
+    "x1": 344,
+    "y1": 410.5,
+    "notes": "Tabique closet sup. Dorm2 / Baño 2 hasta jamba norte de la puerta del Baño 2."
+   },
+   {
+    "id": "T10_B",
+    "kind": "interior",
+    "x0": 338.5,
+    "y0": 444.5,
+    "x1": 344,
+    "y1": 474.5,
+    "notes": "Tabique closet inf. Dorm2 / Baño 2 desde jamba sur de la puerta del Baño 2."
+   },
+   {
+    "id": "T_LV_E",
+    "kind": "interior",
+    "x0": 329,
+    "y0": 324,
+    "x1": 336,
+    "y1": 362,
+    "notes": "Tabique este del nicho de lavadora (separa nicho del hall)."
+   },
+   {
+    "id": "T_COC_S",
+    "kind": "interior",
+    "x0": 385,
+    "y0": 297.5,
+    "x1": 418,
+    "y1": 305.5,
+    "notes": "Murete/tabique corto que cierra el extremo sur del mesón derecho de la cocina contra el hall de acceso (doble línea negra, 8 px)."
+   },
+   {
+    "id": "SH1_N",
+    "kind": "shaft",
+    "x0": 391.5,
+    "y0": 125.5,
+    "x1": 418,
+    "y1": 132,
+    "notes": "Muro norte del shaft del Baño 1."
+   },
+   {
+    "id": "SH1_W",
+    "kind": "shaft",
+    "x0": 391.5,
+    "y0": 132,
+    "x1": 397,
+    "y1": 146,
+    "notes": "Muro oeste del shaft del Baño 1."
+   },
+   {
+    "id": "SH2_N",
+    "kind": "shaft",
+    "x0": 388.5,
+    "y0": 445,
+    "x1": 420,
+    "y1": 451,
+    "notes": "Muro norte del shaft del Baño 2."
+   },
+   {
+    "id": "SH2_W",
+    "kind": "shaft",
+    "x0": 388.5,
+    "y0": 451,
+    "x1": 394.5,
+    "y1": 474.5,
+    "notes": "Muro oeste del shaft del Baño 2."
+   },
+   {
+    "id": "BAL_W",
+    "kind": "antepecho_balcon",
+    "x0": 51.5,
+    "y0": 163,
+    "x1": 61,
+    "y1": 339.5,
+    "notes": "Borde oeste del balcón: contorno exterior x=52, dos líneas finas x≈54 y x≈57 (baranda/pasamanos), borde de piso x≈60."
+   },
+   {
+    "id": "BAL_N",
+    "kind": "antepecho_balcon",
+    "x0": 61,
+    "y0": 163,
+    "x1": 113,
+    "y1": 174,
+    "notes": "Borde norte del balcón: contorno y=163, rectángulo fino x 61-112 y 166-170 (baranda), borde de piso y≈173."
+   },
+   {
+    "id": "BAL_S",
+    "kind": "antepecho_balcon",
+    "x0": 61,
+    "y0": 328,
+    "x1": 113,
+    "y1": 339.5,
+    "notes": "Borde sur del balcón: borde de piso y≈328, rectángulo fino x 61-112 y 331-335 (baranda), contorno y=339."
+   }
+  ],
+  "openings": [
+   {
+    "id": "P_D1",
+    "kind": "puerta_abatible",
+    "x0": 251,
+    "y0": 169,
+    "x1": 288.5,
+    "y1": 175,
+    "width_px": 37.5,
+    "connects": "Living-comedor <-> Dormitorio 1",
+    "wall_id": "T_D1_LIV",
+    "hinge_px": [
+     288,
+     170
+    ],
+    "swing": "Abre hacia el Dormitorio 1 (norte, -y). Bisagra en la jamba este (contra T3_C). Hoja abierta dibujada vertical x 284,5-288,5, y 131,5-170 (largo ≈38,5 px). Arco de (250,5,169) a (284,5,132).",
+    "notes": "Vano entre el extremo de T_D1_LIV (x=251) y T3_C (x=288,5)."
+   },
+   {
+    "id": "P_D2",
+    "kind": "puerta_abatible",
+    "x0": 251,
+    "y0": 327,
+    "x1": 288.5,
+    "y1": 333,
+    "width_px": 37.5,
+    "connects": "Living-comedor <-> Dormitorio 2",
+    "wall_id": "T_LIV_D2",
+    "hinge_px": [
+     288,
+     332
+    ],
+    "swing": "Abre hacia el Dormitorio 2 (sur, +y). Bisagra en la jamba este (contra T3_D). Hoja abierta vertical x 284,5-288,5, y 332-370,5 (largo ≈38,5 px). Arco de (250,5,333) a (284,5,370).",
+    "notes": "Vano entre el extremo de T_LIV_D2 (x=251) y T3_D (x=288,5)."
+   },
+   {
+    "id": "P_B1",
+    "kind": "puerta_abatible",
+    "x0": 336.5,
+    "y0": 71.5,
+    "x1": 342,
+    "y1": 105.5,
+    "width_px": 34,
+    "connects": "Dormitorio 1 (vestidor) <-> Baño 1",
+    "wall_id": "T4_A/T4_B",
+    "hinge_px": [
+     341,
+     72
+    ],
+    "swing": "Abre hacia el Baño 1 (este, +x). Bisagra en la jamba norte. Hoja abierta horizontal x 341-376, y 70,5-74 (largo ≈35 px), queda paralela a la tina. Arco de (376,74) a (338,105)."
+   },
+   {
+    "id": "P_B2",
+    "kind": "puerta_abatible",
+    "x0": 338.5,
+    "y0": 410.5,
+    "x1": 344,
+    "y1": 444.5,
+    "width_px": 34,
+    "connects": "Dormitorio 2 (vestidor) <-> Baño 2",
+    "wall_id": "T10_A/T10_B",
+    "hinge_px": [
+     343.5,
+     411
+    ],
+    "swing": "Abre hacia el Baño 2 (este, +x). Bisagra en la jamba norte. Hoja abierta horizontal x 343,5-377, y 409-413 (largo ≈34 px). Arco de (377,413) a (342,444)."
+   },
+   {
+    "id": "P_ENT",
+    "kind": "puerta_entrada",
+    "x0": 420,
+    "y0": 308,
+    "x1": 432,
+    "y1": 362,
+    "width_px": 54,
+    "connects": "Exterior (acceso marcado con triángulo; que sea un pasillo común es inferido) <-> Hall de acceso",
+    "wall_id": "EXT_E1/EXT_E2",
+    "hinge_px": [
+     421,
+     361
+    ],
+    "swing": "Abre hacia adentro (oeste, -x). Bisagra en la jamba sur. Hoja abierta horizontal x 366,5-421, y 358-362 (largo ≈54,5 px). Arco de (367,358) a (421,308)."
+   },
+   {
+    "id": "VEN_LIV",
+    "kind": "ventanal_corredera",
+    "x0": 113,
+    "y0": 175,
+    "x1": 128.5,
+    "y1": 327,
+    "width_px": 152,
+    "connects": "Living-comedor <-> Balcón",
+    "wall_id": "PIL_W1/PIL_W2",
+    "swing": "Corredera (flecha de deslizamiento x 129-134, y 188-212).",
+    "notes": "Dos hojas: líneas de marco distintas en y 176-226 (x≈119-122) y y 227-327 (x≈119-120); traslape aparente en y≈227-231. No se puede saber cuál hoja es fija."
+   },
+   {
+    "id": "V_D1",
+    "kind": "ventana",
+    "x0": 113,
+    "y0": 57.5,
+    "x1": 128.5,
+    "y1": 151,
+    "width_px": 93.5,
+    "connects": "Dormitorio 1 <-> Exterior (fachada oeste)",
+    "wall_id": "EXT_W1/PIL_W1",
+    "notes": "Tramo sin relleno con marco (líneas x 113-114, 118-122, 127-128). Alto de antepecho no determinable."
+   },
+   {
+    "id": "V_D2",
+    "kind": "ventana",
+    "x0": 113,
+    "y0": 350.5,
+    "x1": 128.5,
+    "y1": 458,
+    "width_px": 107.5,
+    "connects": "Dormitorio 2 <-> Exterior (fachada oeste)",
+    "wall_id": "PIL_W2/EXT_W2",
+    "notes": "Medida en el plano: más larga que V_D1 (107,5 vs 93,5 px)."
+   },
+   {
+    "id": "V_B1",
+    "kind": "ventana_bano",
+    "x0": 342.5,
+    "y0": 13,
+    "x1": 372,
+    "y1": 27.5,
+    "width_px": 29.5,
+    "connects": "Baño 1 <-> Exterior (fachada norte)",
+    "wall_id": "EXT_N1/EXT_N2",
+    "notes": "Sobre la tina. El Baño 2 NO tiene ventana dibujada (solo shaft)."
+   },
+   {
+    "id": "VL_D1",
+    "kind": "vano_libre",
+    "x0": 288.5,
+    "y0": 59.5,
+    "x1": 294.5,
+    "y1": 122,
+    "width_px": 62.5,
+    "connects": "Dormitorio 1 (área cama) <-> vestidor/paso a Baño 1",
+    "wall_id": "T3_A/T3_B",
+    "notes": "Hueco en el tabique T3 entre los dos closets; sin puerta."
+   },
+   {
+    "id": "VL_D2",
+    "kind": "vano_libre",
+    "x0": 288.5,
+    "y0": 399.5,
+    "x1": 294.5,
+    "y1": 451,
+    "width_px": 51.5,
+    "connects": "Dormitorio 2 (área cama) <-> vestidor/paso a Baño 2",
+    "wall_id": "T3_E/T3_F",
+    "notes": "Hueco en el tabique T3 entre los dos closets; sin puerta."
+   },
+   {
+    "id": "VL_COC_LIV",
+    "kind": "vano_libre",
+    "x0": 294,
+    "y0": 181.5,
+    "x1": 295,
+    "y1": 297.5,
+    "width_px": 116,
+    "connects": "Cocina <-> Living-comedor",
+    "wall_id": "T3_C",
+    "notes": "Cocina abierta: no hay muro bajo T3_C. El límite x=294,5 es virtual (prolongación de la cara de T3)."
+   },
+   {
+    "id": "VL_HALL_LIV",
+    "kind": "vano_libre",
+    "x0": 294,
+    "y0": 297.5,
+    "x1": 295,
+    "y1": 324,
+    "width_px": 26.5,
+    "connects": "Hall de acceso <-> Living-comedor",
+    "notes": "Límite virtual entre el living y la zona frente al nicho LV."
+   },
+   {
+    "id": "VL_COC_HALL",
+    "kind": "vano_libre",
+    "x0": 294.5,
+    "y0": 297,
+    "x1": 385,
+    "y1": 298,
+    "width_px": 90.5,
+    "connects": "Cocina <-> Hall de acceso",
+    "wall_id": "T_COC_S",
+    "notes": "Límite virtual y=297,5 (prolongación de la cara norte de T_COC_S)."
+   },
+   {
+    "id": "CL_D1_N",
+    "kind": "puerta_closet",
+    "x0": 294.5,
+    "y0": 58.5,
+    "x1": 336.5,
+    "y1": 59.5,
+    "width_px": 42,
+    "connects": "Closet sup. Dorm. 1 <-> vestidor Dorm. 1",
+    "swing": "Frente hacia el sur (+y).",
+    "notes": "Frente dibujado como línea gris simple: tipo de puerta (corredera/abatible) no determinable."
+   },
+   {
+    "id": "CL_D1_S",
+    "kind": "puerta_closet",
+    "x0": 294.5,
+    "y0": 122.5,
+    "x1": 336.5,
+    "y1": 123.5,
+    "width_px": 42,
+    "connects": "Closet inf. Dorm. 1 <-> vestidor Dorm. 1",
+    "swing": "Frente hacia el norte (-y).",
+    "notes": "Frente como línea gris simple."
+   },
+   {
+    "id": "CL_D2_N",
+    "kind": "puerta_closet",
+    "x0": 294.5,
+    "y0": 398.5,
+    "x1": 338.5,
+    "y1": 399.5,
+    "width_px": 44,
+    "connects": "Closet sup. Dorm. 2 <-> vestidor Dorm. 2",
+    "swing": "Frente hacia el sur (+y).",
+    "notes": "Frente como línea gris simple."
+   },
+   {
+    "id": "CL_D2_S",
+    "kind": "puerta_closet",
+    "x0": 294.5,
+    "y0": 451,
+    "x1": 338.5,
+    "y1": 452.5,
+    "width_px": 44,
+    "connects": "Closet inf. Dorm. 2 <-> vestidor Dorm. 2",
+    "swing": "Frente hacia el norte (-y).",
+    "notes": "Frente como línea gris simple."
+   },
+   {
+    "id": "LV_FRENTE",
+    "kind": "puerta_closet",
+    "x0": 294.5,
+    "y0": 320,
+    "x1": 329,
+    "y1": 326,
+    "width_px": 34.5,
+    "connects": "Nicho LV <-> Hall/Living",
+    "swing": "Frente hacia el norte (-y).",
+    "notes": "Frente con línea curva fina (y≈320-326): posible puerta plegable o cortina; podría ser un vano libre."
+   }
+  ],
+  "rooms": [
+   {
+    "name": "Dormitorio 1",
+    "polygon_px": [
+     [
+      128.5,
+      27.5
+     ],
+     [
+      288.5,
+      27.5
+     ],
+     [
+      288.5,
+      59.5
+     ],
+     [
+      336.5,
+      59.5
+     ],
+     [
+      336.5,
+      122.5
+     ],
+     [
+      288.5,
+      122.5
+     ],
+     [
+      288.5,
+      169
+     ],
+     [
+      128.5,
+      169
+     ]
+    ],
+    "notes": "Área cama x 128,5-288,5 × y 27,5-169 + vestidor/paso x 288,5-336,5 × y 59,5-122,5 que lleva al Baño 1 (baño en suite)."
+   },
+   {
+    "name": "Dormitorio 2",
+    "polygon_px": [
+     [
+      128.5,
+      333
+     ],
+     [
+      288.5,
+      333
+     ],
+     [
+      288.5,
+      399.5
+     ],
+     [
+      338.5,
+      399.5
+     ],
+     [
+      338.5,
+      451
+     ],
+     [
+      288.5,
+      451
+     ],
+     [
+      288.5,
+      474.5
+     ],
+     [
+      128.5,
+      474.5
+     ]
+    ],
+    "notes": "Área cama x 128,5-288,5 × y 333-474,5 + vestidor/paso x 288,5-338,5 × y 399,5-451 que lleva al Baño 2."
+   },
+   {
+    "name": "Living-comedor",
+    "polygon_px": [
+     [
+      128.5,
+      175
+     ],
+     [
+      288.5,
+      175
+     ],
+     [
+      288.5,
+      181.5
+     ],
+     [
+      294.5,
+      181.5
+     ],
+     [
+      294.5,
+      324
+     ],
+     [
+      288.5,
+      324
+     ],
+     [
+      288.5,
+      327
+     ],
+     [
+      128.5,
+      327
+     ]
+    ],
+    "notes": "Borde este (x=294,5, y 181,5-324) virtual: abierto a cocina y hall. No hay comedor dibujado."
+   },
+   {
+    "name": "Cocina",
+    "polygon_px": [
+     [
+      294.5,
+      152.5
+     ],
+     [
+      418,
+      152.5
+     ],
+     [
+      418,
+      297.5
+     ],
+     [
+      294.5,
+      297.5
+     ]
+    ],
+    "notes": "Cocina abierta en L. Bordes oeste (bajo y=181,5) y sur (x<385) virtuales."
+   },
+   {
+    "name": "Hall de acceso",
+    "polygon_px": [
+     [
+      294.5,
+      297.5
+     ],
+     [
+      385,
+      297.5
+     ],
+     [
+      385,
+      305.5
+     ],
+     [
+      418,
+      305.5
+     ],
+     [
+      418,
+      308
+     ],
+     [
+      420,
+      308
+     ],
+     [
+      420,
+      362
+     ],
+     [
+      336,
+      362
+     ],
+     [
+      336,
+      324
+     ],
+     [
+      294.5,
+      324
+     ]
+    ],
+    "notes": "Zona entre cocina, nicho LV y Baño 2 donde llega la puerta de entrada. Bordes norte y oeste virtuales."
+   },
+   {
+    "name": "Baño 1",
+    "polygon_px": [
+     [
+      342,
+      27.5
+     ],
+     [
+      418,
+      27.5
+     ],
+     [
+      418,
+      125.5
+     ],
+     [
+      391.5,
+      125.5
+     ],
+     [
+      391.5,
+      146
+     ],
+     [
+      342,
+      146
+     ]
+    ],
+    "notes": "Excluye el shaft 1 (esquina SE)."
+   },
+   {
+    "name": "Baño 2",
+    "polygon_px": [
+     [
+      344,
+      368
+     ],
+     [
+      420,
+      368
+     ],
+     [
+      420,
+      445
+     ],
+     [
+      388.5,
+      445
+     ],
+     [
+      388.5,
+      474.5
+     ],
+     [
+      344,
+      474.5
+     ]
+    ],
+    "notes": "Excluye el shaft 2 (esquina SE)."
+   },
+   {
+    "name": "Balcón",
+    "polygon_px": [
+     [
+      61,
+      174
+     ],
+     [
+      113,
+      174
+     ],
+     [
+      113,
+      328
+     ],
+     [
+      61,
+      328
+     ]
+    ],
+    "notes": "Piso con grilla de baldosas (paso ≈10,8 px). Rodeado por BAL_W/BAL_N/BAL_S."
+   },
+   {
+    "name": "Closet Dorm. 1 superior",
+    "polygon_px": [
+     [
+      294.5,
+      27.5
+     ],
+     [
+      336.5,
+      27.5
+     ],
+     [
+      336.5,
+      59.5
+     ],
+     [
+      294.5,
+      59.5
+     ]
+    ],
+    "notes": "Relleno gris claro."
+   },
+   {
+    "name": "Closet Dorm. 1 inferior",
+    "polygon_px": [
+     [
+      294.5,
+      122.5
+     ],
+     [
+      336.5,
+      122.5
+     ],
+     [
+      336.5,
+      146
+     ],
+     [
+      294.5,
+      146
+     ]
+    ],
+    "notes": "Relleno gris claro."
+   },
+   {
+    "name": "Closet Dorm. 2 superior",
+    "polygon_px": [
+     [
+      294.5,
+      368
+     ],
+     [
+      338.5,
+      368
+     ],
+     [
+      338.5,
+      399.5
+     ],
+     [
+      294.5,
+      399.5
+     ]
+    ],
+    "notes": "Relleno gris claro."
+   },
+   {
+    "name": "Closet Dorm. 2 inferior",
+    "polygon_px": [
+     [
+      294.5,
+      451
+     ],
+     [
+      338.5,
+      451
+     ],
+     [
+      338.5,
+      474.5
+     ],
+     [
+      294.5,
+      474.5
+     ]
+    ],
+    "notes": "Relleno gris claro."
+   },
+   {
+    "name": "Nicho lavadora (LV)",
+    "polygon_px": [
+     [
+      294.5,
+      324
+     ],
+     [
+      329,
+      324
+     ],
+     [
+      329,
+      362
+     ],
+     [
+      294.5,
+      362
+     ]
+    ],
+    "notes": "Abierto hacia el norte (hall/living)."
+   },
+   {
+    "name": "Shaft 1",
+    "polygon_px": [
+     [
+      397,
+      132
+     ],
+     [
+      418,
+      132
+     ],
+     [
+      418,
+      146
+     ],
+     [
+      397,
+      146
+     ]
+    ],
+    "notes": "Cuadrado con diagonal, esquina SE del Baño 1."
+   },
+   {
+    "name": "Shaft 2",
+    "polygon_px": [
+     [
+      394.5,
+      451
+     ],
+     [
+      420,
+      451
+     ],
+     [
+      420,
+      474.5
+     ],
+     [
+      394.5,
+      474.5
+     ]
+    ],
+    "notes": "Cuadrado con diagonal, esquina SE del Baño 2."
+   }
+  ],
+  "fixtures": [
+   {
+    "name": "Cama D1",
+    "room": "Dormitorio 1",
+    "x0": 156,
+    "y0": 31,
+    "x1": 255,
+    "y1": 137.5,
+    "notes": "Cabecera al norte (almohadas y 44-71). Proporción 99×106,5 px."
+   },
+   {
+    "name": "Velador izq. D1",
+    "room": "Dormitorio 1",
+    "x0": 141,
+    "y0": 29,
+    "x1": 157,
+    "y1": 49
+   },
+   {
+    "name": "Velador der. D1",
+    "room": "Dormitorio 1",
+    "x0": 254,
+    "y0": 29,
+    "x1": 272,
+    "y1": 49
+   },
+   {
+    "name": "Closet sup. D1",
+    "room": "Dormitorio 1",
+    "x0": 294.5,
+    "y0": 27.5,
+    "x1": 336.5,
+    "y1": 59.5,
+    "notes": "Mueble closet (relleno gris claro); frente al sur."
+   },
+   {
+    "name": "Closet inf. D1",
+    "room": "Dormitorio 1",
+    "x0": 294.5,
+    "y0": 122.5,
+    "x1": 336.5,
+    "y1": 146,
+    "notes": "Frente al norte."
+   },
+   {
+    "name": "Cama D2",
+    "room": "Dormitorio 2",
+    "x0": 156,
+    "y0": 365,
+    "x1": 255,
+    "y1": 471.5,
+    "notes": "Cabecera al sur (almohadas y 431-457)."
+   },
+   {
+    "name": "Velador izq. D2",
+    "room": "Dormitorio 2",
+    "x0": 141,
+    "y0": 454,
+    "x1": 157,
+    "y1": 474.5
+   },
+   {
+    "name": "Velador der. D2",
+    "room": "Dormitorio 2",
+    "x0": 254,
+    "y0": 454,
+    "x1": 272,
+    "y1": 474.5
+   },
+   {
+    "name": "Closet sup. D2",
+    "room": "Dormitorio 2",
+    "x0": 294.5,
+    "y0": 368,
+    "x1": 338.5,
+    "y1": 399.5,
+    "notes": "Frente al sur."
+   },
+   {
+    "name": "Closet inf. D2",
+    "room": "Dormitorio 2",
+    "x0": 294.5,
+    "y0": 451,
+    "x1": 338.5,
+    "y1": 474.5,
+    "notes": "Frente al norte."
+   },
+   {
+    "name": "Mueble TV",
+    "room": "Living-comedor",
+    "x0": 170,
+    "y0": 182,
+    "x1": 234,
+    "y1": 203,
+    "notes": "Contra el tabique T_D1_LIV; TV dibujada x 182-221, y 185-190."
+   },
+   {
+    "name": "Alfombra",
+    "room": "Living-comedor",
+    "x0": 148,
+    "y0": 193,
+    "x1": 267,
+    "y1": 301.5,
+    "notes": "Rectángulo fino bajo mueble TV, mesa y sofá."
+   },
+   {
+    "name": "Mesa de centro",
+    "room": "Living-comedor",
+    "x0": 174,
+    "y0": 225,
+    "x1": 230,
+    "y1": 259
+   },
+   {
+    "name": "Sofá 2 cuerpos",
+    "room": "Living-comedor",
+    "x0": 161.5,
+    "y0": 281,
+    "x1": 244,
+    "y1": 323,
+    "notes": "Respaldo al sur (y 313-323), brazos x 161,5-169 y 234-244, cojines divididos en x≈201,5. Mira al norte (hacia la TV)."
+   },
+   {
+    "name": "Pouf / mesa lateral",
+    "room": "Living-comedor",
+    "x0": 136,
+    "y0": 288,
+    "x1": 158,
+    "y1": 313.5,
+    "notes": "Cuadrado pequeño junto al sofá; puede ser pouf o mesa lateral."
+   },
+   {
+    "name": "Mesón en L (tramo norte)",
+    "room": "Cocina",
+    "x0": 294.5,
+    "y0": 152.5,
+    "x1": 388,
+    "y1": 183,
+    "notes": "Borde frontal y≈182-183."
+   },
+   {
+    "name": "Mesón en L (tramo este)",
+    "room": "Cocina",
+    "x0": 387,
+    "y0": 152.5,
+    "x1": 418,
+    "y1": 226.5,
+    "notes": "Borde frontal x≈387-388."
+   },
+   {
+    "name": "Encimera 4 platos",
+    "room": "Cocina",
+    "x0": 325,
+    "y0": 154,
+    "x1": 359,
+    "y1": 180,
+    "notes": "Sobre el tramo norte del mesón."
+   },
+   {
+    "name": "Lavaplatos",
+    "room": "Cocina",
+    "x0": 392.5,
+    "y0": 193,
+    "x1": 416,
+    "y1": 218.5,
+    "notes": "Sobre el tramo este; desagüe en (402,205)."
+   },
+   {
+    "name": "Escurridor",
+    "room": "Cocina",
+    "x0": 393,
+    "y0": 172,
+    "x1": 411,
+    "y1": 188,
+    "notes": "Rectángulo con líneas verticales junto al lavaplatos."
+   },
+   {
+    "name": "Muebles altos (línea discontinua)",
+    "room": "Cocina",
+    "x0": 294.5,
+    "y0": 152.5,
+    "x1": 418,
+    "y1": 226,
+    "notes": "Línea discontinua en y≈170-171 (x 295-400) y x≈398-399 (y 171-226): proyección de muebles altos en L, fondo ≈19 px."
+   },
+   {
+    "name": "Módulo rayado (artefacto ambiguo)",
+    "room": "Cocina",
+    "x0": 387,
+    "y0": 226.5,
+    "x1": 418,
+    "y1": 259.5,
+    "notes": "Contorno negro con rayado horizontal y frente curvo con manilla a la izquierda (x 382,5-388, y 229-257; tic en y≈243). Candidatos: torre de horno/microondas, refrigerador o despensa con repisas. No determinable."
+   },
+   {
+    "name": "Espacio refrigerador (probable)",
+    "room": "Cocina",
+    "x0": 386,
+    "y0": 259.5,
+    "x1": 418,
+    "y1": 297.5,
+    "notes": "Rectángulo con borde oeste discontinuo y punto negro en (404-407, 278-281). Probable espacio para refrigerador (artefacto no incluido) o despensa; no confirmado."
+   },
+   {
+    "name": "Lavadora",
+    "room": "Nicho lavadora (LV)",
+    "x0": 296,
+    "y0": 329.5,
+    "x1": 328,
+    "y1": 361,
+    "notes": "Círculo con texto 'LV' dentro de un cuadrado."
+   },
+   {
+    "name": "Tina Baño 1",
+    "room": "Baño 1",
+    "x0": 342,
+    "y0": 27.5,
+    "x1": 417,
+    "y1": 65.5,
+    "notes": "Contra el muro norte, bajo la ventana V_B1."
+   },
+   {
+    "name": "WC Baño 1",
+    "room": "Baño 1",
+    "x0": 382,
+    "y0": 71,
+    "x1": 418,
+    "y1": 96,
+    "notes": "Estanque contra el muro este (x 408-418), taza hacia el oeste."
+   },
+   {
+    "name": "Vanitorio Baño 1",
+    "room": "Baño 1",
+    "x0": 342,
+    "y0": 121,
+    "x1": 380,
+    "y1": 146,
+    "notes": "Contra T5; lavamanos con desagüe en (360,138). Línea fina y≈137-138 de x 378 a 391 (¿toallero?)."
+   },
+   {
+    "name": "Repisa / tabique bajo de instalaciones B1",
+    "room": "Baño 1",
+    "x0": 408,
+    "y0": 64,
+    "x1": 418,
+    "y1": 125.5,
+    "notes": "Línea gris fina x≈408-409 entre tina y shaft; posible tabique bajo que oculta el estanque. Ambiguo."
+   },
+   {
+    "name": "Tina Baño 2",
+    "room": "Baño 2",
+    "x0": 344,
+    "y0": 368,
+    "x1": 419,
+    "y1": 404.5,
+    "notes": "Contra T9."
+   },
+   {
+    "name": "WC Baño 2",
+    "room": "Baño 2",
+    "x0": 381,
+    "y0": 412,
+    "x1": 420,
+    "y1": 436,
+    "notes": "Estanque contra el muro este (x 411-420)."
+   },
+   {
+    "name": "Vanitorio Baño 2",
+    "room": "Baño 2",
+    "x0": 344,
+    "y0": 451,
+    "x1": 382,
+    "y1": 474.5,
+    "notes": "Contra el muro sur; desagüe en (361,457)."
+   },
+   {
+    "name": "Repisa / tabique bajo de instalaciones B2",
+    "room": "Baño 2",
+    "x0": 410,
+    "y0": 404.5,
+    "x1": 420,
+    "y1": 445,
+    "notes": "Línea punteada x≈410-411 entre tina y shaft. Ambiguo."
+   },
+   {
+    "name": "Marca de acceso (triángulo)",
+    "room": "Exterior",
+    "x0": 430,
+    "y0": 316,
+    "x1": 450,
+    "y1": 353,
+    "notes": "Símbolo de acceso fuera del muro este, apunta hacia la puerta de entrada. No es un objeto físico."
+   },
+   {
+    "name": "Flecha corredera",
+    "room": "Living-comedor",
+    "x0": 129,
+    "y0": 188,
+    "x1": 134,
+    "y1": 212,
+    "notes": "Símbolo de deslizamiento del ventanal. No es un objeto físico."
+   }
+  ],
+  "uncertain": [
+   "Convención de coordenadas: px del PNG 500x500 en coordenadas continuas (el píxel i ocupa [i,i+1]), x hacia la derecha, y hacia abajo. Norte/sur/este/oeste en las notas = arriba/abajo/derecha/izquierda de la imagen; el plano no tiene flecha de norte.",
+   "Escala: el plano no tiene cotas ni escala gráfica. Indicios (supuestos, no medidos): puerta de entrada 54 px, puertas de dormitorio 37,5 px, puertas de baño 34 px, cama 99×106,5 px, baldosas del balcón ≈10,8 px. Si la cama es de 1,8×2,0 m → ≈0,0188 m/px (entrada ≈1,0 m, dormitorios ≈0,70 m, baños ≈0,64 m, muros ext. ≈0,27 m, tabiques ≈0,11 m, planta ≈6,0×8,9 m). Si la cama es de 2,0×2,0 m → ≈0,020 m/px. Hay que fijarla con al menos una cota real.",
+   "Espesores medidos: muro N 14,5 px, muro O 15,5 px, muro S 13 px, muro E 12 px (14 px en el tramo norte si se incluye la línea interior x 418-420). No se sabe si la diferencia es real o es imprecisión del dibujo.",
+   "Precisión: los bordes se midieron sobre el PNG antialiasado; cuando un píxel es gris intermedio se tomó el borde en ,5. Error esperado ±1 px en muros y vanos, ±2 px en muebles.",
+   "Balcón: se ven el contorno exterior, dos líneas finas paralelas (baranda o pasamanos) y el borde del piso con baldosas. No se puede determinar si el antepecho es macizo, de vidrio o metálico, ni su altura.",
+   "Ventanal: se ven dos hojas con traslape en y≈227-231 y una flecha de deslizamiento, pero no se puede determinar cuál hoja es fija ni si la corredera es de 2 o de 3 hojas.",
+   "Alturas de antepechos de ventanas y de dinteles: no aparecen en planta (habrá que suponer valores estándar).",
+   "Cocina: el 'módulo rayado' (x 387-418, y 226,5-259,5) y el 'rectángulo discontinuo con punto' (x 386-418, y 259,5-297,5) son ambiguos: podrían ser torre de horno, refrigerador, despensa o lavavajillas.",
+   "Frente del nicho LV: línea curva fina; podría ser una puerta plegable, una cortina o solo un vano libre.",
+   "Frentes de closets: línea simple; no se distingue si las puertas son correderas o abatibles.",
+   "Los límites entre living, cocina y hall son virtuales (planta abierta); los elegí prolongando las caras de T3 y de T_COC_S.",
+   "Línea x 418-420 del muro este en la cocina y el Baño 1: en la cocina la separa del relleno gris un píxel blanco; puede ser revestimiento o tabique de instalaciones. Se incluyó dentro de EXT_E1.",
+   "Líneas finas junto a los WC (x≈408-409 en B1 y x≈410-411 en B2): posible tabique bajo o repisa de instalaciones; no confirmado.",
+   "El Baño 2 no tiene ventana dibujada; se asume ventilación por shaft (inferido).",
+   "No hay comedor (mesa y sillas) dibujado, aunque el ambiente se llama living-comedor.",
+   "Verificación hecha: overlay_walls.png revisado a 3x en las zonas NE, SE, O, cocina/entrada y puerta del Dorm. 1. Los píxeles oscuros (<90) que no cubre ningún muro solo corresponden a vanos (marcos de ventanas), hojas de puertas, el módulo rayado de la cocina, el triángulo de acceso y el texto LV."
+  ],
+  "files_written": [
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/walls.json",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/overlay_walls.png",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/geo/build_json.py",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/geo/residual.py",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/geo/dump.py",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/geo/num.py",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/geo/darks.py",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/geo/fdump.py",
+   "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/geo/bb.py"
+  ]
+ },
+ "scales": [
+  {
+   "family": "Artefactos sanitarios (baño 1 superior y baño 2 inferior): tinas, WC, vanitorios y nicho de tina; shafts solo como control",
+   "measurements": [
+    {
+     "element": "B1 tina",
+     "dim_label": "ancho exterior (y)",
+     "dim_px": 37.5,
+     "bbox_px": [
+      344.5,
+      27.5,
+      412.5,
+      65.5
+     ],
+     "real_m_low": 0.68,
+     "real_m_likely": 0.7,
+     "real_m_high": 0.75,
+     "m_per_px_likely": 0.01867,
+     "standard_source": "Supuesto/estándar: casi todas las tinas comerciales de LatAm (acero esmaltado o fibra) miden 0,70 m de ancho; 0,75-0,80 solo en modelos grandes. Valor de memoria, no verificado en catálogo en esta sesión."
+    },
+    {
+     "element": "B2 tina",
+     "dim_label": "ancho exterior (y)",
+     "dim_px": 36.5,
+     "bbox_px": [
+      346.5,
+      367.5,
+      413.5,
+      404.5
+     ],
+     "real_m_low": 0.68,
+     "real_m_likely": 0.7,
+     "real_m_high": 0.75,
+     "m_per_px_likely": 0.01918,
+     "standard_source": "Igual que B1 (tina de 0,70 m de ancho)."
+    },
+    {
+     "element": "B1 WC",
+     "dim_label": "profundidad total, frente de la taza hasta el muro (incluye estanque)",
+     "dim_px": 36,
+     "bbox_px": [
+      381.5,
+      70.5,
+      417.3,
+      95.5
+     ],
+     "real_m_low": 0.64,
+     "real_m_likely": 0.7,
+     "real_m_high": 0.76,
+     "m_per_px_likely": 0.01944,
+     "standard_source": "Supuesto/estándar: WC de dos piezas comunes en Chile, Argentina y México (tipo Fanaloza, Ferrum, Vitromex) y Neufert: 0,64-0,76 m, típico cerca de 0,70. De memoria, sin verificar."
+    },
+    {
+     "element": "B2 WC",
+     "dim_label": "profundidad total, frente de la taza hasta el muro (incluye estanque)",
+     "dim_px": 36,
+     "bbox_px": [
+      383.5,
+      411.5,
+      419.3,
+      435.5
+     ],
+     "real_m_low": 0.64,
+     "real_m_likely": 0.7,
+     "real_m_high": 0.76,
+     "m_per_px_likely": 0.01944,
+     "standard_source": "Igual que B1."
+    },
+    {
+     "element": "B1 WC taza",
+     "dim_label": "ancho exterior del óvalo de la taza (y)",
+     "dim_px": 19.5,
+     "bbox_px": [
+      381.5,
+      73,
+      409,
+      93
+     ],
+     "real_m_low": 0.35,
+     "real_m_likely": 0.37,
+     "real_m_high": 0.4,
+     "m_per_px_likely": 0.01897,
+     "standard_source": "Supuesto/estándar: ancho de taza de 0,35-0,40 m, típico 0,36-0,38. De memoria."
+    },
+    {
+     "element": "B2 WC taza",
+     "dim_label": "ancho exterior del óvalo de la taza (y)",
+     "dim_px": 19.5,
+     "bbox_px": [
+      383.5,
+      413.5,
+      411.5,
+      433.5
+     ],
+     "real_m_low": 0.35,
+     "real_m_likely": 0.37,
+     "real_m_high": 0.4,
+     "m_per_px_likely": 0.01897,
+     "standard_source": "Igual que B1."
+    },
+    {
+     "element": "B1 vanitorio",
+     "dim_label": "fondo, del borde frontal al muro (y)",
+     "dim_px": 24.8,
+     "bbox_px": [
+      341.5,
+      121.5,
+      379.5,
+      146.3
+     ],
+     "real_m_low": 0.4,
+     "real_m_likely": 0.46,
+     "real_m_high": 0.5,
+     "m_per_px_likely": 0.01855,
+     "standard_source": "Supuesto/estándar: vanitorios y lavamanos comerciales con fondo de 0,40-0,50 m, típico 0,45-0,48. De memoria."
+    },
+    {
+     "element": "B2 vanitorio",
+     "dim_label": "fondo, del borde frontal al muro (y)",
+     "dim_px": 24,
+     "bbox_px": [
+      343.5,
+      451,
+      381.5,
+      475
+     ],
+     "real_m_low": 0.4,
+     "real_m_likely": 0.46,
+     "real_m_high": 0.5,
+     "m_per_px_likely": 0.01917,
+     "standard_source": "Igual que B1."
+    },
+    {
+     "element": "B1 nicho de tina (ancho interior del baño, entre caras de muro)",
+     "dim_px": 75.3,
+     "dim_label": "ancho interior en x (INFERIDO: la tina suele ir de muro a muro)",
+     "bbox_px": [
+      342,
+      27.3,
+      417.3,
+      65.5
+     ],
+     "real_m_low": 1.4,
+     "real_m_likely": 1.5,
+     "real_m_high": 1.7,
+     "m_per_px_likely": 0.01992,
+     "standard_source": "Inferencia: en departamentos chilenos el nicho de la tina suele coincidir con el largo nominal (1,40/1,50/1,70). Peso secundario, porque el símbolo dibujado no llena el nicho."
+    },
+    {
+     "element": "B2 nicho de tina (ancho interior del baño)",
+     "dim_label": "ancho interior en x (INFERIDO)",
+     "dim_px": 75.3,
+     "bbox_px": [
+      344,
+      367.5,
+      419.3,
+      404.5
+     ],
+     "real_m_low": 1.4,
+     "real_m_likely": 1.5,
+     "real_m_high": 1.7,
+     "m_per_px_likely": 0.01992,
+     "standard_source": "Igual que B1."
+    },
+    {
+     "element": "B1 WC estanque",
+     "dim_label": "ancho del estanque (y)",
+     "dim_px": 24,
+     "bbox_px": [
+      409,
+      70.5,
+      417.3,
+      95.5
+     ],
+     "real_m_low": 0.36,
+     "real_m_likely": 0.42,
+     "real_m_high": 0.5,
+     "m_per_px_likely": 0.0175,
+     "standard_source": "Supuesto: el ancho de estanque varía mucho según el modelo (0,36-0,50). Peso bajo."
+    },
+    {
+     "element": "B2 WC estanque",
+     "dim_label": "ancho del estanque (y)",
+     "dim_px": 24,
+     "bbox_px": [
+      411.5,
+      411.5,
+      419.3,
+      435.5
+     ],
+     "real_m_low": 0.36,
+     "real_m_likely": 0.42,
+     "real_m_high": 0.5,
+     "m_per_px_likely": 0.0175,
+     "standard_source": "Igual que B1. Peso bajo."
+    },
+    {
+     "element": "B1 vanitorio",
+     "dim_label": "ancho (x)",
+     "dim_px": 38,
+     "bbox_px": [
+      341.5,
+      121.5,
+      379.5,
+      146.3
+     ],
+     "real_m_low": 0.5,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.8,
+     "m_per_px_likely": 0.01579,
+     "standard_source": "Supuesto: anchos comerciales de 0,50/0,60/0,70/0,80; el más vendido es 0,60. El rango es demasiado amplio para discriminar. Peso muy bajo."
+    },
+    {
+     "element": "B2 vanitorio",
+     "dim_label": "ancho (x)",
+     "dim_px": 38,
+     "bbox_px": [
+      343.5,
+      451,
+      381.5,
+      475
+     ],
+     "real_m_low": 0.5,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.8,
+     "m_per_px_likely": 0.01579,
+     "standard_source": "Igual que B1. Peso muy bajo."
+    },
+    {
+     "element": "B1 tina",
+     "dim_label": "largo exterior (x)",
+     "dim_px": 67.5,
+     "bbox_px": [
+      344.5,
+      27.5,
+      412.5,
+      65.5
+     ],
+     "real_m_low": 1.2,
+     "real_m_likely": 1.5,
+     "real_m_high": 1.7,
+     "m_per_px_likely": 0.02222,
+     "standard_source": "Supuesto: largo más común de 1,50 (también 1,20/1,40/1,60/1,70). Casi descartada: la relación largo/ancho medida (1,81) no calza con 150x70 (2,14)."
+    },
+    {
+     "element": "B2 tina",
+     "dim_label": "largo exterior (x)",
+     "dim_px": 66.5,
+     "bbox_px": [
+      346.5,
+      367.5,
+      413.5,
+      404.5
+     ],
+     "real_m_low": 1.2,
+     "real_m_likely": 1.5,
+     "real_m_high": 1.7,
+     "m_per_px_likely": 0.02256,
+     "standard_source": "Igual que B1. Casi descartada."
+    }
+   ],
+   "m_per_px": 0.0192,
+   "m_per_px_low": 0.018,
+   "m_per_px_high": 0.0208,
+   "confidence": "media",
+   "notes": "MÉTODO: medí con PIL (perfiles de oscuridad promediados en bandas, scripts san_prof.py y san_band.py) y revisé recortes ampliados (san_b1_tina.png, san_b1_wc_lav.png, san_b2_tina.png, san_b2_wc_lav.png, y los bbox en san_bboxes.png, todos en /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/). Los bordes son los de las líneas del símbolo, con una incertidumbre de ±1 px (3-5 % en dimensiones de 20-38 px). Las caras interiores de muro, medidas en el plano, son: B1 x 342-417,3 e y 27,3-146,3 (75,3 x 119 px); B2 x 344-419,3, con la cara superior en y 367,5.\n\nCOMPARACIÓN ENTRE BAÑOS: los dos baños usan los mismos bloques CAD y sus medidas coinciden en ±1 px (tina 67-68 x 36,5-37,5; WC 36 de profundidad, taza de 19,5 y estanque de 24; vanitorio 38 x 24-24,8; nicho de 75,3). Esto confirma que la medición es repetible, pero no aporta evidencia independiente sobre el tamaño real: en la práctica es una sola muestra por artefacto.\n\nCONSOLIDACIÓN: la media ponderada de las cuatro medidas primarias (ancho de tina con peso 3, profundidad del WC 3, ancho de taza 1,5 y fondo de vanitorio 1,5) da 0,0191 m/px; sus valores individuales van de 0,0186 a 0,0194. Si se suma el nicho de tina con peso 1 (0,0199), el resultado es 0,0192. El rango 0,0180-0,0208 es la franja donde todas las primarias quedan dentro de su rango estándar. Fuera de ella, la tina tendría menos de 0,66 m o más de 0,78 m de ancho, o el WC menos de 0,65 m o más de 0,75 m de profundidad.\n\nDIMENSIONES IMPLICADAS A 0,0192 (inferidas, no medidas en metros): tina 1,29 x 0,71; WC 0,69 de profundidad, taza de 0,37 y estanque de 0,46; vanitorio 0,73 x 0,47 (compatible con un modelo de 70 x 46); interior de cada baño 1,45 x 2,28 m; nicho de tina de 1,45 m, que sugiere una tina real de 1,40.\n\nDESCARTES Y PESO BAJO:\n(1) Largo de tina (0,0222-0,0226 si mide 1,50): la relación largo/ancho del símbolo es 1,81, frente a 2,14 de una tina de 150 x 70. Además, el símbolo no llena el nicho (quedan huecos de 3 px a la izquierda y 6-7 px a la derecha), lo que indica un bloque genérico que no está a escala. Con 0,0222 el WC mediría 0,80 m, la taza 0,43 y la tina 0,83 de ancho, todo fuera de estándar. Le di peso mínimo.\n(2) Hipótesis alternativa de una tina de 150 x 80, que daría unos 0,0213-0,0221: obligaría a un WC de 0,77, una taza de 0,42 y un estanque de 0,51, todos en el extremo alto o fuera de rango. Es menos probable.\n(3) Ancho de vanitorio: el rango comercial (0,50-0,80) es demasiado amplio. Con 0,60 da 0,0158 y con 0,70 da 0,0184, así que no discrimina.\n(4) Ancho de estanque: rango de 0,36-0,50, peso bajo.\n(5) Profundidad del estanque (unos 8 px): un error de ±1 px equivale al 12 %, así que la descarté.\n(6) Shafts o ductos con diagonal: B1 mide 28 x 21 px por fuera y B2 31 x 30 px. Son distintos entre baños y no tienen medida estándar, así que los descarté (a 0,0192 serían 0,54 x 0,40 y 0,60 x 0,58 m).\n\nOBSERVACIONES: el WC de B1 está junto a una línea vertical tenue en x≈408,5 (de y 65 a 125) y el de B2 junto a una línea discontinua en x≈414,5 (de y 368 a 445). Podrían ser una repisa, un tabique de instalaciones o una proyección; no se puede determinar desde el plano. La marca de grifería del vanitorio de B2 está en el lado del recinto y no en el del muro, lo que indica un bloque girado o reflejado; no afecta a la medida.\n\nCONTROL DE ERRORES GROSEROS (otras familias, no usadas en el cálculo): la hoja de las puertas de baño mide 34-35 px, es decir 0,66 m a 0,0192 (estándar 0,65-0,70; si la hoja fuera de 0,70, la escala sería 0,0203). La cama del dormitorio 1 mide 97 x 92 px y es más ancha que larga, así que su bloque no es proporcional y no sirve. El contorno exterior mide unos 319 x 482 px, es decir unos 6,1 x 9,3 m, plausible para 2 dormitorios y 2 baños. No encontré errores groseros.\n\nADVERTENCIA: los rangos estándar son valores típicos de catálogos latinoamericanos y del Neufert, tomados de memoria y no verificados en línea en esta sesión. El plano es de tipo comercial, sin cotas, y sus bloques pueden no estar a escala real. Por eso la confianza es media y no alta."
+  },
+  {
+   "family": "Puertas y muros (hojas abatibles por radio de arco, luces y vanos de puertas, espesores de muros perimetrales y tabiques, ventanal hacia el balcón)",
+   "measurements": [
+    {
+     "element": "Hoja puerta Dormitorio 1 (radio del arco de giro)",
+     "dim_label": "radio del arco, ajuste de circunferencia (Kasa) sobre 50 muestras del trazo, rms 0,12 px; bisagra en (287,6; 169,7)",
+     "dim_px": 37.44,
+     "bbox_px": [
+      250,
+      132,
+      289,
+      171
+     ],
+     "real_m_low": 0.7,
+     "real_m_likely": 0.75,
+     "real_m_high": 0.8,
+     "m_per_px_likely": 0.02003,
+     "standard_source": "Estándar de hoja interior de dormitorio en vivienda en altura en Latinoamérica: 0,70/0,75/0,80. La hoja dibujada (rectángulo en x≈286-288, y≈132-170, unos 38 px) confirma el radio."
+    },
+    {
+     "element": "Hoja puerta Dormitorio 2 (radio del arco de giro)",
+     "dim_label": "radio del arco, ajuste rms 0,13 px; bisagra en (287,6; 331,6)",
+     "dim_px": 37.48,
+     "bbox_px": [
+      250,
+      331,
+      289,
+      369
+     ],
+     "real_m_low": 0.7,
+     "real_m_likely": 0.75,
+     "real_m_high": 0.8,
+     "m_per_px_likely": 0.02001,
+     "standard_source": "Mismo bloque que Dormitorio 1 (diferencia 0,04 px); hojas interiores 0,70/0,75/0,80."
+    },
+    {
+     "element": "Hoja puerta Baño 1 (radio del arco de giro)",
+     "dim_label": "radio del arco, ajuste rms 0,12 px; bisagra en (340,8; 71,0)",
+     "dim_px": 34.68,
+     "bbox_px": [
+      341,
+      71,
+      376,
+      106
+     ],
+     "real_m_low": 0.65,
+     "real_m_likely": 0.7,
+     "real_m_high": 0.75,
+     "m_per_px_likely": 0.02018,
+     "standard_source": "Estándar de hoja de baño: 0,65 a 0,75, lo más común 0,70. La razón baño/dormitorio medida, 0,925, coincide con los pares 0,70/0,75 y 0,65/0,70."
+    },
+    {
+     "element": "Hoja puerta Baño 2 (radio del arco de giro)",
+     "dim_label": "radio del arco, ajuste rms 0,12 px, excluida la fila y=413 contaminada por la hoja; bisagra en (343,0; 409,8)",
+     "dim_px": 34.66,
+     "bbox_px": [
+      343,
+      410,
+      378,
+      445
+     ],
+     "real_m_low": 0.65,
+     "real_m_likely": 0.7,
+     "real_m_high": 0.75,
+     "m_per_px_likely": 0.0202,
+     "standard_source": "Mismo bloque que Baño 1 (diferencia 0,02 px)."
+    },
+    {
+     "element": "Hoja puerta de entrada (radio del arco de giro)",
+     "dim_label": "radio del arco, ajuste rms 0,11 px; bisagra en (420,7; 361,7), sobre la cara interior del muro derecho; hoja dibujada x≈368-421 (unos 53 px) y 4 px de grueso",
+     "dim_px": 54.29,
+     "bbox_px": [
+      366,
+      307,
+      421,
+      362
+     ],
+     "real_m_low": 0.85,
+     "real_m_likely": 0.9,
+     "real_m_high": 1,
+     "m_per_px_likely": 0.01658,
+     "standard_source": "Hoja de acceso a departamento: 0,85/0,90 según el encargo; 1,00 como extremo alto (puertas de acceso amplias). Está en CONFLICTO con las hojas interiores: la razón entrada/dormitorio es 1,45 (0,90/0,75 sería 1,20)."
+    },
+    {
+     "element": "Vano de la puerta de entrada (luz en el muro perimetral derecho)",
+     "dim_label": "distancia entre centros de las líneas de remate del muro (y 306,2 a 362,9); la luz libre de borde a borde es de unos 55,5 px",
+     "dim_px": 56.7,
+     "bbox_px": [
+      418,
+      306,
+      432,
+      363
+     ],
+     "real_m_low": 0.9,
+     "real_m_likely": 0.95,
+     "real_m_high": 1.05,
+     "m_per_px_likely": 0.01676,
+     "standard_source": "Vano ≈ hoja + marcos (unos 2 a 3 cm por lado): con hoja 0,85 a 1,00 da vano 0,90 a 1,05. No es independiente de la hoja de entrada."
+    },
+    {
+     "element": "Vano puerta de dormitorio (del remate del tabique a la cara del tabique opuesto)",
+     "dim_label": "de x=249,1 (remate del muro dormitorio/living) a x=288,9 (cara del tabique); igual en D1 y D2",
+     "dim_px": 39.8,
+     "bbox_px": [
+      249,
+      132,
+      289,
+      174
+     ],
+     "real_m_low": 0.76,
+     "real_m_likely": 0.8,
+     "real_m_high": 0.86,
+     "m_per_px_likely": 0.0201,
+     "standard_source": "Vano = hoja 0,70 a 0,80 + marcos. Redundante con la hoja; solo confirma la razón vano/hoja de 1,06."
+    },
+    {
+     "element": "Muro perimetral, núcleo de hormigón (muro inferior y muro derecho)",
+     "dim_label": "entre centros de líneas: inferior 475,8 a 485,85 = 10,05 px (constante en 10 columnas); derecho 420,5 a 430,3 = 9,8 a 10,0 px. De borde a borde de trazo son unos 12 px",
+     "dim_px": 10,
+     "bbox_px": [
+      114,
+      475,
+      432,
+      487
+     ],
+     "real_m_low": 0.17,
+     "real_m_likely": 0.2,
+     "real_m_high": 0.23,
+     "m_per_px_likely": 0.02,
+     "standard_source": "Hormigón armado de 0,15 a 0,20 m + estuco o yeso de 0,01 a 0,02 m por cara. Se usa la distancia entre centros de línea, no de borde a borde, porque el grosor del trazo (1,5 a 2 px) engorda el muro."
+    },
+    {
+     "element": "Muro de fachada hacia el balcón (machones del muro izquierdo)",
+     "dim_label": "entre centros de líneas x=113,9 a 126,8, constante en 8 filas (y 20 a 480)",
+     "dim_px": 12.8,
+     "bbox_px": [
+      113,
+      13,
+      128,
+      56
+     ],
+     "real_m_low": 0.2,
+     "real_m_likely": 0.24,
+     "real_m_high": 0.28,
+     "m_per_px_likely": 0.01875,
+     "standard_source": "Muro de fachada de hormigón armado de 0,20 m + terminaciones o aislación exterior: total 0,22 a 0,28 m. En el plano es más grueso que el perímetro inferior y derecho (12,8 frente a 10 px)."
+    },
+    {
+     "element": "Tabiques interiores (dormitorios/living, tabique x≈289-293, tabiques de baños, baño/cocina, baño 2/hall)",
+     "dim_label": "entre centros de las dos caras: 3,65 a 4,0 px, media 3,8 px (dormitorio/living 3,88; dormitorio 2/living 3,80; x289-293: 3,8 a 4,0; baño 1: 3,8; baño 2: 3,65; baño 1/cocina: 3,75; baño 2/hall: 3,85 a 4,2). De borde a borde son unos 5,5 px",
+     "dim_px": 3.8,
+     "bbox_px": [
+      128,
+      169,
+      251,
+      174
+     ],
+     "real_m_low": 0.07,
+     "real_m_likely": 0.08,
+     "real_m_high": 0.12,
+     "m_per_px_likely": 0.02105,
+     "standard_source": "Tabique de perfil metálico y yeso-cartón de 0,07 a 0,12 m (el encargo indica 0,08 a 0,12). Tiene peso bajo: la cuantización de ±0,3 px equivale a ±8 %, y los valores de 0,09 a 0,12 producirían errores groseros (puerta de dormitorio de 0,89 a 1,19 m)."
+    },
+    {
+     "element": "Ventanal del living hacia el balcón (vano entre machones del muro izquierdo)",
+     "dim_label": "de y=173,5 (remate inferior del machón superior) a y=328,0 (remate superior del machón inferior); ocupa todo el ancho interior del living",
+     "dim_px": 154.5,
+     "bbox_px": [
+      113,
+      174,
+      128,
+      328
+     ],
+     "real_m_low": 2.6,
+     "real_m_likely": 3,
+     "real_m_high": 3.3,
+     "m_per_px_likely": 0.01942,
+     "standard_source": "No hay estándar para este vano: equivale al ancho de living-comedor de un departamento de 2 dormitorios y 2 baños (2,6 a 3,3 m, supuesto). Peso bajo."
+    }
+   ],
+   "m_per_px": 0.0188,
+   "m_per_px_low": 0.0175,
+   "m_per_px_high": 0.0203,
+   "confidence": "media",
+   "notes": "RESULTADO: 0,0188 m/px, con rango de 0,0175 a 0,0203 y confianza media.\n\n1) LO MEDIDO EN EL PLANO. Los radios de las puertas se obtuvieron ajustando una circunferencia (método de Kasa) a los centroides del trazo de cada arco, por filas y columnas, con PIL. El error rms fue de 0,11 a 0,13 px, así que la precisión geométrica es alta (±0,3 %). Resultados:\n- Dormitorios: 37,44 y 37,48 px (mismo bloque).\n- Baños: 34,68 y 34,66 px (mismo bloque).\n- Entrada: 54,29 px.\n- Vanos: dormitorio 39,8 px, baño 37,0 px, entrada 56,7 px (entre centros de las líneas de remate).\nSe descartaron las muestras contaminadas: la línea de mueble cerca del arco del dormitorio 1 (y 134 a 137), la hoja del baño 2 (y=413) y la línea de umbral de la entrada (y 306 a 309). La superposición de control está en /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/pm/overlay_doors.png y los scripts en la misma carpeta (px.py, fit.py).\n\n2) CONFLICTO PRINCIPAL. Las hojas interiores y la de entrada no son compatibles con la tabla estándar del encargo:\n- Hoja de dormitorio de 0,70 a 0,80: da 0,0187 a 0,0214.\n- Hoja de entrada de 0,85 a 0,90: da 0,0157 a 0,0166.\nLos rangos no se solapan: la entrada mide 1,45 veces la puerta del dormitorio. La única lectura en la que las tres hojas quedan dentro o en el borde de un estándar es con s ≈ 0,0186: dormitorio 0,70, baño 0,65 y entrada 1,00 (esta última en el extremo alto). Las combinaciones 0,65/0,60/0,95 (s ≈ 0,0174) y 0,75/0,70/1,10 (s ≈ 0,0201) también son consistentes entre sí, pero exigen una hoja de baño de 0,60 o una entrada de 1,10, ambas poco usuales. La combinación de entrada 0,90 con s = 0,0166 obliga a un dormitorio de 0,62, un baño de 0,58 y tabiques de 0,063 m, por lo que se descarta.\n\n3) CONSOLIDACIÓN. Mínimos cuadrados ponderados de todos los elementos, usando los valores probables y un σ ≈ un cuarto del rango: s = 0,01883 ± 0,0005. La tensión residual (χ² ≈ 9 con 6 grados de libertad) viene del conflicto de la entrada. Con solo las puertas da 0,0186; sin los tabiques, 0,0188. Límites del rango:\n- Bajo, 0,0175: combinación 0,65/0,60/0,95.\n- Alto, 0,0203: dormitorio 0,76 y baño 0,70 estándar, suponiendo que el bloque de entrada está sobredimensionado.\n\n4) MUROS. El trazo negro mide 1,5 a 2 px, así que medir de borde a borde engorda el perímetro en unos +20 % (10 a 12 px) y los tabiques en unos +45 % (3,8 a 5,5 px). Por eso se usa siempre la distancia entre centros de línea.\n- Tres espesores perimetrales distintos: el núcleo de hormigón inferior y derecho mide unos 10 px, la fachada izquierda 12,8 px, y el muro superior del dormitorio 1 y el derecho de la cocina miden 12,1 a 12,5 px porque incluyen una capa interior de unos 2 px separada por una línea clara. En los baños esa capa es una doble línea (x 418 a 421, y 23 a 26), probablemente un revestimiento. Se usó el núcleo de 10 px y no el total.\n- Tabiques de 3,8 px: parecen dibujados finos o esquemáticos. Con el estándar de 0,09 a 0,12 m saldría s = 0,024 a 0,032, lo que es un error grosero frente a las puertas y la cama. Se mantienen con peso bajo; solo acotan s ≥ ~0,0184 si el tabique real mide 0,07 m o más.\n\n5) DESCARTADO O NO USADO.\n- Grosor dibujado de las hojas (3 a 4 px): es simbólico.\n- Largo de los rectángulos de las hojas: es redundante con el radio y solo lo confirma.\n- Clósets y mueble con la etiqueta \"LV\": no tienen arco de giro (probablemente puertas correderas o plegables); la curva sobre el mueble \"LV\" no es una hoja abatible.\n- Ventanas de los dormitorios: no pertenecen a la familia y no tienen un estándar.\n- Ventanal: se usó con peso bajo porque tampoco tiene un estándar; 154,5 px equivalen a unos 2,9 m con s = 0,0188.\n- No se usaron las fotos de ref/depto/.\n\n6) CONTROL DE ERRORES GROSEROS CON OTRAS FAMILIAS (solo verificación, no entra en el cálculo).\n- Cama del dormitorio 1: 96,8 × 104,6 px, que con s = 0,0188 son 1,82 × 1,97 m. Es coherente con una cama king; con s = 0,0166 el largo quedaría en 1,74 m, demasiado corto.\n- Tina del baño 1: 66,5 × 32,3 px, que son 1,25 × 0,61 m. Es una tina compacta y sugiere que la escala real podría estar algo más alta (~0,020 a 0,021), sin llegar a ser un error grosero.\n- Contorno exterior: unos 317 × 472 px, que son ~5,96 × 8,87 m (unos 53 m²). Es plausible para un departamento de 2 dormitorios y 2 baños.\nTodas las dimensiones reales son supuestos basados en estándares; solo los valores en px están medidos en el plano."
+  },
+  {
+   "family": "COCINA (mueble base en L, anafe, lavaplatos y artefactos de la columna derecha)",
+   "measurements": [
+    {
+     "element": "Mueble base, tramo superior (horizontal, junto al muro y≈151)",
+     "dim_label": "fondo: centro de la línea del muro (y=150,78) al centro de la línea del frente de la encimera (y=182,37); media de 52 columnas, x 296-321 y 362-387, desv. est. 0,12 px",
+     "bbox_px": [
+      293,
+      150.8,
+      418.1,
+      182.4
+     ],
+     "dim_px": 31.59,
+     "real_m_low": 0.55,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.65,
+     "m_per_px_likely": 0.01899,
+     "standard_source": "Fondo estándar de mueble base/encimera: 0,60 m (rango 0,55-0,65, según la tarea). Medido en el plano: la línea del frente es continua desde el muro izquierdo (x≈293) hasta la esquina (x≈387)."
+    },
+    {
+     "element": "Mueble base, tramo derecho (vertical, junto al muro exterior x≈418)",
+     "dim_label": "fondo: centro de la línea del muro (x=418,12) al centro de la línea del frente (x=386,61); media de 38 filas, y 188-225, desv. est. 0,05 px",
+     "bbox_px": [
+      386.6,
+      182.4,
+      418.1,
+      227.3
+     ],
+     "dim_px": 31.51,
+     "real_m_low": 0.55,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.65,
+     "m_per_px_likely": 0.01904,
+     "standard_source": "Mismo estándar de 0,60 m (0,55-0,65). Coincide con el tramo superior con 0,08 px de diferencia, así que ambos tramos se dibujaron con el mismo fondo."
+    },
+    {
+     "element": "Anafe / encimera de cocción, en el tramo superior (rectángulo; no se distinguen los quemadores a esta resolución)",
+     "dim_label": "ancho a lo largo de la encimera (x): de borde a borde, centros de línea en x=325,50 y x=357,62",
+     "bbox_px": [
+      325.5,
+      154.4,
+      357.6,
+      178.4
+     ],
+     "dim_px": 32.12,
+     "real_m_low": 0.55,
+     "real_m_likely": 0.58,
+     "real_m_high": 0.6,
+     "m_per_px_likely": 0.01806,
+     "standard_source": "Anafe de 4 platos ≈ 0,58 m de ancho (típico entre 0,55 y 0,60). No se pudo verificar que tenga 4 platos: el símbolo está submuestreado."
+    },
+    {
+     "element": "Anafe (misma pieza)",
+     "dim_label": "fondo (y): centros de línea en y=154,43 y y=178,35",
+     "bbox_px": [
+      325.5,
+      154.4,
+      357.6,
+      178.4
+     ],
+     "dim_px": 23.93,
+     "real_m_low": 0.48,
+     "real_m_likely": 0.51,
+     "real_m_high": 0.52,
+     "m_per_px_likely": 0.02131,
+     "standard_source": "Anafe de 4 platos ≈ 0,51 m de fondo (0,48-0,52). ES INCOHERENTE con el ancho: la relación ancho/fondo medida es 1,34 y la estándar es 1,14. Queda descartada como medición individual (ver notas)."
+    },
+    {
+     "element": "Anafe, media geométrica ancho×fondo (compensa el error de proporción del símbolo)",
+     "dim_label": "sqrt(32,12 × 23,93)",
+     "bbox_px": [
+      325.5,
+      154.4,
+      357.6,
+      178.4
+     ],
+     "dim_px": 27.72,
+     "real_m_low": 0.514,
+     "real_m_likely": 0.544,
+     "real_m_high": 0.559,
+     "m_per_px_likely": 0.01962,
+     "standard_source": "sqrt(0,58×0,51)=0,544; rango de sqrt(0,55×0,48) a sqrt(0,60×0,52). Peso bajo."
+    },
+    {
+     "element": "Lavaplatos: bacha (rectángulo redondeado con desagüe al centro), en el tramo derecho",
+     "dim_label": "ancho de la bacha en el sentido del fondo del mueble (x): centros de línea en x=390,39 y x=412,68",
+     "bbox_px": [
+      390.4,
+      193.3,
+      412.7,
+      217.4
+     ],
+     "dim_px": 22.29,
+     "real_m_low": 0.34,
+     "real_m_likely": 0.4,
+     "real_m_high": 0.45,
+     "m_per_px_likely": 0.01795,
+     "standard_source": "Bacha simple de lavaplatos de 0,50 m de fondo: interior de 0,34 a 0,45 m (supuesto, estándar muy variable). Peso bajo."
+    },
+    {
+     "element": "Lavaplatos: bacha",
+     "dim_label": "largo de la bacha a lo largo de la encimera (y): centros en y=193,28 y y=217,36",
+     "bbox_px": [
+      390.4,
+      193.3,
+      412.7,
+      217.4
+     ],
+     "dim_px": 24.08,
+     "real_m_low": 0.38,
+     "real_m_likely": 0.45,
+     "real_m_high": 0.5,
+     "m_per_px_likely": 0.01869,
+     "standard_source": "Bacha simple: interior de 0,38 a 0,50 m (supuesto). Peso bajo. El escurridor de nervaduras verticales está en x 393-410,5, y 173-187,5."
+    },
+    {
+     "element": "Artefacto 3 de la columna derecha (y 227-258): rectángulo con rayado horizontal, líneas laterales gruesas y un frente curvo abombado con una marca a media altura (x≈383). Identificación incierta: lavadora de carga frontal (el abombado sería la puerta de ojo de buey) o refrigerador (la línea gruesa indicaría un elemento alto cortado; la marca sería la manilla).",
+     "dim_label": "ancho a lo largo del tramo (y): centros de las líneas gruesas en y=227,30 y y=257,96",
+     "bbox_px": [
+      383,
+      227.3,
+      418.1,
+      258
+     ],
+     "dim_px": 30.66,
+     "real_m_low": 0.55,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.7,
+     "m_per_px_likely": 0.01957,
+     "standard_source": "Lavadora ≈ 0,60 de ancho; refrigerador de 0,55 a 0,70 (según la tarea). Como no se sabe qué artefacto es, se usa el rango amplio. Peso bajo-medio."
+    },
+    {
+     "element": "Artefacto 3 (mismo)",
+     "dim_label": "fondo del cuerpo sin el abombado: línea frontal x=387,95 hasta el muro x=418,12. Con el abombado llega a unos 35 px.",
+     "bbox_px": [
+      388,
+      227.3,
+      418.1,
+      258
+     ],
+     "dim_px": 30.17,
+     "real_m_low": 0.52,
+     "real_m_likely": 0.57,
+     "real_m_high": 0.65,
+     "m_per_px_likely": 0.01889,
+     "standard_source": "Fondo del cuerpo de una lavadora o refrigerador compacto: 0,52-0,65 (supuesto). Puede incluir la holgura contra el muro. Peso bajo."
+    },
+    {
+     "element": "Artefacto 4 de la columna derecha (y 261-296), al final del tramo junto a un tabique corto: contorno con frente discontinuo (x≈386), rectángulo interior (x 389,9-413,8, ancho 23,9 px) y una marca pequeña de 3×4 px en el centro exacto (401,5; 279,5). No es identificable: puede ser un refrigerador, una lavadora bajo encimera u otro.",
+     "dim_label": "largo a lo largo del tramo (y): línea superior y=260,87 a línea fina inferior y≈295,6",
+     "bbox_px": [
+      386.1,
+      260.9,
+      418.1,
+      295.6
+     ],
+     "dim_px": 34.7,
+     "real_m_low": 0.55,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.7,
+     "m_per_px_likely": 0.01729,
+     "standard_source": "Si es un artefacto de 0,60 (rango 0,55-0,70). No se identifica, así que queda descartado para el consolidado."
+    },
+    {
+     "element": "Artefacto 4 (mismo)",
+     "dim_label": "fondo: línea discontinua frontal x=386,05 hasta el muro x=418,12",
+     "bbox_px": [
+      386.1,
+      260.9,
+      418.1,
+      295.6
+     ],
+     "dim_px": 32.07,
+     "real_m_low": 0.55,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.7,
+     "m_per_px_likely": 0.01871,
+     "standard_source": "Supuesto de 0,60 (0,55-0,70). La línea frontal está alineada con el frente de la encimera (386,6), así que probablemente es solo el borde de la encimera o del mueble. Descartado."
+    }
+   ],
+   "m_per_px": 0.019,
+   "m_per_px_low": 0.0177,
+   "m_per_px_high": 0.0204,
+   "confidence": "media",
+   "notes": "MEDIDO EN EL PLANO frente a SUPUESTO. Todas las posiciones son centroides ponderados por oscuridad de las líneas antialiasadas (PIL, sin numpy), en píxeles del PNG original. Las dimensiones reales son estándares supuestos: el plano no tiene cotas.\n\n1) BASE DEL CONSOLIDADO: fondo del mueble base en sus dos tramos. Se midió 31,59 px (tramo superior) y 31,51 px (tramo derecho), con desviación de 0,05 a 0,12 px a lo largo de cada tramo: es la medición más precisa y repetible de la familia. Con 0,60 m da 0,0190 m/px. El rango 0,55-0,65 m da 0,0174-0,0206. El error de medición (±0,5 px, ≈1,6 %) es mucho menor que la incertidumbre del estándar (±8 %). Se tomó el centro de la línea del muro como cara del muro; si se tomara su borde interior, el fondo sería de unos 30,7 px (0,0195 m/px), lo que queda dentro del rango.\n\n2) ANAFE: el ancho (32,12 px) da 0,0181 y el fondo (23,93 px) da 0,0213. Los dos rangos no se superponen: la proporción del símbolo (1,34) no corresponde a 0,58×0,51 (1,14). Por eso descarté el fondo como medición individual y di peso bajo al anafe; solo uso la media geométrica, que da 0,0196. El símbolo cuadra con un anafe de 0,60×0,45 a unos 0,0187 m/px, o con uno de 0,70×0,52 (5 platos) a unos 0,0218, pero este último daría un mueble de 0,69 m de fondo, lo que es inverosímil. No pude contar los quemadores. Márgenes medidos: 3,65 px detrás y 4,0 px delante, dentro de un fondo de mueble de 31,6 px.\n\n3) LAVAPLATOS: bacha de 22,3 × 24,1 px, con escurridor de nervaduras en y 173-187,5. El estándar de bacha varía demasiado (0,34-0,50), así que tiene peso bajo y solo sirve para confirmar (≈0,018-0,019). Descarté el largo total escurridor+bacha (44,4 px, ≈0,80-1,0 m): el marco no está dibujado y parte del escurridor queda bajo la línea de alacenas.\n\n4) ARTEFACTOS DE LA COLUMNA DERECHA: no los pude identificar con certeza. El artefacto 3 (y 227-258) tiene un frente abombado con marca central y líneas laterales gruesas; es una lavadora de carga frontal o un refrigerador. Su ancho de 30,7 px da 0,0196 con 0,60 m (rango 0,018-0,023). El artefacto 4 (y 261-296) tiene frente discontinuo y una marca central ilegible (podría ser una letra submuestreada o un punto); no se identifica y lo descarté (daría 0,0173-0,0187). Según esta familia, ninguno es con seguridad el refrigerador. Conviene preguntarlo al usuario.\n\n5) REVISIÓN SECUNDARIA (no entra en el consolidado): las líneas discontinuas de alacenas están a 19,8 y 20,2 px del muro. Con 0,0190 serían 0,38 m, algo más que el típico de 0,30-0,35. Si fueran de 0,35 m, la escala sería 0,0175. Es una leve tensión hacia abajo, y por eso el límite bajo queda en 0,0177.\n\n6) CONTROL DE ERRORES GROSEROS, con otras familias y solo para verificar orden de magnitud. A 0,019 m/px: muro exterior de 13 px = 0,25 m; tabique al final de la cocina de 6,3 px (y 298,2-304,5) = 0,12 m; hoja de la puerta del dormitorio 1 de unos 38 px ≈ 0,72 m; edificio de unos 318×475 px ≈ 6,0×9,0 m (unos 54 m² sin balcón). Todo es plausible, así que no hay error grosero. Tramos de la cocina: el superior mide unos 125 px (≈2,38 m) y el derecho unos 147 px (≈2,80 m, hasta el tabique).\n\nCONSOLIDADO: 0,0190 m/px (bajo 0,0177, alto 0,0204). Pondera sobre todo el fondo de ambos tramos del mueble, con apoyo débil del anafe (media geométrica) y del artefacto 3, que caen en 0,0181-0,0196. Confianza media: se apoya en un solo estándar robusto, pero ese estándar tiene ±8 % de variación; el anafe es inconsistente y los artefactos no se identificaron.\n\nArchivos auxiliares, solo en el scratchpad: /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/kit_zoom.py, kit_measure.py, kit_measure2.py y los recortes kz_top.png, kz_right.png, kz_cols.png, kz_anafe.png, kz_s.png y kz_dot.png. No se modificaron archivos del proyecto y no se usaron las fotos de ref/depto/."
+  },
+  {
+   "family": "Mobiliario dibujado y tipología (camas, veladores, sofá, mesa de centro, alfombra, mueble de TV, mesa lateral y, como control global, la superficie útil típica de un 2D2B)",
+   "measurements": [
+    {
+     "element": "Cama dormitorio 1 (bloque doble)",
+     "dim_label": "ancho (eje de línea a eje de línea, x)",
+     "dim_px": 96.9,
+     "bbox_px": [
+      156.5,
+      31.6,
+      253.3,
+      136.4
+     ],
+     "real_m_low": 1.6,
+     "real_m_likely": 1.8,
+     "real_m_high": 2,
+     "m_per_px_likely": 0.01858,
+     "standard_source": "Medidas estándar de colchón en Latinoamérica: 2 plazas 1,40x1,90; queen 1,50/1,60x2,00; king 1,80x2,00 o 2,00x2,00. La proporción dibujada largo/ancho = 104,8/96,9 = 1,08 descarta 2 plazas (1,36) y queen (1,25) y apunta a king 1,80x2,00 (1,11). Proporciones cercanas: king EE. UU. 1,93x2,03 (1,05) o 2,00x2,00 (1,00). Los arcos de las puertas son isótropos (38x37 y 50x51 px), así que la proporción medida no es una deformación de la imagen."
+    },
+    {
+     "element": "Cama dormitorio 1 (bloque doble)",
+     "dim_label": "largo (línea de cabecera y=31,6 a pie y=136,4)",
+     "dim_px": 104.8,
+     "bbox_px": [
+      156.5,
+      31.6,
+      253.3,
+      136.4
+     ],
+     "real_m_low": 1.9,
+     "real_m_likely": 2,
+     "real_m_high": 2.03,
+     "m_per_px_likely": 0.01908,
+     "standard_source": "El largo de colchón es casi invariable (1,90 a 2,00 m; 2,03 en king EE. UU.). Es la medida más robusta de la familia porque no depende del tipo de cama."
+    },
+    {
+     "element": "Cama dormitorio 2 (mismo bloque, espejado)",
+     "dim_label": "ancho",
+     "dim_px": 96.8,
+     "bbox_px": [
+      156.5,
+      365.2,
+      253.3,
+      470.3
+     ],
+     "real_m_low": 1.6,
+     "real_m_likely": 1.8,
+     "real_m_high": 2,
+     "m_per_px_likely": 0.0186,
+     "standard_source": "Es idéntica a la cama 1 (96,8 x 105,0 px): es el mismo bloque CAD copiado, así que no es una medición independiente."
+    },
+    {
+     "element": "Cama dormitorio 2 (mismo bloque, espejado)",
+     "dim_label": "largo",
+     "dim_px": 105,
+     "bbox_px": [
+      156.5,
+      365.2,
+      253.3,
+      470.3
+     ],
+     "real_m_low": 1.9,
+     "real_m_likely": 2,
+     "real_m_high": 2.03,
+     "m_per_px_likely": 0.01905,
+     "standard_source": "Igual que el largo de la cama 1."
+    },
+    {
+     "element": "Sofá de 2 cuerpos (living)",
+     "dim_label": "ancho total con brazos (x)",
+     "dim_px": 80.7,
+     "bbox_px": [
+      161.3,
+      281.5,
+      242,
+      321.7
+     ],
+     "real_m_low": 1.4,
+     "real_m_likely": 1.55,
+     "real_m_high": 1.8,
+     "m_per_px_likely": 0.01921,
+     "standard_source": "Tiene dos cojines de asiento de 32,2 px y brazos de unos 8 px: es un sofá de 2 plazas. Rango comercial típico: 1,40 a 1,80 m; en departamentos compactos suele ser de 1,50 a 1,60 m."
+    },
+    {
+     "element": "Sofá de 2 cuerpos (living)",
+     "dim_label": "ancho de un cojín de asiento (por plaza)",
+     "dim_px": 32.2,
+     "bbox_px": [
+      169.3,
+      281.5,
+      201.5,
+      313.3
+     ],
+     "real_m_low": 0.55,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.65,
+     "m_per_px_likely": 0.01863,
+     "standard_source": "Ergonomía de asiento: de 0,55 a 0,65 m por plaza."
+    },
+    {
+     "element": "Sofá de 2 cuerpos (living)",
+     "dim_label": "fondo total (y)",
+     "dim_px": 40.2,
+     "bbox_px": [
+      161.3,
+      281.5,
+      242,
+      321.7
+     ],
+     "real_m_low": 0.75,
+     "real_m_likely": 0.8,
+     "real_m_high": 0.95,
+     "m_per_px_likely": 0.0199,
+     "standard_source": "Fondo comercial típico: 0,75 a 0,95 m, que en un sofá compacto de 2 plazas suele ser de 0,80 a 0,85 m. Se le da menos peso porque el rango es amplio."
+    },
+    {
+     "element": "Mesa de centro",
+     "dim_label": "largo (x)",
+     "dim_px": 54,
+     "bbox_px": [
+      174.4,
+      225.2,
+      228.4,
+      257.6
+     ],
+     "real_m_low": 0.9,
+     "real_m_likely": 1,
+     "real_m_high": 1.2,
+     "m_per_px_likely": 0.01852,
+     "standard_source": "Mesa de centro rectangular típica: 0,90 a 1,20 x 0,50 a 0,70 m. La proporción dibujada (1,667) coincide exactamente con 1,00x0,60."
+    },
+    {
+     "element": "Mesa de centro",
+     "dim_label": "ancho (y)",
+     "dim_px": 32.4,
+     "bbox_px": [
+      174.4,
+      225.2,
+      228.4,
+      257.6
+     ],
+     "real_m_low": 0.5,
+     "real_m_likely": 0.6,
+     "real_m_high": 0.7,
+     "m_per_px_likely": 0.01852,
+     "standard_source": "Igual que el largo; con 1,00x0,60 ambos ejes dan el mismo m/px."
+    },
+    {
+     "element": "Mueble de TV (rack)",
+     "dim_label": "largo (x)",
+     "dim_px": 62,
+     "bbox_px": [
+      170.6,
+      182.7,
+      232.6,
+      201.6
+     ],
+     "real_m_low": 1,
+     "real_m_high": 1.6,
+     "real_m_likely": 1.2,
+     "m_per_px_likely": 0.01935,
+     "standard_source": "Rack de TV típico: 1,00 a 1,80 m; en un living compacto, de 1,20 a 1,40 m. Es una referencia débil porque el rango es amplio."
+    },
+    {
+     "element": "Mueble de TV (rack)",
+     "dim_label": "fondo (y)",
+     "dim_px": 18.9,
+     "bbox_px": [
+      170.6,
+      182.7,
+      232.6,
+      201.6
+     ],
+     "real_m_low": 0.35,
+     "real_m_likely": 0.4,
+     "real_m_high": 0.45,
+     "m_per_px_likely": 0.02116,
+     "standard_source": "Fondo típico: 0,35 a 0,45 m. Es una medida pequeña: 1 px de error equivale a más de un 5 %."
+    },
+    {
+     "element": "Alfombra del living",
+     "dim_label": "largo (x)",
+     "dim_px": 117.2,
+     "bbox_px": [
+      148.3,
+      193.1,
+      265.5,
+      300.3
+     ],
+     "real_m_low": 2,
+     "real_m_likely": 2.3,
+     "real_m_high": 2.9,
+     "m_per_px_likely": 0.01962,
+     "standard_source": "Formatos comerciales: 1,60x2,30; 2,00x2,50/2,90; 2,00x2,00. La proporción dibujada (1,09) no coincide con ningún formato estándar. Es débil."
+    },
+    {
+     "element": "Alfombra del living",
+     "dim_label": "ancho (y)",
+     "dim_px": 107.2,
+     "bbox_px": [
+      148.3,
+      193.1,
+      265.5,
+      300.3
+     ],
+     "real_m_low": 1.6,
+     "real_m_likely": 2,
+     "real_m_high": 2.4,
+     "m_per_px_likely": 0.01866,
+     "standard_source": "Igual que el largo. Es débil."
+    },
+    {
+     "element": "Mesa lateral (junto al sofá)",
+     "dim_label": "lado corto (x)",
+     "dim_px": 18.9,
+     "bbox_px": [
+      135.7,
+      287.9,
+      154.6,
+      312.5
+     ],
+     "real_m_low": 0.35,
+     "real_m_likely": 0.4,
+     "real_m_high": 0.5,
+     "m_per_px_likely": 0.02116,
+     "standard_source": "Mesa lateral típica: 0,35 a 0,50 m de lado (el lado largo mide 24,6 px, proporción 1,30, compatible con 0,40x0,50). Es débil por su tamaño."
+    },
+    {
+     "element": "Banda de veladores y respaldo (cama 1)",
+     "dim_label": "fondo (y) de la banda, entre y=29,0 e y=47,6",
+     "dim_px": 18.6,
+     "bbox_px": [
+      141.5,
+      29,
+      271,
+      47.6
+     ],
+     "real_m_low": 0.35,
+     "real_m_likely": 0.4,
+     "real_m_high": 0.45,
+     "m_per_px_likely": 0.02151,
+     "standard_source": "Velador típico: 0,40 a 0,55 de ancho x 0,35 a 0,45 m de fondo. DESCARTADO: los anchos laterales son asimétricos (15,0 y 17,7 px), lo que daría m/px de 0,024 a 0,031, incoherente con todo lo demás. Además, la banda parece más un respaldo o panel que dos veladores a escala."
+    },
+    {
+     "element": "Control global: área interior (caras interiores de los muros perimetrales x 127,5–418 e y 26,5–475,5, con tabiques; sin terraza)",
+     "dim_label": "raíz cuadrada del área en px² (130.200 px², de modo que √ = 360,8 px), comparada con la √ de la superficie útil típica de un 2D2B",
+     "dim_px": 360.8,
+     "bbox_px": [
+      127.5,
+      26.5,
+      418,
+      475.5
+     ],
+     "real_m_low": 6.708,
+     "real_m_likely": 7.416,
+     "real_m_high": 8.367,
+     "m_per_px_likely": 0.02055,
+     "standard_source": "Superficie útil típica de un 2D2B en Latinoamérica: 45, 55 y 70 m² (bajo, probable y alto; √ = 6,71, 7,42 y 8,37 m). Es conocimiento general del mercado, no verificado con una fuente (Chile compacto: de 45 a 60; Perú, Colombia y México: de 55 a 80). Resultado: m/px de 0,0186 a 0,0232. Si en cambio se toma el área bruta con muros perimetrales (318,5x474 = 151.000 px²), resulta de 0,0173 a 0,0215, con 0,0191 como probable. Es un control grueso: solo sirve para descartar hipótesis."
+    }
+   ],
+   "m_per_px": 0.0189,
+   "m_per_px_low": 0.018,
+   "m_per_px_high": 0.0205,
+   "confidence": "media",
+   "notes": "MÉTODO: las líneas se ubicaron con precisión subpíxel analizando perfiles de gris con PIL (centroide de las corridas con valor menor a 240–245), y las cotas se toman de eje de línea a eje de línea. Script: /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/mob/prof.py. Imagen con las cajas medidas superpuestas: /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/mob/mob_overlay.png. No usé las fotos de ref/depto/ ni modifiqué archivos del proyecto.\n\nCONSOLIDADO: 0,0189 m/px, con un rango de 0,0180 a 0,0205. Es el promedio ponderado de las referencias fuertes: el largo de cama (0,0191), el ancho de cama con la hipótesis king de 1,80 (0,0186), la mesa de centro en sus dos ejes (0,0185), el sofá en ancho total y por plaza (0,0192 y 0,0186) y el largo del rack (0,0194). Las referencias débiles, con poco peso, son el fondo del sofá (0,0199), el fondo del rack (0,0212), la alfombra (0,0187 a 0,0196) y la mesa lateral (0,021). El límite bajo (0,0180) sale de una cama de 1,90 de largo. El límite alto (0,0205) sale de una cama de 2,00x2,00 o king EE. UU., de un sofá de 1,80 y del control de área con 55 m².\n\nMEDIDO EN EL PLANO vs. SUPUESTO: todos los px están medidos; todas las dimensiones reales son supuestas a partir de estándares comerciales. Identificar la cama como king (1,80x2,00) es una INFERENCIA basada en la proporción dibujada de 1,08, no un dato. Las dos camas son el mismo bloque copiado: cuentan como una sola evidencia. La proporción de la mesa de centro (1,667 = 1,00x0,60) respalda el valor de forma independiente.\n\nDESCARTADOS: (1) Cama de 2 plazas 1,40x1,90 y queen 1,50/1,60: su proporción (1,25 a 1,36) no coincide con la dibujada (1,08), y con esos anchos el m/px sería de 0,0145 a 0,0165. Eso daría un interior de 27 a 35 m², absurdo para un 2D2B: el control global los descarta. (2) Anchos de veladores (15,0 y 17,7 px, asimétricos): darían de 0,024 a 0,031; probablemente es un respaldo o panel y no veladores a escala. (3) Pantalla de TV (unos 39 px, es decir, 0,74 m a 0,0189, equivalente a unas 32 pulgadas): es un símbolo genérico que no indica pulgadas reales. (4) Alfombra: su proporción (1,09) no corresponde a ningún formato estándar; se conserva con peso mínimo.\n\nADVERTENCIA: en los planos comerciales el mobiliario suele ser de bloques genéricos y a veces se dibuja más chico para que los recintos parezcan amplios. Si fuera así, suponer medidas estándar SOBREESTIMA el m/px. Aquí no se nota esa reducción: el sofá y el rack están en el rango normal o compacto, y la cama es grande.\n\nCONTROL GLOBAL: con 0,0189 m/px, el interior entre caras de muros perimetrales (130.200 px²) mide unos 46,5 m²; el área bruta con muros (151.000 px²), unos 54 m²; el piso neto sin tabiques (unos 121.200 px², contando píxeles), unos 43 m²; y la terraza (unos 10.800 px² brutos), unos 3,9 m². Queda en el extremo bajo del rango típico de un 2D2B, plausible para un 2D2B compacto de estilo chileno. Coincide con el mobiliario, aunque el control por área favorecería un valor algo mayor (0,0205 con 55 m²). La definición de \"superficie útil\" varía según el país (con o sin muros perimetrales), lo que agrega un ±7 % en m/px.\n\nCONTROL DE ERRORES GROSEROS CON OTRAS FAMILIAS (medido de forma aproximada, no usado en el valor): fondo de la encimera de cocina, de y=150 a y=182 (unos 32 px), da 0,60 m; tabiques de unos 6 px dan 0,11 m; muros perimetrales de 12 a 13,5 px dan de 0,23 a 0,26 m; el recinto de la tina, de muro a muro (80 px), da 1,51 m; la puerta de entrada (unos 52 px) da 0,98 m; la puerta de dormitorio (unos 38 px) da 0,72 m. Todo es coherente con 0,0189: no hay error grosero. El dormitorio 1 resultaría de unos 3,02 x 2,68 m."
+  }
+ ],
+ "synth": {
+  "m_per_px": 0.019,
+  "m_per_px_low": 0.0181,
+  "m_per_px_high": 0.02,
+  "scale_rationale": "ESCALA FINAL: 0,0190 m/px (rango 0,0181-0,0200, alrededor de ±5 %). Confianza media-alta en el valor central y media en el rango.\n\n(1) Las cuatro familias coinciden al ±1 %: sanitarios 0,0192, puertas/muros 0,0188, cocina 0,0190 y mobiliario 0,0189 (media 0,01897). La intersección de sus rangos va de 0,0180 a 0,0203.\n\n(2) Ajuste propio por mínimos cuadrados ponderados (script cons/consolidar.py) con las nueve referencias más estandarizadas o grandes. Cada σ vale un cuarto del rango estándar:\n- fondo del mesón en sus dos tramos: 31,55 px con 0,60 m, da 0,01902;\n- largo de la cama: 104,9 px con 2,00 m, da 0,01907;\n- hoja de dormitorio: 37,46 px con 0,725 m, da 0,01935;\n- hoja de baño: 34,67 px con 0,675 m, da 0,01947;\n- ancho de tina: 37,5 px con 0,70 m, da 0,01867;\n- profundidad del WC: 36 px con 0,70 m, da 0,01944;\n- mesa de centro de 1,00 × 0,60 m: da 0,01852;\n- sofá: 80,7 px con 1,55 m, da 0,01921;\n- núcleo de muro: 10,45 px con 0,20 m, da 0,01914.\nResultado: s = 0,01908 ± 0,00026, con χ² = 1,0 en 8 grados de libertad, sin tensión interna.\n\n(3) Peso de cada referencia. El mesón (0,60 m en casi todo el mercado; se midió con desviación de 0,1 px en 90 muestras) y el largo de la cama (1,90-2,03 m) pesan más. Las puertas tienen una ambigüedad bimodal: 0,70/0,65 m da unos 0,0187 y 0,75/0,70 m da unos 0,0201. La luz de jamba a jamba resuelve la ambigüedad: con 0,0190 las luces miden 0,76 y 0,70 m y las hojas 0,71 y 0,66 m, lo que calza con puertas de 70 y 65 cm más marco. El grosor del trazo, los veladores, la alfombra, el anafe (su proporción es incoherente), la pantalla de TV y las baldosas del balcón (10,76 px = 0,204 m; si fueran de 20 cm darían 0,0185) solo sirven de control.\n\n(4) Descartes:\n- Puerta de entrada: con una hoja de 0,90 m daría 0,0166, a -2,7σ del resto. Se trata como conflicto y no entra en la escala.\n- Control por superficie típica: si la superficie útil real fuera 55 m², la escala sería 0,0210. Con ella el mesón mediría 0,66 m y la cama 2,20 m, ambos fuera de estándar. Se concluye que el departamento es compacto, de unos 45 m² útiles.\n\n(5) Límites del rango:\n- Con 0,0181: mesón 0,57, cama 1,90, hojas de 0,68 y 0,63, tina 0,68, WC 0,65 (borde bajo de todos los estándares).\n- Con 0,0200: mesón 0,63, cama 2,10, hojas de 0,75 y 0,69, tina 0,75, WC 0,72 (borde alto).\n\nMÉTODO DE MEDICIÓN: todas las coordenadas que uso son centros de línea subpíxel (coordenadas continuas, el píxel i ocupa [i, i+1]), medidos con perfiles de PIL (cons/lines.py). No uso bordes de trazo, porque el trazo negro mide 1,5-2 px y agrega unos 2 px a cada muro o vano medido de borde a borde. Por eso mis medidas difieren de la EXTRACCION en 1-3 px.\n\nESPESORES MEDIDOS (entre centros de línea, a 0,0190):\n- muro sur: 10,5 px = 0,20 m;\n- muro este: núcleo de 10,5 px = 0,20 m; en la cocina y el Baño 1 tiene además una capa interior (forro) separada por una línea clara, y el total llega a 12,6 px = 0,24 m;\n- muro norte: 12,7 px = 0,24 m, de los cuales 10,2 px = 0,19 m son relleno gris y 2,5 px = 0,05 m una capa interior;\n- muro oeste (fachada hacia el balcón): 13,0 px = 0,25 m, todo con relleno;\n- tabiques: 3,8 px = 0,072 m (de borde a borde serían 6 px = 0,11 m);\n- T_COC_S: 6,4 px = 0,12 m;\n- muros de los shafts: unos 4,4 px = 0,08 m.\nEn el campo wall_ext_thickness_m va el núcleo de 0,20 m. Recomiendo modelar el norte y el oeste con 0,24-0,25 m.\n\nScripts: /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/cons/lines.py y consolidar.py. Las coordenadas de centro de línea de todos los muros están en los diccionarios X e Y de consolidar.py. No usé las fotos de ref/depto/.",
+  "exterior": {
+   "width_x_m": 6.01,
+   "depth_y_m": 8.98,
+   "gross_area_m2": 54,
+   "useful_area_m2": 45.1,
+   "wall_ext_thickness_m": 0.2,
+   "wall_int_thickness_m": 0.072
+  },
+  "rooms": [
+   {
+    "name": "Dormitorio 1",
+    "w_m": 3.08,
+    "d_m": 2.73,
+    "area_m2": 9.43,
+    "notes": "Medido en el plano entre caras interiores (centros de línea): área de cama de 162,1 × 143,8 px (x 127,45-289,57; y 26,5-170,25), que son 3,08 × 2,73 m = 8,41 m². Se suma el vestidor o paso entre closets: 43,9 × 64,2 px = 0,83 × 1,22 m = 1,02 m², al que se entra por un vano libre de 1,23 m en el tabique T3 y que conduce al Baño 1 en suite. Sin closets: 9,43 m². Con closets: 10,34 m². La cama dibujada mide 1,84 × 1,99 m (king, inferido por su proporción)."
+   },
+   {
+    "name": "Closet Dorm. 1 superior",
+    "w_m": 0.83,
+    "d_m": 0.62,
+    "area_m2": 0.52,
+    "notes": "x 293,43-337,37; y 26,5-59,0 (frente). Frente de 0,83 m; tipo de puerta no determinable."
+   },
+   {
+    "name": "Closet Dorm. 1 inferior",
+    "w_m": 0.83,
+    "d_m": 0.46,
+    "area_m2": 0.39,
+    "notes": "y 123,2-147,5. Tiene 0,46 m de fondo, menos que los 0,55-0,60 m habituales para colgar ropa. Puede ser de repisas; conviene verificarlo."
+   },
+   {
+    "name": "Dormitorio 2",
+    "w_m": 3.08,
+    "d_m": 2.73,
+    "area_m2": 9.3,
+    "notes": "Área de cama de 162,1 × 143,9 px (y 332,14-476,04), que son 3,08 × 2,73 m = 8,42 m², más el vestidor de 0,87 × 1,00 m = 0,88 m² (vano libre de 1,00 m en T3, conduce al Baño 2). Con closets: 10,23 m². Es la imagen espejada del Dormitorio 1."
+   },
+   {
+    "name": "Closet Dorm. 2 superior",
+    "w_m": 0.87,
+    "d_m": 0.61,
+    "area_m2": 0.53,
+    "notes": "x 293,43-339,4; y 367,02-399,2."
+   },
+   {
+    "name": "Closet Dorm. 2 inferior",
+    "w_m": 0.87,
+    "d_m": 0.46,
+    "area_m2": 0.4,
+    "notes": "y 452,0-476,04. Fondo de 0,46 m, poco profundo (igual que el closet inferior del Dorm. 1)."
+   },
+   {
+    "name": "Living-comedor",
+    "w_m": 3.15,
+    "d_m": 2.93,
+    "area_m2": 9.23,
+    "notes": "x 127,45-293,43 (el borde este es virtual: prolongación de la cara este de T3); y 174,04-328,31. Planta abierta: el vano hacia la cocina y el hall mide 2,75 m (de T3_C a T3_D). Todo el ambiente abierto (living, cocina y hall) suma 18,2 m². El ventanal ocupa todo el muro oeste. No hay comedor dibujado."
+   },
+   {
+    "name": "Cocina",
+    "w_m": 2.37,
+    "d_m": 2.8,
+    "area_m2": 6.64,
+    "notes": "x 293,43-418,2 (cara del forro del muro este); y 151,29-298,63 (el límite sur es virtual). Mesón en L de 0,60 m de fondo: tramo norte de 2,37 m y tramo este de 1,44 m. Siguen dos módulos ambiguos junto al muro este: uno de 0,58 m y otro de 0,72 m de largo. Muebles altos (proyección con línea discontinua) de unos 0,38 m de fondo."
+   },
+   {
+    "name": "Hall de acceso",
+    "w_m": 2.41,
+    "d_m": 1.23,
+    "area_m2": 2.32,
+    "notes": "Caja envolvente x 293,43-420,3, y 298,63-363,18, descontando T_COC_S y el bloque del nicho LV. Los bordes norte y oeste son virtuales. Aquí llega la puerta de entrada."
+   },
+   {
+    "name": "Nicho lavadora (LV)",
+    "w_m": 0.71,
+    "d_m": 0.71,
+    "area_m2": 0.51,
+    "notes": "x 293,43-330,84; y 325,57-363,18. Le cabe una lavadora de 0,60 m. El frente es una línea curva fina: puerta plegable, cortina o abierto, no determinable."
+   },
+   {
+    "name": "Baño 1",
+    "w_m": 1.46,
+    "d_m": 2.3,
+    "area_m2": 3.16,
+    "notes": "x 341,29-418,2; y 26,5-147,5; se descuenta la esquina del shaft 1 con sus muros (0,19 m²). La tina dibujada mide unos 1,27 × 0,72 m y no llena el nicho de 1,46 m entre muros: es un bloque genérico. Sugiero modelar una tina de 1,40-1,45 m o preguntar. Tiene ventana V_B1 de 0,60 m sobre la tina."
+   },
+   {
+    "name": "Baño 2",
+    "w_m": 1.46,
+    "d_m": 2.07,
+    "area_m2": 2.66,
+    "notes": "x 343,36-420,3; y 367,02-476,04; se descuenta el shaft 2 con sus muros (0,36 m²). No tiene ventana dibujada; que ventile por el shaft es inferido."
+   },
+   {
+    "name": "Shaft 1",
+    "w_m": 0.45,
+    "d_m": 0.31,
+    "area_m2": 0.14,
+    "notes": "Medida interior; no cuenta como superficie útil."
+   },
+   {
+    "name": "Shaft 2",
+    "w_m": 0.51,
+    "d_m": 0.54,
+    "area_m2": 0.27,
+    "notes": "Medida interior; no cuenta como superficie útil."
+   }
+  ],
+  "balcony": {
+   "w_m": 1.03,
+   "d_m": 2.94,
+   "area_m2": 3.01,
+   "notes": "Piso útil entre el borde de la franja de baranda (x=60,5) y la cara exterior de la fachada (x=114,45): 53,95 px, más y 173,6-328,1 (154,5 px). Da 1,03 m de fondo por 2,94 m de largo = 3,01 m². La losa bruta, hasta el contorno exterior (x 52,3; y 163,3-338,7), mide 1,18 × 3,33 m = 3,94 m². La franja perimetral de baranda mide 0,16 m al oeste y 0,20 m al norte y al sur. Tiene dos líneas finas interiores (baranda, vidrio o pasamanos) y no lleva relleno gris, así que probablemente no es de hormigón, aunque eso no se puede determinar. Las baldosas tienen un paso de 10,76 px, que son 0,204 m, y caben exactamente 5 a lo largo del fondo. Superficie bruta del departamento incluyendo el balcón: 55,96 m² si se cuenta al 50 % y 57,93 m² si se cuenta al 100 %."
+  },
+  "openings_m": [
+   {
+    "id": "P_D1",
+    "kind": "puerta_abatible",
+    "width_m": 0.76,
+    "plausible": true,
+    "notes": "Luz de jamba a jamba de 39,87 px (x 249,7-289,57). La hoja, por el radio del arco, mide 37,44 px = 0,71 m. Calza con una puerta estándar de 0,70 m más marcos. Rango: luz de 0,72 a 0,80 m. Abre hacia el dormitorio."
+   },
+   {
+    "id": "P_D2",
+    "kind": "puerta_abatible",
+    "width_m": 0.76,
+    "plausible": true,
+    "notes": "Luz de 39,88 px y hoja de 37,48 px = 0,71 m. Es el mismo bloque que P_D1."
+   },
+   {
+    "id": "P_B1",
+    "kind": "puerta_abatible",
+    "width_m": 0.7,
+    "plausible": true,
+    "notes": "Luz de 36,85 px (y 70,43-107,28). La hoja mide 34,68 px = 0,66 m: una puerta estándar de 0,65 m. Rango: luz de 0,67 a 0,74 m. Abre hacia el baño."
+   },
+   {
+    "id": "P_B2",
+    "kind": "puerta_abatible",
+    "width_m": 0.7,
+    "plausible": true,
+    "notes": "Luz de 36,63 px (y 409,32-445,95) y hoja de 34,66 px = 0,66 m."
+   },
+   {
+    "id": "P_ENT",
+    "kind": "puerta_entrada",
+    "width_m": 1.07,
+    "plausible": false,
+    "notes": "Luz de 56,44 px (y 306,95-363,39) y hoja de 54,29 px = 1,03 m (rango de 0,98 a 1,09). El estándar de acceso a departamento es 0,85-0,90 m. Solo sería plausible si es una puerta ancha o accesible de 1,00 m; si no, el bloque está sobredimensionado. Ver conflicts."
+   },
+   {
+    "id": "VEN_LIV",
+    "kind": "ventanal_corredera",
+    "width_m": 2.94,
+    "plausible": true,
+    "notes": "154,54 px (y 173,96-328,5), el ancho interior completo del living. Corredera de dos hojas de unos 1,47 m, con traslape. No se puede determinar cuál hoja es fija."
+   },
+   {
+    "id": "V_D1",
+    "kind": "ventana",
+    "width_m": 1.83,
+    "plausible": true,
+    "notes": "96,04 px (y 56,52-152,56). Machones: de 0,57 m arriba y de 0,41 m abajo."
+   },
+   {
+    "id": "V_D2",
+    "kind": "ventana",
+    "width_m": 2.09,
+    "plausible": true,
+    "notes": "109,81 px (y 349,8-459,61). Mide 0,26 m más que V_D1 (medido). Machones: de 0,40 m arriba y de 0,31 m abajo."
+   },
+   {
+    "id": "V_B1",
+    "kind": "ventana_bano",
+    "width_m": 0.6,
+    "plausible": true,
+    "notes": "31,78 px (x 341,65-373,43), sobre la tina."
+   },
+   {
+    "id": "VL_D1",
+    "kind": "vano_libre",
+    "width_m": 1.23,
+    "plausible": true,
+    "notes": "64,51 px en T3, entre T3_A y T3_B. Paso del área de cama al vestidor."
+   },
+   {
+    "id": "VL_D2",
+    "kind": "vano_libre",
+    "width_m": 1,
+    "plausible": true,
+    "notes": "52,74 px en T3, entre T3_E y T3_F."
+   },
+   {
+    "id": "VL_COC_LIV",
+    "kind": "vano_libre",
+    "width_m": 2.24,
+    "plausible": true,
+    "notes": "Límite virtual de 117,7 px, desde el remate de T3_C (y 180,91) hasta y 298,63."
+   },
+   {
+    "id": "VL_HALL_LIV",
+    "kind": "vano_libre",
+    "width_m": 0.51,
+    "plausible": true,
+    "notes": "Límite virtual de 26,9 px, de y 298,63 a 325,57. Junto con VL_COC_LIV forma una sola abertura continua de 2,75 m hacia el living."
+   },
+   {
+    "id": "VL_COC_HALL",
+    "kind": "vano_libre",
+    "width_m": 1.77,
+    "plausible": true,
+    "notes": "Límite virtual de 93 px, de x 293,43 a 386,4 (extremo de T_COC_S)."
+   },
+   {
+    "id": "CL_D1_N",
+    "kind": "puerta_closet",
+    "width_m": 0.83,
+    "plausible": true,
+    "notes": "43,94 px. Puede ser corredera de 2 hojas o abatible; no determinable."
+   },
+   {
+    "id": "CL_D1_S",
+    "kind": "puerta_closet",
+    "width_m": 0.83,
+    "plausible": true,
+    "notes": "43,94 px."
+   },
+   {
+    "id": "CL_D2_N",
+    "kind": "puerta_closet",
+    "width_m": 0.87,
+    "plausible": true,
+    "notes": "45,97 px."
+   },
+   {
+    "id": "CL_D2_S",
+    "kind": "puerta_closet",
+    "width_m": 0.87,
+    "plausible": true,
+    "notes": "45,97 px."
+   },
+   {
+    "id": "LV_FRENTE",
+    "kind": "puerta_closet",
+    "width_m": 0.71,
+    "plausible": true,
+    "notes": "37,41 px. Le cabe una lavadora de 0,60 m. El tipo de cierre no es determinable."
+   }
+  ],
+  "heights": {
+   "ceiling_m": 2.4,
+   "door_head_m": 2.05,
+   "window_head_m": 2.1,
+   "window_sill_bedroom_m": 0.95,
+   "bath_window_sill_m": 1.5,
+   "balcony_rail_m": 1,
+   "kitchen_counter_m": 0.9,
+   "upper_cabinets_bottom_m": 1.5,
+   "rationale": "TODAS SON INFERIDAS: el plano en planta no da alturas.\n- Piso-cielo, 2,40 m: la OGUC de Chile exige al menos 2,35 m en recintos habitables (dato de la tarea). En edificios nuevos lo típico es 2,35-2,50 m terminado, con losas de 0,15-0,18 m. Es frecuente que los baños, el hall y la cocina tengan un cielo falso de 2,20-2,30 m para ductos (supuesto, no visible).\n- Dintel de puertas, 2,05 m: las hojas comerciales miden 2,00 m (puertas de 70 × 200 y 65 × 200) y el marco superior agrega 0,03-0,05 m. El ventanal corredera del living iría de un umbral de unos 0,02 m hasta el mismo dintel, 2,05-2,10 m.\n- Dintel de ventanas, 2,10 m: alineado aproximadamente con el de las puertas, dejando unos 0,30 m bajo la losa para el dintel o la viga.\n- Antepecho de dormitorios, 0,95 m: lo usual es 0,90-1,00 m. Elegí 0,95 porque, según recuerdo, la OGUC (art. 4.2.7, no verificado) pide antepechos o barandas de protección de al menos 0,95 m en pisos altos. Las ventanas quedarían de 1,15 m de alto. No se puede descartar que sean de piso a cielo.\n- Ventana del baño, antepecho de 1,50 m: por privacidad y por estar sobre la tina, con un vano de unos 0,60 × 0,60 m.\n- Baranda del balcón, 1,00 m: mínimo de 0,95 m (mismo supuesto normativo) y 1,00-1,10 m en edificios recientes.\n- Mesón de cocina, 0,90 m: estándar de 0,85-0,92 m; en Chile lo más común es 0,90.\n- Muebles altos: parte inferior a 1,50 m (0,60 m sobre el mesón, típico 0,55-0,65) y superior a unos 2,10-2,20 m. Sobre el anafe, la campana iría a 0,65-0,75 m de la encimera."
+  },
+  "conflicts": [
+   "PUERTA DE ENTRADA: con 0,0190 m/px la hoja mide 1,03 m (54,29 px) y la luz 1,07 m. El estándar es 0,85-0,90 m. Para que fuera de 0,90 m la escala tendría que ser 0,0166, a -2,7σ del ajuste de las otras nueve referencias; con esa escala el mesón mediría 0,52 m y la cama 1,74 m. No se usa para la escala. Se modela como está dibujada (puerta ancha o accesible de unos 1,0 m) salvo que el usuario diga otra cosa.",
+   "ESPESOR DE MUROS: la EXTRACCION mide de borde a borde de trazo (muros de 12-15,5 px, tabiques de unos 6 px), mientras que entre centros de línea los perimetrales miden 10,5-13 px y los tabiques 3,8 px. El trazo de 1,5-2 px engorda un 20-45 %. Adopto los centros de línea: muros de 0,20 m (sur y este) y 0,24-0,25 m (norte y oeste, con capa interior o relleno), tabiques de 0,072 m, T_COC_S de 0,12 m. Un tabique de 0,072 m es delgado (el típico es 0,08-0,10) pero plausible; si se tomara de borde a borde serían 0,11 m.",
+   "Los muros perimetrales no son uniformes, y esto está medido. El norte (12,7 px) y el oeste (13,0 px) son más gruesos que el sur y el este (10,5 px). En el norte y en el tramo del este correspondiente a la cocina y al Baño 1 hay una capa interior de unos 2,5 px (0,05 m) separada del relleno gris por una línea clara, que interpreto como forro o aislación (inferido). No se puede saber si el muro sur es medianero o fachada.",
+   "Coordenadas de recintos: los polígonos de la EXTRACCION usan bordes de trazo, así que dan recintos 1-3 px más chicos (2-5 cm). Por ejemplo, el área de cama del Dorm. 1 mide 160 × 141,5 px en la EXTRACCION y 162,1 × 143,8 px entre centros. Lo mismo pasa con los vanos: P_D1 mide 37,5 px de borde a borde y 39,87 px entre jambas, y V_D1 93,5 px frente a 96,0 px. Para modelar deben usarse los centros de línea de consolidar.py.",
+   "Errores en las entradas de escala, verificados en el plano: la familia de sanitarios dice que el contorno exterior mide 319 × 482 px, pero el real es 319 × 474,5 px de borde a borde y 316,35 × 472,77 px entre centros. También dice que la cama mide 97 × 92 px y es más ancha que larga, cuando en realidad mide 96,9 × 104,9 px y es más larga que ancha. La familia de puertas da una tina de 66,5 × 32,3 px, pero el perfil en x=360 muestra un ancho exterior de unos 38 px, así que los 32,3 px corresponden a una línea interior. Ninguno de estos errores cambia la escala consolidada.",
+   "Tina: el símbolo mide unos 1,27 × 0,72 m y el nicho entre muros 1,46 m, en ambos baños. Hay que decidir si se modela la tina tal como está dibujada (con huecos laterales) o una tina estándar de 1,40-1,45 m que llene el nicho.",
+   "Anafe: su proporción dibujada (1,34) no corresponde a un anafe de 4 platos de 0,58 × 0,51 m (1,14). A 0,0190 mide 0,61 × 0,45 m. Muebles altos: 20 px, que son 0,38 m de fondo, algo más que el típico de 0,30-0,35. Son bloques genéricos.",
+   "Closets inferiores de ambos dormitorios: 0,46 m de fondo, bajo el mínimo usual de unos 0,55 m para colgar ropa. Es plausible solo como closet de repisas o de poca profundidad.",
+   "Control por superficie: con 0,0190 la superficie útil neta es 45,1 m² (rango de 40,9 a 50,0) y la bruta 54,0 m² sin balcón. Queda en el extremo bajo de lo típico para un 2D2B. Una superficie declarada de 50-55 m² útiles empujaría la escala a 0,020-0,021, lo que tensiona el mesón y la cama."
+  ],
+  "open_questions": [
+   "¿Hay alguna medida real? Por ejemplo, la superficie útil o total del folleto o la escritura, el ancho interior del living (estimado en 3,15 m) o el de un dormitorio (estimado en 3,08 m), o cualquier medida con huincha. Con una sola cota la escala pasa de ±5 % a cerca de ±1 %, y todo el modelo depende de ella.",
+   "Altura real de piso a cielo (supuse 2,40 m). ¿Los baños, la cocina o el hall tienen cielo falso más bajo?",
+   "Puerta de entrada: ¿la hoja mide cerca de 1,0 m, como la dibuja el plano (1,03 m a esta escala), o es una estándar de 0,85-0,90 m?",
+   "Ventanas y balcón: ¿las ventanas de los dormitorios tienen antepecho (supuse 0,95 m) o van de piso a cielo? ¿El ventanal del living es una corredera de 2 hojas desde el piso? ¿La baranda del balcón es de vidrio, metálica o maciza, y qué altura tiene?",
+   "Cocina: ¿qué son los dos módulos junto al muro este, al sur del lavaplatos (uno con rayado y frente curvo, de 0,58 m, y otro rectangular con un punto, de 0,72 m)? ¿Horno, refrigerador, despensa, lavavajillas? ¿Dónde va el refrigerador? ¿El nicho de la lavadora tiene puerta?",
+   "Orientación: ¿qué fachada debe ser el frente del modelo (+Y), la del balcón (izquierda del plano) o la de la entrada (derecha)? ¿Dónde está el norte real? El plano no tiene flecha, y eso define la luz solar del tour."
+  ]
+ },
+ "critics": [
+  {
+   "lens": "TOPOLOGÍA Y LECTURA DEL PLANO (muros, ambientes, puertas, ventanas, artefactos ambiguos), verificado con perfiles de píxeles del PNG original",
+   "issues": [
+    {
+     "severity": "alta",
+     "target": "CONSOLIDACION.openings_m.VEN_LIV (y EXTRACCION.openings.VEN_LIV.swing/notes)",
+     "claim": "El ventanal es una \"corredera de dos hojas de unos 1,47 m, con traslape\" (consolidación). La extracción dice además que \"no se puede saber cuál hoja es fija\".",
+     "evidence": "Medido en el plano. El traslape (cajón del encuentro de hojas) está en x 119-123, y 227-231. En y=227 los valores son 186/194/166/175 en x 119-122, contra 205-250 fuera de esa franja. Las caras de la hoja norte están en x≈119 y x≈121,5 (valores ~210-219, de y 176 a 226). Las de la hoja sur están en x≈119,5 y x≈122,5 (valores ~186-221, de y 232 a 323): corridas 1 px, lo que indica dos rieles. En y 232-323 no hay ningún otro travesaño: el perfil es idéntico en y 240, 260, 280, 300 y 310. Las hojas miden entonces ≈175→231 (56 px) y ≈227→327 (100 px). A 0,019 m/px eso da ≈1,06 m y ≈1,90 m, no dos hojas iguales de 1,47 m. La flecha (fuste en x=131, y 188-206; punta triangular con base en y 207-208, x 128-133, y vértice en y 210-211) apunta al sur y está junto a la hoja norte. Además, la nota de la extracción omite la segunda línea de la hoja sur (x 122-123).",
+     "fix": "Modelar dos hojas desiguales con el encuentro en y≈229, a ≈54 px (≈1,03 m) de la jamba norte (y=175). Hoja norte ≈1,06 m, hoja sur ≈1,90 m. Marcar como inferido de la flecha que la hoja norte es la móvil y corre hacia el sur por delante de la sur; que la hoja sur sea fija no se puede determinar. Corregir VEN_LIV en openings_m y dejar la pregunta en open_questions."
+    },
+    {
+     "severity": "media",
+     "target": "CONSOLIDACION.rooms['Dormitorio 2'].notes",
+     "claim": "\"Es la imagen espejada del Dormitorio 1.\"",
+     "evidence": "Medido en el plano. V_D2 mide 107,5 px y V_D1 93,5 px (+15 %). VL_D2 mide 51,5 px y VL_D1 62,5 px (−18 %). Los closets de D2 miden 44 px de frente y los de D1 42 px. T10 está en x 338,5-344 y T4 en x 336,5-342. El bloque Baño 2 es una TRASLACIÓN del Baño 1, no un espejo: la tina está al norte en los dos (y 27,5-65,5 / y 368-404,5), el WC al centro y el vanitorio al sur; la bisagra de la puerta está en la jamba NORTE en los dos (P_B1 en (341,72), P_B2 en (343,5,411)), y el shaft queda en la esquina SE en los dos. Solo las camas están espejadas: cabecera al norte en D1 (almohadas y 44-71) y al sur en D2 (y 431-457). Si se espejara D1+B1 para obtener D2+B2, la tina quedaría contra el muro sur, la bisagra en la jamba sur y la ventana 0,27 m más corta.",
+     "fix": "Eliminar \"imagen espejada\". Construir el Dorm. 2 y el Baño 2 con sus propias coordenadas y documentar que el grupo baño/closet es una traslación, con la puerta del baño abisagrada al norte en ambos casos."
+    },
+    {
+     "severity": "media",
+     "target": "EXTRACCION.walls.T_COC_S.notes",
+     "claim": "\"Murete/tabique corto que cierra el extremo sur del mesón derecho.\" El término \"murete\" sugiere un muro bajo.",
+     "evidence": "Está dibujado con trazo de corte negro, del mismo peso que los tabiques: la línea y=298 (x 386-418) y la línea y 304-305 (x 386-421) valen <60, con un cierre vertical en x 385-387 (y 297-305). T9 tiene el mismo peso (<60 en y 362-363 y 366-367). Un elemento bajo, por debajo del plano de corte, se dibujaría con línea fina gris, como el mesón (x=387, 202-225, valores 170-215). Además es contiguo a la línea de cierre de la jamba norte de la entrada (y 306-307, x 420-431, <60): funciona como el retorno de esa jamba.",
+     "fix": "Modelar T_COC_S como tabique de altura completa de 0,12 m (6,5 px entre centros), renombrarlo \"tabique/retorno de jamba de entrada\" y dejar explícito que su altura se infiere del tipo de trazo."
+    },
+    {
+     "severity": "baja",
+     "target": "ESTIMACIONES_DE_ESCALA[cocina].Artefacto 3 / EXTRACCION.fixtures 'Módulo rayado'",
+     "claim": "Uno de los candidatos para el módulo rayado (x 387-418, y 227-258) es una \"lavadora de carga frontal\".",
+     "evidence": "El plano ya tiene un nicho de lavadora propio (círculo de tambor en un cuadrado, x 296-328, y 329,5-361), así que una segunda lavadora en la cocina es topológicamente improbable. La línea discontinua de los muebles altos (x≈398-399) termina justo en y≈226, donde empieza el módulo. El borde sur del módulo (y=258, x 388-418) es negro de corte (<60), mientras su borde norte (y=227) es gris (60-110). Ambos datos apuntan a un elemento alto: refrigerador o torre de horno. El módulo siguiente (y 259-297) tiene el frente oeste discontinuo (x=386, valores alternos 170-215 y 110-170 entre y 261 y 296), la convención habitual para un equipo no incluido, por ejemplo el espacio del refrigerador.",
+     "fix": "Descartar la lavadora como candidato del módulo rayado. Dejar como candidatos del módulo A \"refrigerador / torre horno-despensa (alto, inferido)\" y del módulo B \"espacio de equipo no incluido (probable refrigerador)\", y mantener la pregunta al usuario."
+    },
+    {
+     "severity": "baja",
+     "target": "EXTRACCION.fixtures 'Encimera 4 platos'",
+     "claim": "La encimera se da como \"4 platos\", como si fuera un hecho.",
+     "evidence": "Dentro del rectángulo x 325-358, y 154-178 solo hay manchas de 3-5 px con grises de 150-220, sin forma circular legible (recorte ct_anafe.png a 14x). La propia familia de cocina dice que no pudo contar los quemadores.",
+     "fix": "Cambiar a \"Encimera (número de platos no determinable)\" y modelar 4 platos como supuesto estándar."
+    },
+    {
+     "severity": "baja",
+     "target": "EXTRACCION.openings.V_D1 / V_D2",
+     "claim": "No se registra dónde se dividen las hojas de las ventanas de los dormitorios, así que implícitamente quedan como vanos simétricos.",
+     "evidence": "En V_D1, la línea de hoja de x=118 se interrumpe en y 111-112 (valores 224-229, contra 144-182 arriba y abajo), y en y 109-112 hay un travesaño en x 122 (176-198). Las hojas quedan de ≈57,5→111 (54 px) y ≈111→151 (40 px), desiguales. En V_D2 el encuentro está en y 403-406 (x=118 vale 213-236) y las hojas quedan de ≈54 + 53,5 px, iguales. En V_D1, además, la línea interior x=127 se aclara entre y 131 y 150 (126-136, contra 85-95 en el resto), sin explicación.",
+     "fix": "Registrar los encuentros de hojas: V_D1 en y≈111 (hojas desiguales) y V_D2 en y≈404,5. Anotar como no determinado el tramo más claro de V_D1 (y 131-150)."
+    },
+    {
+     "severity": "baja",
+     "target": "EXTRACCION.fixtures 'Repisa / tabique bajo de instalaciones B2' y ESTIMACIONES_DE_ESCALA[sanitarios].OBSERVACIONES",
+     "claim": "La línea discontinua junto al WC del Baño 2 está en x≈410-411 (extracción) o en x≈414,5 (familia de sanitarios).",
+     "evidence": "El perfil de columnas muestra que la línea discontinua está en x=412: valores alternos 146-190 y 200-240 desde y 369 hasta 444. En x=410-411 solo hay manchas sueltas y en x=414 casi todo es blanco. En el Baño 1 la línea equivalente es CONTINUA en x≈408,5 (y 64-125). El tipo de trazo es distinto (continua frente a discontinua), así que puede que no sean el mismo elemento.",
+     "fix": "Corregir a x≈412 (y 368-445) y anotar que en B1 es continua y en B2 discontinua; en B2 podría ser un elemento en altura. Sigue siendo ambiguo."
+    },
+    {
+     "severity": "baja",
+     "target": "EXTRACCION.fixtures 'Lavadora' / rooms 'Nicho lavadora (LV)'",
+     "claim": "\"Círculo con texto 'LV'\": se toma el texto como leído.",
+     "evidence": "El glifo ocupa unos 4×6 px en (310-314, 343-349) y en el recorte a 14x (ct_lvtxt.png) parece una \"S\" o un \"5\". No se lee \"LV\". La identificación como lavadora sí se sostiene por el símbolo (un círculo de tambor de ≈26 px dentro de un cuadrado de 30 px) y por estar en un nicho fuera de la cocina.",
+     "fix": "Anotar que la lavadora se infiere del símbolo y la ubicación, y que el texto no es legible a esta resolución."
+    },
+    {
+     "severity": "baja",
+     "target": "EXTRACCION.walls EXT_E1/EXT_E2 y CONSOLIDACION.scale_rationale (espesores)",
+     "claim": "Hay desfases menores de coordenadas y de descripción en el muro este.",
+     "evidence": "La cara interior de EXT_E2 está en x≈419, no en 420: en y 380, 420 y 460, x=419 vale 110-170 y x=420 vale <60. El relleno gris de EXT_E1 va de x 422 a 429, no de 421 a 430. La consolidación dice que en el Baño 1 hay una capa interior \"separada por una línea clara\", pero en el Baño 1 la franja x 418-421 es negra continua en y=40 y y=100; la línea clara (x=420) solo aparece en la cocina (y 156-297). Todos los desfases son de 1 px o menos, por debajo del umbral de 2 px.",
+     "fix": "Ajustar EXT_E2.x0 a 419 y corregir el texto del forro: el blanco intermedio existe solo en la cocina."
+    }
+   ],
+   "verdict_ok": false,
+   "summary": "La lectura topológica de la EXTRACCION se sostiene. Ningún muro falta, sobra ni está desplazado más de 2 px; los desfases observados son de 1 px como máximo.\n\nMuros, verificados con corridas de píxeles:\n- T3 en x=289/293 tiene tramos oscuros exactamente en y 26-59, 122-181, 324-400 y 451-476. Eso confirma T3_A-F, VL_D1 (62,5 px), VL_D2 (51,5 px) y el remate de T3_C en y 181,5.\n- T5 (y 147/151) y T9 (y 362-363/366-367) son continuos, sin puertas desde la cocina ni desde el hall hacia los baños. Los dos baños solo se alcanzan desde su dormitorio.\n- El relleno gris del muro este (x=425) es continuo en y 15-305 y 364-484. No hay ventanas en la cocina ni en los baños por ese lado.\n- El muro sur es continuo (y=481, x 115-429).\n- El muro norte solo se abre en x 343-372 (V_B1, sobre la tina).\n- El Baño 2 no tiene ventana: confirmado.\n\nPuertas: las cinco tienen bien la bisagra, el sentido de giro y los ambientes que conectan.\n- D1: bisagra en (288,170), abre al norte.\n- D2: bisagra en (288,332), abre al sur.\n- B1: bisagra en la jamba norte (341,72), abre al este. La hoja está en y 71-73, x 340-375.\n- B2: bisagra en la jamba norte (343,5,411), abre al este.\n- Entrada: bisagra en la jamba sur (421,361), abre hacia adentro. La hoja está en y 359-361, x 366-420, sobre T9. Las jambas están en y 307,5 y 361,5.\n\nOtros elementos confirmados:\n- Balcón: las líneas x 52/54/57/60 e y 163/167/170/173 y la grilla de ≈10,8 px coinciden.\n- Ventanas: los machones y los vanos V_D1 (57,5-151), V_D2 (350,5-458) y el ventanal (175-327) coinciden.\n- El frente curvo del nicho LV es un arco entre los extremos de los muros (de ≈(291,325) a (335,325), con el vértice en y≈320,5). Queda ambiguo con razón.\n- Residuo: de 10.362 píxeles oscuros (<110), 612 no los cubre ningún muro (con 1 px de holgura). Todos son marcos de ventana, el triángulo de acceso, el módulo rayado, el arco o el texto del LV y extremos de hojas de puerta. No aparece ningún muro omitido.\n\nErrores encontrados:\n- Alta, en la CONSOLIDACION: el ventanal no tiene dos hojas iguales de 1,47 m. El encuentro está en y≈229, con hojas de ≈56 px y ≈100 px (≈1,06 m y ≈1,90 m) en rieles distintos. La flecha apunta al sur junto a la hoja norte.\n- Medias:\n  - El Dorm. 2 no es un espejo del Dorm. 1. La ventana y el vano son distintos, y el Baño 2 es una traslación del Baño 1, con la bisagra al norte en ambos.\n  - T_COC_S tiene trazo de corte negro, así que es un tabique de altura completa y no un murete.\n- Bajas: la hipótesis de una lavadora en la cocina (ya existe el nicho LV), los 4 platos, las divisiones de hojas de las ventanas de dormitorio, la posición de la línea del B2 (x≈412), el texto \\\"LV\\\" ilegible y desfases de 1 px en el muro este.\n\nScripts y recortes propios en /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/crit_topo/: tt.py, runs.py, resid.py, ct_ventanal.png, ct_mods.png, ct_lv.png, ct_lvtxt.png y ct_anafe.png. No se usaron las fotos de ref/depto/ ni se modificaron archivos del proyecto."
+  },
+  {
+   "lens": "Escala, cuentas y plausibilidad (crítico adversarial)",
+   "verdict_ok": false,
+   "summary": "Rehíce las cuentas clave con PIL y python3. El script de verificación es /tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/plan/crit_escala_wls.py; también ejecuté cons/consolidar.py y tomé perfiles propios con cons/lines.py.\n\nESCALA: no pude refutarla. Los centros de línea que remedí coinciden con los de la consolidación: mesón 31,7 y 31,5 px, cama 104,8 × 96,9 px, tina 37,2 px entre centros (la consolidación usa 37,5 medido de borde a borde), WC 35,7 px, tabique 3,7-3,8 px, muro sur 10,5 px, muro norte 12,8 px y muro oeste 13,0 px. El ajuste por mínimos cuadrados ponderados es estable. Da 0,01912 con la tina y el WC medidos entre centros, 0,01917 sin mobiliario suelto, 0,01898 con hojas de 0,70/0,65 y 0,01925 con hojas de 0,75/0,70. No hay sesgo hacia una familia: la cama pesa cerca del 30 %, pero quitarla no mueve el resultado.\n\nÁREAS: cuadran. La suma de recintos da 45,09 m², el interior entre caras perimetrales 47,31 m² y la superficie bruta 53,99 m². Los 2,2 m² de diferencia corresponden a tabiques y shafts más unos 0,37 m² de umbrales de puertas y vanos que no se asignan a ningún recinto.\n\nMEDIDAS: ningún dormitorio baja de 7 m² (el área de cama mide 8,4 m² en cada uno). La puerta de entrada (1,03 m) y la tina (1,27 m) quedan fuera de estándar, pero la consolidación ya las marca como conflicto.\n\nPROBLEMA GRAVE (uno solo): el ventanal del living se describe como dos hojas iguales de 1,47 m. El plano muestra dos paños distintos, de unos 1,08 m y unos 1,92 m, y la flecha de corredera está sobre el paño superior.\n\nPROBLEMAS MENORES: las alturas se justifican con la norma chilena (OGUC) sin que el plano indique el país, y faltan alturas de varios elementos que se van a modelar. El razonamiento que \"resuelve\" la ambigüedad de las puertas es circular. El χ² \"sin tensión\" solo vale tras excluir la puerta de entrada. Hay además varias imprecisiones de redacción y de referencia (machones, Dormitorio 2 \"espejado\", artefacto 4, espesor de muro, definición de superficie útil). Nada de esto mueve la escala más de un 1,5 %.",
+   "issues": [
+    {
+     "severity": "alta",
+     "target": "CONSOLIDACION.openings_m[VEN_LIV].notes",
+     "claim": "\"Corredera de dos hojas de unos 1,47 m, con traslape\".",
+     "evidence": "Medí el perfil de grises en x 113-129. Hay dos patrones de marco distintos:\n- y 178-225: líneas en x≈119 (gris 213) y x≈121-122 (212/205).\n- y 233-324: líneas en x≈119-120 (187/203) y x≈122-123 (222/213).\nEntre y 227 y 231 hay una línea transversal (valores de 166 a 194), que es el encuentro o traslape. Así, el paño superior va de y≈174 a 231 (unos 57 px, 1,04-1,08 m a 0,019) y el inferior de y≈227 a 328 (unos 101 px, 1,89-1,92 m). La flecha de corredera (x 129-134, y 188-212) está sobre el paño superior y apunta a +y. La EXTRACCION ya lo registraba (\"y 176-226 ... y 227-327\"). La cifra de 2 × 1,47 m no está medida: es una división en dos partes iguales, supuesta. El montante quedaría unos 0,40 m fuera de lugar y cada hoja con un error del 27 al 45 %.",
+     "fix": "Reemplazar la nota por lo medido: división en y≈229 (px originales). El paño norte mide unos 1,05 m y es la hoja corredera (por la flecha). El paño sur mide unos 1,90 m y puede ser una hoja fija o dos hojas de unos 0,95 m (corredera de 3 hojas); esto no es determinable. Agregarlo a open_questions. Mientras tanto, modelar el montante en y≈229 y no al centro."
+    },
+    {
+     "severity": "media",
+     "target": "CONSOLIDACION.heights",
+     "claim": "Las alturas estarían \"justificadas\" porque la OGUC de Chile exige 2,35 m (\"dato de la tarea\"). Además, el bloque de alturas estaría completo para modelar.",
+     "evidence": "(1) El plano no tiene texto aparte de \"LV\", así que no hay evidencia de que el departamento esté en Chile. Los mínimos de otros países de la región van de unos 2,30 m (Perú, CDMX) a 2,60 m (Argentina, CABA). Estos valores son de memoria y no los verifiqué. Con 2,60 m el cielo subiría un 8 %, lo que se nota en un tour.\n(2) Faltan alturas de elementos que el modelo va a construir:\n- el murete T_COC_S (no se dice si es de altura completa o un murete bajo);\n- los módulos altos de la cocina (el módulo rayado tiene líneas gruesas que, según la familia cocina, podrían indicar un elemento alto);\n- los closets (si llegan al cielo o a 2,10);\n- el tabique bajo junto a los WC;\n- el frente del nicho LV;\n- el desnivel del balcón.\n(3) Hay una incoherencia interna: el dintel de puertas es 2,05, el de ventanas 2,10 y el del ventanal \"2,05-2,10\".",
+     "fix": "Marcar ceiling_m = 2,40 como supuesto regional sin país confirmado (valor central de un rango de 2,30 a 2,60) y agregar el país a open_questions. Añadir campos explícitos con la etiqueta \"supuesto\":\n- T_COC_S: altura completa (2,40) o murete de 1,05;\n- torre de horno o refrigerador: unos 2,10 m;\n- closets hasta el cielo;\n- tabique de instalaciones del WC: unos 1,10-1,20 m;\n- balcón: unos 0,02-0,05 m bajo el piso interior.\nFijar un solo dintel para el ventanal: 2,05, igual al de las puertas, o 2,10, igual al de las ventanas."
+    },
+    {
+     "severity": "baja",
+     "target": "CONSOLIDACION.scale_rationale (3)",
+     "claim": "\"La luz de jamba a jamba resuelve la ambigüedad [bimodal 0,70/0,65 vs 0,75/0,70]\".",
+     "evidence": "La relación entre luz y hoja no depende de la escala: 39,87/37,44 = 1,065 en dormitorios y 36,85/34,68 = 1,063 en baños. La holgura de marco es de unos 2,4 px, que son 0,045 m a 0,0187 y 0,049 m a 0,0201. Las dos lecturas son igual de plausibles, así que la luz no discrimina. El argumento usa la escala final para justificar una entrada de esa misma escala, y es circular. Además, el ajuste usa 0,725 y 0,675 m, que son puntos medios de una distribución bimodal y no corresponden a ninguna hoja comercial. El efecto es pequeño: 0,01898 con 0,70/0,65 y 0,01925 con 0,75/0,70 (±1,4 %).",
+     "fix": "Eliminar la frase \"resuelve la ambigüedad\". Declarar que las puertas no la resuelven y que la resuelven el mesón y el largo de la cama, que llevan a 0,70/0,65. En el ajuste, usar 0,70/0,65 o tratar las puertas como bimodales. La escala no cambia de forma apreciable."
+    },
+    {
+     "severity": "baja",
+     "target": "CONSOLIDACION.scale_rationale (2)",
+     "claim": "\"χ² = 1,0 en 8 grados de libertad, sin tensión interna\". También \"confianza media-alta\" con ±0,00026 (1,4 %).",
+     "evidence": "El χ² se calculó después de excluir la puerta de entrada. Si se incluye con 0,90 ± 0,0375 m, sube a 12,7 con 9 grados de libertad (s = 0,01879). Además, el ±0,00026 supone que los estándares son independientes, cuando cama, mesa, sofá y sanitarios son bloques CAD de la misma biblioteca, con posible sesgo común. La propia familia de mobiliario advierte que en planos comerciales los bloques suelen dibujarse más chicos. Ese error sistemático no está en el σ.",
+     "fix": "Redactar: \"sin tensión entre las 9 referencias retenidas; la puerta de entrada queda a -2,7σ\". Presentar ±0,00026 como error estadístico y ±5 % (0,0181-0,0200) como incertidumbre total. Bajar la confianza del valor central a \"media\" mientras no haya una cota real."
+    },
+    {
+     "severity": "baja",
+     "target": "CONSOLIDACION.rooms[Dormitorio 2].notes",
+     "claim": "\"Es la imagen espejada del Dormitorio 1\".",
+     "evidence": "Solo el área de cama está espejada (162,1 × 143,9 frente a 162,1 × 143,8 px). El resto difiere más de un 5 %, según las propias cifras de la consolidación:\n- ventana V_D2 2,09 m frente a V_D1 1,83 m (+14 %);\n- vestidor 0,87 × 1,00 frente a 0,83 × 1,22 m;\n- vano libre 1,00 frente a 1,23 m;\n- baño asociado 2,07 frente a 2,30 m de fondo.\nSi alguien modela el Dormitorio 2 espejando el script del Dormitorio 1, el resultado quedará mal.",
+     "fix": "Cambiar la frase por \"el área de cama es simétrica a la del Dormitorio 1; la ventana, el vestidor, el vano libre y el baño NO lo son (ver medidas propias)\". Construir cada dormitorio con sus propias constantes."
+    },
+    {
+     "severity": "baja",
+     "target": "CONSOLIDACION.openings_m[V_D1], [V_D2]",
+     "claim": "Machones del Dormitorio 1: 0,57 m arriba y 0,41 m abajo. Del Dormitorio 2: 0,40 m arriba y 0,31 m abajo.",
+     "evidence": "Los machones de 0,41 y 0,40 se midieron hasta la cara del tabique que da al LIVING (Y D1s = 174,04 e Y D2n = 328,31), no hasta la cara interior del dormitorio:\n- (174,04-152,56) × 0,019 = 0,408, pero (170,25-152,56) × 0,019 = 0,336;\n- (349,8-328,31) × 0,019 = 0,408, pero (349,8-332,14) × 0,019 = 0,336.\nLos otros dos (0,57 y 0,31) sí están medidos hasta la cara interior. El criterio es mixto y la diferencia es de 7 cm (unos 18 % del machón).",
+     "fix": "Informar los machones vistos desde el dormitorio: D1 0,57 y 0,34; D2 0,34 y 0,31. Posicionar las ventanas por coordenadas y, no por el largo del machón."
+    },
+    {
+     "severity": "baja",
+     "target": "CONSOLIDACION.rooms[Cocina].notes y conflicts",
+     "claim": "\"dos módulos ambiguos ... uno de 0,58 m y otro de 0,72 m de largo\".",
+     "evidence": "El artefacto 4 dibujado va de y 260,87 a 295,6: 34,7 px, que son 0,66 m. Los 0,72 m corresponden al espacio hasta la cara norte de T_COC_S (298,63), es decir 37,8 px. Se mezclan la medida del artefacto y la del nicho, con una diferencia del 9 %.",
+     "fix": "Separar las dos medidas: nicho de 0,72 m (y 260,9-298,6) y contorno dibujado de 0,66 m. Si es un refrigerador, modelar el nicho de 0,72 y un equipo de 0,60-0,70."
+    },
+    {
+     "severity": "baja",
+     "target": "CONSOLIDACION.exterior.wall_ext_thickness_m",
+     "claim": "wall_ext_thickness_m = 0,20 como único espesor exterior.",
+     "evidence": "Medido entre centros de línea: norte 12,8 px (0,24 m), oeste 13,0 px (0,25 m), sur y este 10,5 px (0,20 m). En la cocina y el Baño 1 el muro este tiene una línea a x≈418,4 separada del relleno por un píxel blanco (x=420). Si un script usa el campo único, los muros norte y oeste quedan 4-5 cm más delgados. O bien corre la cara interior, o bien el contorno exterior (6,01 × 8,98 m) deja de cuadrar.",
+     "fix": "Reemplazar el campo único por un espesor por muro (N 0,24, O 0,25, S 0,20, E 0,20 y E con forro 0,24) y construir con las coordenadas X/Y de consolidar.py."
+    },
+    {
+     "severity": "baja",
+     "target": "CONSOLIDACION.scale_rationale (4) y conflicts (control por superficie)",
+     "claim": "\"si la superficie útil real fuera 55 m², la escala sería 0,0210\", con una superficie útil de 45,1 m².",
+     "evidence": "Los 45,1 m² son la suma de recintos. Excluyen tabiques, shafts y unos 0,37 m² de umbrales de vanos y puertas que no se asignan a ningún recinto: VL_D1 unos 0,09 m², VL_D2 unos 0,07 m² y P_D1, P_D2, P_B1 y P_B2 unos 0,05 m² cada una. La superficie útil comercial suele medirse hasta la cara interior de los muros perimetrales, que según el propio script da 47,31 m². Con 47,31 m², una superficie de 55 m² implicaría s = 0,0205, no 0,0210. La conclusión (departamento compacto) no cambia.",
+     "fix": "Informar las dos cifras: 45,1 m² de recintos y 47,3 m² entre caras perimetrales. Hacer el control por superficie con 47,3 m² y aclarar qué definición se usa."
+    },
+    {
+     "severity": "baja",
+     "target": "EXTRACCION.fixtures[Velador izq./der. D1, D2]",
+     "claim": "Veladores con bbox x 141-157 / 254-272 e y 29-49 (listados como muebles modelables).",
+     "evidence": "A 0,019 miden 0,30 × 0,38 y 0,34 × 0,38 m, y son asimétricos. El ancho típico de un velador es 0,40-0,50 m. La familia de mobiliario los descartó como referencia porque parecen un respaldo o panel, pero la consolidación no da una medida para modelarlos.",
+     "fix": "Si se modelan, usar un velador supuesto de 0,40 × 0,38 m, o un respaldo corrido de 2,46 m × 0,36 m (x 141,5-271, y 29-47,6), y marcarlo como inferido."
+    }
+   ]
+  }
+ ]
+}

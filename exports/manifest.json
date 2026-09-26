@@ -1,0 +1,260 @@
+{
+  "depto": {
+    "archivo": "depto.glb",
+    "bytes": 15905508,
+    "md5": "6161bbec3148c1488c2175f1238387e5",
+    "web": {
+      "carpeta": "web",
+      "archivos": 58,
+      "bytes": 17131712,
+      "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
+    },
+    "colisiones": {
+      "archivo": "depto_colisiones.json",
+      "bytes": 39861,
+      "estaticos": 803,
+      "moviles": 31
+    },
+    "fecha": "2026-09-26",
+    "fase": "06",
+    "sellos": {
+      "01": "377a9336d63b",
+      "02": "d46673dce541",
+      "03": "9ca39d56daee",
+      "04": "d46cd6cf5455",
+      "05": "2c305fad6ee5",
+      "06": "5871997ae845"
+    },
+    "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
+    "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
+    "dimensiones_m": {
+      "x": 8.9826,
+      "y": 8.7415,
+      "z": 2.73
+    },
+    "bbox_blender_m": {
+      "min": [
+        -4.4913,
+        -4.5553,
+        -0.18
+      ],
+      "max": [
+        4.4913,
+        4.1862,
+        2.55
+      ]
+    },
+    "mallas": 354,
+    "triangulos": 141652,
+    "materiales": [
+      "Depto_Mat_Acero",
+      "Depto_Mat_AceroInox",
+      "Depto_Mat_AceroNegro",
+      "Depto_Mat_Alfombra",
+      "Depto_Mat_Arte1",
+      "Depto_Mat_Arte2",
+      "Depto_Mat_Arte3",
+      "Depto_Mat_Bombilla",
+      "Depto_Mat_CableTela",
+      "Depto_Mat_Carton",
+      "Depto_Mat_Caucho",
+      "Depto_Mat_Ceramica",
+      "Depto_Mat_Cielo",
+      "Depto_Mat_Cobertor",
+      "Depto_Mat_Concreto",
+      "Depto_Mat_CubiertaBano",
+      "Depto_Mat_CubiertaConcreto",
+      "Depto_Mat_Cuero",
+      "Depto_Mat_Electro",
+      "Depto_Mat_Espejo",
+      "Depto_Mat_FrenteCloset",
+      "Depto_Mat_FrenteCocina",
+      "Depto_Mat_GranoClaro",
+      "Depto_Mat_GranoOscuro",
+      "Depto_Mat_GresArena",
+      "Depto_Mat_GresBlanco",
+      "Depto_Mat_GresNegro",
+      "Depto_Mat_Ladrillo",
+      "Depto_Mat_Lana",
+      "Depto_Mat_Laton",
+      "Depto_Mat_Libro1",
+      "Depto_Mat_Libro2",
+      "Depto_Mat_Libro3",
+      "Depto_Mat_Libro4",
+      "Depto_Mat_Libro5",
+      "Depto_Mat_MaderaMueble",
+      "Depto_Mat_Manilla",
+      "Depto_Mat_Manta",
+      "Depto_Mat_MarcoPuerta",
+      "Depto_Mat_MarcoVentana",
+      "Depto_Mat_MetalNegroMate",
+      "Depto_Mat_Microcemento",
+      "Depto_Mat_MuebleBano",
+      "Depto_Mat_MuebleBlanco",
+      "Depto_Mat_MuebleCocina",
+      "Depto_Mat_MuroBano",
+      "Depto_Mat_MuroExterior",
+      "Depto_Mat_MuroPintado",
+      "Depto_Mat_NeveraAcero",
+      "Depto_Mat_Palier",
+      "Depto_Mat_PalierPiso",
+      "Depto_Mat_PantallaInterior",
+      "Depto_Mat_Papel",
+      "Depto_Mat_Pasamanos",
+      "Depto_Mat_PisoBalcon",
+      "Depto_Mat_PisoCeramico",
+      "Depto_Mat_PisoMadera",
+      "Depto_Mat_PuertaEntrada",
+      "Depto_Mat_PuertaMadera",
+      "Depto_Mat_RopaAzul",
+      "Depto_Mat_RopaCarbon",
+      "Depto_Mat_RopaCrudo",
+      "Depto_Mat_RopaDoblada1",
+      "Depto_Mat_RopaDoblada2",
+      "Depto_Mat_RopaGris",
+      "Depto_Mat_RopaVerde",
+      "Depto_Mat_RopaVino",
+      "Depto_Mat_TapizAcento",
+      "Depto_Mat_Textil",
+      "Depto_Mat_Toalla",
+      "Depto_Mat_Vidrio",
+      "Depto_Mat_VidrioBombilla",
+      "Depto_Mat_VidrioEsmerilado",
+      "Depto_Mat_VidrioNegro",
+      "Depto_Mat_VidrioReloj",
+      "Depto_Mat_Yeso",
+      "Depto_Mat_Zapato",
+      "Depto_Mat_Zocalo"
+    ],
+    "escala": {
+      "m_por_px_plano": 0.019,
+      "incertidumbre": "±5 % (inferida de elementos estándar; sin cota real)"
+    },
+    "exportacion": {
+      "formato": "GLB",
+      "imagenes": "JPEG",
+      "extras": true,
+      "camaras": false,
+      "luces": false,
+      "blender": "3.6.23"
+    },
+    "texturas": {
+      "laminate_floor_02": {
+        "nombre": "Laminate Floor 02",
+        "autores": [
+          "Dario Barresi",
+          "Charlotte Baglioni"
+        ],
+        "pagina": "https://polyhaven.com/a/laminate_floor_02",
+        "licencia": "CC0"
+      },
+      "white_plaster_02": {
+        "nombre": "White Plaster 02",
+        "autores": [
+          "Rob Tuytel"
+        ],
+        "pagina": "https://polyhaven.com/a/white_plaster_02",
+        "licencia": "CC0"
+      },
+      "interior_tiles": {
+        "nombre": "Interior Tiles",
+        "autores": [
+          "Charlotte Baglioni"
+        ],
+        "pagina": "https://polyhaven.com/a/interior_tiles",
+        "licencia": "CC0"
+      },
+      "tiled_floor_001": {
+        "nombre": "Tiled Floor 001",
+        "autores": [
+          "Rob Tuytel",
+          "Dimitrios Savva"
+        ],
+        "pagina": "https://polyhaven.com/a/tiled_floor_001",
+        "licencia": "CC0"
+      },
+      "patio_tiles": {
+        "nombre": "Patio Tiles",
+        "autores": [
+          "Dario Barresi"
+        ],
+        "pagina": "https://polyhaven.com/a/patio_tiles",
+        "licencia": "CC0"
+      },
+      "oak_veneer_01": {
+        "nombre": "Oak Veneer 01",
+        "autores": [
+          "Jenelle van Heerden"
+        ],
+        "pagina": "https://polyhaven.com/a/oak_veneer_01",
+        "licencia": "CC0"
+      },
+      "poly_wool_herringbone": {
+        "nombre": "Poly Wool Herringbone",
+        "autores": [
+          "colormass",
+          "Rico Cilliers"
+        ],
+        "pagina": "https://polyhaven.com/a/poly_wool_herringbone",
+        "licencia": "CC0"
+      },
+      "rough_linen": {
+        "nombre": "Rough Linen",
+        "autores": [
+          "colormass",
+          "Rico Cilliers"
+        ],
+        "pagina": "https://polyhaven.com/a/rough_linen",
+        "licencia": "CC0"
+      }
+    },
+    "texturas_propias": {
+      "granito_gris_512": "generada por build/depto_05_materiales.py"
+    },
+    "prueba_recorrido": {
+      "tal_cual": {
+        "Hall": true,
+        "Living": true,
+        "Cocina": true,
+        "Dorm1": true,
+        "Paso_D1": true,
+        "Bano1": true,
+        "Dorm2": true,
+        "Paso_D2": true,
+        "Bano2": true,
+        "Balcon": true,
+        "Palier": false,
+        "Nicho_LV": false
+      },
+      "todo_cerrado": {
+        "Hall": true,
+        "Living": true,
+        "Cocina": true,
+        "Dorm1": false,
+        "Paso_D1": false,
+        "Bano1": false,
+        "Dorm2": false,
+        "Paso_D2": false,
+        "Bano2": false,
+        "Balcon": false,
+        "Palier": false,
+        "Nicho_LV": false
+      },
+      "entrada_abierta": {
+        "Hall": true,
+        "Living": true,
+        "Cocina": true,
+        "Dorm1": true,
+        "Paso_D1": true,
+        "Bano1": true,
+        "Dorm2": true,
+        "Paso_D2": true,
+        "Bano2": true,
+        "Balcon": true,
+        "Palier": true,
+        "Nicho_LV": false
+      }
+    },
+    "fuente": "ref/plano/plano_depto.png (plano del usuario); medidas en asset-brief-depto.md"
+  }
+}

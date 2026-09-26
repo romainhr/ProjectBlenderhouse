@@ -1,0 +1,66 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tour-depto",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-c",
+        "import functools, http.server as h; H = h.SimpleHTTPRequestHandler; H.extensions_map.update({'.html': 'text/html; charset=utf-8', '.json': 'application/json; charset=utf-8', '.glb': 'model/gltf-binary'}); h.ThreadingHTTPServer(('127.0.0.1', 8765), functools.partial(H, directory='exports')).serve_forever()"
+      ],
+      "port": 8765
+    },
+    {
+      "name": "tour-csp",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "tools/servidor_csp.py",
+        "/tmp/claude-1000/-home-romainharion-Documentos-ProjectBlenderhouse/55cd4aab-334b-4878-86a6-ae3a2cb51a8c/scratchpad/v2web",
+        "8766"
+      ],
+      "port": 8766
+    },
+    {
+      "name": "stitch-diseno",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8767",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "web/diseno/stitch"
+      ],
+      "port": 8767
+    },
+    {
+      "name": "sitio-local",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8768",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "web/dist"
+      ],
+      "port": 8768
+    },
+    {
+      "name": "sitio-src",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8769",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "web/src"
+      ],
+      "port": 8769
+    }
+  ]
+}

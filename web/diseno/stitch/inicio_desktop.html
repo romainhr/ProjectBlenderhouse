@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LOFT 2D2B — Arriendo Turístico Industrial</title>
+<!-- Fonts: Barlow Condensed, IBM Plex Sans, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&amp;family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'loft-base': '#0F1113',
+            'loft-card': '#16181B',
+            'loft-card-light': '#1C1F24',
+            'loft-rust': '#C0562F',
+            'loft-rust-hover': '#A84622',
+            'loft-brass': '#B8862B',
+            'loft-border': '#26292E',
+            'loft-border-light': '#33383F',
+            'loft-dim': '#7E8590',
+            'loft-highlight': '#E5E7EB'
+          },
+          fontFamily: {
+            display: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          borderRadius: {
+            'sm': '2px',
+            'DEFAULT': '2px',
+            'md': '2px',
+            'lg': '2px'
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom CSS -->
+<style data-purpose="architectural-blueprint">
+    /* Blueprint subtle technical grid */
+    .bg-tech-grid {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(38, 41, 46, 0.4) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(38, 41, 46, 0.4) 1px, transparent 1px);
+    }
+    
+    /* Technical dimension line decoration */
+    .dimension-line-x {
+      position: relative;
+    }
+    .dimension-line-x::before, .dimension-line-x::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 1px;
+      background-color: #33383F;
+    }
+    .dimension-line-x::before { left: 0; }
+    .dimension-line-x::after { right: 0; }
+
+    /* Custom scrollbar for raw industrial feel */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0F1113;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #26292E;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #C0562F;
+    }
+  </style>
+<!-- END: Custom CSS -->
+</head>
+<body class="bg-loft-base text-[#D0D4DC] font-sans antialiased selection:bg-loft-rust selection:text-white">
+<!-- BEGIN: MainHeader -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-[#0F1113]/90 backdrop-blur-md border-b border-loft-border">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+<!-- Logo Branding -->
+<a class="flex items-center space-x-3.5 group" href="#">
+<div class="w-10 h-10 border border-loft-brass flex items-center justify-center bg-loft-card transition-colors group-hover:border-loft-rust">
+<svg class="w-5 h-5 text-loft-brass group-hover:text-loft-rust transition-colors" fill="none" stroke="currentColor" stroke-width="1.8" viewbox="0 0 24 24">
+<polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+<polyline points="2 17 12 22 22 17"></polyline>
+<polyline points="2 12 12 17 22 12"></polyline>
+</svg>
+</div>
+<div>
+<div class="flex items-center space-x-2">
+<span class="font-display font-extrabold tracking-wider text-2xl text-white uppercase">LOFT 2D2B</span>
+<span class="text-[10px] font-mono tracking-widest text-loft-brass border border-loft-brass/40 px-1.5 py-0.5 rounded-sm bg-loft-brass/10">STGO</span>
+</div>
+<p class="text-[10px] font-mono text-loft-dim tracking-wider uppercase">Arriendo Turístico Exclusivo</p>
+</div>
+</a>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center space-x-8 font-mono text-xs tracking-wider text-loft-dim uppercase">
+<a class="hover:text-white transition-colors flex items-center gap-1.5" href="#espacios">
+<span class="text-loft-rust font-semibold">01</span> Espacios
+        </a>
+<a class="hover:text-white transition-colors flex items-center gap-1.5" href="#tour-3d">
+<span class="text-loft-rust font-semibold">02</span> Tour 3D
+        </a>
+<a class="hover:text-white transition-colors flex items-center gap-1.5" href="#amenidades">
+<span class="text-loft-rust font-semibold">03</span> Amenidades
+        </a>
+<a class="hover:text-white transition-colors flex items-center gap-1.5" href="#reservas">
+<span class="text-loft-rust font-semibold">04</span> Tarifas
+        </a>
+<a class="hover:text-white transition-colors flex items-center gap-1.5" href="#faq">
+<span class="text-loft-rust font-semibold">05</span> Preguntas
+        </a>
+</nav>
+<!-- Action Button -->
+<div class="flex items-center space-x-4">
+<a class="inline-flex items-center justify-center px-5 py-2.5 bg-loft-rust hover:bg-loft-rust-hover text-white font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-200 shadow-sm border border-loft-rust hover:border-loft-rust-hover" href="#reservas">
+          Reservar
+        </a>
+</div>
+</div>
+</header>
+<!-- END: MainHeader -->
+<main>
+<!-- BEGIN: HeroSection -->
+<section class="relative min-h-screen pt-24 pb-16 flex flex-col justify-between overflow-hidden border-b border-loft-border">
+<!-- Background Image with Industrial Dark Overlay -->
+<div class="absolute inset-0 z-0">
+<img alt="Ultra modern industrial loft living room interior" class="w-full h-full object-cover object-center filter brightness-90 contrast-105 scale-105 transform motion-safe:animate-pulse duration-[10000ms]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzKpUNKb41KVS8lTz5ZZIk_ze4RaSThQQA_cP2CEJeaOFZDvTtJV--_UllZH0U51jVq-PA_Igi9pRVzts_rdLmFvFPT-319HEFlBVj9aU1olWduLFRaUrqy-W02hkwmO-OFxTg6onVFE8I65owJuf29btrDKX-PtBWBFus1Nr0kro9ndX7sSrXUXii2YejcFOLT0b5EasrC7d3i6tvVygjQHz72yalwdohng7kHXC9ExiydjXf_aictJx-mowgQrTNyPEPzv0c8Lgo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-loft-base via-loft-base/80 to-[#0F1113]/70"></div>
+<div class="absolute inset-0 bg-tech-grid opacity-30 pointer-events-none"></div>
+</div>
+<!-- Hero Main Content -->
+<div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full my-auto py-12">
+<div class="max-w-3xl">
+<!-- Status Tag -->
+<div class="inline-flex items-center space-x-2.5 px-3 py-1 bg-loft-card/90 border border-loft-border text-loft-highlight font-mono text-xs mb-6 tracking-wide">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+<span class="w-2 h-2 rounded-full bg-emerald-500 -ml-4.5"></span>
+<span class="text-loft-dim font-bold">DISPONIBLE:</span> TEMPORADA 2025 / SANTIAGO, CHILE
+          </div>
+<!-- Hero Headline -->
+<h1 class="font-display text-7xl sm:text-8xl lg:text-9xl font-extrabold uppercase tracking-tight text-white leading-none mb-6">
+            LOFT <span class="text-transparent bg-clip-text bg-gradient-to-r from-loft-rust to-loft-brass">2D2B</span>
+</h1>
+<!-- Tagline -->
+<p class="text-lg sm:text-xl lg:text-2xl text-gray-300 font-light max-w-2xl leading-relaxed mb-8">
+            Concreto, acero y luz cálida. Arquitectura brutalista de doble altura concebida para una estancia excepcional. Recórrelo en 3D antes de llegar.
+          </p>
+<!-- CTAs -->
+<div class="flex flex-wrap items-center gap-4">
+<a class="px-7 py-3.5 bg-loft-rust hover:bg-loft-rust-hover text-white font-mono text-xs sm:text-sm font-semibold uppercase tracking-widest flex items-center space-x-3 transition-colors shadow-lg shadow-loft-rust/20" href="#tour-3d">
+<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span>Entrar al tour 3D</span>
+</a>
+<a class="px-7 py-3.5 bg-loft-card/80 hover:bg-loft-card-light text-white font-mono text-xs sm:text-sm font-semibold uppercase tracking-widest border border-loft-border-light hover:border-loft-brass transition-all flex items-center space-x-2" href="#reservas">
+<span>Ver disponibilidad</span>
+<span class="text-loft-brass">→</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Technical Spec Floor Line -->
+<div class="relative z-10 w-full border-t border-loft-border/80 bg-loft-base/80 backdrop-blur-sm">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 font-mono text-xs text-loft-dim text-center md:text-left divide-y md:divide-y-0 md:divide-x divide-loft-border">
+<div class="pt-2 md:pt-0 md:px-4">
+<span class="block text-[10px] text-loft-rust uppercase tracking-widest">HABITACIONES</span>
+<span class="text-white font-semibold">2 DORMITORIOS</span>
+</div>
+<div class="pt-2 md:pt-0 md:px-4">
+<span class="block text-[10px] text-loft-rust uppercase tracking-widest">HIGIENE</span>
+<span class="text-white font-semibold">2 BAÑOS COMPLETOS</span>
+</div>
+<div class="pt-2 md:pt-0 md:px-4">
+<span class="block text-[10px] text-loft-rust uppercase tracking-widest">EXTERIOR</span>
+<span class="text-white font-semibold">BALCÓN BISTRÓ PRIVADO</span>
+</div>
+<div class="pt-2 md:pt-0 md:px-4">
+<span class="block text-[10px] text-loft-rust uppercase tracking-widest">CAPACIDAD</span>
+<span class="text-white font-semibold">HASTA 4 HUÉSPEDES</span>
+</div>
+<div class="pt-2 md:pt-0 md:px-4">
+<span class="block text-[10px] text-loft-rust uppercase tracking-widest">SUPERFICIE</span>
+<span class="text-loft-brass font-bold">≈ 54.0 M² ÚTILES</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: HeroSection -->
+<!-- BEGIN: SpacesSection -->
+<section class="py-24 bg-loft-base border-b border-loft-border relative" id="espacios">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Section Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-loft-border">
+<div>
+<span class="font-mono text-xs uppercase tracking-widest text-loft-rust font-semibold">01 / PLANTA Y DISTRIBUCIÓN</span>
+<h2 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase tracking-tight mt-1">
+              ESPACIOS DISEÑADOS AL DETALLE
+            </h2>
+</div>
+<p class="font-mono text-xs text-loft-dim mt-4 md:mt-0 tracking-wider">
+            ESCALA 1:1 · INDUSTRIAL DUAL FLOOR APARTMENT
+          </p>
+</div>
+<!-- Architectural Spaces Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Space 1: Living (Featured) -->
+<article class="lg:col-span-2 group bg-loft-card border border-loft-border hover:border-loft-brass/60 transition-all duration-300 flex flex-col justify-between overflow-hidden">
+<div class="relative h-80 sm:h-96 overflow-hidden">
+<img alt="Living room integrado con ventanales y chimenea" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 filter brightness-95" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzKpUNKb41KVS8lTz5ZZIk_ze4RaSThQQA_cP2CEJeaOFZDvTtJV--_UllZH0U51jVq-PA_Igi9pRVzts_rdLmFvFPT-319HEFlBVj9aU1olWduLFRaUrqy-W02hkwmO-OFxTg6onVFE8I65owJuf29btrDKX-PtBWBFus1Nr0kro9ndX7sSrXUXii2YejcFOLT0b5EasrC7d3i6tvVygjQHz72yalwdohng7kHXC9ExiydjXf_aictJx-mowgQrTNyPEPzv0c8Lgo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-loft-card via-transparent to-black/40"></div>
+<div class="absolute top-4 left-4 bg-loft-base/90 border border-loft-border px-3 py-1 font-mono text-xs text-loft-brass">
+                SECTOR 01 // ZONA SOCIAL
+              </div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-end">
+<span class="font-mono text-xs text-white bg-loft-card/80 px-2 py-0.5 border border-loft-border">SUP: 22.4 M²</span>
+</div>
+</div>
+<div class="p-6">
+<div class="flex items-baseline justify-between mb-2">
+<h3 class="font-display text-2xl font-bold uppercase tracking-wider text-white">LIVING INTEGRADO</h3>
+<span class="font-mono text-xs text-loft-rust">COTA 0.00</span>
+</div>
+<p class="text-sm text-loft-dim leading-relaxed">
+                Muro de ladrillo a la vista restaurado, chimenea suspendida en acero al carbono, piso de roble ahumado y ventanales piso a cielo con vista panorámica a la ciudad.
+              </p>
+</div>
+</article>
+<!-- Space 2: Kitchen -->
+<article class="group bg-loft-card border border-loft-border hover:border-loft-brass/60 transition-all duration-300 flex flex-col justify-between">
+<div class="relative h-64 overflow-hidden bg-[#1f2227] flex items-center justify-center">
+<!-- Technical representation graphic for kitchen -->
+<div class="absolute inset-0 bg-tech-grid opacity-40"></div>
+<div class="w-4/5 h-40 border border-dashed border-loft-border-light flex flex-col items-center justify-center p-4 text-center">
+<svg class="w-10 h-10 text-loft-dim mb-2 group-hover:text-loft-rust transition-colors" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 10h18M3 14h18m-9-4v8m-7 4h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+<span class="font-mono text-[11px] text-loft-highlight uppercase">COCINA INDUSTRIAL ABIERTA</span>
+<span class="font-mono text-[9px] text-loft-dim">ENCIMERA INDUCCIÓN &amp; CUARZO NEGRO</span>
+</div>
+<div class="absolute top-4 left-4 bg-loft-base/90 border border-loft-border px-2.5 py-0.5 font-mono text-[11px] text-loft-brass">
+                SECTOR 02
+              </div>
+</div>
+<div class="p-6">
+<div class="flex items-baseline justify-between mb-2">
+<h3 class="font-display text-xl font-bold uppercase tracking-wider text-white">COCINA AMERICANA</h3>
+<span class="font-mono text-xs text-loft-dim">9.8 M²</span>
+</div>
+<p class="text-sm text-loft-dim leading-relaxed">
+                Mobiliario en acero negro mate antihuella, encimera vitrocerámica táctil, campana extractora oculta y barra para comensales en granito pulido.
+              </p>
+</div>
+</article>
+<!-- Space 3: Master Suite -->
+<article class="group bg-loft-card border border-loft-border hover:border-loft-brass/60 transition-all duration-300 flex flex-col justify-between">
+<div class="relative h-64 overflow-hidden bg-[#1a1c20] flex items-center justify-center">
+<div class="absolute inset-0 bg-tech-grid opacity-40"></div>
+<div class="w-4/5 h-40 border border-loft-border-light flex flex-col items-center justify-center p-4 text-center">
+<svg class="w-10 h-10 text-loft-dim mb-2 group-hover:text-loft-brass transition-colors" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+<span class="font-mono text-[11px] text-loft-highlight uppercase">SUITE PRINCIPAL</span>
+<span class="font-mono text-[9px] text-loft-dim">KING SIZE + BAÑO EN SUITE</span>
+</div>
+<div class="absolute top-4 left-4 bg-loft-base/90 border border-loft-border px-2.5 py-0.5 font-mono text-[11px] text-loft-brass">
+                SECTOR 03
+              </div>
+</div>
+<div class="p-6">
+<div class="flex items-baseline justify-between mb-2">
+<h3 class="font-display text-xl font-bold uppercase tracking-wider text-white">MASTER SUITE</h3>
+<span class="font-mono text-xs text-loft-dim">13.2 M²</span>
+</div>
+<p class="text-sm text-loft-dim leading-relaxed">
+                Cama King de hotelería 5 estrellas, baño integrado con mampara de vidrio acanalado, blackout automatizado e iluminación indirecta cálida de 2700K.
+              </p>
+</div>
+</article>
+<!-- Space 4: Guest Bedroom -->
+<article class="group bg-loft-card border border-loft-border hover:border-loft-brass/60 transition-all duration-300 flex flex-col justify-between">
+<div class="relative h-64 overflow-hidden bg-[#181a1d] flex items-center justify-center">
+<div class="absolute inset-0 bg-tech-grid opacity-40"></div>
+<div class="w-4/5 h-40 border border-dashed border-loft-border-light flex flex-col items-center justify-center p-4 text-center">
+<svg class="w-10 h-10 text-loft-dim mb-2 group-hover:text-loft-rust transition-colors" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+<span class="font-mono text-[11px] text-loft-highlight uppercase">DORMITORIO GUEST</span>
+<span class="font-mono text-[9px] text-loft-dim">CONFIGURACIÓN DUAL FLEXIBLE</span>
+</div>
+<div class="absolute top-4 left-4 bg-loft-base/90 border border-loft-border px-2.5 py-0.5 font-mono text-[11px] text-loft-brass">
+                SECTOR 04
+              </div>
+</div>
+<div class="p-6">
+<div class="flex items-baseline justify-between mb-2">
+<h3 class="font-display text-xl font-bold uppercase tracking-wider text-white">DORMITORIO GUEST</h3>
+<span class="font-mono text-xs text-loft-dim">10.5 M²</span>
+</div>
+<p class="text-sm text-loft-dim leading-relaxed">
+                Configuración versátil (2 camas individuales o 1 King), clóset modular en perfiles de acero crudo, escritorio de trabajo y tomas USB de alta potencia.
+              </p>
+</div>
+</article>
+<!-- Space 5: Master Bathroom -->
+<article class="group bg-loft-card border border-loft-border hover:border-loft-brass/60 transition-all duration-300 flex flex-col justify-between">
+<div class="relative h-64 overflow-hidden bg-[#191b1e] flex items-center justify-center">
+<div class="absolute inset-0 bg-tech-grid opacity-40"></div>
+<div class="w-4/5 h-40 border border-loft-border-light flex flex-col items-center justify-center p-4 text-center">
+<svg class="w-10 h-10 text-loft-dim mb-2 group-hover:text-loft-brass transition-colors" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+<span class="font-mono text-[11px] text-loft-highlight uppercase">BAÑO PRINCIPAL</span>
+<span class="font-mono text-[9px] text-loft-dim">REVESTIMIENTO MICROCEMENTO</span>
+</div>
+<div class="absolute top-4 left-4 bg-loft-base/90 border border-loft-border px-2.5 py-0.5 font-mono text-[11px] text-loft-brass">
+                SECTOR 05
+              </div>
+</div>
+<div class="p-6">
+<div class="flex items-baseline justify-between mb-2">
+<h3 class="font-display text-xl font-bold uppercase tracking-wider text-white">BAÑO PRINCIPAL</h3>
+<span class="font-mono text-xs text-loft-dim">4.6 M²</span>
+</div>
+<p class="text-sm text-loft-dim leading-relaxed">
+                Ducha termostática de efecto lluvia, grifería empotrada en negro mate grafito, revestimiento continuo tipo microcemento y espejo retroiluminado antiempañante.
+              </p>
+</div>
+</article>
+<!-- Space 6: Balcony -->
+<article class="group bg-loft-card border border-loft-border hover:border-loft-brass/60 transition-all duration-300 flex flex-col justify-between">
+<div class="relative h-64 overflow-hidden bg-[#1c1e22] flex items-center justify-center">
+<div class="absolute inset-0 bg-tech-grid opacity-40"></div>
+<div class="w-4/5 h-40 border border-dashed border-loft-border-light flex flex-col items-center justify-center p-4 text-center">
+<svg class="w-10 h-10 text-loft-dim mb-2 group-hover:text-loft-rust transition-colors" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+</svg>
+<span class="font-mono text-[11px] text-loft-highlight uppercase">BALCÓN BISTRÓ</span>
+<span class="font-mono text-[9px] text-loft-dim">VISTA DESPEJADA CIUDAD</span>
+</div>
+<div class="absolute top-4 left-4 bg-loft-base/90 border border-loft-border px-2.5 py-0.5 font-mono text-[11px] text-loft-brass">
+                SECTOR 06
+              </div>
+</div>
+<div class="p-6">
+<div class="flex items-baseline justify-between mb-2">
+<h3 class="font-display text-xl font-bold uppercase tracking-wider text-white">BALCÓN BISTRÓ</h3>
+<span class="font-mono text-xs text-loft-dim">3.5 M²</span>
+</div>
+<p class="text-sm text-loft-dim leading-relaxed">
+                Piso de madera tecnológica exterior resistente a intemperie, baranda en pletina de acero soldado, juego de mesa y sillas de hierro forjado al atardecer.
+              </p>
+</div>
+</article>
+</div>
+</div>
+</section>
+<!-- END: SpacesSection -->
+<!-- BEGIN: Tour3DSection -->
+<section class="py-24 bg-loft-card border-b border-loft-border relative overflow-hidden" id="tour-3d">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Section Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+<div>
+<span class="font-mono text-xs uppercase tracking-widest text-loft-rust font-semibold">02 / EXPERIENCIA INMERSIVA</span>
+<h2 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase tracking-tight mt-1">
+              TOUR 3D INTERACTIVO
+            </h2>
+</div>
+<p class="text-sm text-loft-dim font-mono mt-2 md:mt-0">
+            RENDER 3D WEBGL ENGINE · PROYECCIÓN ESPACIAL
+          </p>
+</div>
+<!-- 3D Viewer Monumental Container -->
+<div class="relative bg-loft-base border border-loft-border overflow-hidden shadow-2xl">
+<!-- Virtual Viewport -->
+<div class="relative w-full aspect-video max-h-[640px] flex items-center justify-center overflow-hidden">
+<img alt="Visor interactivo 3D del living del loft" class="w-full h-full object-cover filter brightness-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzKpUNKb41KVS8lTz5ZZIk_ze4RaSThQQA_cP2CEJeaOFZDvTtJV--_UllZH0U51jVq-PA_Igi9pRVzts_rdLmFvFPT-319HEFlBVj9aU1olWduLFRaUrqy-W02hkwmO-OFxTg6onVFE8I65owJuf29btrDKX-PtBWBFus1Nr0kro9ndX7sSrXUXii2YejcFOLT0b5EasrC7d3i6tvVygjQHz72yalwdohng7kHXC9ExiydjXf_aictJx-mowgQrTNyPEPzv0c8Lgo"/>
+<!-- Grid overlay for HUD effect -->
+<div class="absolute inset-0 bg-tech-grid opacity-25 pointer-events-none"></div>
+<!-- Top HUD Bar -->
+<div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none">
+<div class="flex items-center space-x-2 bg-black/70 backdrop-blur-md px-3 py-1.5 border border-loft-border pointer-events-auto">
+<span class="w-2.5 h-2.5 rounded-full bg-loft-rust animate-pulse"></span>
+<span class="font-mono text-xs font-semibold text-white tracking-widest uppercase">VISTA 360° ACTIVA</span>
+<span class="text-loft-dim font-mono text-[10px]">| PISO 14</span>
+</div>
+<div class="hidden sm:flex items-center space-x-2 bg-black/70 backdrop-blur-md px-3 py-1.5 border border-loft-border font-mono text-xs text-loft-dim pointer-events-auto">
+<span>FPS: 60.0</span>
+<span>•</span>
+<span>FOV: 85°</span>
+</div>
+</div>
+<!-- Interactive Hotspot Pins -->
+<div class="absolute top-1/2 left-1/3 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group" data-purpose="tour-pin">
+<div class="relative flex items-center justify-center">
+<div class="w-8 h-8 rounded-full bg-loft-rust/30 animate-ping absolute"></div>
+<div class="w-6 h-6 rounded-full bg-loft-rust border-2 border-white flex items-center justify-center shadow-lg transition-transform group-hover:scale-125">
+<span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+</div>
+<div class="absolute left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 border border-loft-border px-3 py-1 pointer-events-none whitespace-nowrap">
+<span class="font-mono text-[11px] text-white">Chimenea Flotante Acero</span>
+</div>
+</div>
+</div>
+<div class="absolute top-2/3 right-1/3 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer group" data-purpose="tour-pin">
+<div class="relative flex items-center justify-center">
+<div class="w-8 h-8 rounded-full bg-loft-brass/30 animate-ping absolute"></div>
+<div class="w-6 h-6 rounded-full bg-loft-brass border-2 border-white flex items-center justify-center shadow-lg transition-transform group-hover:scale-125">
+<span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+</div>
+<div class="absolute right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 border border-loft-border px-3 py-1 pointer-events-none whitespace-nowrap">
+<span class="font-mono text-[11px] text-white">Sillón Lounge Cuero</span>
+</div>
+</div>
+</div>
+<!-- Floorplan Radar Mini-map (Bottom Right) -->
+<div class="absolute bottom-4 right-4 hidden sm:block bg-black/80 backdrop-blur-md border border-loft-border p-3 w-48 pointer-events-auto">
+<div class="flex items-center justify-between mb-2">
+<span class="font-mono text-[10px] text-loft-brass uppercase tracking-wider">Mini-Plano 2D</span>
+<span class="font-mono text-[9px] text-loft-dim">ZONA LIVING</span>
+</div>
+<div class="relative w-full h-24 border border-dashed border-loft-border-light bg-[#121417] flex items-center justify-center overflow-hidden">
+<!-- Architectural lines -->
+<div class="absolute top-2 left-2 right-2 h-px bg-loft-border"></div>
+<div class="absolute top-2 bottom-2 left-6 w-px bg-loft-border"></div>
+<!-- Radar camera cone -->
+<div class="w-4 h-4 rounded-full bg-loft-rust border border-white flex items-center justify-center">
+<div class="w-1 h-1 bg-white rounded-full"></div>
+</div>
+<div class="absolute w-12 h-12 border-t-2 border-l-2 border-loft-rust/60 rounded-tl-full -top-1 -left-1"></div>
+</div>
+</div>
+<!-- Center Callout / Action Prompt -->
+<div class="absolute bottom-6 left-6 max-w-md bg-black/85 backdrop-blur-md border border-loft-border p-4">
+<p class="text-sm text-gray-200 font-sans mb-3">
+                Camina por el departamento desde el navegador, en computador o teléfono. Vista completa en 360 grados de cada rincón.
+              </p>
+<div class="flex items-center space-x-2">
+<button class="px-3.5 py-1.5 bg-loft-rust hover:bg-loft-rust-hover font-mono text-xs text-white uppercase tracking-wider font-semibold transition-colors">
+                  Pantalla Completa
+                </button>
+<button class="px-3.5 py-1.5 bg-loft-card hover:bg-loft-card-light border border-loft-border-light font-mono text-xs text-loft-dim hover:text-white uppercase tracking-wider transition-colors">
+                  Selector de Habitación
+                </button>
+</div>
+</div>
+</div>
+<!-- Bottom Control Strip -->
+<div class="bg-loft-card-light px-6 py-3 border-t border-loft-border flex flex-wrap items-center justify-between text-xs font-mono text-loft-dim">
+<div class="flex items-center space-x-4">
+<span class="text-loft-highlight">MODO DE VISTA:</span>
+<button class="text-loft-rust font-semibold underline underline-offset-4">PRIMERA PERSONA</button>
+<button class="hover:text-white transition-colors">VISTA MAQUETA (DOLLHOUSE)</button>
+<button class="hover:text-white transition-colors">PLANO CENITAL</button>
+</div>
+<div class="flex items-center space-x-4 mt-2 sm:mt-0">
+<span class="flex items-center gap-1">
+<svg class="w-4 h-4 text-loft-brass" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                Arrastra para girar
+              </span>
+<span>•</span>
+<span>Rueda para zoom</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Tour3DSection -->
+<!-- BEGIN: AmenitiesSection -->
+<section class="py-24 bg-loft-base border-b border-loft-border relative" id="amenidades">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-loft-border">
+<div>
+<span class="font-mono text-xs uppercase tracking-widest text-loft-rust font-semibold">03 / EQUIPAMIENTO Y CONFORT</span>
+<h2 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase tracking-tight mt-1">
+              AMENIDADES DE NIVEL SUPERIOR
+            </h2>
+</div>
+<p class="font-mono text-xs text-loft-dim mt-4 md:mt-0">
+            ESPECIFICACIONES CERTIFICADAS · HIGHEST STANDARD
+          </p>
+</div>
+<!-- Amenities 8-Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Amenity 1 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Wi-Fi Ultrarrápido</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Fibra óptica simétrica dedicada de 500 Mbps. Cobertura Mesh integral ideal para trabajo remoto exigente y streaming en 4K.
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">PING: &lt; 5 MS</div>
+</div>
+<!-- Amenity 2 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Cocina Ultra Equipada</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Cafetera espresso de bomba italiana, lavavajillas silencioso, horno convección, tostadora de diseño y vajilla artesanal de gres.
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">FULL APPLIANCES</div>
+</div>
+<!-- Amenity 3 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM12 18a6 6 0 100-12 6 6 0 000 12z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Lavadora &amp; Secadora</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Torre combinada oculta en armario técnico. Ciclo rápido disponible, detergente ecológico biodegradable de cortesía.
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">IN-UNIT LAUNDRY</div>
+</div>
+<!-- Amenity 4 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Smart TV 55" OLED 4K</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Pantalla montada sobre brazo articulado en living. Acceso ilimitado y sesión activa a plataformas de streaming principales.
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">4K HDR ENTERTAINMENT</div>
+</div>
+<!-- Amenity 5 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Lencería 400 Hilos</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Juegos de sábanas en satén de algodón egipcio de 400 hilos, almohadas hipoalergénicas dobles y toallas de gramaje pesado (600 gsm).
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">PREMIUM TEXTILES</div>
+</div>
+<!-- Amenity 6 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11m16-11v11" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Balcón Bistró</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Espacio exterior privado con baranda de seguridad de acero. Mesa compacta para café matutino o copa nocturna con vista urbana despejada.
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">OPEN AIR VIEW</div>
+</div>
+<!-- Amenity 7 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Climatización Dual</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Sistema de bomba de calor y aire acondicionado Inverter silencioso en todas las áreas. Termostatos individuales para control milimétrico.
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">INVERTER CLIMATE</div>
+</div>
+<!-- Amenity 8 -->
+<div class="p-6 bg-loft-card border border-loft-border hover:border-loft-rust/60 transition-colors group">
+<div class="w-12 h-12 border border-loft-border flex items-center justify-center mb-5 bg-[#121417] text-loft-brass group-hover:text-loft-rust group-hover:border-loft-rust transition-colors">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
+</svg>
+</div>
+<h3 class="font-display text-lg font-bold uppercase tracking-wider text-white mb-2">Cerradura Digital</h3>
+<p class="text-xs text-loft-dim leading-relaxed">
+              Acceso completamente autónomo las 24 horas mediante teclado numérico con pin personalizado emitido de forma segura antes de la llegada.
+            </p>
+<div class="mt-4 pt-3 border-t border-loft-border/50 font-mono text-[10px] text-loft-rust">SMART KEYLESS ENTRY</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: AmenitiesSection -->
+<!-- BEGIN: BookingSection -->
+<section class="py-24 bg-loft-card border-b border-loft-border relative" id="reservas">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-16 pb-6 border-b border-loft-border">
+<div>
+<span class="font-mono text-xs uppercase tracking-widest text-loft-rust font-semibold">04 / TARIFA Y CONDICIONES</span>
+<h2 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase tracking-tight mt-1">
+              RESERVA TRANSPARENTE &amp; DIRECTA
+            </h2>
+</div>
+<p class="font-mono text-xs text-loft-brass mt-4 md:mt-0">
+            • CONFIRMACIÓN RÁPIDA VÍA CORREO (&lt; 2 HORAS)
+          </p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Column Left: Policies and Technical Rules -->
+<div class="lg:col-span-6 space-y-6">
+<div class="bg-loft-base border border-loft-border p-8">
+<h3 class="font-display text-2xl font-bold uppercase text-white tracking-wider mb-6 flex items-center justify-between border-b border-loft-border pb-4">
+<span>Ficha Técnica de Arriendo</span>
+<span class="font-mono text-xs text-loft-rust">DOC #LFT-2025</span>
+</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 font-mono text-xs mb-8">
+<div class="border-l-2 border-loft-rust pl-3 py-1">
+<span class="text-loft-dim block text-[10px] uppercase">CHECK-IN HORARIO</span>
+<span class="text-white text-sm font-semibold">Desde las 15:00 hrs</span>
+<p class="text-loft-dim text-[11px] mt-0.5">Ingreso autónomo con código</p>
+</div>
+<div class="border-l-2 border-loft-rust pl-3 py-1">
+<span class="text-loft-dim block text-[10px] uppercase">CHECK-OUT HORARIO</span>
+<span class="text-white text-sm font-semibold">Hasta las 11:00 hrs</span>
+<p class="text-loft-dim text-[11px] mt-0.5">Cierre automático de clave</p>
+</div>
+<div class="border-l-2 border-loft-border-light pl-3 py-1">
+<span class="text-loft-dim block text-[10px] uppercase">ESTANCIA MÍNIMA</span>
+<span class="text-white text-sm font-semibold">2 Noches consecutivas</span>
+<p class="text-loft-dim text-[11px] mt-0.5">Fines de semana y festivos</p>
+</div>
+<div class="border-l-2 border-loft-border-light pl-3 py-1">
+<span class="text-loft-dim block text-[10px] uppercase">AFORO MÁXIMO</span>
+<span class="text-white text-sm font-semibold">4 Huéspedes adultos</span>
+<p class="text-loft-dim text-[11px] mt-0.5">No se admiten sobrecupos</p>
+</div>
+</div>
+<!-- Notice Box -->
+<div class="bg-loft-card border border-loft-border-light p-4 text-xs font-sans text-gray-300 relative">
+<div class="flex items-start space-x-3">
+<svg class="w-5 h-5 text-loft-brass flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<div>
+<p class="font-semibold text-white mb-1">Sin cobro anticipado inmediato</p>
+<p class="text-loft-dim leading-relaxed">
+                      Las reservas enviadas desde este portal son <span class="text-loft-highlight font-medium">solicitudes directas sin cobro con tarjeta en línea</span>. Nuestro equipo de conserjería revisa el calendario en tiempo real y confirma la reserva formalmente vía correo electrónico en un lapso menor a 2 horas.
+                    </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Building Specification Badges -->
+<div class="border border-loft-border p-4 bg-loft-base flex flex-wrap items-center justify-around gap-4 font-mono text-[11px] text-loft-dim">
+<span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> EDIFICIO SEGURO 24/7</span>
+<span>•</span>
+<span>ASCENSORES DE ALTA VELOCIDAD</span>
+<span>•</span>
+<span>ACCESO CONTROLADO</span>
+</div>
+</div>
+<!-- Column Right: Interactive Booking Form Card -->
+<div class="lg:col-span-6">
+<div class="bg-loft-base border-2 border-loft-border p-8 shadow-2xl relative" data-purpose="booking-card">
+<!-- Top Price Tag -->
+<div class="flex items-baseline justify-between border-b border-loft-border pb-6 mb-6">
+<div>
+<span class="text-xs font-mono text-loft-dim uppercase tracking-wider block">TARIFA POR NOCHE</span>
+<div class="flex items-baseline gap-1 mt-1">
+<span class="font-display text-4xl sm:text-5xl font-extrabold text-white">CLP 58.000</span>
+<span class="font-mono text-xs text-loft-dim">/ NOCHE</span>
+</div>
+</div>
+<div class="text-right">
+<span class="inline-block bg-loft-rust/20 border border-loft-rust px-2.5 py-1 font-mono text-[10px] text-loft-rust font-bold uppercase tracking-wider">
+                    TARIFA DIRECTA
+                  </span>
+</div>
+</div>
+<!-- Form Inputs -->
+<form class="space-y-4" id="booking-form" onsubmit="event.preventDefault(); handleBookingSubmit();">
+<div class="grid grid-cols-2 gap-3">
+<div>
+<label class="block font-mono text-[11px] text-loft-dim uppercase tracking-wider mb-1.5">Check-in</label>
+<input class="w-full bg-loft-card border border-loft-border text-white text-xs font-mono py-2.5 px-3 focus:outline-none focus:border-loft-rust focus:ring-0" id="input-checkin" type="date" value="2025-03-14"/>
+</div>
+<div>
+<label class="block font-mono text-[11px] text-loft-dim uppercase tracking-wider mb-1.5">Check-out</label>
+<input class="w-full bg-loft-card border border-loft-border text-white text-xs font-mono py-2.5 px-3 focus:outline-none focus:border-loft-rust focus:ring-0" id="input-checkout" type="date" value="2025-03-16"/>
+</div>
+</div>
+<div>
+<label class="block font-mono text-[11px] text-loft-dim uppercase tracking-wider mb-1.5">Huéspedes</label>
+<select class="w-full bg-loft-card border border-loft-border text-white text-xs font-mono py-2.5 px-3 focus:outline-none focus:border-loft-rust focus:ring-0" id="select-guests">
+<option value="1">1 Huésped</option>
+<option selected="" value="2">2 Huéspedes</option>
+<option value="3">3 Huéspedes</option>
+<option value="4">4 Huéspedes (Capacidad Máxima)</option>
+</select>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+<div>
+<label class="block font-mono text-[11px] text-loft-dim uppercase tracking-wider mb-1.5">Nombre Completo</label>
+<input class="w-full bg-loft-card border border-loft-border text-white text-xs font-sans py-2 px-3 focus:outline-none focus:border-loft-rust focus:ring-0 placeholder:text-loft-dim/40" placeholder="Ej: Camilo Henríquez" required="" type="text"/>
+</div>
+<div>
+<label class="block font-mono text-[11px] text-loft-dim uppercase tracking-wider mb-1.5">Correo Electrónico</label>
+<input class="w-full bg-loft-card border border-loft-border text-white text-xs font-sans py-2 px-3 focus:outline-none focus:border-loft-rust focus:ring-0 placeholder:text-loft-dim/40" placeholder="correo@ejemplo.com" required="" type="email"/>
+</div>
+</div>
+<!-- Price Breakdown Section -->
+<div class="bg-loft-card border border-loft-border p-4 my-6 space-y-2.5 font-mono text-xs">
+<div class="flex justify-between text-loft-dim">
+<span id="label-nights">2 noches x $58.000</span>
+<span class="text-white" id="val-subtotal">$116.000 CLP</span>
+</div>
+<div class="flex justify-between text-loft-dim">
+<span>Tarifa única de limpieza y preparación</span>
+<span class="text-white">$15.000 CLP</span>
+</div>
+<div class="border-t border-loft-border/70 pt-2.5 flex justify-between items-baseline font-bold">
+<span class="text-loft-brass uppercase tracking-wider">Total Estimado</span>
+<span class="text-lg text-white font-mono" id="val-total">$131.000 CLP</span>
+</div>
+</div>
+<!-- Submit Button -->
+<button class="w-full py-4 bg-loft-rust hover:bg-loft-rust-hover text-white font-mono text-sm uppercase tracking-widest font-bold transition-colors duration-200 border border-loft-rust flex items-center justify-center space-x-2" type="submit">
+<span>Solicitar reserva</span>
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</form>
+<!-- Footer guarantee disclaimer -->
+<p class="font-mono text-[10px] text-loft-dim text-center mt-4">
+                🔒 No se realizará ningún cobro en este paso. Se enviará un comprobante formal a tu correo con las instrucciones de pago seguro.
+              </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: BookingSection -->
+<!-- BEGIN: FaqSection -->
+<section class="py-24 bg-loft-base border-b border-loft-border relative" id="faq">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Header -->
+<div class="mb-14 text-center">
+<span class="font-mono text-xs uppercase tracking-widest text-loft-rust font-semibold">05 / DUDAS FRECUENTES</span>
+<h2 class="font-display text-4xl sm:text-5xl font-extrabold text-white uppercase tracking-tight mt-1">
+            PREGUNTAS FRECUENTES
+          </h2>
+<p class="text-sm text-loft-dim font-mono mt-2">
+            RESOLUCIÓN RÁPIDA DE CONDICIONES Y POLÍTICAS OPERACIONALES
+          </p>
+</div>
+<!-- Accordion Container -->
+<div class="space-y-3" id="faq-accordion">
+<!-- Item 1 -->
+<div class="border border-loft-border bg-loft-card overflow-hidden transition-colors" data-purpose="faq-item">
+<button class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none" onclick="toggleFaq(this)">
+<span class="font-mono text-sm text-white font-medium flex items-center gap-3">
+<span class="text-loft-rust font-bold">Q1.</span> ¿Cómo funciona el check-in autónomo con cerradura inteligente?
+              </span>
+<span class="faq-icon text-loft-dim text-xl font-mono transform transition-transform duration-200">+</span>
+</button>
+<div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 px-6 bg-[#131518]">
+<p class="py-4 text-xs sm:text-sm text-gray-300 leading-relaxed font-sans border-t border-loft-border/60">
+                El acceso es 100% independiente las 24 horas. 12 horas antes de tu fecha de llegada recibirás por WhatsApp y correo un código de 6 dígitos intransferible. Dicho código se activa exactamente a las 15:00 hrs del día de check-in y expira a las 11:00 hrs del día de salida. No necesitas coordinar entrega física de llaves ni esperar a un anfitrión.
+              </p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="border border-loft-border bg-loft-card overflow-hidden transition-colors" data-purpose="faq-item">
+<button class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none" onclick="toggleFaq(this)">
+<span class="font-mono text-sm text-white font-medium flex items-center gap-3">
+<span class="text-loft-rust font-bold">Q2.</span> ¿Se requiere depósito en garantía antes del ingreso?
+              </span>
+<span class="faq-icon text-loft-dim text-xl font-mono transform transition-transform duration-200">+</span>
+</button>
+<div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 px-6 bg-[#131518]">
+<p class="py-4 text-xs sm:text-sm text-gray-300 leading-relaxed font-sans border-t border-loft-border/60">
+                Sí, para preservar el estándar de equipamiento y diseño, se solicita un depósito de garantía reembolsable de CLP $100.000 al confirmar la reserva mediante transferencia bancaria o retención de cupo. Esta suma se libera íntegramente en un máximo de 24 horas tras el check-out, luego de que el personal de supervisión revise el inventario.
+              </p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="border border-loft-border bg-loft-card overflow-hidden transition-colors" data-purpose="faq-item">
+<button class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none" onclick="toggleFaq(this)">
+<span class="font-mono text-sm text-white font-medium flex items-center gap-3">
+<span class="text-loft-rust font-bold">Q3.</span> ¿Cuenta con estacionamiento privado en el edificio?
+              </span>
+<span class="faq-icon text-loft-dim text-xl font-mono transform transition-transform duration-200">+</span>
+</button>
+<div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 px-6 bg-[#131518]">
+<p class="py-4 text-xs sm:text-sm text-gray-300 leading-relaxed font-sans border-t border-loft-border/60">
+                El loft cuenta con un estacionamiento subterráneo techado asignado con control remoto de portón automático, apto para camionetas o SUVs (altura máxima 2.10 metros). El uso está incluido sin costo adicional en estadías superiores a 3 noches, o con un recargo preferencial de $10.000 CLP diarios por estadías menores.
+              </p>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="border border-loft-border bg-loft-card overflow-hidden transition-colors" data-purpose="faq-item">
+<button class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none" onclick="toggleFaq(this)">
+<span class="font-mono text-sm text-white font-medium flex items-center gap-3">
+<span class="text-loft-rust font-bold">Q4.</span> ¿Cuál es la política de cancelación y cambios de fecha?
+              </span>
+<span class="faq-icon text-loft-dim text-xl font-mono transform transition-transform duration-200">+</span>
+</button>
+<div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 px-6 bg-[#131518]">
+<p class="py-4 text-xs sm:text-sm text-gray-300 leading-relaxed font-sans border-t border-loft-border/60">
+                Reembolso completo (100%) para cancelaciones solicitadas con más de 7 días de anticipación a la fecha de llegada. Cancelaciones entre 7 y 3 días reciben el 50% de reembolso. Los cambios de fecha están sujetos a disponibilidad sin penalización si se avisan con al menos 5 días de anticipación.
+              </p>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="border border-loft-border bg-loft-card overflow-hidden transition-colors" data-purpose="faq-item">
+<button class="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none" onclick="toggleFaq(this)">
+<span class="font-mono text-sm text-white font-medium flex items-center gap-3">
+<span class="text-loft-rust font-bold">Q5.</span> ¿Se permiten mascotas o eventos sociales?
+              </span>
+<span class="faq-icon text-loft-dim text-xl font-mono transform transition-transform duration-200">+</span>
+</button>
+<div class="faq-answer max-h-0 overflow-hidden transition-all duration-300 px-6 bg-[#131518]">
+<p class="py-4 text-xs sm:text-sm text-gray-300 leading-relaxed font-sans border-t border-loft-border/60">
+                Por reglamento de copropiedad del edificio y cuidado del parquet de roble ahumado, no está permitido el ingreso de mascotas ni la realización de fiestas o eventos con música que sobrepase los decibeles residenciales normados (horario de silencio estricto: 22:00 a 08:00 hrs).
+              </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: FaqSection -->
+</main>
+<!-- BEGIN: MainFooter -->
+<footer class="bg-loft-base border-t border-loft-border text-loft-dim font-sans pt-16 pb-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- MANDATORY NOTICE BANNER (Industrial Blueprint Box) -->
+<div class="mb-14 p-4 border border-loft-rust/60 bg-loft-rust/10 flex items-center justify-center space-x-3 text-center">
+<svg class="w-5 h-5 text-loft-rust flex-shrink-0" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+<span class="font-mono text-xs text-white uppercase tracking-widest font-semibold">
+          AVISO OBLIGATORIO: «Sitio de prueba · imágenes renderizadas desde un modelo 3D»
+        </span>
+</div>
+<!-- Main Footer Columns -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-loft-border">
+<!-- Brand & Description -->
+<div class="lg:col-span-2 space-y-4">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 border border-loft-brass flex items-center justify-center bg-loft-card">
+<span class="font-mono font-bold text-loft-brass text-sm">2B</span>
+</div>
+<span class="font-display font-extrabold text-2xl text-white tracking-wider uppercase">LOFT 2D2B</span>
+</div>
+<p class="text-xs text-loft-dim leading-relaxed max-w-sm">
+            Concepto de hospedaje arquitectónico de estética brutalista industrial en el corazón neurálgico de la metrópoli. Espacio pensado para viajeros exigentes, directores creativos y estancias prolongadas.
+          </p>
+<div class="font-mono text-[10px] text-loft-brass">
+            COORDENADAS: 33°26'14"S 70°39'02"W · STGO-CL
+          </div>
+</div>
+<!-- Quick Links -->
+<div>
+<h4 class="font-mono text-xs text-white font-bold uppercase tracking-wider mb-4 border-l-2 border-loft-rust pl-2">
+            Navegación
+          </h4>
+<ul class="space-y-2 font-mono text-xs">
+<li><a class="hover:text-white transition-colors" href="#espacios">01. Espacios Interiores</a></li>
+<li><a class="hover:text-white transition-colors" href="#tour-3d">02. Experiencia 3D</a></li>
+<li><a class="hover:text-white transition-colors" href="#amenidades">03. Equipamiento y Confort</a></li>
+<li><a class="hover:text-white transition-colors" href="#reservas">04. Tarifas &amp; Booking</a></li>
+<li><a class="hover:text-white transition-colors" href="#faq">05. Dudas Frecuentes</a></li>
+</ul>
+</div>
+<!-- Specs Technical -->
+<div>
+<h4 class="font-mono text-xs text-white font-bold uppercase tracking-wider mb-4 border-l-2 border-loft-brass pl-2">
+            Detalles Unidad
+          </h4>
+<ul class="space-y-2 font-mono text-xs text-loft-dim">
+<li>Planta: 54.0 m² útiles</li>
+<li>Orientación: Nor-Oriente</li>
+<li>Aislación: Termopanel DVH</li>
+<li>Cerradura: Yale Smart Lock</li>
+<li>Red: Fibra Óptica 500M</li>
+</ul>
+</div>
+<!-- Direct Host Contact -->
+<div>
+<h4 class="font-mono text-xs text-white font-bold uppercase tracking-wider mb-4 border-l-2 border-loft-border-light pl-2">
+            Atención Directa
+          </h4>
+<p class="text-xs text-loft-dim mb-3">Conserjería y asistencia a huéspedes:</p>
+<div class="space-y-1 font-mono text-xs">
+<p class="text-white">host@loft2d2b.cl</p>
+<p class="text-loft-rust">+56 9 8450 9120</p>
+<p class="text-[10px] text-loft-dim mt-2">Atención 08:00 a 22:00 hrs</p>
+</div>
+</div>
+</div>
+<!-- Bottom Credits and Copyright -->
+<div class="pt-8 flex flex-col sm:flex-row items-center justify-between font-mono text-[11px] text-loft-dim">
+<p>© 2025 LOFT 2D2B — Todos los derechos reservados.</p>
+<p class="mt-2 sm:mt-0 tracking-wider">
+          SISTEMA INDUSTRIAL DARK · TIPOGRAFÍAS BARLOW &amp; JETBRAINS
+        </p>
+</div>
+</div>
+</footer>
+<!-- END: MainFooter -->
+<!-- BEGIN: InteractiveScripts -->
+<script data-purpose="faq-interactions">
+    // Interactive accordion toggle with smooth height transition
+    function toggleFaq(buttonElement) {
+      const parent = buttonElement.parentElement;
+      const answer = parent.querySelector('.faq-answer');
+      const icon = buttonElement.querySelector('.faq-icon');
+      
+      const isOpen = answer.style.maxHeight && answer.style.maxHeight !== '0px';
+
+      // Close all active drawers first
+      document.querySelectorAll('#faq-accordion .faq-answer').forEach(el => {
+        el.style.maxHeight = '0px';
+      });
+      document.querySelectorAll('#faq-accordion .faq-icon').forEach(el => {
+        el.textContent = '+';
+        el.classList.remove('rotate-45', 'text-loft-rust');
+      });
+
+      // If clicked item was not open, open it
+      if (!isOpen) {
+        answer.style.maxHeight = answer.scrollHeight + 32 + 'px';
+        icon.textContent = '×';
+        icon.classList.add('text-loft-rust');
+      }
+    }
+  </script>
+<script data-purpose="booking-simulator">
+    // Booking recalculation logic based on dates and nights
+    function recalculateBooking() {
+      const checkinVal = document.getElementById('input-checkin').value;
+      const checkoutVal = document.getElementById('input-checkout').value;
+      
+      const pricePerNight = 58000;
+      const cleaningFee = 15000;
+
+      if (checkinVal && checkoutVal) {
+        const d1 = new Date(checkinVal);
+        const d2 = new Date(checkoutVal);
+        const diffTime = d2 - d1;
+        let nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (nights < 2) nights = 2; // enforce minimum 2 nights policy
+
+        const subtotal = nights * pricePerNight;
+        const total = subtotal + cleaningFee;
+
+        // Update DOM elements
+        document.getElementById('label-nights').textContent = `${nights} noches x $58.000`;
+        document.getElementById('val-subtotal').textContent = `$${subtotal.toLocaleString('es-CL')} CLP`;
+        document.getElementById('val-total').textContent = `$${total.toLocaleString('es-CL')} CLP`;
+      }
+    }
+
+    document.getElementById('input-checkin').addEventListener('change', recalculateBooking);
+    document.getElementById('input-checkout').addEventListener('change', recalculateBooking);
+
+    function handleBookingSubmit() {
+      alert("Solicitud recibida correctamente. Nos comunicaremos a tu correo en menos de 2 horas con los detalles de confirmación.");
+    }
+  </script>
+<!-- END: InteractiveScripts -->
+</body></html>

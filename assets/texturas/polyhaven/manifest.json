@@ -1,0 +1,263 @@
+{
+  "fuente": "Poly Haven (https://polyhaven.com), API https://api.polyhaven.com",
+  "licencia": "CC0 1.0 (dominio público)",
+  "resolucion": "1k",
+  "formato": "jpg",
+  "descargado": "2026-09-25",
+  "aprobado_por": "Romain Ange (compuerta fase 2)",
+  "texturas": {
+    "laminate_floor_02": {
+      "nombre": "Laminate Floor 02",
+      "pagina": "https://polyhaven.com/a/laminate_floor_02",
+      "autores": [
+        "Dario Barresi",
+        "Charlotte Baglioni"
+      ],
+      "dimensiones_mm": [
+        1699.9999284744263,
+        1700.0000476837158
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "laminate_floor_02/laminate_floor_02_diff_1k.jpg",
+          "bytes": 721641,
+          "md5": "34ab81c5882c1083028ffa71d40fe44d",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/laminate_floor_02/laminate_floor_02_diff_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "laminate_floor_02/laminate_floor_02_nor_gl_1k.jpg",
+          "bytes": 515725,
+          "md5": "40f4b1e4a5cafbd3bd1b02e8367cf3b1",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/laminate_floor_02/laminate_floor_02_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "laminate_floor_02/laminate_floor_02_rough_1k.jpg",
+          "bytes": 560815,
+          "md5": "6ef14a4d438a44103689739248ef50b7",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/laminate_floor_02/laminate_floor_02_rough_1k.jpg"
+        }
+      }
+    },
+    "white_plaster_02": {
+      "nombre": "White Plaster 02",
+      "pagina": "https://polyhaven.com/a/white_plaster_02",
+      "autores": [
+        "Rob Tuytel"
+      ],
+      "dimensiones_mm": [
+        1000,
+        1000
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "white_plaster_02/white_plaster_02_diff_1k.jpg",
+          "bytes": 527219,
+          "md5": "7b10c2686bcfd76d1f309a20fd06b57e",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_02/white_plaster_02_diff_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "white_plaster_02/white_plaster_02_nor_gl_1k.jpg",
+          "bytes": 652310,
+          "md5": "55fc03203ebf1dc703a380fde93ff502",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_02/white_plaster_02_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "white_plaster_02/white_plaster_02_rough_1k.jpg",
+          "bytes": 295900,
+          "md5": "8b28f263360b8c4ddbdc4f7c650c4eeb",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_02/white_plaster_02_rough_1k.jpg"
+        }
+      }
+    },
+    "interior_tiles": {
+      "nombre": "Interior Tiles",
+      "pagina": "https://polyhaven.com/a/interior_tiles",
+      "autores": [
+        "Charlotte Baglioni"
+      ],
+      "dimensiones_mm": [
+        1899.9998569488525,
+        1899.9998569488525
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "interior_tiles/interior_tiles_diff_1k.jpg",
+          "bytes": 694562,
+          "md5": "94ba3714450bb6bbe6a57c9a26e8dac5",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/interior_tiles/interior_tiles_diff_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "interior_tiles/interior_tiles_nor_gl_1k.jpg",
+          "bytes": 414639,
+          "md5": "5c3a384bef2bbe4222803e7b40641609",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/interior_tiles/interior_tiles_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "interior_tiles/interior_tiles_rough_1k.jpg",
+          "bytes": 521038,
+          "md5": "87e16e8aaeb2f1c1a3d9ed2e6da194ea",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/interior_tiles/interior_tiles_rough_1k.jpg"
+        }
+      }
+    },
+    "tiled_floor_001": {
+      "nombre": "Tiled Floor 001",
+      "pagina": "https://polyhaven.com/a/tiled_floor_001",
+      "autores": [
+        "Rob Tuytel",
+        "Dimitrios Savva"
+      ],
+      "dimensiones_mm": [
+        1500,
+        1500
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "tiled_floor_001/tiled_floor_001_diffuse_1k.jpg",
+          "bytes": 442938,
+          "md5": "9addf9ebd204d63d5ca249bcd215ba43",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/tiled_floor_001/tiled_floor_001_diffuse_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "tiled_floor_001/tiled_floor_001_nor_gl_1k.jpg",
+          "bytes": 310183,
+          "md5": "2b66abf674a7641a0392bf2eda1dce2c",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/tiled_floor_001/tiled_floor_001_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "tiled_floor_001/tiled_floor_001_rough_1k.jpg",
+          "bytes": 332566,
+          "md5": "776af6fd398af0d8e8d62c721b1717c9",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/tiled_floor_001/tiled_floor_001_rough_1k.jpg"
+        }
+      }
+    },
+    "patio_tiles": {
+      "nombre": "Patio Tiles",
+      "pagina": "https://polyhaven.com/a/patio_tiles",
+      "autores": [
+        "Dario Barresi"
+      ],
+      "dimensiones_mm": [
+        2150.0000953674316,
+        2150.0000953674316
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "patio_tiles/patio_tiles_diff_1k.jpg",
+          "bytes": 700816,
+          "md5": "221dd43ae606e52fc142e04c4683b423",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/patio_tiles/patio_tiles_diff_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "patio_tiles/patio_tiles_nor_gl_1k.jpg",
+          "bytes": 302459,
+          "md5": "27264b26d14bd391843fbbf43b385a0d",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/patio_tiles/patio_tiles_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "patio_tiles/patio_tiles_rough_1k.jpg",
+          "bytes": 379224,
+          "md5": "18f47955ef2e7f7e72c2cff3fe11a5bb",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/patio_tiles/patio_tiles_rough_1k.jpg"
+        }
+      }
+    },
+    "oak_veneer_01": {
+      "nombre": "Oak Veneer 01",
+      "pagina": "https://polyhaven.com/a/oak_veneer_01",
+      "autores": [
+        "Jenelle van Heerden"
+      ],
+      "dimensiones_mm": [
+        1830.0000429153442,
+        1830.0000429153442
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "oak_veneer_01/oak_veneer_01_diff_1k.jpg",
+          "bytes": 641756,
+          "md5": "39a99df4e328d62d74f3122722a64a95",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_veneer_01/oak_veneer_01_diff_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "oak_veneer_01/oak_veneer_01_nor_gl_1k.jpg",
+          "bytes": 484844,
+          "md5": "d05406f5fdaf51f0d7b115b35d9af1b7",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_veneer_01/oak_veneer_01_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "oak_veneer_01/oak_veneer_01_rough_1k.jpg",
+          "bytes": 865194,
+          "md5": "a19b44176a078b9ae93314133848c9aa",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/oak_veneer_01/oak_veneer_01_rough_1k.jpg"
+        }
+      }
+    },
+    "poly_wool_herringbone": {
+      "nombre": "Poly Wool Herringbone",
+      "pagina": "https://polyhaven.com/a/poly_wool_herringbone",
+      "autores": [
+        "colormass",
+        "Rico Cilliers"
+      ],
+      "dimensiones_mm": [
+        270.0788548673393,
+        275.70000290870667
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "poly_wool_herringbone/poly_wool_herringbone_diff_1k.jpg",
+          "bytes": 942966,
+          "md5": "5c0981092ba0129d5951720ea23d50c2",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/poly_wool_herringbone/poly_wool_herringbone_diff_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "poly_wool_herringbone/poly_wool_herringbone_nor_gl_1k.jpg",
+          "bytes": 1045151,
+          "md5": "a6371d03b033a1c20e1c2758136ac757",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/poly_wool_herringbone/poly_wool_herringbone_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "poly_wool_herringbone/poly_wool_herringbone_rough_1k.jpg",
+          "bytes": 857426,
+          "md5": "9f85f667517ee9c7f3cc85214058a7d8",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/poly_wool_herringbone/poly_wool_herringbone_rough_1k.jpg"
+        }
+      }
+    },
+    "rough_linen": {
+      "nombre": "Rough Linen",
+      "pagina": "https://polyhaven.com/a/rough_linen",
+      "autores": [
+        "colormass",
+        "Rico Cilliers"
+      ],
+      "dimensiones_mm": [
+        270.7081392676629,
+        271.29998803138733
+      ],
+      "mapas": {
+        "Diffuse": {
+          "archivo": "rough_linen/rough_linen_diff_1k.jpg",
+          "bytes": 835801,
+          "md5": "663db789fb075462b685c1f740e58930",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_diff_1k.jpg"
+        },
+        "nor_gl": {
+          "archivo": "rough_linen/rough_linen_nor_gl_1k.jpg",
+          "bytes": 916843,
+          "md5": "3350269a2e9c472aa406bd3cc1eaf2c8",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_nor_gl_1k.jpg"
+        },
+        "Rough": {
+          "archivo": "rough_linen/rough_linen_rough_1k.jpg",
+          "bytes": 1083725,
+          "md5": "a380b24cc43cff88c39510305ebf0020",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rough_linen/rough_linen_rough_1k.jpg"
+        }
+      }
+    }
+  },
+  "total_bytes": 15045741
+}

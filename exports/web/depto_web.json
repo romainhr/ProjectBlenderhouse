@@ -1,0 +1,223 @@
+{
+ "gltf": "depto_gltf.json",
+ "bin": "depto_bin.b64.txt",
+ "imagenes": [
+  {
+   "uri": "tex/white_plaster_02_nor_gl_1k.jpg",
+   "bytes": 652310
+  },
+  {
+   "uri": "tex/white_plaster_02_rough_1k.jpg",
+   "bytes": 62464
+  },
+  {
+   "uri": "tex/azulejo_subway_nor_gl_1k.jpg",
+   "bytes": 97470
+  },
+  {
+   "uri": "tex/azulejo_subway_diff_1k.jpg",
+   "bytes": 92618
+  },
+  {
+   "uri": "tex/azulejo_subway_rough_1k.jpg",
+   "bytes": 84104
+  },
+  {
+   "uri": "tex/ladrillo_nor_gl_1k.jpg",
+   "bytes": 413418
+  },
+  {
+   "uri": "tex/ladrillo_diff_1k.jpg",
+   "bytes": 291329
+  },
+  {
+   "uri": "tex/ladrillo_rough_1k.jpg",
+   "bytes": 131140
+  },
+  {
+   "uri": "tex/microcemento_nor_gl_1k.jpg",
+   "bytes": 42878
+  },
+  {
+   "uri": "tex/microcemento_diff_1k.jpg",
+   "bytes": 144798
+  },
+  {
+   "uri": "tex/microcemento_rough_1k.jpg",
+   "bytes": 103461
+  },
+  {
+   "uri": "tex/piso_roble_nor_gl_1k.jpg",
+   "bytes": 49809
+  },
+  {
+   "uri": "tex/piso_roble_diff_1k.jpg",
+   "bytes": 219172
+  },
+  {
+   "uri": "tex/piso_roble_rough_1k.jpg",
+   "bytes": 80727
+  },
+  {
+   "uri": "tex/baldosa_hex_nor_gl_1k.jpg",
+   "bytes": 119117
+  },
+  {
+   "uri": "tex/baldosa_hex_diff_1k.jpg",
+   "bytes": 194424
+  },
+  {
+   "uri": "tex/baldosa_hex_rough_1k.jpg",
+   "bytes": 104118
+  },
+  {
+   "uri": "tex/concreto_encofrado_nor_gl_1k.jpg",
+   "bytes": 99569
+  },
+  {
+   "uri": "tex/concreto_encofrado_diff_1k.jpg",
+   "bytes": 195582
+  },
+  {
+   "uri": "tex/concreto_encofrado_rough_1k.jpg",
+   "bytes": 99361
+  },
+  {
+   "uri": "tex/losa_hormigon_nor_gl_1k.jpg",
+   "bytes": 201936
+  },
+  {
+   "uri": "tex/losa_hormigon_diff_1k.jpg",
+   "bytes": 271631
+  },
+  {
+   "uri": "tex/losa_hormigon_rough_1k.jpg",
+   "bytes": 93576
+  },
+  {
+   "uri": "tex/oak_veneer_01_nor_gl_1k.jpg",
+   "bytes": 484844
+  },
+  {
+   "uri": "tex/oak_veneer_01_diff_1k.jpg",
+   "bytes": 641756
+  },
+  {
+   "uri": "tex/oak_veneer_01_rough_1k.jpg",
+   "bytes": 213475
+  },
+  {
+   "uri": "tex/acero_pavonado_nor_gl_1k.jpg",
+   "bytes": 36758
+  },
+  {
+   "uri": "tex/acero_pavonado_diff_1k.jpg",
+   "bytes": 78997
+  },
+  {
+   "uri": "tex/acero_pavonado_rough_1k.jpg",
+   "bytes": 96321
+  },
+  {
+   "uri": "tex/rough_linen_nor_gl_1k.jpg",
+   "bytes": 916843
+  },
+  {
+   "uri": "tex/rough_linen_rough_1k.jpg",
+   "bytes": 271046
+  },
+  {
+   "uri": "tex/lana_nor_gl_1k.jpg",
+   "bytes": 633435
+  },
+  {
+   "uri": "tex/lana_rough_1k.jpg",
+   "bytes": 81452
+  },
+  {
+   "uri": "tex/poly_wool_herringbone_nor_gl_1k.jpg",
+   "bytes": 1045151
+  },
+  {
+   "uri": "tex/poly_wool_herringbone_rough_1k.jpg",
+   "bytes": 161655
+  },
+  {
+   "uri": "tex/concreto_oscuro_nor_gl_1k.jpg",
+   "bytes": 20579
+  },
+  {
+   "uri": "tex/concreto_oscuro_diff_1k.jpg",
+   "bytes": 190333
+  },
+  {
+   "uri": "tex/concreto_oscuro_rough_1k.jpg",
+   "bytes": 41172
+  },
+  {
+   "uri": "tex/acero_cepillado_nor_gl_1k.jpg",
+   "bytes": 23384
+  },
+  {
+   "uri": "tex/acero_cepillado_diff_1k.jpg",
+   "bytes": 154082
+  },
+  {
+   "uri": "tex/acero_cepillado_rough_1k.jpg",
+   "bytes": 108779
+  },
+  {
+   "uri": "tex/roble_ahumado_nor_gl_1k.jpg",
+   "bytes": 57581
+  },
+  {
+   "uri": "tex/roble_ahumado_diff_1k.jpg",
+   "bytes": 189903
+  },
+  {
+   "uri": "tex/roble_ahumado_rough_1k.jpg",
+   "bytes": 55627
+  },
+  {
+   "uri": "tex/cuero_nor_gl_1k.jpg",
+   "bytes": 135592
+  },
+  {
+   "uri": "tex/cuero_diff_1k.jpg",
+   "bytes": 157273
+  },
+  {
+   "uri": "tex/cuero_rough_1k.jpg",
+   "bytes": 94850
+  },
+  {
+   "uri": "tex/yute_nor_gl_1k.jpg",
+   "bytes": 453436
+  },
+  {
+   "uri": "tex/yute_diff_1k.jpg",
+   "bytes": 305833
+  },
+  {
+   "uri": "tex/yute_rough_1k.jpg",
+   "bytes": 68506
+  },
+  {
+   "uri": "tex/lana_diff_1k.jpg",
+   "bytes": 393237
+  },
+  {
+   "uri": "tex/arte_1_diff_1k.jpg",
+   "bytes": 250908
+  },
+  {
+   "uri": "tex/arte_2_diff_1k.jpg",
+   "bytes": 210236
+  },
+  {
+   "uri": "tex/arte_3_diff_1k.jpg",
+   "bytes": 460509
+  }
+ ],
+ "total_bytes": 17131712
+}

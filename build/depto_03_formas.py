@@ -1,0 +1,1214 @@
+"""Fase 3 (formas) del activo Depto: puertas, ventanas, baranda de vidrio, palier, closets, cocina, nicho
+de lavadora y sanitarios.
+
+Uso (o todo el pipeline con build/depto_run.sh):
+    blender -b build/depto.blend --python-exit-code 1 --python build/depto_03_formas.py
+
+Idempotente: exige que se haya abierto el maestro con el sello vigente de la fase 2 (cadena de
+build/depto_sellos.py), borra y reconstruye sólo sus colecciones (Depto_Aberturas, Depto_Fijos,
+Depto_Sanitarios, Depto_BalconDetalle, Depto_Palier) y no modifica objetos de otras fases. Antes de
+guardar prueba (si algo falla, no guarda): presupuesto de triángulos, cada hoja cerrada dentro de su
+vano, ninguna pieza que penetre muros u otras piezas (> 1 mm), cámaras a ≥ 0,20 m de todo sólido y el
+paso libre de la corredera del living. Sella scene["depto_fase03"] y borra los sellos posteriores.
+
+Orígenes de cada constante (etiqueta en el comentario):
+  medido    = línea del plano (centro de trazo, build/depto_plano.py o re-medición indicada);
+              verificado en cada corrida por build/depto_medicion/verificar_lineas.py cuando se indica.
+  extracción= bbox de artefactos de la Fase 0 (build/depto_medicion/extraccion_px_bordes.json, bordes de
+              trazo, ±1 px).
+  brief     = decisión del brief (asset-brief-depto.md); compuerta = decisión del usuario en una compuerta.
+  supuesto  = medida comercial o constructiva usual, no está en el plano.
+"""
+import math
+import os
+import random
+import sys
+
+import bpy
+from mathutils import Vector
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(RAIZ, "build"))
+import depto_geom as G  # noqa: E402
+import depto_plano as P  # noqa: E402
+import depto_sellos as SE  # noqa: E402
+from depto_geom import Pieza, px  # noqa: E402
+
+X, Y = P.X, P.Y
+S = P.M_POR_PX               # metros por píxel del plano (px(m) = m / S es la inversa)
+H = P.ALTURA_PISO_CIELO
+OUT_BLEND = SE.MAESTRO
+COLS = ("Depto_Aberturas", "Depto_Fijos", "Depto_Sanitarios", "Depto_BalconDetalle", "Depto_Palier")
+JUNTA = 0.003                # junta entre frentes y hojas de mueble (supuesto)
+
+# ---------------------------------------------------------------------------
+# Puertas (m salvo px). Hojas interiores: radio del arco de giro medido (P.HOJA_PX).
+# ---------------------------------------------------------------------------
+HOJA_ALTO = 2.00             # supuesto: hoja comercial (brief: dintel 2,05 = hoja + marco)
+HOJA_ESP = 0.04              # supuesto: hoja interior
+HOJA_ESP_ENTRADA = 0.05      # supuesto: hoja de acceso
+HOJA_ENTRADA = 1.00          # brief (decisión 1): hoja de 1,00 en la luz dibujada de 1,07 (el arco mide 1,03)
+LUZ_PISO = 0.01              # supuesto: holgura bajo la hoja
+MARCO_ANCHO = 0.025          # medido: jamba = (luz 0,76 − hoja 0,71) / 2 en las puertas interiores
+MARCO_SOBRESALE = 0.01       # supuesto: el marco sobresale 1 cm de cada cara del muro
+MANILLA_Z = 1.00             # supuesto: altura estándar
+MANILLA = (0.12, 0.06)       # supuesto: largo de la manilla y cuánto sobresale de la hoja
+# Ángulo de las hojas abiertas. D1 y D2: a 90° la manilla del lado de la bisagra toca el tabique T3 (≈86°),
+# así que quedan a 84°. B1 y B2: del lado de la bisagra no hay muro (la tina queda a 0,07 m de la manilla) y a
+# 90° la hoja deja 0,61 m de paso frente a la jamba opuesta; a 84° dejaba 0,53 (recorrido de 0,25 m: no pasa).
+ANGULO_ABIERTA = dict(D1=84.0, D2=84.0, B1=90.0, B2=90.0)
+# (id, muro: 'x'|'y' = eje del muro en el plano, a, b [px a lo largo del eje], c0, c1 [px espesor del muro],
+#  hoja px, lado bisagra 'a'|'b', abre hacia: +1/-1 en el eje perpendicular, abierta, opciones)
+PUERTAS = [
+    ("D1", "x", X["JAMBA_D"], X["T3_W"], Y["D1_N"], Y["D1_S"], P.HOJA_PX["D1"], "b", -1, True, {}),   # abre al Dorm 1 (norte)
+    ("D2", "x", X["JAMBA_D"], X["T3_W"], Y["D2_N"], Y["D2_S"], P.HOJA_PX["D2"], "b", +1, True, {}),   # abre al Dorm 2 (sur)
+    ("B1", "y", Y["T4_A"], Y["T4_B"], X["T4_W"], X["T4_E"], P.HOJA_PX["B1"], "a", +1, True, {}),      # abre al Baño 1 (este)
+    ("B2", "y", Y["T10_A"], Y["T10_B"], X["T10_W"], X["T10_E"], P.HOJA_PX["B2"], "a", +1, True, {}),  # abre al Baño 2 (este)
+    # compuerta 2: cerrada. Bisagra al sur (arco del plano), abre hacia el hall. La jamba norte cubre el canto del
+    # forro (E_FORRO) y el sobresaliente del lado del hall no entra en T9 (que empieza en T9_N, antes de ENT_S).
+    ("Entrada", "y", Y["ENT_N"], Y["ENT_S"], X["E_I"], X["E_O"], px(HOJA_ENTRADA), "b", -1, False,
+     {"w_c0_a": X["E_FORRO"] - px(MARCO_SOBRESALE), "u_max_c0": Y["T9_N"]}),
+]
+
+# ---------------------------------------------------------------------------
+# Ventanas: marco de 0,05 × 0,06 m centrado en el espesor del muro (supuesto), con los encuentros de hojas
+# medidos en el plano (crítico de topología, Fase 0; confirmados por el crítico de ubicación de la fase 3).
+# ---------------------------------------------------------------------------
+PERFIL = 0.05                # supuesto: ancho visto del perfil
+PERFIL_PROF = 0.06           # supuesto: fondo del marco de una hoja
+PERFIL_PROF_CORREDERA = 0.10  # supuesto: marco de dos rieles del ventanal
+HOJA_CORREDERA_PROF = 0.04   # supuesto: fondo del perfil de cada hoja corredera
+VIDRIO_ESP = 0.006           # supuesto: vidrio simple de 6 mm
+VENTANAS = [
+    # (id, eje del muro, a, b, c0, c1 [espesor], antepecho, dintel, encuentros px, material de vidrio)
+    ("VD1", "y", Y["V_D1_A"], Y["V_D1_B"], X["W_O"], X["W_I"], P.ANTEPECHO_DORMITORIOS, P.DINTEL_VENTANAS,
+     [111.0], "Depto_Mat_Vidrio"),                        # medido: encuentro y≈111 (hojas desiguales 1,03 + 0,79)
+    ("VD2", "y", Y["V_D2_A"], Y["V_D2_B"], X["W_O"], X["W_I"], P.ANTEPECHO_DORMITORIOS, P.DINTEL_VENTANAS,
+     [404.5], "Depto_Mat_Vidrio"),                        # medido: encuentro y≈404,5 (hojas iguales)
+    ("VB1", "x", X["V_B1_A"], X["V_B1_B"], Y["N_O"], Y["N_I"], P.ANTEPECHO_BANO, P.DINTEL_VENTANAS,
+     [], "Depto_Mat_VidrioEsmerilado"),                   # supuesto: ventana alta del baño con vidrio esmerilado
+]
+# Ventanal del living: corredera de dos rieles. Medido: encuentro VEN_ENCUENTRO y flecha de deslizamiento en el
+# paño norte (hoja móvil de 1,05); el paño sur (1,89) es fijo, en el riel exterior. Para el recorrido la hoja
+# móvil queda corrida detrás del paño fijo y deja libre el paño norte (≈0,97 m entre jamba y montante).
+VENTANAL = dict(a=Y["VEN_A"], b=Y["VEN_B"], c0=X["W_O"], c1=X["W_I"], z0=0.0, z1=P.DINTEL_VENTANAS,
+                encuentro=Y["VEN_ENCUENTRO"], abierta=True)
+
+# ---------------------------------------------------------------------------
+# Baranda de vidrio del balcón (compuerta 2): canal inferior, vidrio y pasamanos, sobre los ejes medidos.
+# La colisión es Depto_Col_Baranda (fase 2, BARANDA_TIPO = "vidrio").
+# ---------------------------------------------------------------------------
+Z_BAL = -P.DESNIVEL_BALCON
+CANAL = (0.05, 0.06)          # supuesto: ancho, alto del perfil inferior
+PASAMANOS = (0.05, 0.05)      # supuesto: ancho, alto; tope a 1,00 sobre el piso del balcón (brief)
+VIDRIO_BARANDA = 0.012        # supuesto: laminado 6+6
+
+# ---------------------------------------------------------------------------
+# Palier exterior neutro (compuerta 2: "palier neutro"; las medidas son supuestas, el plano no lo muestra).
+# ---------------------------------------------------------------------------
+PALIER_ANCHO = 1.40           # supuesto: pasillo común usual
+PALIER_LARGO_EXTRA = 1.00     # supuesto: tramo visible a cada lado de la puerta
+PALIER_MURO = 0.15            # supuesto
+LOSA = P.ESPESOR_LOSA         # supuesto (el mismo de la fase 2)
+
+# ---------------------------------------------------------------------------
+# Closets hasta el cielo (brief), con puertas correderas en dos rieles: el plano no dibuja arcos de giro en
+# los closets (inferido), y abatibles tapaban la puerta del Baño 2 al abrirse (crítico de uso, fase 3).
+# ---------------------------------------------------------------------------
+PUERTA_CLOSET_ESP = 0.02      # supuesto: melamina de 18 mm con canto
+RIEL_SEP = 0.005              # supuesto: separación entre las hojas de los dos rieles
+CLOSET_CABEZAL = 0.05         # supuesto: cabezal del riel superior
+CLOSET_SOLAPE = 0.03          # supuesto: traslape de las dos hojas en el centro
+# Contenido interactivo de los clósets (fase "07 detalle interactivo"): las celdas "_Norte" (más hondas, ~0,61 m)
+# quedan de colgar (barra + perchas) y las "_Sur" (~0,46 m) de repisas (ropa doblada, zapatos y 1-2 cajones);
+# diseño, no lo mide el plano. Distinto por dormitorio: D1 (principal) en tonos crudo/azul/vino con 1 cajón,
+# D2 (segundo) en tonos gris/verde/carbón con 2 cajones y más prendas informales (incl. pantalones).
+CLOSET_PANEL_ESP = 0.018     # supuesto: costados, fondo, piso y techo del cascarón (melamina 18 mm)
+CLOSET_BARRA_R = 0.011       # supuesto: barra de colgar, tubo de acero de 22 mm
+CLOSET_BARRA_DESDE_CABEZAL = 0.28   # diseño: la barra cuelga 0,28 m bajo el cabezal del riel
+CLOSET_CAJON_ALTO = 0.22     # diseño: cajón interior bajo
+CLOSET_CAJON_RECORRIDO = 0.32
+CLOSETS = [
+    # (id, x0, x1, y_fondo, y_frente)  frente = línea gris medida (CL*), fondo = muro o tabique
+    ("D1_Norte", X["T3_E"], X["T4_W"], Y["N_I"], Y["CL1_N"]),
+    ("D1_Sur", X["T3_E"], X["T4_W"], Y["T5_N"], Y["CL1_S"]),
+    ("D2_Norte", X["T3_E"], X["T10_W"], Y["T9_S"], Y["CL2_N"]),
+    ("D2_Sur", X["T3_E"], X["T10_W"], Y["S_I"], Y["CL2_S"]),
+]
+
+# ---------------------------------------------------------------------------
+# Cocina en L. Todas las líneas px se verifican contra el plano en verificar_lineas.py (sondas "cocina").
+# ---------------------------------------------------------------------------
+COC_FRENTE_Y = Y["T5_S"] + 31.55        # medido: frente del tramo norte (y≈182,8; fondo 0,60)
+COC_FRENTE_X = X["E_FORRO"] - 31.51     # medido: frente del tramo este (x≈386,7; fondo 0,60)
+TORRE_Y = (227.8, 258.4)                # medido (re-medición fase 3): centros de los trazos N y S del módulo rayado
+ALTOS_Y = 170.5                          # medido: discontinua de muebles altos, tramo norte (centroide 171,1)
+ALTOS_X = 398.5                          # medido: idem, tramo este
+MESON_Z = P.ALTURA_MESON                 # brief: 0,90
+CUBIERTA_ESP = 0.04                      # supuesto
+ZOCALO_ALTO, ZOCALO_RETRANQUEO = 0.10, 0.05   # supuesto
+FRENTE_ESP = 0.018                       # supuesto: melamina de 18 mm
+RELLENO_ESQUINA = 0.05                   # supuesto: rellenador en la esquina de la L (los frentes no chocan)
+ALTOS_Z = P.MUEBLES_ALTOS_Z              # brief: 1,50 a 2,10
+TORRE_ALTO = 2.10                        # brief (inferido): torre de horno y despensa hasta 2,10
+HORNO_Z = (0.75, 1.35)                   # supuesto: frente de horno empotrado en la torre
+TORRE_COSTADO = 0.018                    # supuesto: costados de la torre a cada lado del horno
+ANAFE = (326.0, 358.0, 155.0, 178.4)     # medido (re-medición fase 3): centros del contorno (x0, x1, y0, y1)
+BACHA = (390.9, 413.0, 193.7, 218.1)     # medido (re-medición fase 3): centros del contorno del lavaplatos; la
+                                         # extracción (392,5-416) estaba corrida 2-3 px al este
+BACHA_REBORDE = 0.015                    # supuesto
+BACHA_PROF, BACHA_PARED = 0.18, 0.008    # supuesto: cubeta de acero
+ESCURRIDOR = (393.0, 411.0, 172.0, 188.0)  # extracción: rectángulo con líneas verticales junto al lavaplatos
+REFRI = (0.60, 0.60, 1.80)               # inferido (brief): ancho, fondo, alto; fondo 0,60 para quedar al ras del
+                                         # frente discontinuo (el rectángulo dibujado mide ≈0,61)
+REFRI_HOLGURA = 0.02                     # supuesto: separación al muro
+# Versión 2 (decoración industrial, docs/deco-industrial.md): el tramo norte queda sin muebles altos (repisas
+# abiertas que pone la fase 4), con campana de chimenea de acero y azulejo subway detrás hasta la línea de los altos.
+CAMPANA = dict(z0=1.55, alto=0.08, fondo=0.48, chimenea=(0.26, 0.22))   # diseño: canopia a 0,64 m sobre el anafe
+SALPICADERO_ESP = 0.005                  # supuesto: azulejo sobre el muro
+SALPICADERO_Z_NORTE = 2.10               # diseño: sube detrás de las repisas hasta la línea de los altos
+TIRADOR = dict(largo_max=0.32, seccion=0.012, separacion=0.035, desde_borde=0.045)   # supuesto: barra de 12 mm
+MODULO_BASE = 0.60                       # supuesto: ancho de frentes de mueble base
+MODULO_BACHA = 0.40                      # supuesto: bajo el lavaplatos, dos puertas de 0,40 (mueble de 0,80)
+MODULO_ALTO = 0.40                       # supuesto
+# Cocina: cajones y puertas interactivos, y contenido (fase "07 detalle interactivo"). Frentes que ya no se
+# reparten con frentes()/tiradores() (los tramos base y alto de MODULO_BASE/MODULO_ALTO): los base se
+# reconstruyen como cajones reales (salvo bajo el lavaplatos, que queda como puerta de bisagra), y los altos como
+# puertas de bisagra, cada uno un objeto interactivo con su tirador.
+CAJON_ESP = 0.018                        # supuesto: melamina de 18 mm (frente, laterales, fondo, piso)
+CAJON_RECORRIDO = 0.40                   # diseño: recorrido de los cajones base (0,35-0,45 m del encargo)
+CAJON_PROF_BASE = 0.52                   # supuesto: hondo del cajón (algo menos que el mueble, 0,60 - frente)
+ALTO_CAJON_SUP = 0.16                    # diseño: cajón angosto superior (bandeja de cubiertos)
+JUNTA_CAJONES = 0.006                    # supuesto: reveal entre los dos cajones apilados de un mismo módulo
+ANGULO_MUEBLE = 95.0                     # diseño: puertas de mueble (90-100°) que no sean cajones
+ALTOS_ESP = 0.018                        # supuesto: costados/piso/techo del mueble alto (cascarón hueco)
+# ---------------------------------------------------------------------------
+# Nevera (fase "07 detalle interactivo"): reemplaza el bloque macizo REFRI por un cuerpo hueco de acero cepillado,
+# con puerta principal de bisagra (interactiva) y cajón freezer abajo (interactivo). Freezer abajo: diseño
+# (estilo «French door» de mercado; el brief sólo pedía el volumen REFRI).
+# ---------------------------------------------------------------------------
+NEVERA_ZOCALO = 0.08                     # supuesto: zócalo bajo la nevera, a ras del de la cocina
+NEVERA_ESP = 0.020                       # supuesto: chapa + aislación de costados, fondo, techo y piso
+NEVERA_ESP_PUERTA = 0.045                # supuesto: espesor de la puerta y el cajón freezer (con aislación)
+NEVERA_JUNTA = 0.010                     # supuesto: junta oscura entre el freezer y la puerta principal
+NEVERA_HOLGURA_LADO = 0.008              # supuesto: reveal entre la puerta/cajón y el cuerpo
+NEVERA_FREEZER_ALTO = 0.42               # diseño: alto interior del cajón freezer
+NEVERA_ANGULO_PUERTA = 100.0              # diseño: abre bastante para mostrar el interior. El canto exterior sí
+                                          # invade el paso angosto frente a la nevera (prueba de recorrido fase 6):
+                                          # se excluye ahí ese único requisito, con el mismo criterio de un
+                                          # electrodoméstico real (no se puede circular con la puerta abierta).
+NEVERA_RECORRIDO_FREEZER = 0.36          # diseño: cuánto sale el cajón freezer
+NEVERA_CAJON_PROF = 0.50                 # supuesto: hondo del cajón freezer (deja margen contra el fondo)
+NEVERA_MANILLA = dict(seccion=0.016, sobresale=0.045, margen=0.16)  # supuesto: manilla de barra vertical
+NEVERA_FORRO_ESP = 0.010                 # supuesto: forro interior blanco (puerta y cuerpo)
+NEVERA_ESTANTE_ESP = 0.006               # supuesto: estante de vidrio
+NEVERA_ESTANTES_Z = (0.40, 0.78)         # diseño: dos estantes de vidrio dentro del compartimento principal
+NEVERA_CAJON_VERDURA_ALTO = 0.16         # supuesto: cajón de verduras (no interactivo: se ve al abrir la puerta)
+NEVERA_BALCON_ALTO = 0.09                # supuesto: balcones de la contrapuerta
+
+# ---------------------------------------------------------------------------
+# Nicho de lavadora: frente plegable cerrado (el arco del plano) y dintel sobre la puerta.
+# ---------------------------------------------------------------------------
+LAVADORA = (0.60, 0.60, 0.85)          # supuesto: carga frontal estándar
+LAVADORA_HOLGURA = 0.03                # supuesto: separación al fondo del nicho
+LV_FRENTE_ESP = 0.02                   # supuesto
+LV_DINTEL_ESP = 0.072                  # supuesto: como un tabique (0,072 entre centros de línea, medido)
+
+# ---------------------------------------------------------------------------
+# Sanitarios.
+# ---------------------------------------------------------------------------
+TINA_FONDO = 0.70            # brief (decisión 2): tina de 1,45 × 0,70 que llena el nicho
+TINA_ALTO = 0.55             # supuesto
+TINA_PARED = 0.07            # supuesto
+TINA_BASE = 0.12             # supuesto
+BANOS = {
+    # tina: (x0, x1, cara del muro en y, sentido hacia el baño)
+    # wc: bbox de la extracción, muro del estanque ('E'|'O') y estanque 'visible' u 'oculto' (en la repisa)
+    # repisa (B1): línea continua medida x≈408,65 entre tina y shaft; alto 1,10 del brief
+    # ducto (B2): discontinua medida de y 369 a 445, que cruza la tina: elemento sobre el plano de corte ->
+    #             ducto o cielo falso local contra el muro este, de 2,10 al cielo (inferido, fase 3). Centro de
+    #             trazo 412,6 sobre la tina y ≈412,0 junto al WC (ahí se confunde con el estanque): se usa 412,3
+    # vanitorio: bbox de la extracción con el borde del muro declarado y el extremo libre
+    "B1": dict(tina=(X["T4_E"], X["E_FORRO"], Y["N_I"], +1),
+               wc=dict(bbox=(382.0, X["E_FORRO"], 71.0, 96.0), muro="E", estanque="oculto"),
+               repisa=(408.5, X["E_FORRO"], 64.4, Y["SH1_N"], 1.10),
+               vanitorio=dict(bbox=(X["T4_E"], 380.0, 121.0, Y["T5_N"]), muro=("S", Y["T5_N"]), libre="E")),
+    "B2": dict(tina=(X["T10_E"], X["E_I"], Y["T9_S"], +1),
+               wc=dict(bbox=(381.0, X["E_I"], 412.0, 436.0), muro="E", estanque="visible"),
+               ducto=(412.3, X["E_I"], Y["T9_S"], Y["SH2_N"], 2.10),
+               vanitorio=dict(bbox=(X["T10_E"], 382.0, 451.0, Y["S_I"]), muro=("S", Y["S_I"]), libre="E")),
+}
+WC = dict(taza_alto=0.40, pedestal_alto=0.30, taza_largo=0.52, taza_ancho=0.37, estanque_z=(0.40, 0.80),
+          estanque_fondo=0.18, estanque_ancho=0.40)   # supuesto: medidas comerciales usuales
+VANITORIO_Z = (0.80, 0.85)       # supuesto: mueble y cubierta
+VANITORIO_RETRANQUEO = 0.02      # supuesto: vuelo de la cubierta sobre el mueble
+RESPALDO_ALTO = 0.08             # supuesto
+# Versión 2: lavamanos, grifería y espejo son piezas de la decoración (build/deco_cocina_bano.py, fase 4).
+
+TOL_PENETRACION = 0.001          # m: dos piezas no pueden solaparse más que esto en los tres ejes
+HOLGURA_CAMARA = 0.20            # m: distancia mínima (3D) de cada cámara de ambiente a todo sólido
+
+
+def uw(eje, u0, u1, w0, w1):
+    """(u a lo largo del muro, w a través) -> (x0, x1, y0, y1) del plano."""
+    return (u0, u1, w0, w1) if eje == "x" else (w0, w1, u0, u1)
+
+
+def mundo(eje, u, w, z=0.0):
+    x, y = (u, w) if eje == "x" else (w, u)
+    return Vector((*P.a_blender(x, y), z))
+
+
+# ---------------------------------------------------------------------------
+# Ayudas genéricas para piezas móviles fuera de la tabla PUERTAS (versión 2, fase "07 detalle interactivo": nevera,
+# cocina, clósets). Mismo patrón que puertas()/ventanal(): se arman en su posición final de mundo (px en el plano,
+# m en z), con el origen en la bisagra o el punto de reposo, para que el visor las abra sin tocar la geometría.
+# ---------------------------------------------------------------------------
+def _bisagra(col, nombre, mat, eje, u0, u1, w0, w1, z0, z1, ub_bisagra, cara_bisagra, sentido,
+             angulo_abierta_deg, abierta, props):
+    """Hoja rectangular de bisagra genérica (mueble, clóset, nevera): caja u0..u1 (a lo largo de eje), w0..w1 (a
+    través), z0..z1. `cara_bisagra` debe ser w0 o w1 (la cara donde queda el eje de giro); `ub_bisagra`, u0 o u1
+    (el extremo con la bisagra). `sentido`: +1/-1, hacia qué lado de cara_bisagra se abre. Devuelve (objeto,
+    pivote de mundo); origen en la bisagra, rotation_euler.z = ángulo actual (0 = cerrada)."""
+    h = Pieza(nombre, mat)
+    h.caja(*uw(eje, u0, u1, w0, w1), z0, z1)
+    ulibre = u1 if ub_bisagra == u0 else u0
+    piv = mundo(eje, ub_bisagra, cara_bisagra)
+    dc = mundo(eje, ulibre, cara_bisagra) - piv
+    do = mundo(eje, ub_bisagra, cara_bisagra + sentido) - piv
+    signo = 1 if dc.x * do.y - dc.y * do.x > 0 else -1
+    ang_max = round(angulo_abierta_deg * signo, 2)
+    ang = math.radians(ang_max) if abierta else 0.0
+    p = dict(props)
+    p.update(puerta=nombre, abierta=abierta, angulo_deg=round(math.degrees(ang), 2), angulo_abierta_deg=ang_max)
+    ob = h.crear(col, p, origen=tuple(piv))
+    ob.rotation_euler.z = ang
+    return ob, piv
+
+
+def _corredera(col, nombre, mat, eje, u0, u1, w0, w1, z0, z1, sentido_u, recorrido_m, abierta, props):
+    """Hoja corredera genérica (clóset): caja u0..u1, w0..w1, z0..z1 en su posición cerrada. Se desliza
+    recorrido_m a lo largo de eje, hacia sentido_u (+1/-1). Devuelve (objeto, referencia de mundo); origen en la
+    esquina de referencia (u0, w0, z0), la posición cerrada."""
+    h = Pieza(nombre, mat)
+    h.caja(*uw(eje, u0, u1, w0, w1), z0, z1)
+    ref = mundo(eje, u0, w0, z0)
+    u_abierta = u0 + sentido_u * px(recorrido_m)
+    dvec = mundo(eje, u_abierta, w0, z0) - ref
+    p = dict(props)
+    p.update(corredera=True, abierta=abierta, recorrido_m=round(dvec.length, 4),
+             eje_apertura=[round(c, 6) for c in (dvec.normalized() if dvec.length else Vector((0.0, 0.0, 0.0)))])
+    ob = h.crear(col, p, origen=tuple(ref))
+    ob.location = ref + (dvec if abierta else Vector((0.0, 0.0, 0.0)))
+    return ob, ref
+
+
+def _cajon(col, nombre, mat, eje, u0, u1, w_frente, sentido_prof, prof, z0, z1, esp, recorrido_m, abierta, props):
+    """Cajón real (frente + laterales + fondo + piso, abierto arriba), en un solo objeto: ancho u0..u1 (a lo
+    largo de eje, paralelo al mueble), hondo `prof` desde w_frente hacia sentido_prof (transversal, adentro del
+    mueble), alto z0..z1 (paredes del cajón), tablero de espesor `esp`. Se desliza recorrido_m hacia afuera
+    (transversal, en el sentido opuesto a sentido_prof: sale hacia el frente del mueble). Origen en la esquina de
+    referencia (u0, w_frente, z0), la posición cerrada."""
+    e = px(esp)
+    wl = w_frente + sentido_prof * e                      # cara interior del frente
+    wf = w_frente + sentido_prof * px(prof)               # fondo del cajón
+    h = Pieza(nombre, mat)
+    h.caja(*uw(eje, u0, u1, w_frente, wl), z0, z1)                        # frente
+    h.caja(*uw(eje, u0, u0 + e, wl, wf), z0, z1)                          # lateral 1
+    h.caja(*uw(eje, u1 - e, u1, wl, wf), z0, z1)                          # lateral 2
+    h.caja(*uw(eje, u0, u1, wf - sentido_prof * e, wf), z0, z1)          # fondo
+    h.caja(*uw(eje, u0, u1, w_frente, wf), z0, z0 + esp)                  # piso (z: metros, no px)
+    ref = mundo(eje, u0, w_frente, z0)
+    w_abierta = w_frente - sentido_prof * px(recorrido_m)                 # sale hacia afuera del mueble
+    dvec = mundo(eje, u0, w_abierta, z0) - ref
+    p = dict(props)
+    p.update(corredera=True, abierta=abierta, recorrido_m=round(dvec.length, 4),
+             eje_apertura=[round(c, 6) for c in (dvec.normalized() if dvec.length else Vector((0.0, 0.0, 0.0)))])
+    ob = h.crear(col, p, origen=tuple(ref))
+    ob.location = ref + (dvec if abierta else Vector((0.0, 0.0, 0.0)))
+    return ob, ref
+
+
+def _tramos(eje, u_ini, u_fin, w_frente, s, z0, z1, modulo):
+    """Sólo los tramos (u0, u1) de frentes(), sin dejar geometría (el bmesh de prueba se descarta)."""
+    tmp = Pieza("_tmp_tramos", "Depto_Mat_MuebleCocina")
+    t = frentes(tmp, eje, u_ini, u_fin, w_frente, s, z0, z1, modulo)
+    tmp.bm.free()
+    return t
+
+
+def _tirador(col, nombre, eje, u0, u1, w_cara, s, z0, z1, origen, padre, vertical=False):
+    """Manilla de barra (dos soportes, como tiradores()), delante de la cara w_cara, hija de `padre` (mismo
+    origen que la hoja). Horizontal (cajones): centrada en u0..u1, cerca del borde superior z1. Vertical
+    (puertas de bisagra): centrada en z0..z1, en el punto medio de u0..u1 (canto de la hoja)."""
+    T = TIRADOR
+    sec, sep = px(T["seccion"]), px(T["separacion"])
+    p = Pieza(nombre, "Depto_Mat_MetalNegroMate")
+    if vertical:
+        zc = (z0 + z1) / 2
+        largo = min(T["largo_max"], 0.6 * (z1 - z0))
+        uc = (u0 + u1) / 2
+        for ze in (zc - largo / 2 + T["seccion"], zc + largo / 2 - T["seccion"]):
+            p.caja(*uw(eje, uc - sec / 2, uc + sec / 2, w_cara, w_cara + s * (sep - sec)),
+                   ze - T["seccion"] / 2, ze + T["seccion"] / 2)
+    else:
+        zh = z1 - T["desde_borde"]
+        largo = min(px(T["largo_max"]), 0.6 * (u1 - u0))
+        uc = (u0 + u1) / 2
+        for ue in (uc - largo / 2 + sec, uc + largo / 2 - sec):
+            p.caja(*uw(eje, ue - sec / 2, ue + sec / 2, w_cara, w_cara + s * (sep - sec)),
+                   zh - T["seccion"] / 2, zh + T["seccion"] / 2)
+    return p.crear(col, origen=origen, padre=padre)
+
+
+# ---------------------------------------------------------------------------
+# Contenido de cocina (fase "07 detalle interactivo"): bandeja de cubiertos y ollas dentro de los cajones
+# (hijos del cajón: se mueven con él), platos y tazas sobre la repisa de los muebles altos (estáticos: la
+# repisa no se mueve, sólo la puerta que la tapa).
+# ---------------------------------------------------------------------------
+def _bandeja_cubiertos(col, u0, u1, w_frente, w_fondo, z_piso, origen, padre):
+    """Bandeja con 3 compartimentos (divisiones) y cubiertos simplificados (placas planas de acero)."""
+    m = px(0.010)
+    w0, w1 = sorted((w_frente, w_fondo))
+    div = Pieza("Depto_Cocina_CajonCubiertosBandeja", "Depto_Mat_MuebleBlanco")
+    div.caja(u0 + m, u1 - m, w0 + m, w1 - m, z_piso, z_piso + 0.004)
+    n = 3
+    paso = (u1 - u0 - 2 * m) / n
+    for i in range(1, n):
+        ud = u0 + m + i * paso
+        div.caja(ud - px(0.0025), ud + px(0.0025), w0 + m, w1 - m, z_piso, z_piso + 0.032)
+    div.crear(col, origen=origen, padre=padre)
+    cub = Pieza("Depto_Cocina_CajonCubiertosPiezas", "Depto_Mat_Acero")
+    wm = px(0.014)
+    for i in range(n):
+        uc0 = u0 + m + i * paso
+        for j, frac in enumerate((0.32, 0.68)):
+            uc = uc0 + paso * frac
+            largo = px(0.15 + 0.02 * ((i + j) % 3))
+            cub.caja(uc - px(0.007), uc + px(0.007), w0 + wm, w0 + wm + largo, z_piso + 0.005, z_piso + 0.010)
+    cub.crear(col, origen=origen, padre=padre)
+
+
+def _ollas_sartenes(col, uc, wc, z_piso, origen, padre):
+    """Una olla (cilindro con dos asas cortas) y un sartén (cilindro bajo con una asa corta), apoyados en el
+    piso; todo dentro de un radio chico para no tocar las paredes del cajón."""
+    r_olla, r_sarten = px(0.095), px(0.105)
+    ollas = Pieza("Depto_Cocina_CajonOllas", "Depto_Mat_Acero")
+    uo, us = uc - px(0.12), uc + px(0.115)
+    ollas.cilindro(uo, wc, r_olla, r_olla, z_piso, z_piso + 0.13, seg=16)
+    ollas.cilindro(us, wc, r_sarten, r_sarten, z_piso, z_piso + 0.045, seg=16)
+    ollas.crear(col, origen=origen, padre=padre)
+    mangos = Pieza("Depto_Cocina_CajonMangos", "Depto_Mat_MetalNegroMate")
+    mangos.caja(us + r_sarten, us + r_sarten + px(0.035), wc - px(0.014), wc + px(0.014),
+                z_piso + 0.016, z_piso + 0.030)                                  # asa corta del sartén
+    mangos.caja(uo - r_olla - px(0.018), uo - r_olla, wc - px(0.045), wc - px(0.028), z_piso + 0.085, z_piso + 0.105)
+    mangos.caja(uo - r_olla - px(0.018), uo - r_olla, wc + px(0.028), wc + px(0.045), z_piso + 0.085, z_piso + 0.105)
+    mangos.crear(col, origen=origen, padre=padre)
+
+
+def _platos_stack(col, cx, cy, z_piso, n=5):
+    """Pila de n platos (discos apilados) sobre una repisa; estática (la repisa no se mueve)."""
+    p = Pieza("Depto_Cocina_AltoPlatos", "Depto_Mat_GresBlanco")
+    r = px(0.12)
+    paso = 0.018
+    for i in range(n):
+        p.cilindro(cx, cy, r, r, z_piso + i * paso, z_piso + i * paso + 0.012, seg=20)
+    p.crear(col)
+
+
+def _tazas(col, cx, cy, z_piso, n=3, separacion=0.09):
+    """n tazas sobre una repisa; estáticas."""
+    p = Pieza("Depto_Cocina_AltoTazas", "Depto_Mat_Ceramica")
+    r = px(0.038)
+    sep = px(separacion)
+    for i in range(n):
+        cxi = cx + (i - (n - 1) / 2) * sep
+        p.cilindro(cxi, cy, r, r, z_piso, z_piso + 0.09, seg=14)
+    p.crear(col)
+
+
+# ---------------------------------------------------------------------------
+PUERTA_CONTRATO = {   # clase/etiqueta/recinto del contrato de interacción v2 (docs/contrato-interaccion.md)
+    "D1": ("Puerta del dormitorio principal", "Dorm1"),
+    "D2": ("Puerta del segundo dormitorio", "Dorm2"),
+    "B1": ("Puerta del baño 1", "Bano1"),
+    "B2": ("Puerta del baño 2", "Bano2"),
+    "Entrada": ("Puerta de entrada", "Hall"),
+}
+
+
+def puertas(col):
+    """Marco, hoja y manillas. La hoja y sus manillas se arman cerradas con el origen en la bisagra, y la
+    hoja abierta es la misma malla girada ANGULO_ABIERTA[id]: el tour puede abrir y cerrar rotando en Z."""
+    hojas = []
+    for pid, eje, a, b, c0, c1, hoja, bisagra, sentido, abierta, opc in PUERTAS:
+        es_ent = pid == "Entrada"
+        ma, ms = px(MARCO_ANCHO), px(MARCO_SOBRESALE)
+        if es_ent:
+            ma = ((b - a) - hoja) / 2              # jamba = (luz − hoja) / 2
+        assert ma > 0, f"{pid}: la hoja no cabe en la luz"
+        dintel = P.DINTEL_PUERTAS
+        marco = Pieza(f"Depto_Puerta_{pid}_Marco", "Depto_Mat_MarcoPuerta")
+        umax0 = opc.get("u_max_c0", b)
+
+        def pieza_marco(u0, u1, z0, z1, w_c0):
+            marco.caja(*uw(eje, u0, u1, c0, c1 + ms), z0, z1)              # dentro del muro y lado c1
+            if min(u1, umax0) > u0:
+                marco.caja(*uw(eje, u0, min(u1, umax0), w_c0, c0), z0, z1)  # sobresaliente del lado c0
+        pieza_marco(a, a + ma, 0.0, dintel, opc.get("w_c0_a", c0 - ms))    # jambas
+        pieza_marco(b - ma, b, 0.0, dintel, c0 - ms)
+        pieza_marco(a + ma, b - ma, HOJA_ALTO, dintel, c0 - ms)             # cabezal entre jambas
+        marco.crear(col)
+
+        # Hoja cerrada: entre jambas, al ras de la cara hacia la que abre. Bisagra en esa cara, junto a la jamba.
+        e = px(HOJA_ESP_ENTRADA if es_ent else HOJA_ESP)
+        cara = c0 if sentido < 0 else c1
+        w0, w1 = sorted((cara, cara - sentido * e))
+        du = 1 if bisagra == "a" else -1                  # de la bisagra hacia el canto libre
+        ub = a + ma if bisagra == "a" else b - ma
+        ulibre = b - ma if bisagra == "a" else a + ma
+        piv = mundo(eje, ub, cara)
+        h = Pieza(f"Depto_Puerta_{pid}_Hoja", "Depto_Mat_PuertaEntrada" if es_ent else "Depto_Mat_PuertaMadera")
+        h.caja(*uw(eje, a + ma, b - ma, w0, w1), LUZ_PISO, HOJA_ALTO)
+        man = Pieza(f"Depto_Puerta_{pid}_Manillas", "Depto_Mat_Manilla")
+        m0, m1 = sorted((ulibre - du * px(0.05), ulibre - du * px(0.05 + MANILLA[0])))
+        for wa, wb in ((w0 - px(MANILLA[1]), w0), (w1, w1 + px(MANILLA[1]))):
+            man.caja(*uw(eje, m0, m1, wa, wb), MANILLA_Z - 0.01, MANILLA_Z + 0.01)
+        # Giro: del sentido cerrado (bisagra -> canto libre) hacia el lado en que abre, en coordenadas de mundo.
+        dc, do = mundo(eje, ub + du, cara) - piv, mundo(eje, ub, cara + sentido) - piv
+        signo = 1 if dc.x * do.y - dc.y * do.x > 0 else -1
+        ang_max = ANGULO_ABIERTA.get(pid, 90.0) * signo          # la entrada (cerrada) abriría a 90°
+        ang = math.radians(ang_max) if abierta else 0.0
+        etiqueta, recinto = PUERTA_CONTRATO[pid]
+        ob = h.crear(col, {"puerta": pid, "abierta": abierta, "angulo_deg": round(math.degrees(ang), 2),
+                           "angulo_abierta_deg": ang_max, "bisagra": "origen, eje Z",
+                           "clase": "puerta", "etiqueta": etiqueta, "recinto": recinto},
+                     origen=tuple(piv))
+        ob.rotation_euler.z = ang
+        man.crear(col, origen=tuple(piv), padre=ob)
+        hojas.append((ob, eje, a, b, c0, c1))
+    return hojas
+
+
+def marco_ventana(marco, vidrio, eje, a, b, c0, c1, z0, z1, encuentros):
+    p, pp, vg = px(PERFIL), px(PERFIL_PROF), px(VIDRIO_ESP)
+    cm = (c0 + c1) / 2
+    assert encuentros == sorted(encuentros) and all(a + 2 * p < e < b - 2 * p for e in encuentros), encuentros
+    wa, wb = cm - pp / 2, cm + pp / 2
+    marco.caja(*uw(eje, a, a + p, wa, wb), z0, z1)                     # jambas
+    marco.caja(*uw(eje, b - p, b, wa, wb), z0, z1)
+    marco.caja(*uw(eje, a + p, b - p, wa, wb), z0, z0 + PERFIL)        # riel inferior y cabezal, a tope
+    marco.caja(*uw(eje, a + p, b - p, wa, wb), z1 - PERFIL, z1)
+    zi0, zi1 = z0 + PERFIL, z1 - PERFIL
+    for e in encuentros:                                               # montante: dos perfiles traslapados
+        marco.caja(*uw(eje, e - p, e + p * 0.2, wa, cm), zi0, zi1)
+        marco.caja(*uw(eje, e - p * 0.2, e + p, cm, wb), zi0, zi1)
+    bordes = [a + p] + [x for e in encuentros for x in (e - p, e + p)] + [b - p]
+    for i in range(0, len(bordes), 2):
+        vidrio.caja(*uw(eje, bordes[i], bordes[i + 1], cm - vg / 2, cm + vg / 2), zi0, zi1)
+
+
+def ventanas(col):
+    for vid, eje, a, b, c0, c1, z0, z1, encuentros, mat_vidrio in VENTANAS:
+        marco = Pieza(f"Depto_Ventana_{vid}_Marco", "Depto_Mat_MarcoVentana")
+        vidrio = Pieza(f"Depto_Ventana_{vid}_Vidrio", mat_vidrio)
+        marco_ventana(marco, vidrio, eje, a, b, c0, c1, z0, z1, encuentros)
+        marco.crear(col)
+        vidrio.crear(col, {"vidrio": True})
+
+
+def hoja_corredera(marco, vidrio, u0, u1, wc, z0, z1):
+    """Hoja de corredera (perfil perimetral + vidrio) en el riel centrado en wc, eje del muro 'y'."""
+    p, hp, vg = px(PERFIL), px(HOJA_CORREDERA_PROF), px(VIDRIO_ESP)
+    wa, wb = wc - hp / 2, wc + hp / 2
+    marco.caja(*uw("y", u0, u0 + p, wa, wb), z0, z1)
+    marco.caja(*uw("y", u1 - p, u1, wa, wb), z0, z1)
+    marco.caja(*uw("y", u0 + p, u1 - p, wa, wb), z0, z0 + PERFIL)
+    marco.caja(*uw("y", u0 + p, u1 - p, wa, wb), z1 - PERFIL, z1)
+    vidrio.caja(*uw("y", u0 + p, u1 - p, wc - vg / 2, wc + vg / 2), z0 + PERFIL, z1 - PERFIL)
+
+
+def ventanal(col):
+    """Corredera de dos rieles: marco perimetral, paño fijo sur en el riel exterior y hoja móvil norte en el
+    interior, corrida detrás del fijo. Devuelve (u del centro del paso libre, u de control del paño fijo)."""
+    v = VENTANAL
+    a, b, c0, c1, z0, z1, e = v["a"], v["b"], v["c0"], v["c1"], v["z0"], v["z1"], v["encuentro"]
+    p, pp = px(PERFIL), px(PERFIL_PROF_CORREDERA)
+    cm = (c0 + c1) / 2
+    w_ext, w_int = cm - pp / 4, cm + pp / 4            # c0 = W_O es la cara exterior
+    marco = Pieza("Depto_Ventana_Ventanal_Marco", "Depto_Mat_MarcoVentana")
+    vidrio = Pieza("Depto_Ventana_Ventanal_Vidrio", "Depto_Mat_Vidrio")
+    wa, wb = cm - pp / 2, cm + pp / 2
+    marco.caja(*uw("y", a, a + p, wa, wb), z0, z1)
+    marco.caja(*uw("y", b - p, b, wa, wb), z0, z1)
+    marco.caja(*uw("y", a + p, b - p, wa, wb), z0, z0 + PERFIL)       # riel inferior (5 cm: bajo el escalón del tour)
+    marco.caja(*uw("y", a + p, b - p, wa, wb), z1 - PERFIL, z1)
+    zi0, zi1 = z0 + PERFIL, z1 - PERFIL
+    hoja_corredera(marco, vidrio, e - p / 2, b - p, w_ext, zi0, zi1)  # paño fijo: parte del marco
+    marco.crear(col)
+    vidrio.crear(col, {"vidrio": True})
+    # Hoja móvil: cerrada va de la jamba norte al encuentro (con traslape de un perfil sobre el fijo).
+    u0, u1 = a + p, e + p / 2
+    desplaz = (e - p / 2) - u0 if v["abierta"] else 0.0              # corrida hasta alinear con el fijo
+    assert u1 + desplaz <= b - p, "la hoja móvil no cabe detrás del paño fijo"
+    hm = Pieza("Depto_Ventana_Ventanal_Hoja", "Depto_Mat_MarcoVentana")
+    hv = Pieza("Depto_Ventana_Ventanal_HojaVidrio", "Depto_Mat_Vidrio")
+    hoja_corredera(hm, hv, u0, u1, w_int, zi0, zi1)
+    ref = mundo("y", u0, w_int, zi0)                                  # origen: esquina de la hoja cerrada
+    dvec = mundo("y", u0 + desplaz, w_int, zi0) - ref
+    ob = hm.crear(col, {"corredera": True, "abierta": v["abierta"], "recorrido_m": round(dvec.length, 4),
+                        "eje_apertura": list((dvec.normalized() if dvec.length else Vector((0, 0, 0)))[:]),
+                        "clase": "ventana", "etiqueta": "Ventanal del living", "recinto": "Living"},
+                  origen=tuple(ref))
+    ob.location = ref + dvec
+    hv.crear(col, {"vidrio": True}, origen=tuple(ref), padre=ob)
+    return (u0 + (e - p / 2)) / 2, (u1 + desplaz + b - p) / 2
+
+
+def baranda_vidrio(col):
+    if "Depto_Col_Baranda" not in bpy.data.objects:
+        raise SystemExit("ERROR: falta Depto_Col_Baranda: la fase 2 debe tener BARANDA_TIPO = 'vidrio' (compuerta 2).")
+    e = px(VIDRIO_BARANDA) / 2
+    cw, ch = px(CANAL[0]) / 2, CANAL[1]
+    pw, ph = px(PASAMANOS[0]) / 2, PASAMANOS[1]
+    top = Z_BAL + P.ALTURA_BARANDA_BALCON
+    tramos = [  # (eje, fijo px, desde, hasta): mismos extremos que la masa del blockout
+        ("y", X["BARANDA_O"], Y["BARANDA_N"] - cw, Y["BARANDA_S"] + cw),
+        ("x", Y["BARANDA_N"], X["BARANDA_O"] + cw, X["W_O"]),
+        ("x", Y["BARANDA_S"], X["BARANDA_O"] + cw, X["W_O"]),
+    ]
+    vid = Pieza("Depto_Balcon_BarandaVidrio", "Depto_Mat_Vidrio")
+    met = Pieza("Depto_Balcon_BarandaPerfiles", "Depto_Mat_Pasamanos")
+    for eje, f, u0, u1 in tramos:
+        # eje = eje largo del tramo: 'y' = a lo largo de y (fijo en x)
+        def c(obj, half, za, zb):
+            obj.caja(*uw(eje, u0, u1, f - half, f + half), za, zb)
+        c(met, cw, Z_BAL, Z_BAL + ch)                           # canal inferior
+        c(vid, e, Z_BAL + ch, top - ph)                         # vidrio
+        c(met, pw, top - ph, top)                               # pasamanos
+    vid.crear(col, {"vidrio": True})
+    met.crear(col)
+
+
+def palier(col):
+    ancho, extra, m = px(PALIER_ANCHO), px(PALIER_LARGO_EXTRA), px(PALIER_MURO)
+    x0, x1 = X["E_O"], X["E_O"] + ancho
+    y0, y1 = Y["ENT_N"] - extra, Y["ENT_S"] + extra
+    Pieza("Depto_Palier_Piso", "Depto_Mat_PalierPiso").caja(x0, x1 + m, y0 - m, y1 + m, -LOSA, 0.0).crear(col)
+    muros = Pieza("Depto_Palier_Muros", "Depto_Mat_Palier")
+    muros.caja(x1, x1 + m, y0 - m, y1 + m, 0.0, H)              # muro de fondo
+    muros.caja(x0, x1, y0 - m, y0, 0.0, H)                      # muros de los extremos
+    muros.caja(x0, x1, y1, y1 + m, 0.0, H)
+    muros.crear(col)
+    Pieza("Depto_Palier_Cielo", "Depto_Mat_Palier").caja(x0, x1 + m, y0 - m, y1 + m, H, H + LOSA).crear(col)
+
+
+# ---------------------------------------------------------------------------
+# Contenido de los clósets: ropa colgada (perchas), ropa doblada, zapatos.
+# ---------------------------------------------------------------------------
+CLOSET_ROPA = {
+    # ancho: sobre un rack real las prendas se tocan (hombro con hombro); acá se dejan angostas (< el paso entre
+    # perchas) para que las cajas no se penetren entre sí ni con los tabiques de los costados.
+    "D1": dict(cajones=1, doblada="Depto_Mat_RopaDoblada1", zapatos="Depto_Mat_Zapato", colgar=[
+        ("camisa", "Depto_Mat_RopaCrudo", 0.62, 0.18), ("vestido", "Depto_Mat_RopaVino", 0.95, 0.17),
+        ("camisa", "Depto_Mat_RopaAzul", 0.60, 0.18), ("vestido", "Depto_Mat_RopaGris", 0.90, 0.17)]),
+    "D2": dict(cajones=2, doblada="Depto_Mat_RopaDoblada2", zapatos="Depto_Mat_Zapato", colgar=[
+        ("camisa", "Depto_Mat_RopaVerde", 0.60, 0.19), ("pantalon", "Depto_Mat_RopaCarbon", 0.98, 0.15),
+        ("camisa", "Depto_Mat_RopaGris", 0.58, 0.19), ("pantalon", "Depto_Mat_RopaAzul", 0.96, 0.15)]),
+}
+
+
+def _barra_colgar(pieza, x0, x1, y_c, z, margen=0.04):
+    """Barra de colgar horizontal (tubo aproximado por una barra de sección cuadrada), a lo largo de x."""
+    r = px(CLOSET_BARRA_R)
+    pieza.caja(x0 + px(margen), x1 - px(margen), y_c - r, y_c + r, z - CLOSET_BARRA_R, z + CLOSET_BARRA_R)
+
+
+def _prenda(pieza, xc, y_c, z_top, tipo, alto, ancho, rnd):
+    """Prenda colgada muy simplificada (2 cajas): hombro/cintura + cuerpo o piernas. z_top: donde cuelga (bajo
+    la barra); tipo: "camisa"|"vestido" (cuerpo entero) o "pantalon" (dos piernas)."""
+    prof = px(0.085 + rnd.uniform(-0.012, 0.018))
+    if tipo == "pantalon":
+        z_cintura = z_top - alto * 0.15
+        pieza.caja(xc - px(ancho) / 2, xc + px(ancho) / 2, y_c - prof / 2, y_c + prof / 2, z_cintura, z_top)
+        pl = px(ancho * 0.36)
+        for sx in (-1, 1):
+            xl = xc + sx * px(ancho) / 4
+            pieza.caja(xl - pl / 2, xl + pl / 2, y_c - prof * 0.42, y_c + prof * 0.42,
+                      z_top - alto, z_cintura + 0.008)
+    else:
+        frac_hombro = 0.24 if tipo == "camisa" else 0.16
+        ancho_cuerpo = ancho * (0.70 if tipo == "camisa" else 0.60)
+        z_h = z_top - alto * frac_hombro
+        pieza.caja(xc - px(ancho) / 2, xc + px(ancho) / 2, y_c - prof / 2, y_c + prof / 2, z_h, z_top)
+        pieza.caja(xc - px(ancho_cuerpo) / 2, xc + px(ancho_cuerpo) / 2, y_c - prof * 0.42, y_c + prof * 0.42,
+                  z_top - alto, z_h)
+
+
+def _pila_doblada(pieza, xc, y_c, z0, ancho, hondo, capas, alto_capa=0.055):
+    """Pila de ropa doblada: capas apiladas, cada una levemente más chica que la de abajo."""
+    for k in range(capas):
+        za = z0 + k * alto_capa
+        f = 1.0 - 0.035 * k
+        pieza.caja(xc - px(ancho) / 2 * f, xc + px(ancho) / 2 * f, y_c - px(hondo) / 2 * f, y_c + px(hondo) / 2 * f,
+                  za + 0.003, za + alto_capa - 0.003)
+
+
+def _zapatos(pieza, xc, y_c, z0, separacion=0.11):
+    """Par de zapatos (dos cajas simples), uno junto al otro."""
+    for sx in (-1, 1):
+        x_ = xc + sx * px(separacion) / 2
+        pieza.caja(x_ - px(0.045), x_ + px(0.045), y_c - px(0.11), y_c + px(0.11), z0, z0 + 0.07)
+
+
+def closets(col):
+    e, sep, j = px(PUERTA_CLOSET_ESP), px(RIEL_SEP), px(JUNTA)
+    ep = px(CLOSET_PANEL_ESP)
+    rnd = random.Random(2026)
+    for cid, x0, x1, yf, yfr in CLOSETS:
+        s = 1 if yfr > yf else -1                               # sentido fondo -> frente (hacia el recinto)
+        fondo_rieles = yfr - s * (2 * e + sep + px(0.005))       # cara del cuerpo detrás de los dos rieles
+        did = cid.split("_")[0]                                  # "D1" | "D2"
+        recinto = "Paso_D1" if did == "D1" else "Paso_D2"
+        # Cascarón hueco (fondo, piso, techo bajo el cabezal): sin costados de punta, los cierran las propias
+        # hojas correderas (mismo criterio que la cocina, evita que el cuerpo choque con la hoja del extremo).
+        cuerpo = Pieza(f"Depto_Closet_{cid}_Cuerpo", "Depto_Mat_FrenteCloset")
+        cuerpo.caja(x0, x1, yf, yf + s * ep, 0.0, H)                                        # fondo (muro)
+        cuerpo.caja(x0, x1, yf, fondo_rieles, 0.0, CLOSET_PANEL_ESP)                         # piso
+        cuerpo.caja(x0, x1, yf, fondo_rieles, H - CLOSET_CABEZAL - CLOSET_PANEL_ESP, H - CLOSET_CABEZAL)  # techo
+        cuerpo.caja(x0, x1, fondo_rieles, yfr, H - CLOSET_CABEZAL, H)                        # cabezal (riel)
+        cuerpo.crear(col)
+
+        # Puertas correderas: dos hojas independientes (antes una sola pieza estática), cada una con su tirador
+        # embutido (hijo). Recorrido: hasta casi la mitad del ancho, para dejar la mitad del clóset accesible.
+        mid, sol = (x0 + x1) / 2, px(CLOSET_SOLAPE)
+        w_ext0, w_ext1 = sorted((yfr - s * e, yfr))
+        w_int = yfr - s * (e + sep)
+        w_int0, w_int1 = sorted((w_int - s * e, w_int))
+        recorrido_m = ((x1 - x0) / 2 - px(CLOSET_SOLAPE) - 2 * j) * S
+        zt = (0.90, 1.30)
+        hoja_a, ref_a = _corredera(col, f"Depto_Closet_{cid}_PuertaA", "Depto_Mat_FrenteCloset", "x",
+                                   x0 + j, mid + sol / 2, w_ext0, w_ext1, LUZ_PISO, H - CLOSET_CABEZAL,
+                                   +1, recorrido_m, False,
+                                   dict(clase="closet", etiqueta="Puerta del clóset", recinto=recinto))
+        Pieza(f"Depto_Closet_{cid}_PuertaA_Tirador", "Depto_Mat_Manilla").caja(
+            x0 + px(0.03), x0 + px(0.05), yfr, yfr + s * px(0.002), *zt
+        ).crear(col, origen=ref_a, padre=hoja_a)
+        hoja_b, ref_b = _corredera(col, f"Depto_Closet_{cid}_PuertaB", "Depto_Mat_FrenteCloset", "x",
+                                   mid - sol / 2, x1 - j, w_int0, w_int1, LUZ_PISO, H - CLOSET_CABEZAL,
+                                   -1, recorrido_m, False,
+                                   dict(clase="closet", etiqueta="Puerta del clóset", recinto=recinto))
+        Pieza(f"Depto_Closet_{cid}_PuertaB_Tirador", "Depto_Mat_Manilla").caja(
+            x1 - px(0.05), x1 - px(0.03), w_int, w_int + s * px(0.002), *zt
+        ).crear(col, origen=ref_b, padre=hoja_b)
+
+        # Interior fijo (no se mueve; las puertas lo tapan): "_Norte" (más honda) de colgar, "_Sur" de repisas.
+        y_mid = (yf + fondo_rieles) / 2
+        z_piso_top, z_techo_bot = CLOSET_PANEL_ESP, H - CLOSET_CABEZAL - CLOSET_PANEL_ESP
+        R = CLOSET_ROPA[did]
+        if cid.endswith("Norte"):
+            z_barra = H - CLOSET_CABEZAL - CLOSET_BARRA_DESDE_CABEZAL
+            barra = Pieza(f"Depto_Closet_{cid}_Barra", "Depto_Mat_AceroNegro")
+            _barra_colgar(barra, x0, x1, y_mid, z_barra)
+            barra.crear(col)
+            items = R["colgar"]
+            paso = ((x1 - x0) - px(0.10)) / len(items)
+            piezas_mat = {}
+            z_top_ropa = z_barra - CLOSET_BARRA_R - 0.015
+            for k, (tipo, mat, alto, ancho) in enumerate(items):
+                xc = x0 + px(0.05) + paso * (k + 0.5)
+                pm = piezas_mat.setdefault(mat, Pieza(f"Depto_Closet_{cid}_Ropa_{mat}", mat))
+                _prenda(pm, xc, y_mid, z_top_ropa, tipo, alto, ancho, rnd)
+            for pm in piezas_mat.values():
+                pm.crear(col)
+        else:
+            w_frente_cajon = fondo_rieles - s * px(0.03)         # detrás de las hojas, dentro del cascarón
+            prof_cajon = (abs(fondo_rieles - yf) * S) - 0.06
+            z0c = z_piso_top
+            for kdraw in range(R["cajones"]):
+                z1c = z0c + CLOSET_CAJON_ALTO
+                ob_c, ref_c = _cajon(col, f"Depto_Closet_{cid}_Cajon{kdraw + 1}", "Depto_Mat_FrenteCloset", "x",
+                                     x0 + px(0.02), x1 - px(0.02), w_frente_cajon, -s, prof_cajon, z0c, z1c,
+                                     CLOSET_PANEL_ESP, CLOSET_CAJON_RECORRIDO, False,
+                                     dict(clase="cajon", etiqueta="Cajón del clóset", recinto=recinto))
+                _tirador(col, f"Depto_Closet_{cid}_Cajon{kdraw + 1}_Tirador", "x", x0 + px(0.02), x1 - px(0.02),
+                        w_frente_cajon, s, z0c, z1c, ref_c, ob_c)
+                z0c = z1c + 0.02
+            z_shelf1 = z0c + 0.02
+            zap = Pieza(f"Depto_Closet_{cid}_Zapatos", R["zapatos"])
+            for k, dx in enumerate((-0.16, 0.16)):
+                _zapatos(zap, (x0 + x1) / 2 + px(dx), y_mid, z_shelf1)
+            zap.crear(col)
+            z_shelf2 = min(z_shelf1 + 0.34, z_techo_bot - 0.20)
+            dob = Pieza(f"Depto_Closet_{cid}_RopaDoblada", R["doblada"])
+            _pila_doblada(dob, (x0 + x1) / 2 - px(0.14), y_mid, z_shelf2, 0.32, 0.30, 3)
+            _pila_doblada(dob, (x0 + x1) / 2 + px(0.16), y_mid, z_shelf2, 0.28, 0.28, 2)
+            dob.crear(col)
+
+
+def frentes(obj, eje, u_ini, u_fin, w_frente, s, z0, z1, modulo):
+    """Frentes de mueble con juntas: a lo largo de u, en el plano w_frente, hacia afuera según s."""
+    assert u_fin > u_ini, (u_ini, u_fin)
+    n = max(1, round((u_fin - u_ini) / px(modulo)))
+    paso = (u_fin - u_ini) / n
+    j = px(JUNTA)
+    tramos = []
+    for i in range(n):
+        u0, u1 = u_ini + i * paso + j / 2, u_ini + (i + 1) * paso - j / 2
+        obj.caja(*uw(eje, u0, u1, w_frente, w_frente + s * px(FRENTE_ESP)), z0, z1)
+        tramos.append((u0, u1))
+    return tramos
+
+
+def tiradores(obj, eje, tramos, w_cara, s, zh):
+    """Tirador de barra horizontal (dos soportes y la barra) centrado en cada frente, delante de su cara w_cara."""
+    T = TIRADOR
+    sec, sep = px(T["seccion"]), px(T["separacion"])
+    for u0, u1 in tramos:
+        largo = min(px(T["largo_max"]), 0.6 * (u1 - u0))
+        uc = (u0 + u1) / 2
+        for ue in (uc - largo / 2 + sec, uc + largo / 2 - sec):          # soportes
+            obj.caja(*uw(eje, ue - sec / 2, ue + sec / 2, w_cara, w_cara + s * (sep - sec)), zh - T["seccion"] / 2,
+                     zh + T["seccion"] / 2)
+        obj.caja(*uw(eje, uc - largo / 2, uc + largo / 2, w_cara + s * (sep - sec), w_cara + s * sep),
+                 zh - T["seccion"] / 2, zh + T["seccion"] / 2)               # barra
+
+
+def cocina(col):
+    f, rel = px(FRENTE_ESP), px(RELLENO_ESQUINA)
+    zc = MESON_Z - CUBIERTA_ESP
+    rb = px(BACHA_REBORDE)
+    hueco = (BACHA[0] + rb, BACHA[1] - rb, BACHA[2] + rb, BACHA[3] - rb)   # corte de la cubierta y cubeta
+    z_fondo_cubeta = MESON_Z - BACHA_PROF
+    # Muebles base: tramo norte con cajones reales (interactivos), tramo este con hueco para la cubeta y sus
+    # puertas de bisagra (bajo el lavaplatos: no son cajones, brief fase 3).
+    e_bn = px(CAJON_ESP)
+    # Cascarón hueco (estilo europeo sin marco: los cajones llegan casi al ancho completo y sus propios
+    # laterales cierran los extremos; sólo el fondo, el piso y el techo son del cuerpo, no costados de punta).
+    basen = Pieza("Depto_Cocina_BaseNorteCascaron", "Depto_Mat_MuebleCocina")
+    basen.caja(X["T3_E"], COC_FRENTE_X + f, Y["T5_S"], Y["T5_S"] + e_bn, ZOCALO_ALTO, zc)          # fondo (muro)
+    basen.caja(X["T3_E"], COC_FRENTE_X + f, Y["T5_S"], COC_FRENTE_Y - f, ZOCALO_ALTO, ZOCALO_ALTO + CAJON_ESP)
+    basen.crear(col)                          # el techo lo cierra la cubierta de arriba (sin panel propio)
+    base = Pieza("Depto_Cocina_BaseEste", "Depto_Mat_MuebleCocina")
+    base.caja_con_hueco(COC_FRENTE_X + f, X["E_FORRO"], Y["T5_S"], TORRE_Y[0], ZOCALO_ALTO, zc,
+                        hueco, z_fondo_cubeta - 0.01)
+    base.crear(col)
+    zoc = Pieza("Depto_Cocina_Zocalo", "Depto_Mat_Zocalo")
+    zr = px(ZOCALO_RETRANQUEO)
+    zoc.caja(X["T3_E"], COC_FRENTE_X + zr, Y["T5_S"], COC_FRENTE_Y - zr, 0.0, ZOCALO_ALTO)
+    zoc.caja(COC_FRENTE_X + zr, X["E_FORRO"], COC_FRENTE_Y - zr, TORRE_Y[0], 0.0, ZOCALO_ALTO)
+    zoc.crear(col)
+    relle = Pieza("Depto_Cocina_Rellenos", "Depto_Mat_FrenteCocina")     # esquina de la L: no son cajón ni puerta
+    zf = (ZOCALO_ALTO, zc - 0.003)
+    relle.caja(COC_FRENTE_X - rel + px(JUNTA) / 2, COC_FRENTE_X + f, COC_FRENTE_Y - f, COC_FRENTE_Y, *zf)
+    relle.caja(COC_FRENTE_X, COC_FRENTE_X + f, COC_FRENTE_Y, COC_FRENTE_Y + rel - px(JUNTA) / 2, *zf)
+    relle.crear(col)
+    # Cajones del tramo norte: dos por módulo (angosto arriba, profundo abajo), cada uno un objeto interactivo.
+    z_sup = (zf[1] - ALTO_CAJON_SUP, zf[1])
+    z_inf = (zf[0] + CAJON_ESP, zf[1] - ALTO_CAJON_SUP - JUNTA_CAJONES)   # apoyado sobre el piso del cascarón
+    CUTLERY_BAY, POTS_BAY = 0, 1
+    t_n = _tramos("x", X["T3_E"], COC_FRENTE_X - rel, COC_FRENTE_Y - f, +1, *zf, MODULO_BASE)
+    for i, (u0, u1) in enumerate(t_n):
+        es_cubiertos, es_ollas = i == CUTLERY_BAY, i == POTS_BAY
+        etq_sup = "Cajón de cubiertos" if es_cubiertos else f"Cajón {i + 1} de la cocina"
+        ob_s, ref_s = _cajon(col, f"Depto_Mueble_Cocina_Cajon{i + 1}Sup", "Depto_Mat_MuebleCocina", "x", u0, u1,
+                             COC_FRENTE_Y, -1, CAJON_PROF_BASE, *z_sup, CAJON_ESP, CAJON_RECORRIDO, es_cubiertos,
+                             dict(clase="cajon", etiqueta=etq_sup, recinto="Cocina"))
+        _tirador(col, f"Depto_Mueble_Cocina_Cajon{i + 1}Sup_Tirador", "x", u0, u1, COC_FRENTE_Y, +1, *z_sup,
+                ref_s, ob_s)
+        if es_cubiertos:
+            _bandeja_cubiertos(col, u0 + px(CAJON_ESP + 0.008), u1 - px(CAJON_ESP + 0.008),
+                               COC_FRENTE_Y - px(CAJON_ESP + 0.008),
+                               COC_FRENTE_Y - px(CAJON_ESP) - px(CAJON_PROF_BASE) + px(0.008),
+                               z_sup[0] + CAJON_ESP, ref_s, ob_s)
+        etq_inf = "Cajón de ollas y sartenes" if es_ollas else f"Cajón {i + 1} profundo de la cocina"
+        ob_i, ref_i = _cajon(col, f"Depto_Mueble_Cocina_Cajon{i + 1}Inf", "Depto_Mat_MuebleCocina", "x", u0, u1,
+                             COC_FRENTE_Y, -1, CAJON_PROF_BASE, *z_inf, CAJON_ESP, CAJON_RECORRIDO, es_ollas,
+                             dict(clase="cajon", etiqueta=etq_inf, recinto="Cocina"))
+        _tirador(col, f"Depto_Mueble_Cocina_Cajon{i + 1}Inf_Tirador", "x", u0, u1, COC_FRENTE_Y, +1, *z_inf,
+                ref_i, ob_i)
+        if es_ollas:
+            _ollas_sartenes(col, (u0 + u1) / 2, COC_FRENTE_Y - px(CAJON_ESP) - px(CAJON_PROF_BASE) / 2,
+                            z_inf[0] + CAJON_ESP, ref_i, ob_i)
+    # Puertas bajo el lavaplatos: bisagra (mueble), alternadas para no repetir siempre el mismo lado.
+    t_e = _tramos("y", COC_FRENTE_Y + rel, TORRE_Y[0], COC_FRENTE_X + f, -1, *zf, MODULO_BACHA)
+    for i, (u0, u1) in enumerate(t_e):
+        ub = u0 if i % 2 == 0 else u1
+        ob, piv = _bisagra(col, f"Depto_Mueble_Cocina_PuertaLavaplatos{i + 1}", "Depto_Mat_FrenteCocina", "y",
+                           u0, u1, COC_FRENTE_X, COC_FRENTE_X + f, zf[0], zf[1], ub, COC_FRENTE_X + f, -1,
+                           ANGULO_MUEBLE, False,
+                           dict(clase="mueble", etiqueta="Puerta bajo el lavaplatos", recinto="Cocina"))
+        ul = u1 - px(0.06) if ub == u0 else u0 + px(0.06)   # manilla junto al canto libre, no al centro
+        _tirador(col, f"Depto_Mueble_Cocina_PuertaLavaplatos{i + 1}_Tirador", "y", ul - px(0.02), ul + px(0.02),
+                COC_FRENTE_X, -1, zf[0], zf[1], piv, ob, vertical=True)
+    cub = Pieza("Depto_Cocina_Cubierta", "Depto_Mat_CubiertaConcreto")
+    vuelo = px(0.02)
+    cub.caja(X["T3_E"], X["E_FORRO"], Y["T5_S"], COC_FRENTE_Y + vuelo, zc, MESON_Z)
+    cub.caja_con_hueco(COC_FRENTE_X - vuelo, X["E_FORRO"], COC_FRENTE_Y + vuelo, TORRE_Y[0], zc, MESON_Z, hueco, zc)
+    cub.crear(col)
+    Pieza("Depto_Cocina_Anafe", "Depto_Mat_VidrioNegro").caja(*ANAFE, MESON_Z, MESON_Z + 0.006).crear(col)
+    bacha = Pieza("Depto_Cocina_Lavaplatos", "Depto_Mat_Acero")
+    bacha.caja_con_hueco(*BACHA, MESON_Z, MESON_Z + 0.004, hueco, MESON_Z)                  # reborde
+    bp = px(BACHA_PARED)
+    bacha.caja_con_hueco(*hueco, z_fondo_cubeta, MESON_Z,
+                         (hueco[0] + bp, hueco[1] - bp, hueco[2] + bp, hueco[3] - bp), z_fondo_cubeta + BACHA_PARED)
+    bacha.crear(col)
+    esc = Pieza("Depto_Cocina_Escurridor", "Depto_Mat_Acero")
+    ex0, ex1, ey0, ey1 = ESCURRIDOR
+    esc.caja(ex0, ex1, ey0, ey1, MESON_Z, MESON_Z + 0.003)
+    for i in range(1, 6):                                                # nervios (las líneas del plano)
+        xr = ex0 + (ex1 - ex0) * i / 6
+        esc.caja(xr - px(0.003), xr + px(0.003), ey0 + px(0.02), ey1 - px(0.02), MESON_Z + 0.003, MESON_Z + 0.006)
+    esc.crear(col)
+    # (la grifería es de la decoración: grifo_cocina en build/deco_cocina_bano.py)
+    # Muebles altos sólo en el tramo este, desde la esquina (el norte lleva repisas abiertas). Cascarón hueco
+    # (costados, fondo, piso, techo y una repisa media) con puertas de bisagra individuales (clase "mueble").
+    e_alt = px(ALTOS_ESP)
+    altos = Pieza("Depto_Cocina_AltosCascaron", "Depto_Mat_MuebleCocina")
+    altos.caja(X["E_FORRO"] - e_alt, X["E_FORRO"], Y["T5_S"], TORRE_Y[0], ALTOS_Z[0], ALTOS_Z[1])       # fondo
+    altos.caja(ALTOS_X + f, X["E_FORRO"], Y["T5_S"], Y["T5_S"] + e_alt, ALTOS_Z[0], ALTOS_Z[1])          # costado N
+    altos.caja(ALTOS_X + f, X["E_FORRO"], TORRE_Y[0] - e_alt, TORRE_Y[0], ALTOS_Z[0], ALTOS_Z[1])        # costado S
+    altos.caja(ALTOS_X + f, X["E_FORRO"], Y["T5_S"], TORRE_Y[0], ALTOS_Z[1] - ALTOS_ESP, ALTOS_Z[1])      # techo
+    altos.caja(ALTOS_X + f, X["E_FORRO"], Y["T5_S"], TORRE_Y[0], ALTOS_Z[0], ALTOS_Z[0] + ALTOS_ESP)      # piso
+    z_estante_alto = (ALTOS_Z[0] + ALTOS_Z[1]) / 2
+    altos.caja(ALTOS_X + f, X["E_FORRO"] - e_alt, Y["T5_S"] + e_alt, TORRE_Y[0] - e_alt,
+              z_estante_alto, z_estante_alto + ALTOS_ESP)                                                # repisa media
+    altos.crear(col)
+    za = (ALTOS_Z[0] + 0.003, ALTOS_Z[1] - 0.003)
+    t_a = _tramos("y", Y["T5_S"] + px(JUNTA), TORRE_Y[0], ALTOS_X + f, -1, *za, MODULO_ALTO)
+    cx_repisa = (ALTOS_X + f + X["E_FORRO"] - e_alt) / 2      # centro del fondo útil (eje="y": (x,y) = (w,u))
+    for i, (u0, u1) in enumerate(t_a):
+        ub = u0 if i % 2 == 0 else u1
+        etq = "Puerta del mueble alto"
+        if i == 0:
+            etq = "Puerta del mueble alto (platos)"
+        elif i == len(t_a) - 1:
+            etq = "Puerta del mueble alto (tazas)"
+        ob, piv = _bisagra(col, f"Depto_Mueble_Cocina_PuertaAlta{i + 1}", "Depto_Mat_FrenteCocina", "y",
+                           u0, u1, ALTOS_X, ALTOS_X + f, za[0], za[1], ub, ALTOS_X + f, -1, ANGULO_MUEBLE,
+                           False, dict(clase="mueble", etiqueta=etq, recinto="Cocina"))
+        ul = u1 - px(0.05) if ub == u0 else u0 + px(0.05)   # manilla junto al canto libre, no al centro
+        _tirador(col, f"Depto_Mueble_Cocina_PuertaAlta{i + 1}_Tirador", "y", ul - px(0.02), ul + px(0.02),
+                ALTOS_X, -1, za[0], za[1], piv, ob, vertical=True)
+        cy = (u0 + u1) / 2
+        if i == 0:
+            _platos_stack(col, cx_repisa, cy, z_estante_alto + ALTOS_ESP, n=5)
+        elif i == len(t_a) - 1:
+            _tazas(col, cx_repisa, cy, z_estante_alto + ALTOS_ESP, n=3, separacion=0.09)
+    # Azulejo: tramo norte hasta SALPICADERO_Z_NORTE (junto a los altos del este, sólo hasta su cara inferior)
+    e = px(SALPICADERO_ESP)
+    sal = Pieza("Depto_Cocina_Salpicadero", "Depto_Mat_MuroBano")
+    y0 = Y["T5_S"]
+    sal.caja(X["T3_E"], X["E_FORRO"], y0, y0 + e, MESON_Z, ALTOS_Z[0])
+    sal.caja(X["T3_E"], ALTOS_X + f, y0, y0 + e, ALTOS_Z[0], SALPICADERO_Z_NORTE)
+    sal.caja(X["E_FORRO"] - e, X["E_FORRO"], y0 + e, TORRE_Y[0], MESON_Z, ALTOS_Z[0])
+    sal.crear(col)
+    # Campana de chimenea (canopia + ducto hasta el cielo), apoyada delante del azulejo
+    C = CAMPANA
+    camp = Pieza("Depto_Cocina_Campana", "Depto_Mat_Acero")
+    camp.caja(ANAFE[0], ANAFE[1], y0 + e, y0 + e + px(C["fondo"]), C["z0"], C["z0"] + C["alto"])
+    xc, (cw, cd) = (ANAFE[0] + ANAFE[1]) / 2, C["chimenea"]
+    camp.caja(xc - px(cw) / 2, xc + px(cw) / 2, y0 + e, y0 + e + px(cd), C["z0"] + C["alto"], H)
+    camp.crear(col)
+    torre = Pieza("Depto_Cocina_Torre", "Depto_Mat_MuebleCocina")
+    torre.caja(COC_FRENTE_X, X["E_FORRO"], TORRE_Y[0], TORRE_Y[1], 0.0, TORRE_ALTO)
+    torre.crear(col)
+    tc = px(TORRE_COSTADO)
+    Pieza("Depto_Cocina_Horno", "Depto_Mat_VidrioNegro").caja(COC_FRENTE_X - px(0.004), COC_FRENTE_X,
+                                                              TORRE_Y[0] + tc, TORRE_Y[1] - tc, *HORNO_Z).crear(col)
+    # La nevera (cuerpo, puerta y cajón freezer interactivos) se arma en nevera(), más abajo.
+
+
+def nevera(col):
+    """Nevera de acero cepillado (Depto_Mat_NeveraAcero), estilo «french door» con freezer abajo (diseño; el
+    brief sólo pedía el volumen REFRI). Cuerpo hueco contra el muro este; puerta principal de bisagra
+    (interactiva, clase "nevera") con contrapuerta (forro blanco y dos balcones con botellas y frascos, hijos de
+    la puerta) y cajón freezer abajo (interactivo, clase "cajon"). Interior fijo (no se mueve, sólo la puerta
+    que lo tapa): dos estantes de vidrio con cartón de huevos, fruta y un táper, cajón de verduras y frascos."""
+    a, fo, al = REFRI
+    yc = (TORRE_Y[1] + Y["COC_N"]) / 2
+    e_n = px(NEVERA_ESP)
+    xf1 = X["E_FORRO"] - px(REFRI_HOLGURA)      # fondo (contra el muro, este)
+    xf0 = xf1 - px(fo)                          # frente (hacia el living de cocina, oeste)
+    yf0, yf1 = yc - px(a) / 2, yc + px(a) / 2   # norte, sur
+
+    zr = px(ZOCALO_RETRANQUEO)
+    Pieza("Depto_Cocina_NeveraZocalo", "Depto_Mat_Zocalo").caja(xf0 + zr, xf1, yf0 + zr, yf1 - zr, 0.0,
+                                                                NEVERA_ZOCALO).crear(col)
+    z_piso_top = NEVERA_ZOCALO + NEVERA_ESP
+    z_freezer_top = z_piso_top + NEVERA_FREEZER_ALTO
+    z_div_top = z_freezer_top + NEVERA_ESP
+    z_techo_bot = al - NEVERA_ESP
+    cuerpo = Pieza("Depto_Cocina_NeveraCuerpo", "Depto_Mat_NeveraAcero")
+    cuerpo.caja(xf1 - e_n, xf1, yf0, yf1, NEVERA_ZOCALO, al)                  # fondo (muro este)
+    cuerpo.caja(xf0, xf1, yf0, yf0 + e_n, NEVERA_ZOCALO, al)                  # costado norte (junto a la torre)
+    cuerpo.caja(xf0, xf1, yf1 - e_n, yf1, NEVERA_ZOCALO, al)                  # costado sur
+    cuerpo.caja(xf0, xf1, yf0, yf1, al - NEVERA_ESP, al)                     # techo
+    cuerpo.caja(xf0, xf1, yf0, yf1, NEVERA_ZOCALO, z_piso_top)               # piso general
+    cuerpo.caja(xf0, xf1, yf0, yf1, z_freezer_top, z_div_top)                # divisor freezer / compartimento
+    cuerpo.crear(col)
+    # Forro interior (plástico blanco, no acero): sólo el exterior es de acero cepillado. Cubre las caras del
+    # cascarón que quedan a la vista al abrir la puerta o el cajón freezer (fondo, costados, techo y piso de
+    # cada compartimento), con un pequeño espesor delante de cada cara.
+    le = px(0.004)
+    forro_cuerpo = Pieza("Depto_Cocina_NeveraForroInterior", "Depto_Mat_MuebleBlanco")
+    for z0i, z1i in ((z_div_top, z_techo_bot), (z_piso_top, z_freezer_top)):   # compartimento principal, freezer
+        forro_cuerpo.caja(xf1 - e_n - le, xf1 - e_n, yf0 + e_n, yf1 - e_n, z0i, z1i)          # fondo
+        forro_cuerpo.caja(xf0, xf1 - e_n, yf0 + e_n, yf0 + e_n + le, z0i, z1i)                # costado norte
+        forro_cuerpo.caja(xf0, xf1 - e_n, yf1 - e_n - le, yf1 - e_n, z0i, z1i)                # costado sur
+        forro_cuerpo.caja(xf0, xf1 - e_n, yf0 + e_n, yf1 - e_n, z1i - 0.004, z1i)             # techo
+        forro_cuerpo.caja(xf0, xf1 - e_n, yf0 + e_n, yf1 - e_n, z0i, z0i + 0.004)             # piso
+    forro_cuerpo.crear(col)
+
+    # Puerta principal: bisagra al sur (se aleja de la torre del horno, que queda al norte), abre hacia el oeste.
+    DOOR_Y0, DOOR_Y1 = yf0 + px(NEVERA_ESP + NEVERA_HOLGURA_LADO), yf1 - px(NEVERA_ESP + NEVERA_HOLGURA_LADO)
+    DOOR_Z0, DOOR_Z1 = z_div_top + NEVERA_JUNTA, z_techo_bot - NEVERA_HOLGURA_LADO
+    cara_puerta = xf0 + px(NEVERA_ESP_PUERTA)
+    puerta, piv_p = _bisagra(col, "Depto_Mueble_Nevera_Puerta", "Depto_Mat_NeveraAcero", "y", DOOR_Y0, DOOR_Y1,
+                             xf0, cara_puerta, DOOR_Z0, DOOR_Z1, DOOR_Y1, cara_puerta, -1,
+                             NEVERA_ANGULO_PUERTA, False,
+                             dict(clase="nevera", etiqueta="Puerta de la nevera", recinto="Cocina"))
+    ul = DOOR_Y0 + px(NEVERA_MANILLA["margen"])                              # cerca del canto libre (norte)
+    _tirador(col, "Depto_Mueble_Nevera_Puerta_Tirador", "y", ul - px(0.02), ul + px(0.02), xf0, -1,
+            DOOR_Z0, DOOR_Z1, piv_p, puerta, vertical=True)
+
+    # Contrapuerta (hija de la puerta): forro blanco y dos balcones con botellas y frascos.
+    forro_w0, forro_w1 = cara_puerta, cara_puerta + px(NEVERA_FORRO_ESP)
+    Pieza("Depto_Cocina_NeveraContrapuerta", "Depto_Mat_MuebleBlanco").caja(
+        *uw("y", DOOR_Y0 + px(0.01), DOOR_Y1 - px(0.01), forro_w0, forro_w1), DOOR_Z0 + 0.01, DOOR_Z1 - 0.01
+    ).crear(col, origen=piv_p, padre=puerta)
+    balcon_w1 = forro_w1 + px(0.10)
+    for k, zb in enumerate((DOOR_Z0 + 0.25, DOOR_Z0 + 0.55)):
+        Pieza(f"Depto_Cocina_NeveraBalcon{k + 1}", "Depto_Mat_MuebleBlanco").caja(
+            *uw("y", DOOR_Y0 + px(0.015), DOOR_Y1 - px(0.015), forro_w1, balcon_w1), zb, zb + NEVERA_BALCON_ALTO
+        ).crear(col, origen=piv_p, padre=puerta)
+        bot = Pieza(f"Depto_Cocina_NeveraBalcon{k + 1}Botellas", "Depto_Mat_Vidrio")
+        ancho_disp = (DOOR_Y1 - px(0.015)) - (DOOR_Y0 + px(0.015))
+        for j in range(3):
+            u_j = DOOR_Y0 + px(0.015) + ancho_disp * (j + 0.5) / 3
+            w_j = forro_w1 + px(0.055)
+            x_j, y_j = w_j, u_j                                              # eje "y": (x, y) = (w, u)
+            r, z0b = px(0.026), zb + NEVERA_BALCON_ALTO
+            alto_bot = 0.155 if j % 2 == 0 else 0.095
+            bot.cilindro(x_j, y_j, r, r, z0b, z0b + alto_bot, seg=12)
+            if j % 2 == 0:
+                bot.cilindro(x_j, y_j, r * 0.45, r * 0.45, z0b + alto_bot, z0b + alto_bot + 0.03, seg=10)
+        bot.crear(col, origen=piv_p, padre=puerta)
+
+    # Cajón freezer: corredera hacia afuera (oeste), mismo ancho que la puerta.
+    FRE_Z0, FRE_Z1 = z_piso_top + NEVERA_HOLGURA_LADO, z_freezer_top - NEVERA_HOLGURA_LADO
+    freezer, ref_f = _cajon(col, "Depto_Mueble_Nevera_Freezer", "Depto_Mat_NeveraAcero", "y", DOOR_Y0, DOOR_Y1,
+                            xf0, +1, NEVERA_CAJON_PROF, FRE_Z0, FRE_Z1, NEVERA_ESP, NEVERA_RECORRIDO_FREEZER,
+                            False, dict(clase="cajon", etiqueta="Cajón del freezer", recinto="Cocina"))
+    _tirador(col, "Depto_Mueble_Nevera_Freezer_Tirador", "y", DOOR_Y0, DOOR_Y1, xf0, -1, FRE_Z0, FRE_Z1,
+            ref_f, freezer)
+
+    # Interior fijo (no se mueve; la puerta lo tapa): estantes de vidrio, cajón de verduras y alimentos simples.
+    shelf_w0, shelf_w1 = xf0 + px(0.22), xf1 - e_n - px(0.02)
+    for k, zz in enumerate(NEVERA_ESTANTES_Z):
+        z_e = z_div_top + zz
+        Pieza(f"Depto_Cocina_NeveraEstante{k + 1}", "Depto_Mat_Vidrio").caja(
+            *uw("y", DOOR_Y0 + px(0.01), DOOR_Y1 - px(0.01), shelf_w0, shelf_w1), z_e, z_e + NEVERA_ESTANTE_ESP
+        ).crear(col)
+    Pieza("Depto_Cocina_NeveraCajonVerdura", "Depto_Mat_MuebleBlanco").caja(
+        *uw("y", DOOR_Y0 + px(0.01), DOOR_Y1 - px(0.01), shelf_w0, shelf_w1), z_div_top + 0.01,
+        z_div_top + 0.01 + NEVERA_CAJON_VERDURA_ALTO
+    ).crear(col)
+    u_c, w_c = (DOOR_Y0 + DOOR_Y1) / 2, (shelf_w0 + shelf_w1) / 2
+    z_estante1 = z_div_top + NEVERA_ESTANTES_Z[0] + NEVERA_ESTANTE_ESP
+    # Tres bandas a lo largo de u (Y), bien separadas: cartón de huevos, fruta y táper.
+    Pieza("Depto_Cocina_NeveraHuevos", "Depto_Mat_Papel").caja(
+        *uw("y", u_c - px(0.24), u_c - px(0.12), w_c - px(0.06), w_c + px(0.06)), z_estante1, z_estante1 + 0.05
+    ).crear(col)
+    fruta = Pieza("Depto_Cocina_NeveraFruta", "Depto_Mat_TapizAcento")
+    for du, dw in ((-0.04, -0.02), (0.02, 0.02), (0.08, -0.01)):
+        x_, y_ = w_c + px(dw), u_c + px(du)                                  # eje "y": (x, y) = (w, u)
+        r = px(0.028)
+        fruta.cilindro(x_, y_, r, r, z_estante1, z_estante1 + 0.06, seg=8)
+    fruta.crear(col)
+    Pieza("Depto_Cocina_NeveraTaper", "Depto_Mat_VidrioEsmerilado").caja(
+        *uw("y", u_c + px(0.14), u_c + px(0.24), w_c - px(0.05), w_c + px(0.05)), z_estante1, z_estante1 + 0.06
+    ).crear(col)
+    z_estante2 = z_div_top + NEVERA_ESTANTES_Z[1] + NEVERA_ESTANTE_ESP
+    frascos = Pieza("Depto_Cocina_NeveraFrascos", "Depto_Mat_Vidrio")
+    for du in (-0.10, 0.05):
+        x_, y_ = w_c - px(0.03), u_c + px(du)
+        r = px(0.035)
+        frascos.cilindro(x_, y_, r, r, z_estante2, z_estante2 + 0.09, seg=12)
+    frascos.crear(col)
+
+
+def nicho_lavadora(col):
+    e = px(LV_FRENTE_ESP)
+    x0, x1 = X["T3_E"], X["LV_W"]
+    frente = Pieza("Depto_LV_Frente", "Depto_Mat_FrenteCloset")
+    mid = (x0 + x1) / 2
+    for u0, u1 in ((x0 + px(JUNTA), mid - px(JUNTA) / 2), (mid + px(JUNTA) / 2, x1 - px(JUNTA))):
+        frente.caja(u0, u1, Y["LV_F"], Y["LV_F"] + e, LUZ_PISO, P.DINTEL_PUERTAS)   # puerta plegable cerrada
+    frente.caja(x0, x1, Y["LV_F"], Y["LV_F"] + px(LV_DINTEL_ESP), P.DINTEL_PUERTAS, H)   # dintel
+    frente.crear(col)
+    w, d, h = LAVADORA
+    yb = Y["T9_N"] - px(LAVADORA_HOLGURA)
+    Pieza("Depto_LV_Lavadora", "Depto_Mat_Electro").caja(mid - px(w) / 2, mid + px(w) / 2, yb - px(d), yb,
+                                                         0.0, h).crear(col)
+
+
+def tina(col, bid, x0, x1, ym, s):
+    y1 = ym + s * px(TINA_FONDO)
+    pa = px(TINA_PARED)
+    t = Pieza(f"Depto_Sanitario_{bid}_Tina", "Depto_Mat_Ceramica")
+    t.caja(x0, x1, ym, y1, 0.0, TINA_BASE)                          # fondo
+    t.caja(x0, x1, y1 - s * pa, y1, TINA_BASE, TINA_ALTO)           # faldón frontal
+    t.caja(x0, x1, ym, ym + s * pa, TINA_BASE, TINA_ALTO)           # borde contra el muro
+    for xa, xb in ((x0, x0 + pa), (x1 - pa, x1)):                   # bordes laterales, a tope (sin traslapes)
+        t.caja(xa, xb, ym + s * pa, y1 - s * pa, TINA_BASE, TINA_ALTO)
+    t.crear(col)
+
+
+def inodoro(col, bid, wc, repisa):
+    wx0, wx1, wy0, wy1 = wc["bbox"]
+    d = -1 if wc["muro"] == "E" else +1                              # del muro del estanque hacia el baño
+    muro_x = wx1 if wc["muro"] == "E" else wx0
+    wyc = (wy0 + wy1) / 2
+    pz = Pieza(f"Depto_Sanitario_{bid}_WC", "Depto_Mat_Ceramica")
+    if wc["estanque"] == "oculto":                                   # B1: estanque dentro de la repisa
+        assert repisa is not None, f"{bid}: estanque oculto sin repisa"
+        fondo = repisa[0] if d < 0 else repisa[1]
+    else:
+        fondo = muro_x + d * px(WC["estanque_fondo"])
+        pz.caja(muro_x, fondo, wyc - px(WC["estanque_ancho"]) / 2, wyc + px(WC["estanque_ancho"]) / 2,
+                *WC["estanque_z"])
+    pz.caja(fondo + d * px(0.20), fondo, wyc - px(0.11), wyc + px(0.11), 0.0, WC["pedestal_alto"])   # pedestal
+    rx = px(WC["taza_largo"]) / 2
+    pz.cilindro(fondo + d * rx, wyc, rx, px(WC["taza_ancho"]) / 2, WC["pedestal_alto"], WC["taza_alto"], seg=20)
+    pz.crear(col)
+
+
+def vanitorio(col, bid, v):
+    vx0, vx1, vy0, vy1 = v["bbox"]
+    lado, muro_y = v["muro"]
+    assert (lado == "S" and abs(vy1 - muro_y) < 1e-6) or (lado == "N" and abs(vy0 - muro_y) < 1e-6), \
+        f"{bid}: el muro del vanitorio no coincide con el borde del bbox"
+    sv = 1 if lado == "S" else -1                                    # del frente hacia el muro, en y
+    frente = vy0 if lado == "S" else vy1
+    libre_e = v["libre"] == "E"
+    z0, z1 = VANITORIO_Z
+    cuerpo = Pieza(f"Depto_Sanitario_{bid}_Vanitorio", "Depto_Mat_MuebleBano")
+    cuerpo.caja(vx0, vx1, frente + sv * px(VANITORIO_RETRANQUEO), muro_y, 0.08, z0)
+    zx0, zx1 = (vx0, vx1 - px(0.03)) if libre_e else (vx0 + px(0.03), vx1)
+    cuerpo.caja(zx0, zx1, frente + sv * px(0.07), muro_y, 0.0, 0.08)   # zócalo retranqueado al frente y al extremo libre
+    cuerpo.crear(col)
+    c = Pieza(f"Depto_Sanitario_{bid}_Cubierta", "Depto_Mat_CubiertaBano")
+    c.caja(vx0, vx1, vy0, vy1, z0, z1)
+    c.caja(vx0, vx1, muro_y - sv * px(0.02), muro_y, z1, z1 + RESPALDO_ALTO)   # respaldo
+    c.crear(col)
+    # lavamanos, grifería mural y espejo: piezas de la decoración (fase 4)
+
+
+def sanitarios(col):
+    for bid, b in BANOS.items():
+        tina(col, bid, *b["tina"])
+        rep = b.get("repisa")
+        inodoro(col, bid, b["wc"], rep)
+        if rep:
+            rx0, rx1, ry0, ry1, rz = rep
+            Pieza(f"Depto_Sanitario_{bid}_Repisa", "Depto_Mat_MuroBano").caja(rx0, rx1, ry0, ry1, 0.0, rz).crear(col)
+            wyc = (b["wc"]["bbox"][2] + b["wc"]["bbox"][3]) / 2
+            Pieza(f"Depto_Sanitario_{bid}_Pulsador", "Depto_Mat_MetalNegroMate").caja(
+                rx0 - px(0.01), rx0, wyc - px(0.10), wyc + px(0.10), rz - 0.20, rz - 0.05).crear(col)
+        if "ducto" in b:
+            dx0, dx1, dy0, dy1, dz = b["ducto"]
+            Pieza(f"Depto_Sanitario_{bid}_Ducto", "Depto_Mat_Yeso").caja(dx0, dx1, dy0, dy1, dz, H).crear(col)
+        vanitorio(col, bid, b["vanitorio"])
+
+
+# ---------------------------------------------------------------------------
+# Pruebas
+# ---------------------------------------------------------------------------
+def pruebas(root, objs_fase, hojas, ventanal_u):
+    fallos = []
+    bpy.context.view_layer.update()
+    visibles = [o for o in root.all_objects if o.type == "MESH" and not o.hide_render
+                and not o.name.startswith("Depto_Ref")]
+    # 1) Cada hoja cerrada (su malla sin giro, en el origen de la bisagra) queda dentro de su vano.
+    for ob, eje, a, b, c0, c1 in hojas:
+        pts = [v.co + ob.location for v in ob.data.vertices]
+        x0, x1, y0, y1 = G.rect_bl(*uw(eje, a, b, c0, c1))
+        bb = G.aabb(pts)
+        if bb[0] < x0 - 1e-6 or bb[1] > x1 + 1e-6 or bb[2] < y0 - 1e-6 or bb[3] > y1 + 1e-6:
+            fallos.append(f"hoja cerrada fuera de su vano: {ob.name}")
+    # 2) Interferencias: piezas de esta fase contra muros, losas y otras piezas (salvo dentro del mismo objeto).
+    #    Con cajas envolventes de mundo, que para una hoja girada son conservadoras. Una hoja y sus manillas
+    #    (hijas) se comparan en el marco local de la hoja, cerrada: ahí son cajas exactas que sólo se tocan.
+    propios = G.solidos([o for o in objs_fase if not o.hide_render])
+    ajenos = G.solidos([o for o in visibles if o not in objs_fase])
+    fallos += G.interferencias(propios, ajenos, TOL_PENETRACION)
+    for ob, *_ in hojas:
+        loc = lambda o: [G.aabb(isla) for isla in G.islas_locales(o)]  # noqa: E731
+        for hijo in ob.children:
+            for A in loc(ob):
+                for B in loc(hijo):
+                    if G.penetracion(A, B) > TOL_PENETRACION:
+                        fallos.append(f"interferencia {ob.name} / {hijo.name} (cerrada): "
+                                      f"{G.penetracion(A, B) * 1000:.1f} mm")
+    # 3) Cámaras de ambiente a >= HOLGURA_CAMARA de todo sólido visible.
+    todos = propios + ajenos
+    f_cam, holguras = G.holgura_camaras(todos, HOLGURA_CAMARA)
+    fallos += f_cam
+    # 4) Ventanal: paso libre a 1,0 m en el paño norte; el paño fijo sí está cerrado.
+    u_libre, u_fijo = ventanal_u
+    v = VENTANAL
+
+    def cruza(u):
+        p0, p1 = mundo("y", u, v["c0"] - 5, 1.0), mundo("y", u, v["c1"] + 5, 1.0)
+        return [o.name for o, c in todos if G.segmento_cruza(c, p0, p1)]
+    if cruza(u_libre):
+        fallos.append(f"ventanal: el paso libre está obstruido por {cruza(u_libre)}")
+    if not any("Vidrio" in n for n in cruza(u_fijo)):
+        fallos.append("ventanal: el paño fijo no tiene vidrio")
+    # 5) Presupuesto de la escena visible.
+    total = 0
+    for o in visibles:
+        o.data.calc_loop_triangles()
+        total += len(o.data.loop_triangles)
+    if total > 150_000:
+        fallos.append(f"presupuesto de triángulos excedido: {total}")
+    return fallos, holguras, total
+
+
+def main():
+    scene = bpy.context.scene
+    SE.exigir(scene, "02", bpy.data.filepath)
+    root = bpy.data.collections["Depto"]
+    cols = G.colecciones_fase(root, COLS)
+    hojas = puertas(cols["Depto_Aberturas"])
+    ventanas(cols["Depto_Aberturas"])
+    ventanal_u = ventanal(cols["Depto_Aberturas"])
+    baranda_vidrio(cols["Depto_BalconDetalle"])
+    palier(cols["Depto_Palier"])
+    closets(cols["Depto_Fijos"])
+    cocina(cols["Depto_Fijos"])
+    nevera(cols["Depto_Fijos"])
+    nicho_lavadora(cols["Depto_Fijos"])
+    sanitarios(cols["Depto_Sanitarios"])
+
+    objs = [o for n in COLS for o in bpy.data.collections[n].all_objects]
+    fallos, holguras, total = pruebas(root, objs, hojas, ventanal_u)
+    for f in fallos:
+        print("FALLA", f)
+    print("CHECK holgura de cámaras (m):", holguras)
+    if fallos:
+        raise SystemExit(f"ERROR: {len(fallos)} pruebas de la fase 3 fallan; no se guarda el maestro.")
+    tris = 0
+    for o in objs:
+        o.data.calc_loop_triangles()
+        tris += len(o.data.loop_triangles)
+    SE.sellar(scene, "03")
+    bpy.ops.wm.save_mainfile(filepath=OUT_BLEND)
+    print(f"CHECK fase 3: {len(objs)} objetos, {tris} triángulos; escena visible {total} triángulos; "
+          f"{len(hojas)} hojas cerradas en su vano; sin interferencias > {TOL_PENETRACION * 1000:.0f} mm")
+    print(f"FASE_OK Depto_03_formas {len(objs)} {tris} sello={scene['depto_fase03']}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,654 @@
+<title>Recorrido Depto 2D2B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --papel: #f2f4f6;
+    --papel-2: #e6eaee;
+    --tinta: #18202b;
+    --grafito: #5b6573;
+    --linea: #c9d0d8;
+    --ocre: #b8862b;
+    --ocre-suave: rgba(184, 134, 43, 0.16);
+    --aqui: #2e7f86;
+    --velo: rgba(242, 244, 246, 0.86);
+    --sombra: 0 6px 24px rgba(24, 32, 43, 0.16);
+    --cielo: #cfdae6;
+    --f-rotulo: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --f-texto: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --papel: #12171e; --papel-2: #1b222c; --tinta: #e6eaef; --grafito: #93a0ae; --linea: #2a333f;
+      --ocre: #d9a640; --ocre-suave: rgba(217, 166, 64, 0.18); --aqui: #4fb3bb;
+      --velo: rgba(18, 23, 30, 0.86); --sombra: 0 6px 24px rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --papel: #12171e; --papel-2: #1b222c; --tinta: #e6eaef; --grafito: #93a0ae; --linea: #2a333f;
+    --ocre: #d9a640; --ocre-suave: rgba(217, 166, 64, 0.18); --aqui: #4fb3bb;
+    --velo: rgba(18, 23, 30, 0.86); --sombra: 0 6px 24px rgba(0, 0, 0, 0.45);
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    background: var(--papel); color: var(--tinta); font-family: var(--f-texto); font-size: 14px;
+    padding-inline: 16px; overflow: hidden; -webkit-font-smoothing: antialiased;
+  }
+  #vista { position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: var(--cielo);
+    touch-action: none; outline: none; }
+  .panel { position: fixed; background: var(--velo); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--linea); box-shadow: var(--sombra); }
+
+  /* Cajetín: el rótulo de un plano */
+  #cajetin { top: calc(16px + env(safe-area-inset-top, 0px)); left: 16px; display: grid;
+    grid-template-columns: auto auto; max-width: calc(100% - 32px); border-radius: 2px; }
+  #cajetin h1 { grid-column: 1 / -1; margin: 0; padding: 8px 12px 6px; font-family: var(--f-rotulo);
+    font-weight: 600; font-size: 22px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1;
+    border-bottom: 1px solid var(--linea); text-wrap: balance; }
+  #cajetin div { padding: 6px 12px 7px; font-family: var(--f-mono); font-size: 11px; color: var(--grafito);
+    font-variant-numeric: tabular-nums; }
+  #cajetin div + div { border-left: 1px solid var(--linea); }
+  #cajetin b { display: block; font-family: var(--f-texto); font-weight: 500; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--grafito); margin-bottom: 1px; }
+  #cajetin span { color: var(--tinta); }
+
+  /* Minimapa */
+  #mapa { left: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); padding: 8px; border-radius: 2px; }
+  #mapa canvas { display: block; width: 190px; height: auto; cursor: pointer; }
+  #mapa p { margin: 6px 0 0; font-size: 11px; color: var(--grafito); }
+
+  /* Ayuda y créditos */
+  #ayuda { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(300px, calc(100% - 32px));
+    padding: 10px 12px; border-radius: 2px; font-size: 12.5px; line-height: 1.45; }
+  #ayuda h2 { margin: 0 0 6px; font-family: var(--f-rotulo); font-weight: 600; font-size: 15px; letter-spacing: 0.06em;
+    text-transform: uppercase; }
+  #ayuda dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; }
+  #ayuda dt { font-family: var(--f-mono); font-size: 11.5px; color: var(--tinta); white-space: nowrap; }
+  #ayuda dd { margin: 0; color: var(--grafito); }
+  #ayuda small { display: block; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--linea); color: var(--grafito);
+    font-size: 11px; }
+  #ayuda a { color: var(--tinta); }
+  .solo-raton { display: contents; }
+  .solo-tactil { display: none; }
+  body.tactil .solo-tactil { display: contents; }
+  body.tactil .solo-raton { display: none; }
+
+  /* Mira y aviso de interacción */
+  #mira { position: fixed; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none;
+    border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.9); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35); }
+  #mira.activa { border-color: var(--ocre); background: var(--ocre-suave); transform: scale(1.3); }
+  #aviso { position: fixed; left: 50%; top: calc(50% + 22px); transform: translateX(-50%); padding: 5px 10px;
+    border-radius: 2px; font-size: 12.5px; white-space: nowrap; pointer-events: none; }
+  #aviso kbd { font-family: var(--f-mono); font-size: 11px; padding: 0 4px; border: 1px solid var(--linea); border-radius: 2px; }
+
+  /* Portada: carga y entrada */
+  #portada { position: fixed; inset: 0; display: grid; place-items: center; padding-inline: 16px;
+    background: linear-gradient(180deg, rgba(24, 32, 43, 0.18), rgba(24, 32, 43, 0.42)); }
+  #portada .tarjeta { width: min(420px, 100%); padding: 20px 22px 18px; border-radius: 2px; position: static; }
+  #portada h2 { margin: 0 0 4px; font-family: var(--f-rotulo); font-weight: 600; font-size: 30px; letter-spacing: 0.03em;
+    text-transform: uppercase; line-height: 1; text-wrap: balance; }
+  #portada p { margin: 8px 0 0; color: var(--grafito); line-height: 1.5; max-width: 60ch; }
+  #barra { height: 4px; margin-top: 16px; background: var(--papel-2); overflow: hidden; }
+  #barra i { display: block; height: 100%; width: 0; background: var(--ocre); transition: width 0.2s; }
+  #estado { margin-top: 6px; font-family: var(--f-mono); font-size: 11px; color: var(--grafito); font-variant-numeric: tabular-nums; }
+  #entrar { margin-top: 14px; width: 100%; padding: 11px 14px; font: 600 15px/1 var(--f-texto); letter-spacing: 0.02em;
+    color: var(--papel); background: var(--tinta); border: 0; border-radius: 2px; cursor: pointer; }
+  #entrar:disabled { opacity: 0.45; cursor: progress; }
+  #entrar:focus-visible, #mapa canvas:focus-visible { outline: 2px solid var(--ocre); outline-offset: 2px; }
+
+  #btn-ayuda { display: none; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); width: 36px; height: 36px;
+    font: 600 16px/1 var(--f-texto); color: var(--tinta); border-radius: 2px; cursor: pointer; }
+  @media (max-width: 640px) {
+    #ayuda { display: none; }
+    body.ayuda-abierta #ayuda { display: block; bottom: auto; top: calc(92px + env(safe-area-inset-top, 0px)); }
+    #mapa canvas { width: 140px; }
+    #cajetin h1 { font-size: 18px; }
+    #btn-ayuda { display: block; }
+  }
+  /* Joystick táctil */
+  #palanca { position: fixed; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; pointer-events: none;
+    border: 1.5px solid rgba(255, 255, 255, 0.8); background: rgba(24, 32, 43, 0.18); }
+  #palanca i { position: absolute; left: 50%; top: 50%; width: 36px; height: 36px; margin: -18px 0 0 -18px; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85); }
+  @media (prefers-reduced-motion: reduce) { #barra i { transition: none; } }
+</style>
+
+<canvas id="vista" tabindex="0" aria-label="Vista 3D del departamento"></canvas>
+
+<header id="cajetin" class="panel">
+  <h1>Depto 2D2B</h1>
+  <div><b>Planta</b><span>6,01 × 8,98 m</span></div>
+  <div><b>Escala</b><span>inferida ±5 %</span></div>
+</header>
+
+<button id="btn-ayuda" class="panel" type="button" aria-controls="ayuda" aria-expanded="false" title="Controles">?</button>
+
+<aside id="ayuda" class="panel" aria-label="Controles">
+  <h2>Controles</h2>
+  <dl>
+    <div class="solo-raton">
+      <dt>W A S D</dt><dd>caminar (o flechas)</dd>
+      <dt>Mayús</dt><dd>caminar más rápido</dd>
+      <dt>Ratón</dt><dd>mirar alrededor</dd>
+      <dt>Clic</dt><dd>abrir o cerrar puertas y el ventanal</dd>
+      <dt>Esc</dt><dd>soltar el ratón</dd>
+    </div>
+    <div class="solo-tactil">
+      <dt>Izquierda</dt><dd>arrastra para caminar</dd>
+      <dt>Derecha</dt><dd>arrastra para mirar</dd>
+      <dt>Toque</dt><dd>abrir o cerrar una puerta</dd>
+    </div>
+    <dt>Mapa</dt><dd>toca un recinto para ir ahí</dd>
+  </dl>
+  <small>Modelo hecho desde un plano sin cotas: las alturas y las terminaciones son supuestas. Muebles, luminarias
+    y 16 texturas creados desde cero por código; tres texturas (roble, lino y yeso) de
+    <a href="https://polyhaven.com/textures" target="_blank" rel="noopener">Poly Haven</a> (CC0).</small>
+</aside>
+
+<figure id="mapa" class="panel" style="margin: 0">
+  <canvas id="plano" width="380" height="560" tabindex="0" aria-label="Plano: toca un recinto para ir ahí"></canvas>
+  <p>Toca un recinto para ir ahí</p>
+</figure>
+
+<div id="mira" hidden></div>
+<div id="aviso" class="panel" hidden></div>
+<div id="palanca" hidden><i></i></div>
+
+<section id="portada" aria-live="polite">
+  <div class="tarjeta panel">
+    <h2>Recorrido del departamento</h2>
+    <p>Dos dormitorios, dos baños, living con balcón y cocina en L, modelados en Blender desde el plano. Entras por el hall
+      con las puertas interiores abiertas. Puedes abrir y cerrar las puertas y el ventanal.</p>
+    <div id="barra"><i></i></div>
+    <div id="estado">Cargando el modelo…</div>
+    <button id="entrar" type="button" disabled>Entrar</button>
+  </div>
+</section>
+
+<script type="importmap">
+  { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const $ = (s) => document.querySelector(s);
+const tactil = matchMedia("(pointer: coarse)").matches;
+document.body.classList.toggle("tactil", tactil);
+const menosMovimiento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+const NOMBRES = { Hall: "Hall", Living: "Living", Cocina: "Cocina", Dorm1: "Dormitorio 1", Dorm2: "Dormitorio 2",
+  Paso_D1: "Paso D1", Paso_D2: "Paso D2", Bano1: "Baño 1", Bano2: "Baño 2", Balcon: "Balcón" };
+const PIEZAS = { Depto_Puerta_D1_Hoja: "la puerta del dormitorio 1", Depto_Puerta_D2_Hoja: "la puerta del dormitorio 2",
+  Depto_Puerta_B1_Hoja: "la puerta del baño 1", Depto_Puerta_B2_Hoja: "la puerta del baño 2",
+  Depto_Puerta_Entrada_Hoja: "la puerta de entrada", Depto_Ventana_Ventanal_Hoja: "el ventanal" };
+
+// ---------------------------------------------------------------- escena
+const canvas = $("#vista");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.8;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcfdae6);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 500);
+camera.rotation.order = "YXZ";
+// Suelo lejano: el departamento está en altura (supuesto), la vista hacia abajo no queda en el vacío.
+const suelo = new THREE.Mesh(new THREE.CircleGeometry(300, 48), new THREE.MeshStandardMaterial({ color: 0x8d948a, roughness: 1 }));
+suelo.rotation.x = -Math.PI / 2; suelo.position.y = -12; scene.add(suelo);
+scene.add(new THREE.HemisphereLight(0xe3ebf5, 0x80766a, 0.35));
+
+function ajustar() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+window.addEventListener("resize", ajustar); ajustar();
+
+// ---------------------------------------------------------------- estado del caminante
+let D = null;                 // datos de colisión
+const yo = { x: 0, z: 0, yaw: 0, pitch: -0.05 };
+const teclas = new Set();
+const moviles = [];           // { m, nodo, t, objetivo, base }
+const tocables = [];          // mallas que abren o cierran algo
+const mapaTocable = new Map();
+
+function mirarHacia(tx, tz) { yo.yaw = Math.atan2(yo.x - tx, yo.z - tz); }
+
+// ---------------------------------------------------------------- colisiones (cilindro contra cajas en XZ)
+function chocaCaja(x, z, c, r) {
+  const cx = Math.max(c[0], Math.min(x, c[1])), cz = Math.max(c[2], Math.min(z, c[3]));
+  const dx = x - cx, dz = z - cz;
+  return dx * dx + dz * dz < r * r;
+}
+function estadoMovil(v, t) {  // posición y ángulo de la pieza con apertura t (0 cerrada, 1 abierta)
+  const m = v.m;
+  if (m.tipo === "bisagra") return { x: m.posicion[0], z: m.posicion[2], ang: m.angulo_abierto * t };
+  const k = t - (m.abierta ? 1 : 0);
+  return { x: m.posicion[0] + m.eje[0] * m.recorrido * k, z: m.posicion[2] + m.eje[1] * m.recorrido * k, ang: 0 };
+}
+function chocaMovil(x, z, v, t, r) {
+  const e = estadoMovil(v, t);
+  const px = x - e.x, pz = z - e.z, ca = Math.cos(e.ang), sa = Math.sin(e.ang);
+  // inversa del giro en Y de three.js (x' = x cos + z sin ; z' = -x sin + z cos)
+  const lx = px * ca - pz * sa, lz = px * sa + pz * ca;
+  return v.m.cajas_locales.some((c) => chocaCaja(lx, lz, c, r));
+}
+function libre(x, z) {
+  const r = D.radio;
+  for (const c of D.estaticos) if (chocaCaja(x, z, c, r)) return false;
+  for (const v of moviles) if (chocaMovil(x, z, v, v.t, r)) return false;
+  return true;
+}
+function libreCercano(x, z) {
+  if (libre(x, z)) return [x, z];
+  for (let rad = 0.05; rad <= 0.8; rad += 0.05)
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 12) {
+      const nx = x + Math.cos(a) * rad, nz = z + Math.sin(a) * rad;
+      if (libre(nx, nz)) return [nx, nz];
+    }
+  return [x, z];
+}
+
+// ---------------------------------------------------------------- carga
+const estado = $("#estado"), barra = $("#barra i"), entrar = $("#entrar");
+async function cargar() {
+  try {
+    const r = await fetch("depto_colisiones.json");
+    if (!r.ok) throw new Error(`colisiones: HTTP ${r.status}`);
+    D = await r.json();
+  } catch (e) {
+    estado.textContent = "No se pudieron leer los datos de colisión. Recarga la página."; throw e;
+  }
+  // Las páginas publicadas no sirven .glb ni .bin: el modelo viaja como glTF (JSON), geometría en base64 e imágenes
+  // .jpg sueltas, y aquí se arma el GLB en memoria (build/depto_06_exportar.py hace el mismo armado y lo valida).
+  // En pantallas táctiles o chicas se prueba primero un índice liviano (texturas de 512 px, lo genera el sitio web en
+  // web/build.py); si no existe, como en la página publicada, se usa el normal.
+  const liviano = matchMedia("(pointer: coarse)").matches || Math.min(screen.width, screen.height) < 700;
+  let buffer;
+  try {
+    buffer = await bajarModelo(liviano ? ["depto_web_movil.json", "depto_web.json"] : ["depto_web.json"]);
+  } catch (e) {
+    estado.textContent = "No se pudo cargar el modelo 3D. Revisa la conexión y recarga la página.";
+    throw e;
+  }
+  estado.textContent = "Preparando texturas…";
+  const loader = new GLTFLoader();
+  // Las texturas del GLB se decodifican con <img> (TextureLoader) y no con fetch() de un blob: (ImageBitmapLoader,
+  // el que three.js usa por defecto): la política de seguridad de la página publicada bloquea ese fetch y el
+  // modelo quedaba sin texturas.
+  loader.register((parser) => {
+    const cargador = new THREE.TextureLoader(parser.options.manager);
+    return {
+      name: "texturas_con_img",
+      loadTexture(i) {
+        const def = parser.json.textures[i];
+        return def.source === undefined ? null : parser.loadTextureImage(i, def.source, cargador);
+      },
+    };
+  });
+  loader.parse(buffer, "", (gltf) => {
+    const raiz = gltf.scene;
+    raiz.traverse((o) => {
+      if (!o.isMesh) return;
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach((mat, i) => {
+        if (/Vidrio/.test(mat.name)) {   // vidrio liviano: sin la pasada de transmisión (costosa en GPU integrada)
+          const v = new THREE.MeshStandardMaterial({ name: mat.name, color: mat.color, roughness: mat.roughness,
+            metalness: 0, transparent: true, opacity: /Esmerilado/.test(mat.name) ? 0.55 : 0.16,
+            depthWrite: false, side: THREE.DoubleSide });
+          if (Array.isArray(o.material)) o.material[i] = v; else o.material = v;
+        } else if ("envMapIntensity" in mat) {
+          mat.envMapIntensity = /Espejo|Acero|Manilla|Pasamanos/.test(mat.name) ? 0.9 : 0.12;
+        }
+      });
+    });
+    scene.add(raiz);
+    for (const m of D.moviles) {
+      const nodo = raiz.getObjectByName(m.nodo);
+      if (!nodo) continue;
+      const v = { m, nodo, t: m.abierta ? 1 : 0, objetivo: m.abierta ? 1 : 0 };
+      moviles.push(v);
+      nodo.traverse((o) => { if (o.isMesh) { tocables.push(o); mapaTocable.set(o, v); } });
+      aplicar(v);
+    }
+    for (const l of D.luces) {
+      if (l.tipo === "puntual") {
+        const p = new THREE.PointLight(0xfff1dc, l.potencia_w * 0.35, 0, 2);
+        p.position.set(...l.posicion); scene.add(p);
+      } else if (l.tipo === "sol") {
+        const s = new THREE.DirectionalLight(0xfff4e5, 1.6);
+        s.position.set(-l.direccion[0] * 20, -l.direccion[1] * 20, -l.direccion[2] * 20); scene.add(s);
+      }
+    }
+    [yo.x, yo.z] = D.inicio.posicion; mirarHacia(...D.inicio.mirar);
+    prepararMapa();
+    barra.style.width = "100%";
+    estado.textContent = `Listo · ${(D.estaticos.length)} obstáculos · radio de la cámara ${D.radio.toFixed(2).replace(".", ",")} m`;
+    entrar.disabled = false; entrar.focus();
+  }, (err) => {
+    estado.textContent = "No se pudo leer el modelo 3D. Recarga la página.";
+    console.error(err);
+  });
+}
+
+const mb = (b) => (b / 1e6).toFixed(1).replace(".", ",");
+async function bajarModelo(indices) {
+  let idx = null;
+  for (const url of indices) {                       // el primer índice que exista
+    const r = await fetch(url);
+    if (r.ok) { idx = await r.json(); break; }
+  }
+  if (!idx) throw new Error(`índice del modelo: no se encontró ${indices.join(" ni ")}`);
+  let leidos = 0;
+  const progreso = () => {
+    barra.style.width = `${Math.min(95, (95 * leidos) / idx.total_bytes).toFixed(0)}%`;
+    estado.textContent = `Cargando el modelo… ${mb(leidos)} de ${mb(idx.total_bytes)} MB`;
+  };
+  async function bajar(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+    const lector = res.body.getReader();
+    const partes = [];
+    for (;;) {
+      const { done, value } = await lector.read();
+      if (done) break;
+      partes.push(value); leidos += value.length; progreso();
+    }
+    return new Uint8Array(await new Blob(partes).arrayBuffer());
+  }
+  const [jsonBytes, binTexto] = await Promise.all([bajar(idx.gltf), bajar(idx.bin)]);
+  const gltf = JSON.parse(new TextDecoder().decode(jsonBytes));
+  const imagenes = [];
+  for (let i = 0; i < (gltf.images || []).length; i += 6) {          // de a 6 descargas en paralelo
+    imagenes.push(...await Promise.all(gltf.images.slice(i, i + 6).map((im) =>
+      bajar(idx.tex_base ? im.uri.replace(/^tex\//, idx.tex_base) : im.uri))));   // tex_base: otra carpeta de texturas
+  }
+  const b64 = atob(new TextDecoder("ascii").decode(binTexto).trim());
+  const pad4 = (n) => (n + 3) & ~3;
+  const trozos = [];
+  let largo = 0;
+  const agregar = (datos) => { const off = largo; trozos.push([off, datos]); largo = pad4(largo + datos.length); return off; };
+  const geo = new Uint8Array(b64.length);
+  for (let i = 0; i < b64.length; i++) geo[i] = b64.charCodeAt(i);
+  agregar(geo);
+  (gltf.images || []).forEach((im, k) => {
+    const off = agregar(imagenes[k]);
+    gltf.bufferViews.push({ buffer: 0, byteOffset: off, byteLength: imagenes[k].length });
+    im.mimeType = im.mimeType || (im.uri.endsWith(".png") ? "image/png" : "image/jpeg");
+    im.bufferView = gltf.bufferViews.length - 1;
+    delete im.uri;
+  });
+  gltf.buffers = [{ byteLength: largo }];
+  const js = new TextEncoder().encode(JSON.stringify(gltf));
+  const jsLargo = pad4(js.length);
+  const total = 12 + 8 + jsLargo + 8 + largo;
+  const out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out);
+  dv.setUint32(0, 0x46546c67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true);   // "glTF", v2
+  dv.setUint32(12, jsLargo, true); dv.setUint32(16, 0x4e4f534a, true);                        // bloque JSON
+  u8.set(js, 20); u8.fill(0x20, 20 + js.length, 20 + jsLargo);
+  const b0 = 20 + jsLargo;
+  dv.setUint32(b0, largo, true); dv.setUint32(b0 + 4, 0x004e4942, true);                      // bloque BIN
+  for (const [off, datos] of trozos) u8.set(datos, b0 + 8 + off);
+  return out;
+}
+
+function aplicar(v) {
+  const e = estadoMovil(v, v.t);
+  if (v.m.tipo === "bisagra") v.nodo.rotation.set(0, e.ang, 0);
+  else v.nodo.position.set(e.x, v.m.posicion[1], e.z);
+}
+
+// ---------------------------------------------------------------- entrada y controles
+const portada = $("#portada"), mira = $("#mira"), aviso = $("#aviso");
+let enMarcha = false;
+entrar.addEventListener("click", () => {
+  portada.hidden = true; mira.hidden = false; enMarcha = true;
+  if (!tactil && canvas.requestPointerLock) {
+    try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) { /* opcional */ }
+  }
+  canvas.focus();
+});
+document.addEventListener("pointerlockchange", () => {
+  if (document.pointerLockElement !== canvas && enMarcha && !tactil) mostrarAviso("Clic en la vista para seguir mirando", 2500);
+});
+canvas.addEventListener("click", () => {
+  if (!enMarcha || tactil) return;
+  if (document.pointerLockElement !== canvas) {
+    try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => {}); } catch (_) {}
+    if (document.pointerLockElement !== canvas && !apuntado) return;
+  }
+  if (apuntado) alternar(apuntado);
+});
+document.addEventListener("mousemove", (e) => {
+  if (document.pointerLockElement !== canvas) return;
+  mirarDelta(e.movementX, e.movementY, 0.0022);
+});
+function mirarDelta(dx, dy, k) {
+  yo.yaw -= dx * k;
+  yo.pitch = Math.max(-1.35, Math.min(1.35, yo.pitch - dy * k));
+}
+// Sin bloqueo del puntero (rechazado por el navegador): arrastrar con el ratón también mira.
+let arrastre = null;
+canvas.addEventListener("pointerdown", (e) => {
+  if (e.pointerType !== "mouse" || document.pointerLockElement === canvas) return;
+  arrastre = { x: e.clientX, y: e.clientY };
+});
+window.addEventListener("pointerup", (e) => { if (e.pointerType === "mouse") arrastre = null; });
+window.addEventListener("pointermove", (e) => {
+  if (!arrastre || e.pointerType !== "mouse") return;
+  mirarDelta(e.clientX - arrastre.x, e.clientY - arrastre.y, 0.004); arrastre = { x: e.clientX, y: e.clientY };
+});
+window.addEventListener("keydown", (e) => {
+  if (!enMarcha) return;
+  if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "ShiftLeft", "ShiftRight"].includes(e.code)) {
+    teclas.add(e.code); e.preventDefault();
+  }
+  if ((e.code === "KeyE" || e.code === "Enter") && apuntado) alternar(apuntado);
+});
+window.addEventListener("keyup", (e) => teclas.delete(e.code));
+window.addEventListener("blur", () => teclas.clear());
+
+// Táctil: mitad izquierda = palanca para caminar; mitad derecha = mirar; toque corto = abrir o cerrar.
+const palanca = $("#palanca"), perilla = $("#palanca i");
+const toques = new Map();
+let palancaVec = { x: 0, y: 0 };
+canvas.addEventListener("pointerdown", (e) => {
+  if (e.pointerType === "mouse" || !enMarcha) return;
+  canvas.setPointerCapture(e.pointerId);
+  const izq = e.clientX < window.innerWidth * 0.45;
+  toques.set(e.pointerId, { izq, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now() });
+  if (izq) { palanca.hidden = false; palanca.style.left = `${e.clientX}px`; palanca.style.top = `${e.clientY}px`; }
+});
+canvas.addEventListener("pointermove", (e) => {
+  const t = toques.get(e.pointerId);
+  if (!t) return;
+  if (t.izq) {
+    const dx = e.clientX - t.x0, dy = e.clientY - t.y0, L = Math.hypot(dx, dy), max = 42;
+    const k = L > max ? max / L : 1;
+    palancaVec = { x: (dx * k) / max, y: (dy * k) / max };
+    perilla.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
+  } else {
+    mirarDelta(e.clientX - t.x, e.clientY - t.y, 0.005);
+  }
+  t.x = e.clientX; t.y = e.clientY;
+});
+function soltar(e) {
+  const t = toques.get(e.pointerId);
+  if (!t) return;
+  toques.delete(e.pointerId);
+  if (t.izq) { palanca.hidden = true; palancaVec = { x: 0, y: 0 }; perilla.style.transform = ""; }
+  const corto = performance.now() - t.t0 < 250 && Math.hypot(e.clientX - t.x0, e.clientY - t.y0) < 10;
+  if (corto) {
+    const v = apuntar((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+    if (v) alternar(v);
+  }
+}
+canvas.addEventListener("pointerup", soltar);
+canvas.addEventListener("pointercancel", soltar);
+
+$("#btn-ayuda").addEventListener("click", (e) => {
+  const abierta = document.body.classList.toggle("ayuda-abierta");
+  e.currentTarget.setAttribute("aria-expanded", String(abierta));
+});
+
+// ---------------------------------------------------------------- puertas y ventanal
+const rayo = new THREE.Raycaster();
+rayo.far = 2.6;
+let apuntado = null;
+function apuntar(nx, ny) {
+  if (!tocables.length) return null;
+  rayo.setFromCamera({ x: nx, y: ny }, camera);
+  const hit = rayo.intersectObjects(scene.children, true).find((h) => h.object !== suelo);
+  return hit && mapaTocable.has(hit.object) ? mapaTocable.get(hit.object) : null;
+}
+function alternar(v) {
+  v.objetivo = v.objetivo > 0.5 ? 0 : 1;
+  if (menosMovimiento) {
+    if (!chocaMovil(yo.x, yo.z, v, v.objetivo, D.radio)) { v.t = v.objetivo; aplicar(v); }
+    else { v.objetivo = v.t; mostrarAviso("Estás en el camino de la hoja: retrocede un paso", 2200); }
+  }
+}
+let avisoHasta = 0;
+function mostrarAviso(texto, ms) { aviso.textContent = texto; aviso.hidden = false; avisoHasta = performance.now() + ms; }
+
+// ---------------------------------------------------------------- minimapa (dibujado desde los datos de colisión)
+const plano = $("#plano"), ctx = plano.getContext("2d");
+let M = null;
+function prepararMapa() {
+  // orientación del plano original: u = z de glTF (izquierda = balcón), v = -x (arriba = dormitorio 1)
+  let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+  for (const c of D.estaticos) { u0 = Math.min(u0, c[2]); u1 = Math.max(u1, c[3]); v0 = Math.min(v0, -c[1]); v1 = Math.max(v1, -c[0]); }
+  const pad = 14, W = plano.width, H = plano.height;
+  const s = Math.min((W - 2 * pad) / (u1 - u0), (H - 2 * pad) / (v1 - v0));
+  const ox = (W - s * (u1 - u0)) / 2, oy = (H - s * (v1 - v0)) / 2;
+  M = { s, a: (x, z) => [ox + (z - u0) * s, oy + (-x - v0) * s] };
+}
+function colorVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#000"; }
+function dibujarMapa() {
+  if (!M) return;
+  const W = plano.width, H = plano.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = colorVar("--papel"); ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = colorVar("--tinta");
+  for (const c of D.estaticos) {
+    const [a, b] = M.a(c[1], c[2]), [e, f] = M.a(c[0], c[3]);
+    ctx.fillRect(Math.min(a, e), Math.min(b, f), Math.max(1, Math.abs(e - a)), Math.max(1, Math.abs(f - b)));
+  }
+  ctx.fillStyle = colorVar("--ocre");
+  for (const v of moviles) {
+    const st = estadoMovil(v, v.t), ca = Math.cos(st.ang), sa = Math.sin(st.ang);
+    for (const c of v.m.cajas_locales) {
+      ctx.beginPath();
+      [[c[0], c[2]], [c[1], c[2]], [c[1], c[3]], [c[0], c[3]]].forEach(([x, z], i) => {
+        const [px, py] = M.a(st.x + x * ca + z * sa, st.z - x * sa + z * ca);
+        i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      });
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.font = `500 ${Math.round(W / 24)}px "IBM Plex Mono", monospace`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = colorVar("--grafito");
+  for (const [k, p] of Object.entries(D.recintos)) {
+    const [px, py] = M.a(p[0], p[1]);
+    ctx.fillText(NOMBRES[k] || k, px, py);
+  }
+  const [px, py] = M.a(yo.x, yo.z);
+  // la mirada en el mapa: dirección (-sin yaw, -cos yaw) en XZ -> (u, v) = (dz, -dx)
+  const dx = -Math.sin(yo.yaw), dz = -Math.cos(yo.yaw);
+  const ang = Math.atan2(-dx, dz);
+  ctx.fillStyle = colorVar("--aqui"); ctx.globalAlpha = 0.28;
+  ctx.beginPath(); ctx.moveTo(px, py); ctx.arc(px, py, M.s * 1.3, ang - 0.6, ang + 0.6); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.beginPath(); ctx.arc(px, py, Math.max(4, M.s * D.radio), 0, Math.PI * 2); ctx.fill();
+}
+function irA(clave) {
+  const p = D.recintos[clave];
+  [yo.x, yo.z] = libreCercano(p[0], p[1]);
+  mostrarAviso(NOMBRES[clave] || clave, 1400);
+}
+plano.addEventListener("click", (e) => {
+  if (!M || !enMarcha) return;
+  const r = plano.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * plano.width, y = ((e.clientY - r.top) / r.height) * plano.height;
+  let mejor = null, dmin = Infinity;
+  for (const [k, p] of Object.entries(D.recintos)) {
+    const [px, py] = M.a(p[0], p[1]);
+    const d = Math.hypot(px - x, py - y);
+    if (d < dmin) { dmin = d; mejor = k; }
+  }
+  if (mejor && dmin < plano.width / 6) irA(mejor);
+});
+plano.addEventListener("keydown", (e) => {   // teclado: Enter recorre los recintos
+  if (e.key !== "Enter" || !enMarcha) return;
+  const ks = Object.keys(D.recintos);
+  irA(ks[(ks.indexOf(plano.dataset.ultimo || ks[ks.length - 1]) + 1) % ks.length]);
+  plano.dataset.ultimo = ks[(ks.indexOf(plano.dataset.ultimo || ks[ks.length - 1]) + 1) % ks.length];
+});
+
+// ---------------------------------------------------------------- bucle
+const reloj = new THREE.Clock();
+function paso(dt) {
+  let f = 0, s = 0;
+  if (teclas.has("KeyW") || teclas.has("ArrowUp")) f += 1;
+  if (teclas.has("KeyS") || teclas.has("ArrowDown")) f -= 1;
+  if (teclas.has("KeyD")) s += 1;
+  if (teclas.has("KeyA")) s -= 1;
+  if (teclas.has("ArrowLeft")) yo.yaw += 1.8 * dt;
+  if (teclas.has("ArrowRight")) yo.yaw -= 1.8 * dt;
+  f -= palancaVec.y; s += palancaVec.x;
+  const L = Math.hypot(f, s);
+  if (L > 1e-3) {
+    const vel = (teclas.has("ShiftLeft") || teclas.has("ShiftRight") ? 2.6 : 1.4) * Math.min(1, L);
+    f /= L; s /= L;
+    const fx = -Math.sin(yo.yaw), fz = -Math.cos(yo.yaw), rx = Math.cos(yo.yaw), rz = -Math.sin(yo.yaw);
+    let dx = (fx * f + rx * s) * vel * dt, dz = (fz * f + rz * s) * vel * dt;
+    const n = Math.max(1, Math.ceil(Math.hypot(dx, dz) / 0.08));
+    dx /= n; dz /= n;
+    for (let i = 0; i < n; i++) {             // deslizar a lo largo de las paredes: primero junto, luego por eje
+      if (libre(yo.x + dx, yo.z + dz)) { yo.x += dx; yo.z += dz; }
+      else if (libre(yo.x + dx, yo.z)) yo.x += dx;
+      else if (libre(yo.x, yo.z + dz)) yo.z += dz;
+    }
+  }
+  for (const v of moviles) {                  // animar hojas; si la hoja topa con el caminante, se detiene
+    if (v.t === v.objetivo) continue;
+    const dir = Math.sign(v.objetivo - v.t);
+    const t = Math.max(0, Math.min(1, v.t + dir * dt / 0.8));
+    if (chocaMovil(yo.x, yo.z, v, t, D.radio)) {
+      v.objetivo = v.t; mostrarAviso("Estás en el camino de la hoja: retrocede un paso", 2200);
+    } else { v.t = Math.abs(t - v.objetivo) < 1e-3 ? v.objetivo : t; aplicar(v); }
+  }
+}
+function cuadro() {
+  requestAnimationFrame(cuadro);
+  const dt = Math.min(0.05, reloj.getDelta());
+  if (D && enMarcha) paso(dt);
+  camera.position.set(yo.x, D ? D.ojo : 1.6, yo.z);
+  camera.rotation.set(yo.pitch, yo.yaw, 0);
+  if (enMarcha && !tactil) {
+    apuntado = apuntar(0, 0);
+    mira.classList.toggle("activa", !!apuntado);
+    if (apuntado && performance.now() > avisoHasta) {
+      aviso.innerHTML = `<kbd>Clic</kbd> ${apuntado.objetivo > 0.5 ? "cerrar" : "abrir"} ${PIEZAS[apuntado.m.nodo] || "la pieza"}`;
+      aviso.hidden = false;
+    } else if (performance.now() > avisoHasta) aviso.hidden = true;
+  } else if (performance.now() > avisoHasta) aviso.hidden = true;
+  renderer.render(scene, camera);
+  dibujarMapa();
+}
+cargar();
+cuadro();
+</script>

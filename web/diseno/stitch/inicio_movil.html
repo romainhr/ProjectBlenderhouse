@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>LOFT 2D2B // Arriendo Turístico Urbano</title>
+<!-- Google Fonts: Barlow Condensed, IBM Plex Sans, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700&amp;family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            carbon: {
+              900: '#121416',
+              800: '#1A1D20',
+              700: '#23272C',
+            },
+            cota: '#32373F',
+            rust: '#C0562F',
+            brass: '#B8862B',
+          },
+          fontFamily: {
+            heading: ['"Barlow Condensed"', 'sans-serif'],
+            body: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          borderRadius: {
+            'industrial': '2px',
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Technical Styles -->
+<style data-purpose="industrial-theme">
+    /* Blueprint hairline grid & base aesthetics */
+    body {
+      background-color: #121416;
+      color: #E2E8F0;
+      font-family: 'IBM Plex Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .tech-border {
+      border: 1px solid #32373F;
+    }
+
+    .tech-border-t {
+      border-top: 1px solid #32373F;
+    }
+
+    .tech-border-b {
+      border-bottom: 1px solid #32373F;
+    }
+
+    .hide-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .hide-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Accordion transitions */
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+    details[open] summary .faq-chevron {
+      transform: rotate(180deg);
+      color: #C0562F;
+    }
+  </style>
+<!-- END: Custom Technical Styles -->
+</head>
+<body class="bg-carbon-900 text-slate-200 antialiased pb-28 selection:bg-rust selection:text-white">
+<!-- Root Mobile Frame Constraint (390px typical iOS viewport) -->
+<div class="w-full max-w-[390px] mx-auto min-h-screen bg-carbon-900 relative shadow-2xl overflow-x-hidden">
+<!-- BEGIN: MainHeader -->
+<header class="sticky top-0 z-40 bg-carbon-900/95 backdrop-blur-md tech-border-b px-4 py-3.5 flex items-center justify-between" data-purpose="top-bar">
+<div class="flex items-center space-x-2">
+<span class="font-heading font-extrabold text-2xl tracking-wider text-white uppercase">LOFT 2D2B</span>
+<span class="font-mono text-[10px] tracking-widest px-1.5 py-0.5 border border-cota text-brass font-bold rounded-industrial bg-carbon-800">
+          STGO
+        </span>
+</div>
+<!-- Industrial Menu Trigger -->
+<button aria-label="Abrir Menú" class="w-9 h-9 flex flex-col justify-center items-center gap-1.5 border border-cota rounded-industrial bg-carbon-800 active:bg-rust transition-colors" type="button">
+<span class="w-4 h-[1.5px] bg-slate-200 block"></span>
+<span class="w-4 h-[1.5px] bg-slate-200 block"></span>
+<span class="w-2.5 self-start ml-2.5 h-[1.5px] bg-brass block"></span>
+</button>
+</header>
+<!-- END: MainHeader -->
+<main class="px-4 pt-4 space-y-6">
+<!-- BEGIN: HeroSection -->
+<section class="tech-border rounded-industrial p-2.5 bg-carbon-800 relative" data-purpose="loft-hero">
+<!-- Technical Dimension Tag -->
+<div class="flex items-center justify-between pb-2 px-1 text-[11px] font-mono tracking-tight text-slate-400">
+<div class="flex items-center gap-1.5">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span>LOC // DEPTO 402 - DISPONIBLE</span>
+</div>
+<span class="text-brass font-medium">SANTIAGO CENTRO</span>
+</div>
+<!-- Hero Photographic Frame -->
+<div class="relative w-full aspect-[4/3] overflow-hidden rounded-industrial border border-cota/60">
+<img alt="Ultra modern industrial loft living room with exposed concrete walls, distressed red brick wall, blackened steel fixtures, smoked oak wooden floor, cognac leather sofa, large black framed warehouse windows, minimalist warm architectural lighting, photorealistic interior photography, architectural digest quality" class="w-full h-full object-cover brightness-[0.92]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCICkvbzhmp_ExDv_BknAgtnq67X6ys6mMlRhGbYE0LaYxIUGRbkvO_aqPpEqoRd-UH12C1vwduhYGrpguI_TJtqtrrBlcyeebfHovUsLAfT9kEOzNSo8jVwv5VQOHlvO9k34Ox8k8sbXE4gE2mHKsb9bCu4odUBWYMvZ5-STpAAqmdfKqd3cW0H7Gzj3W4QIt7_W-Wtt6DH7bADNmmfV3Fhk0b8Pah2KSFD1PBRSa2LI5-9wE6LuvzxhzpTNFcHTRnPqy20HsXHIto"/>
+<!-- Badge Flotante Sobre la Foto -->
+<div class="absolute bottom-2.5 left-2.5 bg-carbon-900/90 border border-cota px-2.5 py-1 backdrop-blur-sm rounded-industrial">
+<span class="text-[10px] font-mono tracking-wider text-slate-300 font-semibold uppercase">
+              LIVING + COCINA INTEGRADA
+            </span>
+</div>
+</div>
+<!-- Hero Content Metadata -->
+<div class="pt-3.5 pb-1 px-1">
+<p class="font-mono text-[11px] tracking-widest text-rust uppercase font-semibold">DEPARTAMENTO TURÍSTICO // STGO</p>
+<h1 class="font-heading font-black text-3xl tracking-tight uppercase text-white mt-0.5 leading-none">
+            LOFT 2D2B
+          </h1>
+<p class="text-xs text-slate-400 mt-2 font-body font-light leading-relaxed">
+            Arquitectura de hormigón a la vista, ladrillo recuperado y carpintería de acero negro en el corazón metropolitano.
+          </p>
+<!-- 3D Tour CTA Button -->
+<button class="w-full mt-4 h-12 bg-rust hover:bg-rust/90 active:scale-[0.99] text-white font-mono text-xs font-bold tracking-widest uppercase rounded-industrial flex items-center justify-center gap-2 border border-rust shadow-lg shadow-rust/20 transition-transform" type="button">
+<svg class="w-4 h-4 stroke-current" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="m21.12 6.4-6.05-4.06a2 2 0 0 0-2.17-.05L2.95 8.41a2 2 0 0 0-.95 1.7v5.82a2 2 0 0 0 .88 1.66l6.05 4.07a2 2 0 0 0 2.17.05l9.95-6.12a2 2 0 0 0 .95-1.7V8.06a2 2 0 0 0-.88-1.66Z"></path>
+<path d="M12 22V12"></path>
+<path d="m3.29 7 8.71 5 8.71-5"></path>
+</svg>
+            Entrar al tour 3D
+          </button>
+<!-- Bottom Blueprint Cota Indicators -->
+<div class="mt-3 pt-2.5 border-t border-cota/70 flex justify-between items-center text-[10px] font-mono text-slate-400">
+<span>COTA: 54 M² INTERIOR</span>
+<span class="text-brass">ESCALA 1:1 VIRTUAL</span>
+</div>
+</div>
+</section>
+<!-- END: HeroSection -->
+<!-- BEGIN: TechnicalDataGrid -->
+<section aria-label="Especificaciones Técnicas del Inmueble" data-purpose="blueprint-specs">
+<div class="grid grid-cols-2 bg-carbon-800 tech-border rounded-industrial overflow-hidden divide-x divide-y divide-cota">
+<!-- Fila 1 Col 1: Tipología -->
+<div class="p-3">
+<span class="text-[10px] font-mono text-slate-400 block tracking-wider">01 // TIPOLOGÍA</span>
+<span class="font-heading font-bold text-lg tracking-wide uppercase text-white block mt-0.5">2 DORMITORIOS</span>
+<span class="text-[11px] text-slate-400 font-mono block mt-0.5">2 camas King Size</span>
+</div>
+<!-- Fila 1 Col 2: Baños -->
+<div class="p-3">
+<span class="text-[10px] font-mono text-slate-400 block tracking-wider">02 // BAÑOS</span>
+<span class="font-heading font-bold text-lg tracking-wide uppercase text-white block mt-0.5">2 BAÑOS</span>
+<span class="text-[11px] text-slate-400 font-mono block mt-0.5">Completos en suite</span>
+</div>
+<!-- Fila 2 Col 1: Capacidad -->
+<div class="p-3">
+<span class="text-[10px] font-mono text-slate-400 block tracking-wider">03 // CAPACIDAD</span>
+<span class="font-heading font-bold text-lg tracking-wide uppercase text-white block mt-0.5 leading-snug">HASTA 4 HUÉSPEDES</span>
+<span class="text-[11px] text-slate-400 font-mono block mt-0.5">Ideal parejas / viajes</span>
+</div>
+<!-- Fila 2 Col 2: Superficie -->
+<div class="p-3">
+<span class="text-[10px] font-mono text-slate-400 block tracking-wider">04 // SUPERFICIE</span>
+<span class="font-heading font-bold text-lg tracking-wide uppercase text-white block mt-0.5">≈ 54 M²</span>
+<span class="text-[11px] text-slate-400 font-mono block mt-0.5">+ Balcón mesa bistró</span>
+</div>
+</div>
+</section>
+<!-- END: TechnicalDataGrid -->
+<!-- BEGIN: SpacesCarousel -->
+<section class="space-y-3" data-purpose="spaces-showcase">
+<!-- Section Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-rust block"></span>
+<h2 class="font-heading font-bold text-xl uppercase tracking-wider text-white">01 // ESPACIOS DEL LOFT</h2>
+</div>
+<span class="text-[10px] font-mono text-slate-400 uppercase tracking-widest">DESLIZAR →</span>
+</div>
+<!-- Horizontal Snap Carousel -->
+<div class="flex gap-3 overflow-x-auto snap-x snap-mandatory hide-scrollbar -mx-4 px-4 pb-2">
+<!-- Tarjeta 1: Dormitorio Principal -->
+<article class="flex-shrink-0 w-[270px] snap-center bg-carbon-800 tech-border rounded-industrial p-2 flex flex-col justify-between">
+<div>
+<div class="relative w-full h-36 rounded-industrial overflow-hidden border border-cota/70">
+<img alt="Ultra modern industrial loft bedroom with king size bed, exposed concrete wall, black steel frame closet, warm architectural lighting, photorealistic interior photography" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcbyTlstTqIA9-X9pNbgmMzn7Au4lEkbGqYxIbQETOJD8ZjgaJmgy-jO_bgs8gSrNbji78lzv76BCeBb00mn0yYM0bZQLuJ6dm2D2eqB8YYxna8p--j--pjwDFJEagTCUaXCnhwbqU9_zI64gdjOx4BjTr-YnLEKtfPe12VPkHqTD-Iv16BujO_4KQFOdOyNgt4qBwXqXXO2tDScRg4mdNhUvWr4Z5ECcTJ4ot556A1l-1UpQoVJMaaaB7dChvLTLjUgXm9bT0JOim"/>
+<span class="absolute top-2 left-2 font-mono text-[9px] font-semibold bg-carbon-900/90 text-white border border-cota px-1.5 py-0.5 rounded-industrial">
+                  18 M²
+                </span>
+</div>
+<div class="mt-2.5">
+<span class="text-[10px] font-mono text-rust tracking-wider uppercase font-medium">DORMITORIO 01</span>
+<h3 class="font-heading font-bold text-lg text-white uppercase tracking-tight">Suite Principal</h3>
+<p class="text-xs text-slate-400 font-body">Cama King · Baño Privado</p>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-cota text-[10px] font-mono text-slate-400 flex justify-between">
+<span>HORMIGÓN VISTO</span>
+<span class="text-brass">CLÓSET ACERO</span>
+</div>
+</article>
+<!-- Tarjeta 2: Segundo Dormitorio -->
+<article class="flex-shrink-0 w-[270px] snap-center bg-carbon-800 tech-border rounded-industrial p-2 flex flex-col justify-between">
+<div>
+<div class="relative w-full h-36 bg-carbon-700 rounded-industrial overflow-hidden border border-cota/70 flex flex-col items-center justify-center text-center p-4">
+<!-- Fallback blueprint grid aesthetic for second room -->
+<div class="border border-dashed border-cota w-full h-full flex flex-col items-center justify-center p-2 bg-carbon-900/40">
+<span class="font-mono text-rust text-xs font-bold">[PLANO TÉCNICO]</span>
+<span class="text-[11px] text-slate-300 font-mono mt-1">PLANTA DORMITORIO 02</span>
+</div>
+<span class="absolute top-2 left-2 font-mono text-[9px] font-semibold bg-carbon-900/90 text-white border border-cota px-1.5 py-0.5 rounded-industrial">
+                  15 M²
+                </span>
+</div>
+<div class="mt-2.5">
+<span class="text-[10px] font-mono text-rust tracking-wider uppercase font-medium">DORMITORIO 02</span>
+<h3 class="font-heading font-bold text-lg text-white uppercase tracking-tight">Dormitorio Secundario</h3>
+<p class="text-xs text-slate-400 font-body">Cama King · Escritorio</p>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-cota text-[10px] font-mono text-slate-400 flex justify-between">
+<span>TRABAJO REMOTO</span>
+<span class="text-brass">BAÑO DEDICADO</span>
+</div>
+</article>
+<!-- Tarjeta 3: Living & Cocina integrada -->
+<article class="flex-shrink-0 w-[270px] snap-center bg-carbon-800 tech-border rounded-industrial p-2 flex flex-col justify-between">
+<div>
+<div class="relative w-full h-36 rounded-industrial overflow-hidden border border-cota/70">
+<img alt="Modern industrial loft kitchen with dark concrete island, open shelves, matte black fixtures, exposed brick wall in background, warm moody interior photography" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDP3Ws5Y9ONM_DoJri8qd9OjMmjPMqTxreS_7wiukz59GeOXzAbphSEixbPkATXJDH1W20QuiLagkm-6K3M-Mz8LTgYnIZjpzCcZJZvKIhUntDrqqN3XHIcmX6WRzfrHKdQmI1x1D6VoZlQCdLdO5VWR3AZrWMbU80YndEGppGazLSwiu94pO7oZDLNJF9w-JWpdF4U-Oow3TXFReQ7clAcUxFvzHztDdXz5Xzooi9WyKqAfBa4SLnXtHUfRppNLNFalQ2OmQR0yg-"/>
+<span class="absolute top-2 left-2 font-mono text-[9px] font-semibold bg-carbon-900/90 text-white border border-cota px-1.5 py-0.5 rounded-industrial">
+                  22 M²
+                </span>
+</div>
+<div class="mt-2.5">
+<span class="text-[10px] font-mono text-rust tracking-wider uppercase font-medium">ZONA SOCIAL</span>
+<h3 class="font-heading font-bold text-lg text-white uppercase tracking-tight">Living &amp; Cocina Abierta</h3>
+<p class="text-xs text-slate-400 font-body">Muro de ladrillo · Isla Bar</p>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-cota text-[10px] font-mono text-slate-400 flex justify-between">
+<span>CAMPANA MATTE</span>
+<span class="text-brass">EQUIPAMIENTO COMPLETO</span>
+</div>
+</article>
+<!-- Tarjeta 4: Balcón Bistró -->
+<article class="flex-shrink-0 w-[270px] snap-center bg-carbon-800 tech-border rounded-industrial p-2 flex flex-col justify-between">
+<div>
+<div class="relative w-full h-36 bg-carbon-700 rounded-industrial overflow-hidden border border-cota/70 flex flex-col items-center justify-center p-3 text-center">
+<div class="border border-dashed border-cota w-full h-full flex flex-col items-center justify-center p-2 bg-carbon-900/40">
+<span class="font-mono text-rust text-xs font-bold">[EXTERIOR // BALCÓN]</span>
+<span class="text-[11px] text-slate-300 font-mono mt-1">ORIENTACIÓN PONIENTE</span>
+</div>
+<span class="absolute top-2 left-2 font-mono text-[9px] font-semibold bg-carbon-900/90 text-white border border-cota px-1.5 py-0.5 rounded-industrial">
+                  4.5 M²
+                </span>
+</div>
+<div class="mt-2.5">
+<span class="text-[10px] font-mono text-rust tracking-wider uppercase font-medium">EXTERIOR</span>
+<h3 class="font-heading font-bold text-lg text-white uppercase tracking-tight">Balcón Bistró</h3>
+<p class="text-xs text-slate-400 font-body">Mesa para dos · Vista urbana</p>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-cota text-[10px] font-mono text-slate-400 flex justify-between">
+<span>DECK METÁLICO</span>
+<span class="text-brass">CAFETERO BISTRÓ</span>
+</div>
+</article>
+</div>
+</section>
+<!-- END: SpacesCarousel -->
+<!-- BEGIN: VirtualImmersion -->
+<section class="tech-border bg-carbon-800 rounded-industrial p-4 relative overflow-hidden" data-purpose="virtual-tour-card">
+<!-- Technical Blueprint Decorative Watermark -->
+<span class="absolute right-2 -bottom-6 font-heading font-black text-8xl text-cota/20 select-none pointer-events-none">
+          3D
+        </span>
+<div class="relative z-10 space-y-3">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-rust block"></span>
+<span class="font-mono text-[11px] tracking-widest text-rust uppercase font-semibold">02 // INMERSIÓN VIRTUAL</span>
+</div>
+<h2 class="font-heading font-black text-2xl uppercase tracking-tight text-white leading-tight">
+            Explora cada rincón antes de tu llegada
+          </h2>
+<p class="text-xs text-slate-300 font-body leading-relaxed">
+            Navega por la geometría espacial completa del loft. Mide vanos, visualiza la iluminación natural de bodega industrial y verifica la distribución arquitectónica en tiempo real.
+          </p>
+<!-- Accuracy metric bar -->
+<div class="tech-border bg-carbon-900/80 p-2.5 rounded-industrial">
+<div class="flex justify-between items-center text-[10px] font-mono text-slate-400 mb-1.5">
+<span>PRECISIÓN ESPACIAL</span>
+<span class="text-brass font-bold">100% ESCALA REAL</span>
+</div>
+<div class="w-full h-1 bg-cota rounded-full overflow-hidden">
+<div class="w-full h-full bg-rust"></div>
+</div>
+</div>
+<button class="w-full h-11 bg-transparent hover:bg-cota/40 active:bg-cota/70 text-slate-200 border border-cota font-mono text-xs font-semibold tracking-wider uppercase rounded-industrial flex items-center justify-center gap-2 transition-colors" type="button">
+<svg class="w-4 h-4 text-brass" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<polygon points="10 8 16 12 10 16 10 8"></polygon>
+</svg>
+            Abrir recorrido interactivo
+          </button>
+</div>
+</section>
+<!-- END: VirtualImmersion -->
+<!-- BEGIN: AmenitiesSection -->
+<section class="space-y-3" data-purpose="amenities">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-rust block"></span>
+<h2 class="font-heading font-bold text-xl uppercase tracking-wider text-white">03 // AMENIDADES</h2>
+</div>
+<div class="grid grid-cols-2 gap-2.5 font-body">
+<!-- Amenity 1: Wi-Fi -->
+<div class="p-3 bg-carbon-800 tech-border rounded-industrial flex flex-col justify-between">
+<div class="text-rust mb-2">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<path d="M5 13a10 10 0 0 1 14 0"></path>
+<path d="M8.5 16.5a5 5 0 0 1 7 0"></path>
+<path d="M12 20h.01"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-heading font-bold text-sm text-white uppercase tracking-wide">Wi-Fi Fibra 500M</h3>
+<p class="text-[11px] text-slate-400 font-mono mt-0.5">Teletrabajo</p>
+</div>
+</div>
+<!-- Amenity 2: Cerradura Digital -->
+<div class="p-3 bg-carbon-800 tech-border rounded-industrial flex flex-col justify-between">
+<div class="text-rust mb-2">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
+<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-heading font-bold text-sm text-white uppercase tracking-wide">Cerradura Digital</h3>
+<p class="text-[11px] text-slate-400 font-mono mt-0.5">Self check-in (clave)</p>
+</div>
+</div>
+<!-- Amenity 3: Cocina Eléctrica -->
+<div class="p-3 bg-carbon-800 tech-border rounded-industrial flex flex-col justify-between">
+<div class="text-rust mb-2">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<path d="M18 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Z"></path>
+<path d="M7 12h10"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-heading font-bold text-sm text-white uppercase tracking-wide">Cocina Eléctrica</h3>
+<p class="text-[11px] text-slate-400 font-mono mt-0.5">Horno, inducción, menaje</p>
+</div>
+</div>
+<!-- Amenity 4: Climatización A/C -->
+<div class="p-3 bg-carbon-800 tech-border rounded-industrial flex flex-col justify-between">
+<div class="text-rust mb-2">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z"></path>
+<path d="M16 12h2"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-heading font-bold text-sm text-white uppercase tracking-wide">Climatización A/C</h3>
+<p class="text-[11px] text-slate-400 font-mono mt-0.5">Frío / calor integral</p>
+</div>
+</div>
+<!-- Amenity 5: Smart TV 55" -->
+<div class="p-3 bg-carbon-800 tech-border rounded-industrial flex flex-col justify-between">
+<div class="text-rust mb-2">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<rect height="15" rx="2" ry="2" width="20" x="2" y="7"></rect>
+<polyline points="17 2 12 7 7 2"></polyline>
+</svg>
+</div>
+<div>
+<h3 class="font-heading font-bold text-sm text-white uppercase tracking-wide">Smart TV 55" 4K</h3>
+<p class="text-[11px] text-slate-400 font-mono mt-0.5">Streaming integrado</p>
+</div>
+</div>
+<!-- Amenity 6: Ropa de Cama & Baño -->
+<div class="p-3 bg-carbon-800 tech-border rounded-industrial flex flex-col justify-between">
+<div class="text-rust mb-2">
+<svg class="w-5 h-5 stroke-current" fill="none" stroke-width="2" viewbox="0 0 24 24">
+<path d="M2 17h20v4H2z"></path>
+<path d="M6 17V7a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v10"></path>
+</svg>
+</div>
+<div>
+<h3 class="font-heading font-bold text-sm text-white uppercase tracking-wide">Ropa de Cama &amp; Baño</h3>
+<p class="text-[11px] text-slate-400 font-mono mt-0.5">300 hilos y toallas</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: AmenitiesSection -->
+<!-- BEGIN: FAQSection -->
+<section class="space-y-3" data-purpose="faq">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 bg-rust block"></span>
+<h2 class="font-heading font-bold text-xl uppercase tracking-wider text-white">04 // PREGUNTAS FRECUENTES</h2>
+</div>
+<div class="space-y-2">
+<!-- FAQ Item 1 -->
+<details class="group bg-carbon-800 tech-border rounded-industrial overflow-hidden">
+<summary class="px-3.5 py-3 cursor-pointer select-none flex items-center justify-between text-xs font-semibold text-slate-200">
+<span>¿Cómo se realiza el pago y la confirmación?</span>
+<span class="faq-chevron text-slate-400 transition-transform duration-200 ml-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</summary>
+<div class="px-3.5 pb-3 pt-1 text-xs text-slate-400 leading-relaxed border-t border-cota/60 font-body">
+              Las reservas a través de esta web son solicitudes directas sin cobro en línea. Se verifica disponibilidad y se confirma por correo electrónico para coordinar el método de abono.
+            </div>
+</details>
+<!-- FAQ Item 2 -->
+<details class="group bg-carbon-800 tech-border rounded-industrial overflow-hidden">
+<summary class="px-3.5 py-3 cursor-pointer select-none flex items-center justify-between text-xs font-semibold text-slate-200">
+<span>¿Cuáles son las políticas de estadía mínima y tarifas?</span>
+<span class="faq-chevron text-slate-400 transition-transform duration-200 ml-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</summary>
+<div class="px-3.5 pb-3 pt-1 text-xs text-slate-400 leading-relaxed border-t border-cota/60 font-body">
+              Estadía mínima de 2 noches. Tarifa estándar de CLP 58.000 por noche, más una tarifa única de servicio de aseo y desinfección de CLP 15.000 por estadía.
+            </div>
+</details>
+<!-- FAQ Item 3 -->
+<details class="group bg-carbon-800 tech-border rounded-industrial overflow-hidden">
+<summary class="px-3.5 py-3 cursor-pointer select-none flex items-center justify-between text-xs font-semibold text-slate-200">
+<span>¿Cómo funciona el Check-in y Check-out?</span>
+<span class="faq-chevron text-slate-400 transition-transform duration-200 ml-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</summary>
+<div class="px-3.5 pb-3 pt-1 text-xs text-slate-400 leading-relaxed border-t border-cota/60 font-body">
+              Check-in autónomo a partir de las 15:00 hrs mediante código digital enviado a tu teléfono el día de ingreso. Check-out impostergable a las 11:00 hrs para procesos de higienización.
+            </div>
+</details>
+<!-- FAQ Item 4 -->
+<details class="group bg-carbon-800 tech-border rounded-industrial overflow-hidden">
+<summary class="px-3.5 py-3 cursor-pointer select-none flex items-center justify-between text-xs font-semibold text-slate-200">
+<span>¿Se permiten fiestas o mascotas?</span>
+<span class="faq-chevron text-slate-400 transition-transform duration-200 ml-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg>
+</span>
+</summary>
+<div class="px-3.5 pb-3 pt-1 text-xs text-slate-400 leading-relaxed border-t border-cota/60 font-body">
+              No se permiten fiestas ni eventos de ninguna índole por normas de copropiedad del edificio. Tampoco se permite el ingreso de mascotas para garantizar los estándares hipoalergénicos del recinto.
+            </div>
+</details>
+</div>
+</section>
+<!-- END: FAQSection -->
+</main>
+<!-- BEGIN: MainFooter -->
+<footer class="mt-8 px-4 pt-4 pb-6 tech-border-t bg-carbon-900" data-purpose="site-footer">
+<!-- Disclaimer Obligatorio en Recuadro Técnico -->
+<div class="tech-border rounded-industrial p-3 bg-carbon-800/80 border-dashed border-cota text-center mb-4">
+<p class="font-mono text-[11px] text-brass uppercase tracking-wider font-semibold">
+          Sitio de prueba · imágenes renderizadas desde un modelo 3D
+        </p>
+</div>
+<!-- Datos de Marca y Ficha Técnica -->
+<div class="text-center space-y-1">
+<p class="font-heading font-bold text-sm tracking-widest text-slate-300 uppercase">
+          LOFT 2D2B · ARRIENDO TURÍSTICO URBANO
+        </p>
+<p class="font-mono text-[10px] text-slate-400 tracking-wider">
+          SISTEMA DE GESTIÓN RESIDENCIAL // REV. 2024
+        </p>
+</div>
+</footer>
+<!-- END: MainFooter -->
+<!-- BEGIN: StickyDock -->
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-carbon-900/95 backdrop-blur-md tech-border-t px-4 py-3 flex items-center justify-between max-w-[390px] mx-auto shadow-2xl" data-purpose="sticky-reservation-bar">
+<!-- Price Summary -->
+<div>
+<div class="flex items-baseline gap-1">
+<span class="font-heading font-extrabold text-xl text-white tracking-tight">CLP 58.000</span>
+<span class="text-[11px] font-mono text-slate-400">/ noche</span>
+</div>
+<p class="text-[10px] font-mono text-brass leading-none">Mín. 2 noches · Aseo CLP 15.000</p>
+</div>
+<!-- CTA Button -->
+<button class="h-11 px-6 bg-rust hover:bg-rust/90 active:scale-[0.98] text-white font-mono text-xs font-bold tracking-widest uppercase rounded-industrial border border-rust transition-all flex items-center justify-center shadow-lg shadow-rust/30" type="button">
+        Reservar
+      </button>
+</div>
+<!-- END: StickyDock -->
+</div>
+</body></html>

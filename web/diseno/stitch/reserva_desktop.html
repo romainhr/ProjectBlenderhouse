@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOFT 2D2B — Reserva</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              rust: '#C0562F',
+              rustHover: '#A84824',
+              brass: '#B8862B',
+              dark: '#121214',
+              surface: '#1A1A1E',
+              surfaceAlt: '#232328',
+              surfaceMuted: '#2B2B32',
+              border: '#33333A',
+              borderLight: '#44444F',
+              textPrimary: '#F1F1F3',
+              textSecondary: '#A0A0AB',
+              textMuted: '#6B6B78',
+            }
+          },
+          fontFamily: {
+            condensed: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          borderRadius: {
+            'loft': '2px',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Patrón de trama diagonal para días ocupados */
+    .diagonal-hatch {
+      background-color: #1f1f24;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.05),
+        rgba(255, 255, 255, 0.05) 3px,
+        transparent 3px,
+        transparent 7px
+      );
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #33333A;
+    }
+  </style>
+</head>
+<body class="bg-[#101012] text-[#F1F1F3] font-sans antialiased min-h-screen flex flex-col selection:bg-[#C0562F] selection:text-white">
+
+  <!-- TOP HEADER / NAV -->
+  <header class="border-b border-[#2B2B32] bg-[#141417]/95 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div class="flex items-center space-x-6">
+        <a href="#" class="flex items-baseline space-x-2 group">
+          <span class="font-condensed font-extrabold text-3xl tracking-wider text-white group-hover:text-[#C0562F] transition-colors">LOFT 2D2B</span>
+          <span class="font-mono text-[10px] text-[#B8862B] border border-[#B8862B]/30 px-1.5 py-0.5 rounded-[2px] tracking-widest uppercase">TURÍSTICO</span>
+        </a>
+        <div class="hidden md:flex items-center text-xs font-mono text-[#6B6B78] space-x-2 pl-4 border-l border-[#2B2B32]">
+          <span>SPEC: 54m²</span>
+          <span>•</span>
+          <span>CAP: 4 PAX</span>
+          <span>•</span>
+          <span class="text-[#A0A0AB]">2 DORM / 2 BAÑOS</span>
+        </div>
+      </div>
+
+      <nav class="hidden md:flex items-center space-x-8 text-xs font-mono tracking-widest">
+        <a href="#" class="text-[#A0A0AB] hover:text-white transition-colors">01. INICIO</a>
+        <a href="#" class="text-[#A0A0AB] hover:text-white transition-colors">02. EL ESPACIO</a>
+        <a href="#" class="text-[#A0A0AB] hover:text-white transition-colors">03. PLANOS</a>
+        <a href="#" class="text-[#C0562F] font-bold border-b border-[#C0562F] pb-1">04. RESERVA</a>
+      </nav>
+
+      <div class="flex items-center space-x-4">
+        <div class="hidden sm:flex items-center border border-[#2B2B32] px-2.5 py-1 text-[11px] font-mono text-[#A0A0AB] rounded-[2px]">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse"></span> DISPONIBILIDAD 2025
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-10">
+    
+    <!-- HEADER SECTION & BREADCRUMBS -->
+    <div class="border-b border-[#2B2B32] pb-8 mb-10">
+      <div class="flex items-center space-x-2 font-mono text-xs text-[#6B6B78] tracking-widest uppercase mb-3">
+        <a href="#" class="hover:text-[#A0A0AB] transition-colors">Inicio</a>
+        <span class="text-[#C0562F]">/</span>
+        <span class="text-[#F1F1F3]">Reserva</span>
+      </div>
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <div class="font-mono text-xs text-[#C0562F] tracking-widest uppercase mb-1">MÓDULO DE SOLICITUD DIRECTA</div>
+          <h1 class="font-condensed font-extrabold text-5xl md:text-6xl uppercase tracking-tight text-white flex items-center gap-3">
+            <span>RESERVA</span>
+            <span class="text-xs font-mono font-normal border border-[#33333A] bg-[#18181C] text-[#A0A0AB] px-3 py-1 rounded-[2px] tracking-widest align-middle">
+              SOLICITUD SIN PAGO INMEDIATO
+            </span>
+          </h1>
+        </div>
+        <p class="font-mono text-xs text-[#8A8A96] max-w-md text-left md:text-right border-l-2 md:border-l-0 md:border-r-2 border-[#C0562F] pl-3 md:pr-3 py-1">
+          Tarifa fija <span class="text-white font-bold">CLP 58.000 / noche</span>. Estadía mínima de 2 noches. Confirmación manual en menos de 4 horas vía correo.
+        </p>
+      </div>
+    </div>
+
+    <!-- MAIN TWO COLUMN GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      
+      <!-- LEFT COLUMN: CALENDAR & FORM (7 cols) -->
+      <div class="lg:col-span-7 space-y-12">
+        
+        <!-- SECTION 01: FECHAS / CALENDARIO -->
+        <section class="bg-[#16161A] border border-[#2B2B32] rounded-[2px] p-6 sm:p-8 relative">
+          <!-- Architectural Tag -->
+          <div class="flex items-center justify-between border-b border-[#282830] pb-4 mb-6">
+            <div class="flex items-center space-x-3">
+              <span class="font-mono text-xs bg-[#24242C] text-[#C0562F] px-2 py-0.5 font-bold rounded-[2px]">01</span>
+              <h2 class="font-condensed font-bold text-2xl tracking-wide uppercase text-white">CALENDARIO DE FECHAS</h2>
+            </div>
+            <span class="font-mono text-[11px] text-[#80808C]">MÍNIMO 2 NOCHES</span>
+          </div>
+
+          <!-- Calendario 2 Meses Contenedor -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Mes 1: OCTUBRE 2025 -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="font-condensed font-bold text-lg tracking-wider uppercase text-[#E0E0E6]">OCTUBRE 2025</span>
+                <span class="font-mono text-[10px] text-[#6B6B78]">MES 10</span>
+              </div>
+              
+              <!-- Días Semana -->
+              <div class="grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-[#6B6B78] uppercase py-1 border-b border-[#26262D]">
+                <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+              </div>
+
+              <!-- Grilla Días Octubre -->
+              <div class="grid grid-cols-7 gap-1 font-mono text-xs text-center">
+                <!-- Espacios vacíos inicio mes -->
+                <div class="h-9"></div>
+                <div class="h-9"></div>
+                
+                <!-- Días 1 al 5 libres/pasados -->
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center text-[#555560] cursor-not-allowed">01</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center text-[#555560] cursor-not-allowed">02</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center text-[#555560] cursor-not-allowed">03</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center text-[#555560] cursor-not-allowed">04</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center text-[#555560] cursor-not-allowed">05</button>
+
+                <!-- Días 06 al 11 ocupados (con trama diagonal) -->
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">06</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">07</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">08</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">09</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">10</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">11</div>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">12</button>
+
+                <!-- Días 13 y 14 libres -->
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">13</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">14</button>
+                
+                <!-- RANGO SELECCIONADO EN ÓXIDO: 15 al 18 Octubre -->
+                <button type="button" class="h-9 bg-[#C0562F] text-white font-bold rounded-l-[2px] flex items-center justify-center relative shadow-sm">
+                  15
+                  <span class="absolute -top-1 right-0 w-1.5 h-1.5 bg-[#B8862B] rounded-full"></span>
+                </button>
+                <button type="button" class="h-9 bg-[#C0562F]/80 text-white font-semibold flex items-center justify-center">16</button>
+                <button type="button" class="h-9 bg-[#C0562F]/80 text-white font-semibold flex items-center justify-center">17</button>
+                <button type="button" class="h-9 bg-[#C0562F] text-white font-bold rounded-r-[2px] flex items-center justify-center shadow-sm">18</button>
+                
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">19</button>
+
+                <!-- Días restantes -->
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">20</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">21</button>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">22</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">23</div>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">24</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">25</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">26</button>
+
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">27</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">28</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">29</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">30</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">31</button>
+              </div>
+            </div>
+
+            <!-- Mes 2: NOVIEMBRE 2025 -->
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="font-condensed font-bold text-lg tracking-wider uppercase text-[#E0E0E6]">NOVIEMBRE 2025</span>
+                <span class="font-mono text-[10px] text-[#6B6B78]">MES 11</span>
+              </div>
+              
+              <!-- Días Semana -->
+              <div class="grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-[#6B6B78] uppercase py-1 border-b border-[#26262D]">
+                <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+              </div>
+
+              <!-- Grilla Días Noviembre -->
+              <div class="grid grid-cols-7 gap-1 font-mono text-xs text-center">
+                <div class="h-9"></div><div class="h-9"></div><div class="h-9"></div><div class="h-9"></div><div class="h-9"></div>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">01</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">02</button>
+
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">03</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">04</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">05</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">06</button>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">07</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">08</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">09</div>
+
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">10</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">11</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">12</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">13</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">14</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">15</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">16</button>
+
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">17</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">18</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">19</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">20</button>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">21</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">22</div>
+                <div title="Ocupado" class="h-9 rounded-[2px] diagonal-hatch border border-[#2B2B32]/60 flex items-center justify-center text-[#5A5A66] cursor-not-allowed">23</div>
+
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">24</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">25</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">26</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">27</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">28</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">29</button>
+                <button type="button" class="h-9 rounded-[2px] flex items-center justify-center hover:bg-[#25252D] text-[#C4C4CD] transition-colors">30</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- LEYENDA DEL CALENDARIO -->
+          <div class="mt-8 pt-6 border-t border-[#26262D] flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+            <div class="flex items-center space-x-6">
+              <div class="flex items-center space-x-2">
+                <span class="w-3.5 h-3.5 bg-[#25252D] border border-[#3A3A45] rounded-[2px] inline-block"></span>
+                <span class="text-[#A0A0AB]">Disponible</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-3.5 h-3.5 diagonal-hatch border border-[#33333A] rounded-[2px] inline-block"></span>
+                <span class="text-[#A0A0AB]">Ocupado</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="w-3.5 h-3.5 bg-[#C0562F] rounded-[2px] inline-block"></span>
+                <span class="text-white font-medium">Tu selección</span>
+              </div>
+            </div>
+            <div class="text-[#B8862B] text-[11px] flex items-center gap-1.5">
+              <span>●</span> Check-in: 15:00 / Check-out: 11:00
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 02: HUÉSPEDES Y FORMULARIO -->
+        <section class="bg-[#16161A] border border-[#2B2B32] rounded-[2px] p-6 sm:p-8">
+          <div class="flex items-center space-x-3 border-b border-[#282830] pb-4 mb-6">
+            <span class="font-mono text-xs bg-[#24242C] text-[#C0562F] px-2 py-0.5 font-bold rounded-[2px]">02</span>
+            <h2 class="font-condensed font-bold text-2xl tracking-wide uppercase text-white">DATOS DE LA RESERVA</h2>
+          </div>
+
+          <form onsubmit="event.preventDefault(); document.getElementById('success-state').classList.remove('hidden'); document.getElementById('success-state').scrollIntoView({behavior: 'smooth'});" class="space-y-6">
+            
+            <!-- SELECTOR DE HUÉSPEDES (1 A 4) -->
+            <div>
+              <label class="block font-mono text-xs text-[#A0A0AB] uppercase tracking-wider mb-2">
+                Número de Huéspedes <span class="text-[#6B6B78]">(Máximo 4 personas)</span>
+              </label>
+              <div class="grid grid-cols-4 gap-2 sm:gap-4 font-mono text-sm">
+                <label class="cursor-pointer">
+                  <input type="radio" name="guests" value="1" class="peer sr-only">
+                  <div class="p-3 text-center border border-[#2E2E38] bg-[#1A1A20] rounded-[2px] peer-checked:border-[#C0562F] peer-checked:bg-[#C0562F]/15 peer-checked:text-white text-[#A0A0AB] hover:border-[#444452] transition-all">
+                    <span class="block font-bold">1</span>
+                    <span class="text-[10px] text-[#6B6B78] block">Huésped</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="guests" value="2" checked class="peer sr-only">
+                  <div class="p-3 text-center border border-[#2E2E38] bg-[#1A1A20] rounded-[2px] peer-checked:border-[#C0562F] peer-checked:bg-[#C0562F]/15 peer-checked:text-white text-[#A0A0AB] hover:border-[#444452] transition-all">
+                    <span class="block font-bold">2</span>
+                    <span class="text-[10px] text-[#6B6B78] block">Huéspedes</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="guests" value="3" class="peer sr-only">
+                  <div class="p-3 text-center border border-[#2E2E38] bg-[#1A1A20] rounded-[2px] peer-checked:border-[#C0562F] peer-checked:bg-[#C0562F]/15 peer-checked:text-white text-[#A0A0AB] hover:border-[#444452] transition-all">
+                    <span class="block font-bold">3</span>
+                    <span class="text-[10px] text-[#6B6B78] block">Huéspedes</span>
+                  </div>
+                </label>
+                <label class="cursor-pointer">
+                  <input type="radio" name="guests" value="4" class="peer sr-only">
+                  <div class="p-3 text-center border border-[#2E2E38] bg-[#1A1A20] rounded-[2px] peer-checked:border-[#C0562F] peer-checked:bg-[#C0562F]/15 peer-checked:text-white text-[#A0A0AB] hover:border-[#444452] transition-all">
+                    <span class="block font-bold">4</span>
+                    <span class="text-[10px] text-[#6B6B78] block">Huéspedes</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- CAMPOS DEL FORMULARIO -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Nombre -->
+              <div>
+                <label for="name" class="block font-mono text-xs text-[#A0A0AB] uppercase tracking-wider mb-2">
+                  Nombre completo <span class="text-[#C0562F]">*</span>
+                </label>
+                <input type="text" id="name" required placeholder="Ej. Camila Morales" class="w-full bg-[#111114] border border-[#2E2E38] focus:border-[#C0562F] focus:outline-none px-4 py-3 rounded-[2px] text-sm text-white placeholder-[#4E4E5A] font-sans">
+              </div>
+
+              <!-- Correo -->
+              <div>
+                <label for="email" class="block font-mono text-xs text-[#A0A0AB] uppercase tracking-wider mb-2">
+                  Correo electrónico <span class="text-[#C0562F]">*</span>
+                </label>
+                <input type="email" id="email" required placeholder="camila@ejemplo.com" class="w-full bg-[#111114] border border-[#2E2E38] focus:border-[#C0562F] focus:outline-none px-4 py-3 rounded-[2px] text-sm text-white placeholder-[#4E4E5A] font-sans">
+              </div>
+            </div>
+
+            <!-- Teléfono (Opcional) -->
+            <div>
+              <label for="phone" class="block font-mono text-xs text-[#A0A0AB] uppercase tracking-wider mb-2 flex justify-between">
+                <span>Teléfono / WhatsApp</span>
+                <span class="text-[#6B6B78] lowercase">(opcional)</span>
+              </label>
+              <input type="tel" id="phone" placeholder="+56 9 8765 4321" class="w-full bg-[#111114] border border-[#2E2E38] focus:border-[#C0562F] focus:outline-none px-4 py-3 rounded-[2px] text-sm text-white placeholder-[#4E4E5A] font-mono">
+            </div>
+
+            <!-- Mensaje (Opcional) -->
+            <div>
+              <label for="message" class="block font-mono text-xs text-[#A0A0AB] uppercase tracking-wider mb-2 flex justify-between">
+                <span>Mensaje o requerimientos especiales</span>
+                <span class="text-[#6B6B78] lowercase">(opcional)</span>
+              </label>
+              <textarea id="message" rows="3" placeholder="Indica hora estimada de llegada, dudas sobre estacionamiento, cuna, etc." class="w-full bg-[#111114] border border-[#2E2E38] focus:border-[#C0562F] focus:outline-none px-4 py-3 rounded-[2px] text-sm text-white placeholder-[#4E4E5A] font-sans resize-none"></textarea>
+            </div>
+
+            <!-- Casilla de Privacidad Obligatoria -->
+            <div class="pt-2">
+              <label class="flex items-start space-x-3 cursor-pointer select-none">
+                <input type="checkbox" required class="mt-1 w-4 h-4 rounded-[2px] border-[#383844] bg-[#111114] text-[#C0562F] focus:ring-0 focus:ring-offset-0 accent-[#C0562F]">
+                <span class="text-xs text-[#A0A0AB] leading-relaxed">
+                  Acepto que usen mis datos sólo para responder esta solicitud. No compartimos tu información con terceros ni enviamos spam comercial.
+                </span>
+              </label>
+            </div>
+
+            <!-- Botón móvil de envío (visible solo en pantallas chicas) -->
+            <div class="lg:hidden pt-4">
+              <button type="submit" class="w-full bg-[#C0562F] hover:bg-[#A84824] text-white font-condensed font-bold text-xl uppercase tracking-wider py-4 rounded-[2px] transition-colors shadow-lg shadow-[#C0562F]/20">
+                SOLICITAR RESERVA
+              </button>
+            </div>
+
+          </form>
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN: STICKY SUMMARY CARD (5 cols) -->
+      <div class="lg:col-span-5">
+        <aside class="sticky top-28 bg-[#16161A] border border-[#2E2E38] rounded-[2px] p-6 shadow-2xl relative overflow-hidden">
+          
+          <!-- Accent Corner Line -->
+          <div class="absolute top-0 right-0 w-24 h-1 bg-gradient-to-l from-[#C0562F] to-transparent"></div>
+          
+          <div class="flex items-center justify-between border-b border-[#282830] pb-4 mb-5">
+            <span class="font-mono text-xs text-[#B8862B] tracking-wider uppercase flex items-center gap-1.5">
+              <span class="inline-block w-1.5 h-1.5 bg-[#B8862B]"></span> RESUMEN DE ESTADÍA
+            </span>
+            <span class="font-mono text-[10px] text-[#6B6B78] border border-[#2B2B32] px-2 py-0.5 rounded-[2px]">COTIZACIÓN PRELIMINAR</span>
+          </div>
+
+          <!-- MINI PREVIEW CARD CON FOTO INDUSTRIAL -->
+          <div class="flex gap-4 p-3 bg-[#111114] border border-[#282830] rounded-[2px] mb-6">
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_mB2Fb7nYhFUvNMEISTIeJo7Dd_NsmI5yvB1Xr3YjruUHyxyt6-Z2e1qPIXu8KMhb8JtoHhsi4DsAAKUz8EUCPBIhdOSazyw4XEWTBzAsq194bawLG2Ja2TgfIMc7yHiXFvkn-v_vuncsq3Z4wbygicCZkKABXsknSZ1W9eE7uDD3jj-RpSS-bRvGCsXJOJEHPbi3_j_d36W9HDmp6yM1I2ltk48Bb6SFFaPf0Thjsp14YHZjujm5wekEe6VC-ECUhlZgpH2Y8GuT" alt="LOFT 2D2B Interior industrial con concreto y ladrillo" class="w-24 h-24 object-cover rounded-[2px] border border-[#33333C] flex-shrink-0">
+            <div class="flex flex-col justify-between py-0.5">
+              <div>
+                <span class="font-mono text-[10px] text-[#C0562F] uppercase tracking-wider">DEPARTAMENTO COMPLETO</span>
+                <h3 class="font-condensed font-bold text-xl uppercase tracking-tight text-white leading-tight">LOFT 2D2B INDUSTRIAL</h3>
+                <p class="font-mono text-xs text-[#8A8A96] mt-0.5">2 Dorm. King · 2 Baños · Balcón</p>
+              </div>
+              <div class="flex items-center space-x-2 text-[11px] font-mono text-[#A0A0AB]">
+                <span>54 m²</span>
+                <span>•</span>
+                <span>Hasta 4 pax</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- DESGLOSE DE FECHAS SELECCIONADAS -->
+          <div class="grid grid-cols-2 gap-3 mb-6 p-3 bg-[#1B1B22] border border-[#282832] rounded-[2px] text-xs font-mono">
+            <div>
+              <span class="text-[10px] text-[#787884] uppercase block">Check-in</span>
+              <span class="text-white font-semibold">Mié 15 Oct 2025</span>
+              <span class="text-[10px] text-[#6B6B78] block">Desde 15:00 hrs</span>
+            </div>
+            <div class="border-l border-[#2B2B32] pl-3">
+              <span class="text-[10px] text-[#787884] uppercase block">Check-out</span>
+              <span class="text-white font-semibold">Sáb 18 Oct 2025</span>
+              <span class="text-[10px] text-[#6B6B78] block">Hasta 11:00 hrs</span>
+            </div>
+          </div>
+
+          <!-- DESGLOSE DE COSTOS (DETALLE ARQUITECTÓNICO) -->
+          <div class="space-y-3 font-mono text-xs border-b border-[#282830] pb-5 mb-5">
+            <div class="flex justify-between items-center text-[#A0A0AB]">
+              <span>3 noches × CLP 58.000</span>
+              <span class="text-white font-medium">CLP 174.000</span>
+            </div>
+            <div class="flex justify-between items-center text-[#A0A0AB]">
+              <span class="flex items-center gap-1">
+                Tarifa única de limpieza
+                <span class="text-[10px] text-[#6B6B78]">(desinfección)</span>
+              </span>
+              <span class="text-white font-medium">CLP 15.000</span>
+            </div>
+            <div class="flex justify-between items-center text-[#A0A0AB]">
+              <span>Depósito de garantía reembolsable</span>
+              <span class="text-[#787884]">CLP 0 (al check-in)</span>
+            </div>
+          </div>
+
+          <!-- TOTAL ESTIMADO -->
+          <div class="flex justify-between items-baseline mb-6">
+            <div>
+              <span class="font-mono text-xs text-[#8A8A96] uppercase tracking-wider block">Total estimado</span>
+              <span class="font-mono text-[10px] text-[#6B6B78]">Sin cargos ocultos ni comisión extra</span>
+            </div>
+            <div class="text-right">
+              <span class="font-condensed font-extrabold text-3xl text-white tracking-tight">CLP 189.000</span>
+              <span class="font-mono text-[10px] text-[#A0A0AB] block">≈ USD $198</span>
+            </div>
+          </div>
+
+          <!-- NOTA SIN COBRO EN LÍNEA -->
+          <div class="bg-[#1C1C22] border-l-2 border-[#B8862B] p-3 rounded-r-[2px] mb-6">
+            <div class="flex items-start space-x-2.5">
+              <svg class="w-4 h-4 text-[#B8862B] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p class="font-mono text-xs text-[#C8C8D2] leading-snug">
+                <strong class="text-white font-semibold">Sin cobro en línea:</strong> te confirmamos disponibilidad y los datos de transferencia formal por correo electrónico.
+              </p>
+            </div>
+          </div>
+
+          <!-- BOTÓN PRIMARIO DE SOLICITUD -->
+          <button type="button" onclick="document.querySelector('form').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}))" class="w-full bg-[#C0562F] hover:bg-[#A84824] text-white font-condensed font-extrabold text-2xl uppercase tracking-wider py-4 rounded-[2px] transition-all duration-150 flex items-center justify-center space-x-3 shadow-lg shadow-[#C0562F]/20 group">
+            <span>SOLICITAR RESERVA</span>
+            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+            </svg>
+          </button>
+
+          <!-- Indicador de confianza / tiempo de respuesta -->
+          <div class="mt-4 text-center font-mono text-[11px] text-[#6B6B78] flex items-center justify-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#B8862B]"></span>
+            <span>Respuesta garantizada en menos de 4 horas hábiles</span>
+          </div>
+
+        </aside>
+      </div>
+
+    </div>
+
+    <!-- ESTADO DE ÉXITO: SOLICITUD RECIBIDA -->
+    <div id="success-state" class="mt-16 pt-10 border-t border-[#2B2B32]">
+      <div class="bg-[#141418] border border-[#33333C] rounded-[2px] p-8 md:p-10 relative overflow-hidden">
+        
+        <!-- Top status bar -->
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#26262E] pb-6 mb-8">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-[2px] bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <div>
+              <span class="font-mono text-xs text-emerald-400 uppercase tracking-widest block">ESTADO: PROCESADA CORRECTAMENTE</span>
+              <h3 class="font-condensed font-extrabold text-3xl md:text-4xl uppercase text-white tracking-wide">
+                SOLICITUD RECIBIDA
+              </h3>
+            </div>
+          </div>
+          <div class="bg-[#1C1C22] border border-[#2F2F3B] px-4 py-2 rounded-[2px] font-mono text-right">
+            <span class="text-[10px] text-[#6B6B78] uppercase block">NÚMERO DE SOLICITUD</span>
+            <span class="text-sm md:text-base text-[#B8862B] font-bold tracking-wider">#LFT-2025-0894</span>
+          </div>
+        </div>
+
+        <p class="text-sm text-[#A0A0AB] max-w-2xl mb-8 leading-relaxed">
+          Hemos recibido tu solicitud de estadía para el <strong class="text-white">LOFT 2D2B</strong> del 15 al 18 de octubre de 2025. Tu cotización preliminar está reservada temporalmente por 6 horas.
+        </p>
+
+        <!-- PRÓXIMOS PASOS (PASOS 01, 02, 03 EN ESTILO INDUSTRIAL) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          
+          <!-- Paso 01 -->
+          <div class="bg-[#19191F] border border-[#282830] p-5 rounded-[2px]">
+            <span class="font-mono text-xs text-[#C0562F] font-bold block mb-2">PASO 01 / VERIFICACIÓN</span>
+            <h4 class="font-condensed font-bold text-lg text-white uppercase mb-2">Revisión de agenda</h4>
+            <p class="font-sans text-xs text-[#8A8A96] leading-relaxed">
+              Verificamos el estado físico del departamento y los horarios de limpieza post check-out previo.
+            </p>
+          </div>
+
+          <!-- Paso 02 -->
+          <div class="bg-[#19191F] border border-[#282830] p-5 rounded-[2px]">
+            <span class="font-mono text-xs text-[#B8862B] font-bold block mb-2">PASO 02 / CORREO</span>
+            <h4 class="font-condensed font-bold text-lg text-white uppercase mb-2">Confirmación & Pago</h4>
+            <p class="font-sans text-xs text-[#8A8A96] leading-relaxed">
+              Recibirás un correo con el voucher digital, instrucciones de transferencia bancaria y contrato simple.
+            </p>
+          </div>
+
+          <!-- Paso 03 -->
+          <div class="bg-[#19191F] border border-[#282830] p-5 rounded-[2px]">
+            <span class="font-mono text-xs text-[#80808E] font-bold block mb-2">PASO 03 / ACCESO</span>
+            <h4 class="font-condensed font-bold text-lg text-white uppercase mb-2">Check-in Autónomo</h4>
+            <p class="font-sans text-xs text-[#8A8A96] leading-relaxed">
+              Una vez acreditado, te enviaremos el código digital de la cerradura inteligente y la guía del loft.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- ACCIONES COMPLEMENTARIAS -->
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-[#23232B] font-mono text-xs">
+          <div class="text-[#787886]">
+            ¿Tienes dudas urgentes? Escríbenos directamente a <a href="mailto:contacto@loft2d2b.cl" class="text-[#C0562F] underline underline-offset-4">contacto@loft2d2b.cl</a>
+          </div>
+          <button type="button" onclick="window.print()" class="border border-[#383844] hover:border-white px-4 py-2 rounded-[2px] text-white transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            IMPRIMIR COMPROBANTE
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- FOOTER TÉCNICO INDUSTRIAL -->
+  <footer class="border-t border-[#2B2B32] bg-[#0E0E10] text-[#787884] font-mono text-xs mt-20">
+    <div class="max-w-7xl mx-auto px-6 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+        <div>
+          <span class="font-condensed font-extrabold text-2xl text-white tracking-wider block mb-2">LOFT 2D2B</span>
+          <p class="text-[11px] text-[#6B6B78] leading-relaxed">
+            Arquitectura contemporánea y hospitalidad independiente. Espacio curado para estancias de trabajo y turismo de diseño.
+          </p>
+        </div>
+        <div>
+          <span class="text-white text-[11px] uppercase tracking-wider block mb-2">ESPECIFICACIONES TÉCNICAS</span>
+          <ul class="space-y-1 text-[11px] text-[#6B6B78]">
+            <li>Área útil: 54 m² + 4 m² balcón</li>
+            <li>Capacidad: 1 a 4 huéspedes</li>
+            <li>Configuración: 2 Dormitorios King, 2 Baños</li>
+            <li>Conexión: Fibra simétrica 500 Mbps</li>
+          </ul>
+        </div>
+        <div>
+          <span class="text-white text-[11px] uppercase tracking-wider block mb-2">POLÍTICAS CLAVE</span>
+          <ul class="space-y-1 text-[11px] text-[#6B6B78]">
+            <li>Check-in: 15:00 hrs / Check-out: 11:00 hrs</li>
+            <li>Estadía mínima: 2 noches continuas</li>
+            <li>Tarifa limpieza: CLP 15.000 por estadía</li>
+            <li>No se permiten eventos ni mascotas</li>
+          </ul>
+        </div>
+        <div>
+          <span class="text-white text-[11px] uppercase tracking-wider block mb-2">CONTACTO & COORDENADAS</span>
+          <p class="text-[11px] text-[#6B6B78] leading-relaxed">
+            Barrio Bellas Artes / Lastarria<br>
+            Santiago, Chile<br>
+            Coordenadas: -33.4372, -70.6476<br>
+            <span class="text-[#B8862B]">reserva@loft2d2b.cl</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- LÍNEA DE COTA ARQUITECTÓNICA Y AVISO LEGAL VISIBLE -->
+      <div class="border-t border-[#232329] pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
+        <div class="flex items-center space-x-2 text-[#8A8A96]">
+          <span class="inline-block w-2 h-2 border border-[#C0562F] bg-[#C0562F]/30"></span>
+          <span>© 2025 LOFT 2D2B. Todos los derechos reservados.</span>
+        </div>
+        <!-- Aviso visible obligatorio requerido por el usuario -->
+        <div class="px-3 py-1.5 bg-[#17171C] border border-[#2B2B32] text-[#B8862B] font-bold rounded-[2px]">
+          Sitio de prueba · imágenes renderizadas desde un modelo 3D
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

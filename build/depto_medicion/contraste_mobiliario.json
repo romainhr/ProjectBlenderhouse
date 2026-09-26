@@ -1,0 +1,200 @@
+{
+  "Depto_Mueble_D1_Cama": {
+    "extraccion": "Cama D1",
+    "criterio": "bordes",
+    "desvio_bordes_px": [
+      2.13,
+      -2.13,
+      -0.0,
+      -1.24
+    ],
+    "desvio_centro_px": [
+      0.0,
+      -0.62
+    ],
+    "diferencia_tamano_m": [
+      -0.081,
+      -0.023
+    ]
+  },
+  "Depto_Mueble_D2_Cama": {
+    "extraccion": "Cama D2",
+    "criterio": "bordes",
+    "desvio_bordes_px": [
+      2.13,
+      -2.13,
+      1.24,
+      -0.0
+    ],
+    "desvio_centro_px": [
+      0.0,
+      0.62
+    ],
+    "diferencia_tamano_m": [
+      -0.081,
+      -0.024
+    ]
+  },
+  "Depto_Mueble_D1_VeladorO": {
+    "extraccion": "Velador izq. D1",
+    "criterio": "centro",
+    "desvio_bordes_px": [
+      -3.92,
+      1.13,
+      0.0,
+      0.0
+    ],
+    "desvio_centro_px": [
+      -1.39,
+      0.0
+    ],
+    "diferencia_tamano_m": [
+      0.096,
+      -0.0
+    ]
+  },
+  "Depto_Mueble_D1_VeladorE": {
+    "extraccion": "Velador der. D1",
+    "criterio": "centro",
+    "desvio_bordes_px": [
+      -1.13,
+      1.92,
+      0.0,
+      0.0
+    ],
+    "desvio_centro_px": [
+      0.39,
+      0.0
+    ],
+    "diferencia_tamano_m": [
+      0.058,
+      -0.0
+    ]
+  },
+  "Depto_Mueble_D2_VeladorO": {
+    "extraccion": "Velador izq. D2",
+    "criterio": "centro",
+    "desvio_bordes_px": [
+      -3.92,
+      1.13,
+      0.5,
+      0.0
+    ],
+    "desvio_centro_px": [
+      -1.39,
+      0.25
+    ],
+    "diferencia_tamano_m": [
+      0.096,
+      -0.009
+    ]
+  },
+  "Depto_Mueble_D2_VeladorE": {
+    "extraccion": "Velador der. D2",
+    "criterio": "centro",
+    "desvio_bordes_px": [
+      -1.13,
+      1.92,
+      0.5,
+      0.0
+    ],
+    "desvio_centro_px": [
+      0.39,
+      0.25
+    ],
+    "diferencia_tamano_m": [
+      0.058,
+      -0.009
+    ]
+  },
+  "Depto_Mueble_Sofa": {
+    "extraccion": "Sofá 2 cuerpos",
+    "criterio": "bordes",
+    "desvio_bordes_px": [
+      0.46,
+      -0.46,
+      -0.11,
+      0.0
+    ],
+    "desvio_centro_px": [
+      0.0,
+      -0.05
+    ],
+    "diferencia_tamano_m": [
+      -0.018,
+      0.002
+    ]
+  },
+  "Depto_Mueble_MesaCentro": {
+    "extraccion": "Mesa de centro",
+    "criterio": "bordes",
+    "desvio_bordes_px": [
+      0.5,
+      -0.5,
+      0.5,
+      -0.5
+    ],
+    "desvio_centro_px": [
+      0.0,
+      -0.0
+    ],
+    "diferencia_tamano_m": [
+      -0.019,
+      -0.019
+    ]
+  },
+  "Depto_Mueble_TV_Frentes": {
+    "extraccion": "Mueble TV",
+    "criterio": "bordes",
+    "desvio_bordes_px": [
+      1.0,
+      -1.0,
+      1.0,
+      -1.0
+    ],
+    "desvio_centro_px": [
+      0.0,
+      0.0
+    ],
+    "diferencia_tamano_m": [
+      -0.038,
+      -0.038
+    ]
+  },
+  "Depto_Mueble_Alfombra": {
+    "extraccion": "Alfombra",
+    "criterio": "bordes",
+    "desvio_bordes_px": [
+      0.5,
+      -0.5,
+      0.5,
+      -0.5
+    ],
+    "desvio_centro_px": [
+      -0.0,
+      -0.0
+    ],
+    "diferencia_tamano_m": [
+      -0.019,
+      -0.019
+    ]
+  },
+  "Depto_Mueble_Pouf": {
+    "extraccion": "Pouf / mesa lateral",
+    "criterio": "bordes",
+    "desvio_bordes_px": [
+      0.5,
+      -0.5,
+      0.5,
+      -0.5
+    ],
+    "desvio_centro_px": [
+      -0.0,
+      -0.0
+    ],
+    "diferencia_tamano_m": [
+      -0.019,
+      -0.019
+    ]
+  }
+}

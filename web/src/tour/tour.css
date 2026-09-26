@@ -1,0 +1,193 @@
+/* Visor v3 del tour (web/src/tour/). Los tokens (papel claro, terracota, Newsreader/Public Sans autoalojadas)
+   vienen de ../css/tokens.css, compartido con el resto del sitio (index.html los importa a este archivo). Aquí
+   solo se agrega --velo, propio del visor (paneles translúcidos sobre la escena 3D). */
+:root {
+  --velo: rgba(255, 255, 255, 0.88);
+}
+
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--papel-2); color: var(--tinta); font-family: var(--f-texto);
+  font-size: 15px; -webkit-font-smoothing: antialiased; overflow: hidden; overscroll-behavior: none;
+}
+button { font-family: inherit; }
+a { color: inherit; }
+
+#vista {
+  position: fixed; inset: 0; width: 100%; height: 100%; display: block; background: #cfd8c9;
+  touch-action: none; outline: none; -webkit-user-select: none; user-select: none;
+}
+
+.panel {
+  background: var(--velo); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--linea); box-shadow: var(--sombra); border-radius: var(--radio);
+}
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--acento); outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ barra superior */
+#barra-superior {
+  position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); left: 10px; right: 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; z-index: 6;
+  pointer-events: none;
+}
+#barra-superior > * { pointer-events: auto; }
+.volver, .btn-reservar {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px;
+  text-decoration: none; font-size: 13.5px; font-weight: 500; white-space: nowrap;
+}
+.volver { color: var(--tinta-2); }
+.volver:hover { color: var(--tinta); }
+/* Pastilla con fondo propio (no solo texto sobre la escena): así el contraste no depende de qué haya detrás. */
+#nombre-lugar {
+  font-family: var(--f-titulo); font-size: 15.5px; font-weight: 500; color: var(--tinta);
+  padding: 10px 16px; margin: 0 auto; text-align: center; max-width: 45%; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; pointer-events: none;
+}
+.btn-reservar { background: var(--acento); color: #fff; border-radius: var(--radio); font-weight: 600; }
+.btn-reservar:hover { background: var(--acento-2); }
+
+/* ------------------------------------------------------------------ botonera inferior */
+#botonera {
+  position: fixed; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  display: flex; gap: 6px; padding: 6px; z-index: 6;
+}
+.boton-icono {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 56px;
+  min-height: 44px; padding: 6px 8px; border: 0; background: transparent; border-radius: calc(var(--radio) - 3px);
+  color: var(--tinta-2); cursor: pointer;
+}
+.boton-icono svg { width: 20px; height: 20px; }
+.boton-icono span { font-size: 10.5px; font-weight: 500; }
+.boton-icono:hover, .boton-icono[aria-pressed="true"] { background: var(--papel-2); color: var(--acento); }
+@media (max-width: 560px) {
+  .boton-icono span { display: none; }
+  .boton-icono { min-width: 44px; padding: 8px; }
+}
+
+/* ------------------------------------------------------------------ paneles flotantes (plano, luces, momento, ayuda) */
+.flotante {
+  position: fixed; right: 10px; bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  width: min(300px, calc(100% - 20px)); max-height: min(70vh, 460px); overflow: auto;
+  padding: 14px 16px; z-index: 7;
+}
+.flotante h2 { margin: 0 0 8px; font-family: var(--f-titulo); font-size: 19px; font-weight: 500; }
+.flotante .cerrar {
+  position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; border: 0; background: transparent;
+  border-radius: 50%; color: var(--tinta-2); cursor: pointer; font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.flotante .cerrar:hover { background: var(--papel-2); }
+
+#panel-plano { padding: 10px; }
+#lienzo-plano { display: block; width: 100%; height: auto; border-radius: calc(var(--radio) - 3px); cursor: pointer; }
+#panel-plano p { margin: 6px 2px 0; font-size: 12px; color: var(--tinta-2); }
+
+.grupo-luz { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0;
+  min-height: 44px; border-bottom: 1px solid var(--linea); }
+.grupo-luz:last-of-type { border-bottom: 0; }
+.grupo-luz span { font-size: 13.5px; }
+.interruptor { position: relative; width: 44px; height: 26px; border-radius: 13px; border: 0; background: var(--linea);
+  cursor: pointer; flex: none; }
+.interruptor::after { content: ""; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .15s ease; }
+.interruptor[aria-pressed="true"] { background: var(--acento); }
+.interruptor[aria-pressed="true"]::after { transform: translateX(18px); }
+#luces-todo { display: flex; gap: 8px; margin-top: 10px; }
+#luces-todo button {
+  flex: 1; min-height: 44px; padding: 8px; border: 1px solid var(--linea); background: var(--papel);
+  border-radius: calc(var(--radio) - 3px); cursor: pointer; font-size: 12.5px; color: var(--tinta);
+}
+#luces-todo button:hover { border-color: var(--acento); color: var(--acento); }
+
+.opcion-momento { display: flex; gap: 6px; }
+.opcion-momento button {
+  flex: 1; min-height: 44px; padding: 10px 6px; border: 1px solid var(--linea); background: var(--papel);
+  border-radius: calc(var(--radio) - 3px); cursor: pointer; font-size: 13px; color: var(--tinta);
+}
+.opcion-momento button[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: #fff; }
+
+#panel-ayuda dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; }
+#panel-ayuda dt { font-weight: 600; color: var(--tinta); white-space: nowrap; }
+#panel-ayuda dd { margin: 0; color: var(--tinta-2); }
+#panel-ayuda small { display: block; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--linea);
+  color: var(--tinta-2); font-size: 11.5px; line-height: 1.5; }
+.solo-raton { display: contents; }
+.solo-tactil { display: none; }
+body.tactil .solo-tactil { display: contents; }
+body.tactil .solo-raton { display: none; }
+
+/* ------------------------------------------------------------------ mira, pista e interacción */
+#mira {
+  position: fixed; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none;
+  border-radius: 50%; border: 1.5px solid rgba(255,255,255,.9); box-shadow: 0 0 0 1px rgba(30,28,25,.35); z-index: 5;
+}
+#mira.activa { border-color: var(--acento); background: rgba(168, 72, 31, .22); transform: scale(1.3); }
+#pista {
+  position: fixed; left: 50%; top: calc(50% + 22px); transform: translateX(-50%); padding: 6px 12px; font-size: 13px;
+  white-space: nowrap; pointer-events: none; z-index: 5;
+}
+#pista kbd { font: inherit; font-weight: 600; padding: 1px 6px; border: 1px solid var(--linea); border-radius: 5px; }
+#chip-tactil {
+  position: fixed; padding: 8px 14px; font-size: 13px; font-weight: 500; pointer-events: none; z-index: 5;
+  transform: translate(-50%, -140%);
+}
+#aviso {
+  position: fixed; left: 50%; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  padding: 8px 14px; font-size: 13px; white-space: nowrap; pointer-events: none; z-index: 8;
+}
+
+/* ------------------------------------------------------------------ joystick táctil */
+#joystick {
+  position: fixed; width: 108px; height: 108px; margin: -54px 0 0 -54px; border-radius: 50%; pointer-events: none;
+  border: 1.5px solid rgba(30,28,25,.35); background: rgba(247,244,239,.35); z-index: 5;
+}
+#joystick i {
+  position: absolute; left: 50%; top: 50%; width: 42px; height: 42px; margin: -21px 0 0 -21px; border-radius: 50%;
+  background: rgba(168,72,31,.85);
+}
+
+/* ------------------------------------------------------------------ pantalla de inicio */
+#pantalla-inicio {
+  position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10;
+  background: linear-gradient(180deg, rgba(30,28,25,.12), rgba(30,28,25,.32));
+}
+#pantalla-inicio .tarjeta {
+  width: min(440px, 100%); padding: 26px 26px 22px; background: var(--tarjeta); border-radius: var(--radio);
+  box-shadow: var(--sombra); border: 1px solid var(--linea);
+}
+#pantalla-inicio h1 { margin: 0 0 6px; font-family: var(--f-titulo); font-size: 30px; font-weight: 500;
+  line-height: 1.15; }
+#pantalla-inicio p.bajada { margin: 0; color: var(--tinta-2); line-height: 1.5; }
+#pantalla-inicio .instrucciones { margin: 14px 0 0; padding: 12px 14px; background: var(--papel); border-radius: calc(var(--radio) - 3px);
+  font-size: 12.5px; color: var(--tinta-2); line-height: 1.6; }
+#barra-carga { height: 5px; margin-top: 16px; background: var(--papel-2); border-radius: 3px; overflow: hidden; }
+#barra-carga i { display: block; height: 100%; width: 0; background: var(--acento); transition: width .2s ease; }
+#texto-estado { margin-top: 7px; font-size: 12px; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+#texto-estado.es-error { color: var(--acento-2); font-weight: 600; }
+#entrar {
+  margin-top: 16px; width: 100%; min-height: 48px; padding: 13px 16px; font: 600 15.5px/1 var(--f-texto); color: #fff;
+  background: var(--acento); border: 0; border-radius: var(--radio); cursor: pointer;
+}
+#entrar:hover:not(:disabled) { background: var(--acento-2); }
+#entrar:disabled { opacity: .45; cursor: progress; }
+@media (prefers-reduced-motion: reduce) {
+  #barra-carga i { transition: none; }
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+
+/* ------------------------------------------------------------------ chico */
+@media (max-width: 640px) {
+  #nombre-lugar { display: none; }
+  .flotante { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 20px); }
+  #pantalla-inicio h1 { font-size: 25px; }
+}
+
+/* ------------------------------------------------------------------ depuración (?debug) */
+#depuracion {
+  position: fixed; left: 10px; top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 9; padding: 8px 10px;
+  font-size: 11px; line-height: 1.6; color: var(--tinta-2); font-variant-numeric: tabular-nums; white-space: pre;
+}

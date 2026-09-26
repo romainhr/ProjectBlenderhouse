@@ -1,0 +1,37 @@
+/* El visor del tour (exports/depto_tour.html, el mismo de la página publicada) con los colores del sitio LOFT 2D2B.
+   web/build.py lo enlaza después de los estilos del visor; :not(#_) sube la especificidad sobre los temas del visor. */
+:root:not(#_) {
+  color-scheme: dark;
+  --papel: #0f1113;
+  --papel-2: #1c1f24;
+  --tinta: #ece9e3;
+  --grafito: #8a909a;
+  --linea: #33383f;
+  --ocre: #c0562f;
+  --ocre-suave: rgba(192, 86, 47, 0.2);
+  --aqui: #b8862b;
+  --velo: rgba(15, 17, 19, 0.84);
+  --sombra: 0 8px 28px rgba(0, 0, 0, 0.5);
+  --cielo: #1c1f24;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+#portada { background: linear-gradient(180deg, rgba(15, 17, 19, 0.55), rgba(15, 17, 19, 0.85)); }
+#portada h2 { font-weight: 700; letter-spacing: 0.02em; }
+#entrar { background: #c0562f; color: #f6f4ef; font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.1em; }
+#entrar:hover:not(:disabled) { background: #a84622; }
+#cajetin h1 { font-weight: 700; }
+
+/* barra del sitio: volver y reservar */
+#sitio-barra { top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; display: flex; gap: 0; border-radius: 2px;
+  z-index: 5; }
+#sitio-barra a { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; text-decoration: none;
+  font: 500 11px/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--tinta); }
+#sitio-barra a + a { border-left: 1px solid var(--linea); }
+#sitio-barra a.primario { background: #c0562f; color: #f6f4ef; }
+#sitio-barra a.primario:hover { background: #a84622; }
+@media (max-width: 640px) {
+  /* arriba están el rótulo y el botón de ayuda del visor; abajo a la derecha queda libre (el mini plano va a la izquierda) */
+  #sitio-barra { top: auto; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  #sitio-barra a { height: 40px; padding: 0 12px; }
+  #sitio-barra .solo-grande { display: none; }
+}

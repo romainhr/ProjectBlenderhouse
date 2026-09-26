@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reserva · LOFT 2D2B</title>
+<meta name="description" content="Elige tus fechas y envía una solicitud de reserva. Sin cobro en línea: te confirmamos por correo.">
+<meta name="theme-color" content="#F7F4EF">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/loft.css">
+<script type="module" src="js/sitio.js"></script>
+<script type="module" src="js/reserva.js"></script>
+<noscript><style>.aparece { opacity: 1 !important; transform: none !important; }</style></noscript>
+</head>
+<body class="con-barra-movil">
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+<header class="barra">
+  <div class="contenedor">
+    <a class="marca" href="./" aria-label="LOFT 2D2B, inicio">
+      <b>Loft 2D2B</b><small>Arriendo turístico</small>
+    </a>
+    <nav class="menu-nav" aria-label="Principal"><ul class="menu">
+      <li><a href="./#espacios">Espacios</a></li>
+      <li><a href="tour/">Recorrido 3D</a></li>
+      <li><a href="./#tarifas">Tarifas</a></li>
+      <li><a href="./#preguntas">Preguntas</a></li>
+    </ul></nav>
+    <a class="boton secundario" href="tour/">Tour 3D</a>
+    <button class="hamburguesa" type="button" aria-label="Abrir menú" aria-controls="panel-menu" aria-expanded="false">
+      <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
+  </div>
+</header>
+<nav id="panel-menu" class="panel-menu" hidden aria-label="Menú">
+  <a href="./">Inicio</a>
+  <a href="./#espacios">Espacios</a>
+  <a href="tour/">Recorrido 3D</a>
+  <a href="./#tarifas">Tarifas</a>
+  <a href="./#preguntas">Preguntas</a>
+</nav>
+
+<main id="contenido" class="pagina">
+  <div class="contenedor">
+    <nav class="migas" aria-label="Migas"><a href="./">Inicio</a><span aria-hidden="true">/</span><span aria-current="page">Reserva</span></nav>
+    <h1 style="font-size: clamp(36px, 7vw, 56px)">Reserva</h1>
+    <p class="bajada" style="margin-top: 12px">Elige tus noches en el calendario y envía la solicitud. Queda pendiente hasta que te confirmamos por correo; no se cobra nada en línea.</p>
+    <p id="aviso-sim" class="mensaje" hidden style="margin-top: 18px; max-width: 60ch">Modo local de prueba: disponibilidad y envíos simulados en este navegador.</p>
+
+    <div class="reserva">
+      <div>
+        <section id="calendario" class="tarjeta bloque" aria-labelledby="t-cal">
+          <h2 id="t-cal">Fechas</h2>
+          <div class="cal-nav">
+            <button id="mes-ant" type="button" aria-label="Mes anterior">←</button>
+            <p id="rango-texto" aria-live="polite" style="margin: 0; font-size: 14px; color: var(--tinta-2)">Elige la llegada</p>
+            <button id="mes-sig" type="button" aria-label="Mes siguiente">→</button>
+          </div>
+          <div id="meses" class="calendario"></div>
+          <div class="leyenda">
+            <span><i aria-hidden="true"></i>Disponible</span>
+            <span><i class="l-ocupado" aria-hidden="true"></i>Ocupado</span>
+            <span><i class="l-sel" aria-hidden="true"></i>Tu selección</span>
+          </div>
+          <p id="cal-error" class="mensaje error" hidden role="alert" style="margin-top: 14px"></p>
+        </section>
+
+        <form id="formulario" class="tarjeta bloque" novalidate aria-labelledby="t-datos">
+          <h2 id="t-datos">Tus datos</h2>
+          <p class="mensaje" style="margin-bottom: 16px">Sitio de prueba: usa un nombre y un correo inventados; no envíes datos reales.</p>
+          <div style="display: grid; gap: 16px">
+            <div class="campo">
+              <span class="rotulo" id="rot-huespedes">Huéspedes</span>
+              <div class="contador" role="group" aria-labelledby="rot-huespedes">
+                <button type="button" id="menos" aria-label="Un huésped menos">−</button>
+                <output id="huespedes" aria-live="polite">2</output>
+                <button type="button" id="mas" aria-label="Un huésped más">+</button>
+              </div>
+            </div>
+            <div class="campo"><label for="nombre">Nombre</label>
+              <input id="nombre" name="nombre" autocomplete="name" maxlength="80" required></div>
+            <div class="dos" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))">
+              <div class="campo"><label for="email">Correo</label>
+                <input id="email" name="email" type="email" autocomplete="email" maxlength="120" required></div>
+              <div class="campo"><label for="telefono">Teléfono (opcional)</label>
+                <input id="telefono" name="telefono" type="tel" autocomplete="tel" maxlength="20"></div>
+            </div>
+            <div class="campo"><label for="mensaje">Mensaje (opcional)</label>
+              <textarea id="mensaje" name="mensaje" maxlength="1000" placeholder="Hora estimada de llegada, preguntas…"></textarea></div>
+            <div class="trampa" aria-hidden="true"><label for="sitio">Sitio web</label><input id="sitio" name="sitio" tabindex="-1" autocomplete="off"></div>
+            <label class="check"><input id="acepta" type="checkbox" required>
+              <span>Acepto que usen mis datos sólo para responder esta solicitud (<a href="privacidad.html">privacidad</a>).</span></label>
+            <p id="form-error" class="mensaje error" hidden role="alert"></p>
+          </div>
+        </form>
+      </div>
+
+      <aside class="tarjeta resumen" aria-labelledby="t-resumen">
+        <figure><img src="img/living-800.jpg" alt="" width="800" height="500"></figure>
+        <div class="cuerpo">
+          <h2 id="t-resumen" style="font-size: 22px">Resumen</h2>
+          <div class="linea"><span>Llegada</span><span id="s-entrada">—</span></div>
+          <div class="linea"><span>Salida</span><span id="s-salida">—</span></div>
+          <div class="linea"><span id="s-noches-txt">Noches</span><span id="s-alojamiento">—</span></div>
+          <div class="linea"><span>Limpieza (ejemplo)</span><span id="s-limpieza">—</span></div>
+          <div class="linea total"><span>Total estimado</span><b id="s-total">—</b></div>
+          <p class="nota">Valores de ejemplo de un sitio de demostración. Sin cobro en línea: te confirmamos por correo.</p>
+          <button id="enviar" class="boton primario bloque" type="submit" form="formulario" disabled>Solicitar reserva</button>
+        </div>
+      </aside>
+    </div>
+
+    <section id="exito" class="tarjeta exito" hidden tabindex="-1" aria-labelledby="t-exito" style="margin-top: 24px">
+      <p class="etiqueta acento">Solicitud recibida</p>
+      <h2 id="t-exito" style="font-size: clamp(30px, 5vw, 44px)">Gracias</h2>
+      <p class="codigo" id="codigo"></p>
+      <p id="exito-texto" style="margin: 0"></p>
+      <div class="pasos">
+        <div><p>Paso 1</p><p style="margin: 6px 0 0; color: var(--tinta)">Tu solicitud queda pendiente y esas noches se bloquean.</p></div>
+        <div><p>Paso 2</p><p style="margin: 6px 0 0; color: var(--tinta)">Te escribimos al correo para confirmarla o proponer otras fechas.</p></div>
+        <div><p>Paso 3</p><p style="margin: 6px 0 0; color: var(--tinta)">Al confirmar acordamos el pago y te enviamos la dirección.</p></div>
+      </div>
+      <p style="margin-top: 20px"><a class="boton secundario" href="tour/">Mientras, recorre el tour 3D</a></p>
+    </section>
+  </div>
+</main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <p class="nota-demo">Sitio de demostración: imágenes renderizadas desde un modelo 3D; tarifas de ejemplo.</p>
+    <p class="derechos">© <span id="anio"></span> LOFT 2D2B · <a href="privacidad.html">Privacidad</a></p>
+  </div>
+</footer>
+
+<div class="barra-movil">
+  <p class="precio" style="margin: 0"><span id="m-total">—</span> <small id="m-noches">elige fechas</small></p>
+  <button class="boton primario" type="submit" form="formulario" id="enviar-movil" disabled>Solicitar</button>
+</div>
+</body>
+</html>

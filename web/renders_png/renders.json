@@ -1,0 +1,146 @@
+[
+  {
+    "camara": "Depto_Cam_Balcon",
+    "archivo": "Balcon.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      1.1429450511932373,
+      3.5838749408721924,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Bano1_Vanitorio",
+    "archivo": "Bano1_Vanitorio.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      2.85294508934021,
+      -2.268125057220459,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Cocina",
+    "archivo": "Cocina.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      -0.6620550155639648,
+      -1.0901249647140503,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Dorm1",
+    "archivo": "Dorm1.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      1.750944972038269,
+      0.2018750011920929,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Dorm2",
+    "archivo": "Dorm2.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      -1.7450549602508545,
+      0.2018750011920929,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Hall_Recibidor",
+    "archivo": "Hall_Recibidor.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      -1.365054965019226,
+      -2.458125114440918,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Living",
+    "archivo": "Living.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      -0.9470549821853638,
+      -0.2161249965429306,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Living_Sofa",
+    "archivo": "Living_Sofa.png",
+    "tipo": "PERSP",
+    "lente_mm": 16.0,
+    "ubicacion": [
+      0.9529449939727783,
+      2.5198750495910645,
+      1.600000023841858
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  },
+  {
+    "camara": "Depto_Cam_Maqueta",
+    "archivo": "Maqueta.png",
+    "tipo": "PERSP",
+    "lente_mm": 26.0,
+    "ubicacion": [
+      -5.1270551681518555,
+      6.3198747634887695,
+      7.5
+    ],
+    "motor": "EEVEE",
+    "resolucion": [
+      1600,
+      1000
+    ]
+  }
+]

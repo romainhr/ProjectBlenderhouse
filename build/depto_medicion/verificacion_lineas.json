@@ -1,0 +1,617 @@
+{
+  "caras": [
+    {
+      "muro": "Depto_Muro_Fachada",
+      "cara": "min",
+      "coord_px": 114.45,
+      "n": 2,
+      "desvio_mediano_px": -0.12
+    },
+    {
+      "muro": "Depto_Muro_Fachada",
+      "cara": "max",
+      "coord_px": 127.45,
+      "n": 2,
+      "desvio_mediano_px": -0.03
+    },
+    {
+      "muro": "Depto_Muro_Norte",
+      "cara": "min",
+      "coord_px": 13.77,
+      "n": 7,
+      "desvio_mediano_px": 0.06
+    },
+    {
+      "muro": "Depto_Muro_Norte",
+      "cara": "max",
+      "coord_px": 26.5,
+      "n": 7,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "Depto_Muro_Sur",
+      "cara": "min",
+      "coord_px": 476.04,
+      "n": 9,
+      "desvio_mediano_px": 0.07
+    },
+    {
+      "muro": "Depto_Muro_Sur",
+      "cara": "max",
+      "coord_px": 486.54,
+      "n": 9,
+      "desvio_mediano_px": 0.12
+    },
+    {
+      "muro": "Depto_Muro_Este",
+      "cara": "min",
+      "coord_px": 420.3,
+      "n": 8,
+      "desvio_mediano_px": -0.85
+    },
+    {
+      "muro": "Depto_Muro_Este",
+      "cara": "max",
+      "coord_px": 430.8,
+      "n": 8,
+      "desvio_mediano_px": 0.37
+    },
+    {
+      "muro": "Depto_Muro_Este_Forro",
+      "cara": "min",
+      "coord_px": 418.2,
+      "n": 9,
+      "desvio_mediano_px": 0.35
+    },
+    {
+      "muro": "Depto_Muro_Este_Forro",
+      "cara": "max",
+      "coord_px": 420.3,
+      "n": 9,
+      "desvio_mediano_px": -1.75
+    },
+    {
+      "muro": "Depto_Tabique_D1_Living",
+      "cara": "min",
+      "coord_px": 170.25,
+      "n": 7,
+      "desvio_mediano_px": 0.03
+    },
+    {
+      "muro": "Depto_Tabique_D1_Living",
+      "cara": "max",
+      "coord_px": 174.04,
+      "n": 7,
+      "desvio_mediano_px": -0.04
+    },
+    {
+      "muro": "Depto_Tabique_Living_D2",
+      "cara": "min",
+      "coord_px": 328.31,
+      "n": 7,
+      "desvio_mediano_px": 0.05
+    },
+    {
+      "muro": "Depto_Tabique_Living_D2",
+      "cara": "max",
+      "coord_px": 332.14,
+      "n": 7,
+      "desvio_mediano_px": -0.1
+    },
+    {
+      "muro": "Depto_Tabique_T3_Norte",
+      "cara": "min",
+      "coord_px": 289.57,
+      "n": 4,
+      "desvio_mediano_px": -0.27
+    },
+    {
+      "muro": "Depto_Tabique_T3_Norte",
+      "cara": "max",
+      "coord_px": 293.43,
+      "n": 4,
+      "desvio_mediano_px": 0.07
+    },
+    {
+      "muro": "Depto_Tabique_T3_Sur",
+      "cara": "min",
+      "coord_px": 289.57,
+      "n": 5,
+      "desvio_mediano_px": -0.07
+    },
+    {
+      "muro": "Depto_Tabique_T3_Sur",
+      "cara": "max",
+      "coord_px": 293.43,
+      "n": 5,
+      "desvio_mediano_px": 0.07
+    },
+    {
+      "muro": "Depto_Tabique_T4",
+      "cara": "min",
+      "coord_px": 337.37,
+      "n": 6,
+      "desvio_mediano_px": 0.07
+    },
+    {
+      "muro": "Depto_Tabique_T4",
+      "cara": "max",
+      "coord_px": 341.29,
+      "n": 6,
+      "desvio_mediano_px": 0.21
+    },
+    {
+      "muro": "Depto_Tabique_T10",
+      "cara": "min",
+      "coord_px": 339.4,
+      "n": 5,
+      "desvio_mediano_px": 0.1
+    },
+    {
+      "muro": "Depto_Tabique_T10",
+      "cara": "max",
+      "coord_px": 343.36,
+      "n": 5,
+      "desvio_mediano_px": 0.14
+    },
+    {
+      "muro": "Depto_Tabique_T5",
+      "cara": "min",
+      "coord_px": 147.5,
+      "n": 9,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "Depto_Tabique_T5",
+      "cara": "max",
+      "coord_px": 151.29,
+      "n": 9,
+      "desvio_mediano_px": 0.03
+    },
+    {
+      "muro": "Depto_Tabique_T9",
+      "cara": "min",
+      "coord_px": 363.18,
+      "n": 9,
+      "desvio_mediano_px": -0.18
+    },
+    {
+      "muro": "Depto_Tabique_T9",
+      "cara": "max",
+      "coord_px": 367.02,
+      "n": 9,
+      "desvio_mediano_px": -0.07
+    },
+    {
+      "muro": "Depto_Tabique_LV",
+      "cara": "min",
+      "coord_px": 330.84,
+      "n": 9,
+      "desvio_mediano_px": 0.13
+    },
+    {
+      "muro": "Depto_Tabique_LV",
+      "cara": "max",
+      "coord_px": 334.68,
+      "n": 9,
+      "desvio_mediano_px": 0.17
+    },
+    {
+      "muro": "Depto_Tabique_CocinaHall",
+      "cara": "min",
+      "coord_px": 298.63,
+      "n": 9,
+      "desvio_mediano_px": -0.13
+    },
+    {
+      "muro": "Depto_Tabique_CocinaHall",
+      "cara": "max",
+      "coord_px": 305.02,
+      "n": 9,
+      "desvio_mediano_px": -0.03
+    },
+    {
+      "muro": "Depto_Shaft_1",
+      "cara": "min",
+      "coord_px": 126.7,
+      "n": 9,
+      "desvio_mediano_px": -0.03
+    },
+    {
+      "muro": "Depto_Shaft_1",
+      "cara": "max",
+      "coord_px": 147.5,
+      "n": 9,
+      "desvio_mediano_px": -0.53
+    },
+    {
+      "muro": "Depto_Shaft_2",
+      "cara": "min",
+      "coord_px": 446.47,
+      "n": 9,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "Depto_Shaft_2",
+      "cara": "max",
+      "coord_px": 476.04,
+      "n": 8,
+      "desvio_mediano_px": 0.05
+    },
+    {
+      "muro": "jamba V_D1_A",
+      "cara": "V_D1_A",
+      "coord_px": 56.52,
+      "n": 11,
+      "desvio_mediano_px": 0.02
+    },
+    {
+      "muro": "jamba V_D1_B",
+      "cara": "V_D1_B",
+      "coord_px": 152.56,
+      "n": 11,
+      "desvio_mediano_px": 0.18
+    },
+    {
+      "muro": "jamba VEN_A",
+      "cara": "VEN_A",
+      "coord_px": 173.96,
+      "n": 11,
+      "desvio_mediano_px": 0.06
+    },
+    {
+      "muro": "jamba VEN_B",
+      "cara": "VEN_B",
+      "coord_px": 328.5,
+      "n": 11,
+      "desvio_mediano_px": 0.03
+    },
+    {
+      "muro": "jamba V_D2_A",
+      "cara": "V_D2_A",
+      "coord_px": 349.8,
+      "n": 11,
+      "desvio_mediano_px": 0.02
+    },
+    {
+      "muro": "jamba V_D2_B",
+      "cara": "V_D2_B",
+      "coord_px": 459.61,
+      "n": 11,
+      "desvio_mediano_px": 0.23
+    },
+    {
+      "muro": "jamba V_B1_A",
+      "cara": "V_B1_A",
+      "coord_px": 341.65,
+      "n": 9,
+      "desvio_mediano_px": -0.27
+    },
+    {
+      "muro": "jamba V_B1_B",
+      "cara": "V_B1_B",
+      "coord_px": 373.43,
+      "n": 9,
+      "desvio_mediano_px": 0.37
+    },
+    {
+      "muro": "jamba ENT_N",
+      "cara": "ENT_N",
+      "coord_px": 306.95,
+      "n": 8,
+      "desvio_mediano_px": -0.07
+    },
+    {
+      "muro": "jamba ENT_S",
+      "cara": "ENT_S",
+      "coord_px": 363.39,
+      "n": 8,
+      "desvio_mediano_px": -0.21
+    },
+    {
+      "muro": "jamba T4_A",
+      "cara": "T4_A",
+      "coord_px": 70.43,
+      "n": 4,
+      "desvio_mediano_px": -0.1
+    },
+    {
+      "muro": "jamba T4_B",
+      "cara": "T4_B",
+      "coord_px": 107.28,
+      "n": 4,
+      "desvio_mediano_px": 0.23
+    },
+    {
+      "muro": "jamba T10_A",
+      "cara": "T10_A",
+      "coord_px": 409.32,
+      "n": 4,
+      "desvio_mediano_px": -0.24
+    },
+    {
+      "muro": "jamba T10_B",
+      "cara": "T10_B",
+      "coord_px": 445.95,
+      "n": 4,
+      "desvio_mediano_px": 0.16
+    },
+    {
+      "muro": "remate JAMBA_D (D1)",
+      "cara": "JAMBA_D",
+      "coord_px": 249.7,
+      "n": 3,
+      "desvio_mediano_px": -0.24
+    },
+    {
+      "muro": "remate T3_C",
+      "cara": "T3_C",
+      "coord_px": 180.91,
+      "n": 4,
+      "desvio_mediano_px": -0.08
+    },
+    {
+      "muro": "remate T3_D",
+      "cara": "T3_D",
+      "coord_px": 325.67,
+      "n": 4,
+      "desvio_mediano_px": 0.1
+    },
+    {
+      "muro": "remate COC_W",
+      "cara": "COC_W",
+      "coord_px": 386.4,
+      "n": 6,
+      "desvio_mediano_px": 0.1
+    },
+    {
+      "muro": "shaft SH1_N",
+      "cara": "SH1_N",
+      "coord_px": 126.7,
+      "n": 19,
+      "desvio_mediano_px": -0.03
+    },
+    {
+      "muro": "shaft SH1_S",
+      "cara": "SH1_S",
+      "coord_px": 131.16,
+      "n": 19,
+      "desvio_mediano_px": -0.06
+    },
+    {
+      "muro": "shaft SH1_W",
+      "cara": "SH1_W",
+      "coord_px": 392.25,
+      "n": 14,
+      "desvio_mediano_px": 0.02
+    },
+    {
+      "muro": "shaft SH1_WI",
+      "cara": "SH1_WI",
+      "coord_px": 396.57,
+      "n": 14,
+      "desvio_mediano_px": -0.07
+    },
+    {
+      "muro": "shaft SH2_N",
+      "cara": "SH2_N",
+      "coord_px": 446.47,
+      "n": 23,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "shaft SH2_S",
+      "cara": "SH2_S",
+      "coord_px": 450.52,
+      "n": 23,
+      "desvio_mediano_px": -0.02
+    },
+    {
+      "muro": "shaft SH2_W",
+      "cara": "SH2_W",
+      "coord_px": 389.45,
+      "n": 23,
+      "desvio_mediano_px": 0.05
+    },
+    {
+      "muro": "shaft SH2_WI",
+      "cara": "SH2_WI",
+      "coord_px": 393.64,
+      "n": 23,
+      "desvio_mediano_px": -0.03
+    },
+    {
+      "muro": "cara E_I tramo Baño 2",
+      "cara": "E_I",
+      "coord_px": 420.3,
+      "n": 69,
+      "desvio_mediano_px": 0.51
+    },
+    {
+      "muro": "cara E_FORRO cocina",
+      "cara": "E_FORRO",
+      "coord_px": 418.2,
+      "n": 131,
+      "desvio_mediano_px": 0.33
+    },
+    {
+      "muro": "cara E_O tramo Baño 2",
+      "cara": "E_O",
+      "coord_px": 430.8,
+      "n": 99,
+      "desvio_mediano_px": 0.42
+    },
+    {
+      "muro": "frente closet CL1_N",
+      "cara": "CL1_N",
+      "coord_px": 58.76,
+      "n": 37,
+      "desvio_mediano_px": -0.12
+    },
+    {
+      "muro": "frente closet CL1_S",
+      "cara": "CL1_S",
+      "coord_px": 123.52,
+      "n": 37,
+      "desvio_mediano_px": -0.02
+    },
+    {
+      "muro": "frente closet CL2_N",
+      "cara": "CL2_N",
+      "coord_px": 398.96,
+      "n": 39,
+      "desvio_mediano_px": 0.41
+    },
+    {
+      "muro": "frente closet CL2_S",
+      "cara": "CL2_S",
+      "coord_px": 451.94,
+      "n": 39,
+      "desvio_mediano_px": 0.05
+    },
+    {
+      "muro": "baranda BARANDA_O",
+      "cara": "BARANDA_O",
+      "coord_px": 56.2,
+      "n": 141,
+      "desvio_mediano_px": 0.11
+    },
+    {
+      "muro": "baranda BARANDA_N",
+      "cara": "BARANDA_N",
+      "coord_px": 168.7,
+      "n": 46,
+      "desvio_mediano_px": 0.04
+    },
+    {
+      "muro": "baranda BARANDA_S",
+      "cara": "BARANDA_S",
+      "coord_px": 333.2,
+      "n": 46,
+      "desvio_mediano_px": 0.2
+    },
+    {
+      "muro": "cocina lavaplatos O",
+      "cara": "390.90",
+      "coord_px": 390.9,
+      "n": 19,
+      "desvio_mediano_px": -0.03
+    },
+    {
+      "muro": "cocina lavaplatos E",
+      "cara": "413.00",
+      "coord_px": 413.0,
+      "n": 19,
+      "desvio_mediano_px": -0.05
+    },
+    {
+      "muro": "cocina lavaplatos N",
+      "cara": "193.70",
+      "coord_px": 193.7,
+      "n": 15,
+      "desvio_mediano_px": -0.2
+    },
+    {
+      "muro": "cocina lavaplatos S",
+      "cara": "218.10",
+      "coord_px": 218.1,
+      "n": 15,
+      "desvio_mediano_px": 0.05
+    },
+    {
+      "muro": "cocina torre N",
+      "cara": "227.80",
+      "coord_px": 227.8,
+      "n": 25,
+      "desvio_mediano_px": -0.3
+    },
+    {
+      "muro": "cocina torre S",
+      "cara": "258.40",
+      "coord_px": 258.4,
+      "n": 25,
+      "desvio_mediano_px": 0.1
+    },
+    {
+      "muro": "cocina frente tramo N",
+      "cara": "182.84",
+      "coord_px": 182.84,
+      "n": 23,
+      "desvio_mediano_px": 0.09
+    },
+    {
+      "muro": "cocina frente tramo E",
+      "cara": "386.69",
+      "coord_px": 386.69,
+      "n": 33,
+      "desvio_mediano_px": 0.53
+    },
+    {
+      "muro": "cocina altos N (discontinua)",
+      "cara": "170.50",
+      "coord_px": 170.5,
+      "n": 20,
+      "desvio_mediano_px": 0.63
+    },
+    {
+      "muro": "cocina altos E (discontinua)",
+      "cara": "398.50",
+      "coord_px": 398.5,
+      "n": 7,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "cocina anafe O",
+      "cara": "326.00",
+      "coord_px": 326.0,
+      "n": 16,
+      "desvio_mediano_px": 0.14
+    },
+    {
+      "muro": "cocina anafe E",
+      "cara": "358.00",
+      "coord_px": 358.0,
+      "n": 16,
+      "desvio_mediano_px": 0.21
+    },
+    {
+      "muro": "cocina anafe N",
+      "cara": "155.00",
+      "coord_px": 155.0,
+      "n": 25,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "cocina anafe S",
+      "cara": "178.40",
+      "coord_px": 178.4,
+      "n": 25,
+      "desvio_mediano_px": 0.28
+    },
+    {
+      "muro": "baño 1 repisa",
+      "cara": "408.50",
+      "coord_px": 408.5,
+      "n": 21,
+      "desvio_mediano_px": 0.0
+    },
+    {
+      "muro": "baño 2 ducto (discontinua)",
+      "cara": "412.30",
+      "coord_px": 412.3,
+      "n": 30,
+      "desvio_mediano_px": 0.4
+    }
+  ],
+  "desvios_mayores_a_1px": [],
+  "excluidas": [
+    {
+      "muro": "Depto_Muro_Este_Forro",
+      "cara": "max",
+      "coord_px": 420.3,
+      "n": 9,
+      "desvio_mediano_px": -1.75,
+      "motivo": "cara de contacto forro/muro este: en el Baño 1 la banda 418-421 es negra continua"
+    }
+  ]
+}

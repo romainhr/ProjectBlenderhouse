@@ -1,0 +1,10 @@
+{
+  "name": "loft-2d2b-sitio",
+  "private": true,
+  "type": "module",
+  "description": "Sitio de prueba de arriendo turístico con el tour 3D del Depto 2D2B (sin dependencias).",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "build": "python3 build.py"
+  }
+}

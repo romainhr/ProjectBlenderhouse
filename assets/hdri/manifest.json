@@ -1,0 +1,10 @@
+{
+  "fuente": "Poly Haven (https://polyhaven.com), licencia CC0",
+  "descargado": "2026-09-26",
+  "uso": "cielo del exterior: HDR 1k como mundo en Blender; JPG 2048x1024 (desde el JPG tonemapped oficial, reducido con Pillow) como fondo del visor web",
+  "cielos": {
+    "dia": "kloofendal_48d_partly_cloudy_puresky",
+    "tarde": "qwantani_dusk_2_puresky",
+    "noche": "kloppenheim_02_puresky"
+  }
+}

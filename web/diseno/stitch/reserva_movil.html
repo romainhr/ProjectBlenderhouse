@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Reserva // LOFT 2D2B Industrial</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Barlow Condensed, IBM Plex Sans, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;1,700&amp;family=IBM+Plex+Sans:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            charcoal: {
+              950: '#0C0D0F',
+              900: '#121316',
+              850: '#16181C',
+              800: '#1A1C20',
+              750: '#22252A',
+              700: '#2D3239',
+              600: '#3A4049',
+            },
+            rust: {
+              500: '#C0562F',
+              600: '#A94824',
+              400: '#D5673F',
+            },
+            brass: {
+              500: '#B8862B',
+              400: '#CFA145',
+              600: '#9B6F20',
+            },
+            ivory: '#E6E8EC',
+          },
+          fontFamily: {
+            condensed: ['"Barlow Condensed"', 'sans-serif'],
+            sans: ['"IBM Plex Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          borderRadius: {
+            'industrial': '2px',
+          }
+        }
+      }
+    }
+  </script>
+<!-- Technical Hatch & Pattern Custom Styles -->
+<style data-purpose="technical-decorations">
+    /* Blueprint diagonal hatching for booked days */
+    .blueprint-hatch {
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(45, 50, 57, 0.6),
+        rgba(45, 50, 57, 0.6) 3px,
+        rgba(26, 28, 32, 0.9) 3px,
+        rgba(26, 28, 32, 0.9) 7px
+      );
+    }
+    
+    /* Subtle grid background for industrial feel */
+    .bg-grid-industrial {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(45, 50, 57, 0.3) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(45, 50, 57, 0.3) 1px, transparent 1px);
+    }
+
+    /* Dimension tick markers */
+    .corner-cross {
+      position: relative;
+    }
+    .corner-cross::before {
+      content: "+";
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      line-height: 1;
+      color: #6B7280;
+    }
+  </style>
+</head>
+<body class="bg-charcoal-900 text-ivory font-sans antialiased selection:bg-rust-500 selection:text-white min-h-screen pb-32">
+<!-- Mobile Container Wrapper max-w-md matching smartphone dimensions -->
+<div class="max-w-[420px] mx-auto min-h-screen border-x border-charcoal-700/60 bg-charcoal-900 relative shadow-2xl">
+<!-- BEGIN: Header -->
+<header class="sticky top-0 z-40 bg-charcoal-900/95 backdrop-blur-md border-b border-charcoal-700 px-4 py-3" data-purpose="top-navigation">
+<div class="flex items-center justify-between">
+<!-- Brand Title & Tag -->
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 bg-rust-500 rounded-none"></span>
+<span class="font-condensed font-extrabold tracking-widest text-lg text-ivory uppercase">LOFT 2D2B</span>
+</div>
+<span class="font-mono text-[9px] tracking-wider text-brass-400 mt-0.5 font-medium">
+            [ 54 m² · 2D2B · DISPONIBLE ]
+          </span>
+</div>
+<!-- Technical Close/Back Button -->
+<button aria-label="Volver al catálogo" class="w-8 h-8 rounded-industrial border border-charcoal-700 bg-charcoal-800 flex items-center justify-center text-gray-400 hover:text-ivory hover:border-rust-500 transition-colors" type="button">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</header>
+<!-- END: Header -->
+<main class="px-4 py-4 space-y-6">
+<!-- BEGIN: Hero Specs & Architectural Media Card -->
+<section class="space-y-2" data-purpose="loft-technical-hero">
+<!-- Blueprint Measure Line Bar -->
+<div class="flex items-center justify-between text-[10px] font-mono text-gray-500 border-b border-charcoal-700 pb-1">
+<span>SEC // REF: ELEV-01</span>
+<span class="flex items-center gap-1">
+<span class="inline-block w-3 h-px bg-gray-600"></span>
+<span>NIVEL 04 · SECTOR PUERTO</span>
+<span class="inline-block w-3 h-px bg-gray-600"></span>
+</span>
+<span>ESCALA 1:50</span>
+</div>
+<!-- Image Container with Architectural Framing -->
+<div class="relative rounded-industrial overflow-hidden border border-charcoal-700 group bg-charcoal-850">
+<img alt="Photorealistic interior of an ultra-modern industrial loft apartment, dark polished concrete floor, exposed brick accent wall, black steel architectural beams, minimalist modular furniture, warm ambient lighting, smoked oak dining table with bistro chairs, architectural photography style, 8k resolution." class="w-full h-52 object-cover object-center filter brightness-[0.92] contrast-[1.05]" loading="eager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqVCezYYTZaoV7MH43mfyibEYASFcggNvTIIRmswrzEY-tUZfcMbwImho5F3cBAQIHvKgHhqJqK5MZGz5NWlVT8TGv4WwRUlV9bXQsmOnXkOcIKyDyx7cvMA8nebkNEDwUEzvdM2_sb4Cvs8GuwW2Uvd3NJVYyhNj5YhgRL9jbgtjYaiGFrebHeNfXG8ip2H4IqgApiaWQQH6YyDtG188GR_Gg8WrCKGxnCWqmU2pjz_BMGI9mAEeolsqNGwJwa3WrKQNnReYAGqWP"/>
+<!-- Measurement Cut Lines Overlays -->
+<div class="absolute inset-0 pointer-events-none p-2 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="font-mono text-[9px] bg-charcoal-950/85 backdrop-blur-sm text-brass-400 border border-charcoal-700 px-1.5 py-0.5 rounded-industrial">
+                PLANO A-01 · VISTA PRINCIPAL
+              </span>
+<span class="font-mono text-[10px] text-gray-400 bg-charcoal-950/80 px-1 border border-charcoal-700">
+                +3.40m
+              </span>
+</div>
+<div class="flex justify-between items-end">
+<div class="bg-charcoal-950/90 text-[9px] font-mono border-l-2 border-rust-500 pl-1.5 text-gray-300 py-0.5">
+                ALTURA LIBRE: 3.80M // HORMIGÓN A LA VISTA
+              </div>
+<span class="font-mono text-[10px] text-gray-500">×</span>
+</div>
+</div>
+</div>
+<!-- Architectural Specifications Badge -->
+<div class="bg-charcoal-800 border border-charcoal-700 p-2.5 rounded-industrial">
+<div class="flex items-center gap-1.5 text-rust-400 mb-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+<polyline points="9 22 9 12 15 12 15 22"></polyline>
+</svg>
+<span class="font-mono text-[10px] uppercase tracking-wider font-semibold text-gray-300">Programa Arquitectónico</span>
+</div>
+<p class="font-sans text-xs text-gray-300 leading-relaxed">
+            2 camas King · 2 baños · Living-cocina · Balcón bistró · Máx 4 huéspedes
+          </p>
+</div>
+</section>
+<!-- END: Hero Specs -->
+<!-- BEGIN: Section 01 - Dates Calendar -->
+<section class="border border-charcoal-700 bg-charcoal-850 p-4 rounded-industrial relative" data-purpose="reservation-calendar">
+<!-- Technical Section Header -->
+<div class="flex items-center justify-between border-b border-charcoal-700 pb-2 mb-3">
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-rust-500 font-bold">01 //</span>
+<h2 class="font-condensed font-bold tracking-wider text-base text-ivory uppercase">FECHAS DE ESTADÍA</h2>
+</div>
+<span class="font-mono text-[10px] text-gray-400 tracking-tight">FASE · SELECCIÓN</span>
+</div>
+<!-- Calendar Navigation Header -->
+<div class="flex items-center justify-between mb-3 px-1">
+<button aria-label="Mes anterior" class="p-1 rounded-industrial border border-charcoal-700 bg-charcoal-800 text-gray-400 hover:text-white" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+<div class="text-center">
+<span class="font-mono text-xs tracking-widest text-ivory font-bold uppercase">NOVIEMBRE 2024</span>
+<span class="block font-mono text-[9px] text-brass-400">DISPONIBILIDAD TEMPORADA ALTA</span>
+</div>
+<button aria-label="Mes siguiente" class="p-1 rounded-industrial border border-charcoal-700 bg-charcoal-800 text-gray-400 hover:text-white" type="button">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</button>
+</div>
+<!-- Calendar Weekday Legend -->
+<div class="grid grid-cols-7 gap-1 text-center font-mono text-[10px] text-gray-500 mb-1 border-b border-charcoal-750 pb-1">
+<div>LU</div><div>MA</div><div>MI</div><div>JU</div><div>VI</div><div class="text-rust-400 font-semibold">SA</div><div class="text-rust-400 font-semibold">DO</div>
+</div>
+<!-- Calendar Days Grid (7 columns) -->
+<div class="grid grid-cols-7 gap-1 text-center font-mono text-xs">
+<!-- Empty Slots or Previous Month -->
+<div class="h-8 flex items-center justify-center text-charcoal-600 text-[10px]">28</div>
+<div class="h-8 flex items-center justify-center text-charcoal-600 text-[10px]">29</div>
+<div class="h-8 flex items-center justify-center text-charcoal-600 text-[10px]">30</div>
+<div class="h-8 flex items-center justify-center text-charcoal-600 text-[10px]">31</div>
+<!-- Nov 1 - 3: Occupied / Hatched -->
+<div class="h-8 rounded-industrial blueprint-hatch border border-charcoal-700/60 flex items-center justify-center text-gray-600 line-through">01</div>
+<div class="h-8 rounded-industrial blueprint-hatch border border-charcoal-700/60 flex items-center justify-center text-gray-600 line-through">02</div>
+<div class="h-8 rounded-industrial blueprint-hatch border border-charcoal-700/60 flex items-center justify-center text-gray-600 line-through">03</div>
+<!-- Nov 4 - 13: Available -->
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">04</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">05</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">06</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">07</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">08</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">09</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">10</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">11</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">12</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">13</div>
+<!-- Nov 14 - 17: Selected Range (Check-in 14, Stay 15-16, Check-out 17) -->
+<div class="h-8 rounded-industrial bg-rust-500 text-white font-bold border border-rust-400 flex flex-col items-center justify-center shadow-sm relative">
+<span class="text-[11px]">14</span>
+<span class="text-[6px] tracking-tighter uppercase leading-none">IN</span>
+</div>
+<div class="h-8 rounded-industrial bg-rust-500/90 text-white font-bold border-y border-rust-400 flex items-center justify-center">15</div>
+<div class="h-8 rounded-industrial bg-rust-500/90 text-white font-bold border-y border-rust-400 flex items-center justify-center">16</div>
+<div class="h-8 rounded-industrial bg-rust-500 text-white font-bold border border-rust-400 flex flex-col items-center justify-center shadow-sm relative">
+<span class="text-[11px]">17</span>
+<span class="text-[6px] tracking-tighter uppercase leading-none">OUT</span>
+</div>
+<!-- Nov 18 - 21: Booked / Occupied -->
+<div class="h-8 rounded-industrial blueprint-hatch border border-charcoal-700/60 flex items-center justify-center text-gray-600 line-through">18</div>
+<div class="h-8 rounded-industrial blueprint-hatch border border-charcoal-700/60 flex items-center justify-center text-gray-600 line-through">19</div>
+<div class="h-8 rounded-industrial blueprint-hatch border border-charcoal-700/60 flex items-center justify-center text-gray-600 line-through">20</div>
+<div class="h-8 rounded-industrial blueprint-hatch border border-charcoal-700/60 flex items-center justify-center text-gray-600 line-through">21</div>
+<!-- Nov 22 - 30: Available -->
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">22</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">23</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">24</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">25</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">26</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">27</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">28</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">29</div>
+<div class="h-8 rounded-industrial bg-charcoal-800 border border-charcoal-700 hover:border-gray-500 flex items-center justify-center text-gray-300 cursor-pointer">30</div>
+</div>
+<!-- Selected Stay Indicator Badge -->
+<div class="mt-3 py-1.5 px-2 bg-charcoal-800 border-l-2 border-rust-500 flex items-center justify-between">
+<span class="font-mono text-[11px] text-rust-400 font-semibold tracking-wide">
+            ✓ 3 noches seleccionadas
+          </span>
+<span class="font-mono text-[9px] text-gray-400">
+            (mínimo 2 noches)
+          </span>
+</div>
+<!-- Technical Legend Bar -->
+<div class="mt-3 pt-2 border-t border-charcoal-700 flex items-center justify-around font-mono text-[10px] text-gray-400">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 bg-charcoal-800 border border-charcoal-700 inline-block rounded-industrial"></span>
+<span>Disponible</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 blueprint-hatch border border-charcoal-700 inline-block rounded-industrial"></span>
+<span>Ocupado</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 bg-rust-500 inline-block rounded-industrial"></span>
+<span class="text-gray-300 font-medium">Seleccionado</span>
+</div>
+</div>
+</section>
+<!-- END: Section 01 -->
+<!-- BEGIN: Section 02 - Guests Counter -->
+<section class="border border-charcoal-700 bg-charcoal-850 p-4 rounded-industrial" data-purpose="guest-selector">
+<div class="flex items-center justify-between border-b border-charcoal-700 pb-2 mb-3">
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-rust-500 font-bold">02 //</span>
+<h2 class="font-condensed font-bold tracking-wider text-base text-ivory uppercase">HUÉSPEDES</h2>
+</div>
+<span class="font-mono text-[10px] text-brass-400">CAPACIDAD MÁX. 4</span>
+</div>
+<div class="flex items-center justify-between bg-charcoal-800 border border-charcoal-700 p-3 rounded-industrial">
+<div class="flex flex-col">
+<span class="font-mono text-sm text-ivory font-bold tracking-wider">2 HUÉSPEDES</span>
+<span class="font-sans text-[11px] text-gray-400">Adultos o niños (máx. 4)</span>
+</div>
+<!-- Industrial Counter Stepper Buttons -->
+<div class="flex items-center space-x-2" data-purpose="counter-controls">
+<button aria-label="Disminuir huéspedes" class="w-8 h-8 rounded-industrial bg-charcoal-750 border border-charcoal-700 text-ivory hover:border-rust-500 hover:text-rust-400 active:scale-95 flex items-center justify-center font-mono text-base font-bold transition-all shadow-inner" type="button">−</button>
+<span class="w-7 text-center font-mono text-sm font-bold text-rust-400">02</span>
+<button aria-label="Aumentar huéspedes" class="w-8 h-8 rounded-industrial bg-charcoal-750 border border-charcoal-700 text-ivory hover:border-rust-500 hover:text-rust-400 active:scale-95 flex items-center justify-center font-mono text-base font-bold transition-all shadow-inner" type="button">+</button>
+</div>
+</div>
+</section>
+<!-- END: Section 02 -->
+<!-- BEGIN: Section 03 - Contact Form -->
+<section class="border border-charcoal-700 bg-charcoal-850 p-4 rounded-industrial" data-purpose="contact-form-section">
+<div class="flex items-center justify-between border-b border-charcoal-700 pb-2 mb-3">
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-rust-500 font-bold">03 //</span>
+<h2 class="font-condensed font-bold tracking-wider text-base text-ivory uppercase">DATOS DE CONTACTO</h2>
+</div>
+<span class="font-mono text-[10px] text-gray-500">TITULAR DE RESERVA</span>
+</div>
+<form class="space-y-3.5" data-purpose="reservation-fields">
+<!-- Full Name Field -->
+<div>
+<label class="block font-mono text-[10px] text-gray-400 uppercase tracking-wider mb-1">
+              Nombre completo <span class="text-rust-400">*</span>
+</label>
+<input class="w-full bg-charcoal-900 border border-charcoal-700 rounded-industrial px-3 py-2 text-xs font-mono text-ivory focus:border-rust-500 focus:ring-0 focus:outline-none placeholder-gray-600" placeholder="Ej. Rodrigo Silva M." required="" type="text"/>
+</div>
+<!-- Email Field -->
+<div>
+<div class="flex justify-between items-center mb-1">
+<label class="font-mono text-[10px] text-gray-400 uppercase tracking-wider">
+                Correo electrónico <span class="text-rust-400">*</span>
+</label>
+<span class="font-mono text-[9px] text-brass-500">Envío confirmación</span>
+</div>
+<input class="w-full bg-charcoal-900 border border-charcoal-700 rounded-industrial px-3 py-2 text-xs font-mono text-ivory focus:border-rust-500 focus:ring-0 focus:outline-none placeholder-gray-600" placeholder="ejemplo@arquitectura.cl" required="" type="email"/>
+</div>
+<!-- Phone Field -->
+<div>
+<label class="block font-mono text-[10px] text-gray-400 uppercase tracking-wider mb-1">
+              Teléfono de contacto <span class="text-gray-500 font-normal">(opcional)</span>
+</label>
+<input class="w-full bg-charcoal-900 border border-charcoal-700 rounded-industrial px-3 py-2 text-xs font-mono text-ivory focus:border-rust-500 focus:ring-0 focus:outline-none placeholder-gray-600" placeholder="+56 9 8765 4321" type="tel"/>
+</div>
+<!-- Special Message / Requirements -->
+<div>
+<label class="block font-mono text-[10px] text-gray-400 uppercase tracking-wider mb-1">
+              Requerimientos especiales <span class="text-gray-500 font-normal">(opcional)</span>
+</label>
+<textarea class="w-full bg-charcoal-900 border border-charcoal-700 rounded-industrial px-3 py-2 text-xs font-sans text-ivory focus:border-rust-500 focus:ring-0 focus:outline-none placeholder-gray-600 resize-none" placeholder="Hora aproximada de llegada, estacionamiento para vehículo..." rows="2"></textarea>
+</div>
+<!-- Terms Checkbox with Industrial Squared Styling -->
+<div class="pt-1 flex items-start gap-2.5">
+<input class="mt-0.5 rounded-industrial bg-charcoal-900 border-charcoal-700 text-rust-500 focus:ring-0 focus:ring-offset-0 w-4 h-4 cursor-pointer" id="loft-terms" required="" type="checkbox"/>
+<label class="font-sans text-[11px] text-gray-400 leading-snug cursor-pointer select-none" for="loft-terms">
+              Acepto las condiciones de estadía y normas de convivencia del loft (no fiestas, no fumar en recintos interiores).
+            </label>
+</div>
+</form>
+</section>
+<!-- END: Section 03 -->
+<!-- BEGIN: Section 04 - Fare Estimation -->
+<section class="border border-charcoal-700 bg-charcoal-850 p-4 rounded-industrial" data-purpose="fare-breakdown">
+<!-- Technical Accordion Bar -->
+<div class="flex items-center justify-between border-b border-charcoal-700 pb-2 mb-3 cursor-pointer">
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-rust-500 font-bold">04 //</span>
+<h2 class="font-condensed font-bold tracking-wider text-base text-ivory uppercase">ESTIMACIÓN DE TARIFA</h2>
+</div>
+<span class="font-mono text-[10px] text-brass-400 flex items-center gap-1">
+            [ DESGLOSE ]
+            <svg class="w-3 h-3 text-brass-400 transform rotate-180" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" fill-rule="evenodd"></path>
+</svg>
+</span>
+</div>
+<!-- Tariff Table Lines -->
+<div class="space-y-2 font-mono text-xs">
+<div class="flex justify-between items-center text-gray-300">
+<span class="flex items-center gap-1">
+<span>3 noches × CLP 58.000</span>
+</span>
+<span class="font-semibold text-ivory">CLP 174.000</span>
+</div>
+<div class="flex justify-between items-center text-gray-400">
+<span>Tarifa única de limpieza</span>
+<span>CLP 15.000</span>
+</div>
+<div class="border-t border-dashed border-charcoal-700 pt-2 mt-2 flex justify-between items-baseline">
+<span class="font-condensed tracking-wider uppercase text-gray-300 text-sm font-bold">TOTAL ESTIMADO</span>
+<div class="text-right">
+<span class="font-mono text-base font-bold text-rust-400">CLP 189.000</span>
+<span class="block font-mono text-[9px] text-gray-500 leading-none">IVA INCLUIDO</span>
+</div>
+</div>
+</div>
+<!-- Clarification Notice Box -->
+<div class="mt-3 p-2 bg-charcoal-900 border border-charcoal-700 text-[10px] font-sans text-gray-400 leading-tight">
+<strong class="text-brass-400 font-mono font-medium block mb-0.5">NOTA METODOLÓGICA //</strong>
+          Sin cobro inmediato en línea. La solicitud se revisa y confirma formalmente por correo electrónico tras validar agenda técnica.
+        </div>
+</section>
+<!-- END: Section 04 -->
+<!-- BEGIN: Legal & Disclaimer Footer -->
+<footer class="pt-2 pb-6 text-center" data-purpose="site-disclaimer">
+<div class="inline-block border border-charcoal-700 bg-charcoal-950/70 px-3 py-1.5 rounded-industrial">
+<p class="font-mono text-[9px] tracking-wider text-gray-400 uppercase">
+            ⚡ Sitio de prueba · imágenes renderizadas desde un modelo 3D
+          </p>
+</div>
+<p class="font-mono text-[8px] text-charcoal-600 mt-2">
+          LOFT INDUSTRIAL 2D2B · SISTEMA ARQ-RES V1.04
+        </p>
+</footer>
+<!-- END: Legal & Disclaimer Footer -->
+</main>
+<!-- BEGIN: Fixed Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-charcoal-950/95 backdrop-blur-md border-t border-charcoal-700 p-3 max-w-[420px] mx-auto shadow-2xl" data-purpose="sticky-bottom-booking-bar">
+<div class="flex items-center justify-between gap-3">
+<!-- Estimation Price Left Box -->
+<div class="flex flex-col">
+<span class="font-mono text-[9px] text-gray-400 uppercase tracking-widest font-semibold">TOTAL ESTIMADO</span>
+<span class="font-mono text-sm font-bold text-ivory tracking-tight">CLP 189.000</span>
+<span class="font-mono text-[9px] text-rust-400 font-medium">3 noches seleccionadas</span>
+</div>
+<!-- Prominent Industrial CTA Button -->
+<button class="flex-1 bg-rust-500 hover:bg-rust-600 active:scale-[0.98] text-white font-condensed font-bold tracking-widest text-sm uppercase py-3 px-4 rounded-industrial border border-rust-400/50 shadow-md flex items-center justify-center gap-1.5 transition-all" type="button">
+<span>SOLICITAR RESERVA</span>
+<span class="font-mono text-base font-normal">→</span>
+</button>
+</div>
+</div>
+<!-- END: Fixed Bottom Action Bar -->
+</div>
+</body></html>

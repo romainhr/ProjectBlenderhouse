@@ -1,0 +1,47 @@
+# Qué no se versiona y por qué: docs/adr/0005-git-github-pipeline.md
+
+# Secretos y entornos locales. Las claves van como secretos de GitHub Actions o en las preferencias del addon.
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+.venv/
+venv/
+
+# config.js lo genera web/build.py sólo dentro de web/dist/, con la clave pública de Supabase.
+web/src/js/config.js
+web/src/admin/js/config.js
+
+# Salidas regenerables:
+# renders de revisión (bash build/depto_run.sh)
+review/
+# sitio armado (python3 web/build.py)
+web/dist/
+# copia de desarrollo del modelo (python3 web/tour_modelo.py)
+web/src/tour/modelo/
+# maestro de Blender, se reconstruye desde las fases (bash build/depto_run.sh)
+build/*.blend
+build/*.blend.watch
+*.blend1
+*.blend2
+# GLB de validación de la fase 6; el sitio usa exports/web/
+exports/*.glb
+exports/*.fbx
+exports/depto_glb.b64.txt
+
+# Fotos de otro inmueble: no se suben (CLAUDE.md). De ref/ sólo se versiona el plano.
+ref/depto/
+
+# Claude Code: worktrees de cada sesión y ajustes personales
+.claude/worktrees/
+.claude/settings.local.json
+
+# Herramientas
+__pycache__/
+*.py[cod]
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

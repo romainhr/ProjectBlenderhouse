@@ -1,0 +1,323 @@
+{
+  "licencia_general": "Propias del proyecto ProjectBlenderhouse: generadas por código con build/deco_texturas.py (numpy, semillas fijas), sin imágenes de terceros ni descargas. Uso libre dentro del proyecto.",
+  "generador": "build/deco_texturas.py",
+  "texturas": {
+    "microcemento": {
+      "nombre": "Microcemento gris cálido",
+      "dimensiones_m": [
+        2.0,
+        2.0
+      ],
+      "mapas": {
+        "color": "microcemento_diff_1k.jpg",
+        "normal": "microcemento_nor_gl_1k.jpg",
+        "rugosidad": "microcemento_rough_1k.jpg"
+      },
+      "descripcion": "Microcemento gris cálido claro (#9C9890): pasadas de llana en arco con canto marcado, nubes suaves, grano, poros finos y brillo satinado desparejo.",
+      "semilla": 101,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "piso_roble": {
+      "nombre": "Piso de tablas de roble ahumado",
+      "dimensiones_m": [
+        2.4,
+        2.4
+      ],
+      "mapas": {
+        "color": "piso_roble_diff_1k.jpg",
+        "normal": "piso_roble_nor_gl_1k.jpg",
+        "rugosidad": "piso_roble_rough_1k.jpg"
+      },
+      "descripcion": "Tablas de roble ahumado de 0,20 × 1,20 m trabadas al azar (12 hileras × 2): veta de tronco con catedrales y rayado, poros, radios medulares, nudos ocasionales, color por tabla, microbisel y juntas finas.",
+      "semilla": 107,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "roble_ahumado": {
+      "nombre": "Roble ahumado (chapa continua)",
+      "dimensiones_m": [
+        1.2,
+        1.2
+      ],
+      "mapas": {
+        "color": "roble_ahumado_diff_1k.jpg",
+        "normal": "roble_ahumado_nor_gl_1k.jpg",
+        "rugosidad": "roble_ahumado_rough_1k.jpg"
+      },
+      "descripcion": "Veta continua de roble ahumado (#6B4F3A) para muebles, sin juntas: anillos deformados en catedrales, poros alargados y radios medulares; la veta corre a lo largo de U.",
+      "semilla": 108,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "cuero": {
+      "nombre": "Cuero coñac",
+      "dimensiones_m": [
+        0.4,
+        0.4
+      ],
+      "mapas": {
+        "color": "cuero_diff_1k.jpg",
+        "normal": "cuero_nor_gl_1k.jpg",
+        "rugosidad": "cuero_rough_1k.jpg"
+      },
+      "descripcion": "Cuero coñac (#8A4B2A) de flor granulada de 1,5 a 3,5 mm, arrugas suaves, poros y desgaste más claro en las partes altas.",
+      "semilla": 110,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "acero_pavonado": {
+      "nombre": "Acero pavonado",
+      "dimensiones_m": [
+        0.6,
+        0.6
+      ],
+      "mapas": {
+        "color": "acero_pavonado_diff_1k.jpg",
+        "normal": "acero_pavonado_nor_gl_1k.jpg",
+        "rugosidad": "acero_pavonado_rough_1k.jpg"
+      },
+      "descripcion": "Acero negro azulado (#232426) con manchas pardas del pavonado, cepillado a lo largo de U y algunas rayas claras.",
+      "semilla": 109,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "acero_cepillado": {
+      "nombre": "Acero cepillado (electrodomésticos)",
+      "dimensiones_m": [
+        0.6,
+        0.6
+      ],
+      "mapas": {
+        "color": "acero_cepillado_diff_1k.jpg",
+        "normal": "acero_cepillado_nor_gl_1k.jpg",
+        "rugosidad": "acero_cepillado_rough_1k.jpg"
+      },
+      "descripcion": "Acero inoxidable gris cálido claro (#C2BFB7) con vetas finas cepilladas verticales (a lo largo de V), motas suaves y manchas tenues de dedos.",
+      "semilla": 114,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "ladrillo": {
+      "nombre": "Ladrillo a la vista",
+      "dimensiones_m": [
+        1.25,
+        1.28
+      ],
+      "mapas": {
+        "color": "ladrillo_diff_1k.jpg",
+        "normal": "ladrillo_nor_gl_1k.jpg",
+        "rugosidad": "ladrillo_rough_1k.jpg"
+      },
+      "descripcion": "Ladrillo #8C4A36 con variación por pieza, aparejo soga de 24 × 7 cm y junta hundida de 1 cm (5 ladrillos × 16 hiladas: por eso 1,25 × 1,28 m), cantos gastados, motas y restos de mortero.",
+      "semilla": 103,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "azulejo_subway": {
+      "nombre": "Azulejo subway blanco biselado",
+      "dimensiones_m": [
+        0.6,
+        0.6
+      ],
+      "mapas": {
+        "color": "azulejo_subway_diff_1k.jpg",
+        "normal": "azulejo_subway_nor_gl_1k.jpg",
+        "rugosidad": "azulejo_subway_rough_1k.jpg"
+      },
+      "descripcion": "Azulejo subway blanco brillante biselado de 7,5 × 15 cm trabado a la mitad, junta gris oscura de 2 mm, esmalte con leves ondulaciones por pieza.",
+      "semilla": 104,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "baldosa_hex": {
+      "nombre": "Baldosa hexagonal carbón",
+      "dimensiones_m": [
+        0.6,
+        0.6928203
+      ],
+      "mapas": {
+        "color": "baldosa_hex_diff_1k.jpg",
+        "normal": "baldosa_hex_nor_gl_1k.jpg",
+        "rugosidad": "baldosa_hex_rough_1k.jpg"
+      },
+      "descripcion": "Hexágonos de 10 cm entre caras en gris carbón con variación por pieza y junta gris clara de 2 mm (6 × 8 hileras: 0,60 × 0,6928 m para que la red hexagonal se repita exacta).",
+      "semilla": 105,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "concreto_encofrado": {
+      "nombre": "Concreto visto de encofrado",
+      "dimensiones_m": [
+        2.4,
+        2.4
+      ],
+      "mapas": {
+        "color": "concreto_encofrado_diff_1k.jpg",
+        "normal": "concreto_encofrado_nor_gl_1k.jpg",
+        "rugosidad": "concreto_encofrado_rough_1k.jpg"
+      },
+      "descripcion": "Concreto visto (#B3AFA8) con marcas de tablas de 0,15 m, veta de madera impresa, rebarba en las juntas, nidos y poros.",
+      "semilla": 102,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "losa_hormigon": {
+      "nombre": "Baldosa de hormigón 60 × 60",
+      "dimensiones_m": [
+        1.2,
+        1.2
+      ],
+      "mapas": {
+        "color": "losa_hormigon_diff_1k.jpg",
+        "normal": "losa_hormigon_nor_gl_1k.jpg",
+        "rugosidad": "losa_hormigon_rough_1k.jpg"
+      },
+      "descripcion": "Baldosas de hormigón de 60 × 60 cm (2 × 2) con juntas marcadas, áridos finos, barrido suave y suciedad en las juntas, para el balcón.",
+      "semilla": 106,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "lana": {
+      "nombre": "Lana bouclé avena",
+      "dimensiones_m": [
+        0.25,
+        0.25
+      ],
+      "mapas": {
+        "color": "lana_diff_1k.jpg",
+        "normal": "lana_nor_gl_1k.jpg",
+        "rugosidad": "lana_rough_1k.jpg"
+      },
+      "descripcion": "Tejido bouclé grueso color avena (#D8CFC0): rulos de hilo de 3 a 6 mm sobre un tejido de base.",
+      "semilla": 111,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "yute": {
+      "nombre": "Yute natural",
+      "dimensiones_m": [
+        0.5,
+        0.5
+      ],
+      "mapas": {
+        "color": "yute_diff_1k.jpg",
+        "normal": "yute_nor_gl_1k.jpg",
+        "rugosidad": "yute_rough_1k.jpg"
+      },
+      "descripcion": "Tejido de canasta 2 × 2 de yute natural con hilos de 7,8 mm, torsión, fibras y hebras sueltas (alfombras).",
+      "semilla": 112,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "concreto_oscuro": {
+      "nombre": "Concreto pulido oscuro",
+      "dimensiones_m": [
+        1.0,
+        1.0
+      ],
+      "mapas": {
+        "color": "concreto_oscuro_diff_1k.jpg",
+        "normal": "concreto_oscuro_nor_gl_1k.jpg",
+        "rugosidad": "concreto_oscuro_rough_1k.jpg"
+      },
+      "descripcion": "Concreto pulido gris oscuro (#545351) para cubiertas: nubes, áridos finos, poros y brillo desparejo.",
+      "semilla": 113,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "arte_1": {
+      "nombre": "Cuadro: círculos y franjas",
+      "dimensiones_m": [
+        0.5,
+        0.7
+      ],
+      "mapas": {
+        "color": "arte_1_diff_1k.jpg"
+      },
+      "descripcion": "Lámina abstracta: círculo ocre, franja y medio círculo carbón, líneas finas; papel crema con grano.",
+      "semilla": 201,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1434
+      ]
+    },
+    "arte_2": {
+      "nombre": "Cuadro: campos de color",
+      "dimensiones_m": [
+        0.5,
+        0.7
+      ],
+      "mapas": {
+        "color": "arte_2_diff_1k.jpg"
+      },
+      "descripcion": "Lámina abstracta de campos de color de bordes difusos: ladrillo, avena y carbón sobre gris cálido.",
+      "semilla": 202,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1434
+      ]
+    },
+    "arte_3": {
+      "nombre": "Cuadro: líneas finas",
+      "dimensiones_m": [
+        0.5,
+        0.7
+      ],
+      "mapas": {
+        "color": "arte_3_diff_1k.jpg"
+      },
+      "descripcion": "Lámina abstracta de líneas finas: curvas de nivel en carbón con una en ocre, sobre papel crema.",
+      "semilla": 203,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1434
+      ]
+    }
+  }
+}

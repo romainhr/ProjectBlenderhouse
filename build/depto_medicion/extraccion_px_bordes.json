@@ -1,0 +1,1292 @@
+{
+ "convencion": "px del PNG 500x500; coordenadas continuas (el píxel i ocupa [i,i+1]); x derecha, y abajo, origen arriba-izquierda. 'Norte/sur/este/oeste' en las notas = arriba/abajo/derecha/izquierda de la imagen (no es el norte real). Todas las medidas son 'medido en el plano' salvo que la nota diga 'supuesto'.",
+ "fuente": "ref/plano/plano_depto.png",
+ "bbox_exterior_px": {
+  "x0": 113,
+  "y0": 13,
+  "x1": 432,
+  "y1": 487.5
+ },
+ "walls": [
+  {
+   "id": "EXT_N1",
+   "kind": "exterior",
+   "x0": 113,
+   "y0": 13,
+   "x1": 342.5,
+   "y1": 27.5,
+   "notes": "Muro norte, desde esquina NO hasta jamba izq. de la ventana del Baño 1. Espesor 14,5 px. Sobre closet/baño la línea interior (y 23-26) se funde con el contorno de esos recintos."
+  },
+  {
+   "id": "EXT_N2",
+   "kind": "exterior",
+   "x0": 372,
+   "y0": 13,
+   "x1": 432,
+   "y1": 27.5,
+   "notes": "Muro norte, desde jamba der. de la ventana del Baño 1 hasta esquina NE."
+  },
+  {
+   "id": "EXT_E1",
+   "kind": "exterior",
+   "x0": 418,
+   "y0": 27.5,
+   "x1": 432,
+   "y1": 308,
+   "notes": "Muro este tramo superior (Baño 1, shaft 1, cocina) hasta jamba norte de la puerta de entrada. Relleno gris x 421-430; x 418-420 es una línea interior adicional (revestimiento) en baño 1 y cocina."
+  },
+  {
+   "id": "EXT_E2",
+   "kind": "exterior",
+   "x0": 420,
+   "y0": 362,
+   "x1": 432,
+   "y1": 474.5,
+   "notes": "Muro este tramo inferior (Baño 2, shaft 2) desde jamba sur de la puerta de entrada. Espesor 12 px."
+  },
+  {
+   "id": "EXT_S",
+   "kind": "exterior",
+   "x0": 113,
+   "y0": 474.5,
+   "x1": 432,
+   "y1": 487.5,
+   "notes": "Muro sur completo, sin vanos. Espesor 13 px."
+  },
+  {
+   "id": "EXT_W1",
+   "kind": "exterior",
+   "x0": 113,
+   "y0": 27.5,
+   "x1": 128.5,
+   "y1": 57.5,
+   "notes": "Muro oeste, tramo sobre la ventana del Dormitorio 1. Espesor 15,5 px."
+  },
+  {
+   "id": "PIL_W1",
+   "kind": "pilar",
+   "x0": 113,
+   "y0": 151,
+   "x1": 128.5,
+   "y1": 175,
+   "notes": "Machón entre ventana Dormitorio 1 y ventanal del living (relleno gris). Recibe el tabique Dorm1/Living."
+  },
+  {
+   "id": "PIL_W2",
+   "kind": "pilar",
+   "x0": 113,
+   "y0": 327,
+   "x1": 128.5,
+   "y1": 350.5,
+   "notes": "Machón entre ventanal del living y ventana Dormitorio 2. Recibe el tabique Living/Dorm2."
+  },
+  {
+   "id": "EXT_W2",
+   "kind": "exterior",
+   "x0": 113,
+   "y0": 458,
+   "x1": 128.5,
+   "y1": 474.5,
+   "notes": "Muro oeste, tramo bajo la ventana del Dormitorio 2 (continúa en EXT_S)."
+  },
+  {
+   "id": "T_D1_LIV",
+   "kind": "interior",
+   "x0": 128.5,
+   "y0": 169,
+   "x1": 251,
+   "y1": 175,
+   "notes": "Tabique Dormitorio 1 / Living. Termina en x=251 (jamba oeste de la puerta del Dorm. 1)."
+  },
+  {
+   "id": "T_LIV_D2",
+   "kind": "interior",
+   "x0": 128.5,
+   "y0": 327,
+   "x1": 251,
+   "y1": 333,
+   "notes": "Tabique Living / Dormitorio 2. Termina en x=251 (jamba oeste de la puerta del Dorm. 2)."
+  },
+  {
+   "id": "T3_A",
+   "kind": "tabique_closet",
+   "x0": 288.5,
+   "y0": 27.5,
+   "x1": 294.5,
+   "y1": 59.5,
+   "notes": "Eje x≈291,5. Lado oeste del closet superior del Dorm. 1."
+  },
+  {
+   "id": "T3_B",
+   "kind": "tabique_closet",
+   "x0": 288.5,
+   "y0": 122,
+   "x1": 294.5,
+   "y1": 146,
+   "notes": "Lado oeste del closet inferior del Dorm. 1."
+  },
+  {
+   "id": "T3_C",
+   "kind": "interior",
+   "x0": 288.5,
+   "y0": 146,
+   "x1": 294.5,
+   "y1": 181.5,
+   "notes": "Remate del tabique junto a la cocina: jamba este de la puerta del Dorm. 1; la cocina queda abierta al living bajo y=181,5."
+  },
+  {
+   "id": "T3_D",
+   "kind": "interior",
+   "x0": 288.5,
+   "y0": 324,
+   "x1": 294.5,
+   "y1": 362,
+   "notes": "Lado oeste del nicho LV / jamba este de la puerta del Dorm. 2."
+  },
+  {
+   "id": "T3_E",
+   "kind": "tabique_closet",
+   "x0": 288.5,
+   "y0": 362,
+   "x1": 294.5,
+   "y1": 399.5,
+   "notes": "Lado oeste del closet superior del Dorm. 2."
+  },
+  {
+   "id": "T3_F",
+   "kind": "tabique_closet",
+   "x0": 288.5,
+   "y0": 451,
+   "x1": 294.5,
+   "y1": 474.5,
+   "notes": "Lado oeste del closet inferior del Dorm. 2."
+  },
+  {
+   "id": "T4_A",
+   "kind": "interior",
+   "x0": 336.5,
+   "y0": 27.5,
+   "x1": 342,
+   "y1": 71.5,
+   "notes": "Tabique closet sup. Dorm1 / Baño 1, hasta jamba norte de la puerta del Baño 1."
+  },
+  {
+   "id": "T4_B",
+   "kind": "interior",
+   "x0": 336.5,
+   "y0": 105.5,
+   "x1": 342,
+   "y1": 146,
+   "notes": "Tabique closet inf. Dorm1 / Baño 1, desde jamba sur de la puerta del Baño 1."
+  },
+  {
+   "id": "T5",
+   "kind": "interior",
+   "x0": 294.5,
+   "y0": 146,
+   "x1": 418,
+   "y1": 152.5,
+   "notes": "Tabique horizontal que separa closet inf. Dorm1 + Baño 1 + shaft 1 (norte) de la cocina (sur). Doble línea y 146-148 / 150-152."
+  },
+  {
+   "id": "T9",
+   "kind": "interior",
+   "x0": 294.5,
+   "y0": 362,
+   "x1": 420,
+   "y1": 368,
+   "notes": "Tabique horizontal que separa nicho LV + hall (norte) de closet sup. Dorm2 + Baño 2 (sur)."
+  },
+  {
+   "id": "T10_A",
+   "kind": "interior",
+   "x0": 338.5,
+   "y0": 368,
+   "x1": 344,
+   "y1": 410.5,
+   "notes": "Tabique closet sup. Dorm2 / Baño 2 hasta jamba norte de la puerta del Baño 2."
+  },
+  {
+   "id": "T10_B",
+   "kind": "interior",
+   "x0": 338.5,
+   "y0": 444.5,
+   "x1": 344,
+   "y1": 474.5,
+   "notes": "Tabique closet inf. Dorm2 / Baño 2 desde jamba sur de la puerta del Baño 2."
+  },
+  {
+   "id": "T_LV_E",
+   "kind": "interior",
+   "x0": 329,
+   "y0": 324,
+   "x1": 336,
+   "y1": 362,
+   "notes": "Tabique este del nicho de lavadora (separa nicho del hall)."
+  },
+  {
+   "id": "T_COC_S",
+   "kind": "interior",
+   "x0": 385,
+   "y0": 297.5,
+   "x1": 418,
+   "y1": 305.5,
+   "notes": "Murete/tabique corto que cierra el extremo sur del mesón derecho de la cocina contra el hall de acceso (doble línea negra, 8 px)."
+  },
+  {
+   "id": "SH1_N",
+   "kind": "shaft",
+   "x0": 391.5,
+   "y0": 125.5,
+   "x1": 418,
+   "y1": 132,
+   "notes": "Muro norte del shaft del Baño 1."
+  },
+  {
+   "id": "SH1_W",
+   "kind": "shaft",
+   "x0": 391.5,
+   "y0": 132,
+   "x1": 397,
+   "y1": 146,
+   "notes": "Muro oeste del shaft del Baño 1."
+  },
+  {
+   "id": "SH2_N",
+   "kind": "shaft",
+   "x0": 388.5,
+   "y0": 445,
+   "x1": 420,
+   "y1": 451,
+   "notes": "Muro norte del shaft del Baño 2."
+  },
+  {
+   "id": "SH2_W",
+   "kind": "shaft",
+   "x0": 388.5,
+   "y0": 451,
+   "x1": 394.5,
+   "y1": 474.5,
+   "notes": "Muro oeste del shaft del Baño 2."
+  },
+  {
+   "id": "BAL_W",
+   "kind": "antepecho_balcon",
+   "x0": 51.5,
+   "y0": 163,
+   "x1": 61,
+   "y1": 339.5,
+   "notes": "Borde oeste del balcón: contorno exterior x=52, dos líneas finas x≈54 y x≈57 (baranda/pasamanos), borde de piso x≈60."
+  },
+  {
+   "id": "BAL_N",
+   "kind": "antepecho_balcon",
+   "x0": 61,
+   "y0": 163,
+   "x1": 113,
+   "y1": 174,
+   "notes": "Borde norte del balcón: contorno y=163, rectángulo fino x 61-112 y 166-170 (baranda), borde de piso y≈173."
+  },
+  {
+   "id": "BAL_S",
+   "kind": "antepecho_balcon",
+   "x0": 61,
+   "y0": 328,
+   "x1": 113,
+   "y1": 339.5,
+   "notes": "Borde sur del balcón: borde de piso y≈328, rectángulo fino x 61-112 y 331-335 (baranda), contorno y=339."
+  }
+ ],
+ "openings": [
+  {
+   "id": "P_D1",
+   "kind": "puerta_abatible",
+   "x0": 251,
+   "y0": 169,
+   "x1": 288.5,
+   "y1": 175,
+   "width_px": 37.5,
+   "connects": "Living-comedor <-> Dormitorio 1",
+   "wall_id": "T_D1_LIV",
+   "hinge_px": [
+    288,
+    170
+   ],
+   "swing": "Abre hacia el Dormitorio 1 (norte, -y). Bisagra en la jamba este (contra T3_C). Hoja abierta dibujada vertical x 284,5-288,5, y 131,5-170 (largo ≈38,5 px). Arco de (250,5,169) a (284,5,132).",
+   "notes": "Vano entre el extremo de T_D1_LIV (x=251) y T3_C (x=288,5)."
+  },
+  {
+   "id": "P_D2",
+   "kind": "puerta_abatible",
+   "x0": 251,
+   "y0": 327,
+   "x1": 288.5,
+   "y1": 333,
+   "width_px": 37.5,
+   "connects": "Living-comedor <-> Dormitorio 2",
+   "wall_id": "T_LIV_D2",
+   "hinge_px": [
+    288,
+    332
+   ],
+   "swing": "Abre hacia el Dormitorio 2 (sur, +y). Bisagra en la jamba este (contra T3_D). Hoja abierta vertical x 284,5-288,5, y 332-370,5 (largo ≈38,5 px). Arco de (250,5,333) a (284,5,370).",
+   "notes": "Vano entre el extremo de T_LIV_D2 (x=251) y T3_D (x=288,5)."
+  },
+  {
+   "id": "P_B1",
+   "kind": "puerta_abatible",
+   "x0": 336.5,
+   "y0": 71.5,
+   "x1": 342,
+   "y1": 105.5,
+   "width_px": 34,
+   "connects": "Dormitorio 1 (vestidor) <-> Baño 1",
+   "wall_id": "T4_A/T4_B",
+   "hinge_px": [
+    341,
+    72
+   ],
+   "swing": "Abre hacia el Baño 1 (este, +x). Bisagra en la jamba norte. Hoja abierta horizontal x 341-376, y 70,5-74 (largo ≈35 px), queda paralela a la tina. Arco de (376,74) a (338,105)."
+  },
+  {
+   "id": "P_B2",
+   "kind": "puerta_abatible",
+   "x0": 338.5,
+   "y0": 410.5,
+   "x1": 344,
+   "y1": 444.5,
+   "width_px": 34,
+   "connects": "Dormitorio 2 (vestidor) <-> Baño 2",
+   "wall_id": "T10_A/T10_B",
+   "hinge_px": [
+    343.5,
+    411
+   ],
+   "swing": "Abre hacia el Baño 2 (este, +x). Bisagra en la jamba norte. Hoja abierta horizontal x 343,5-377, y 409-413 (largo ≈34 px). Arco de (377,413) a (342,444)."
+  },
+  {
+   "id": "P_ENT",
+   "kind": "puerta_entrada",
+   "x0": 420,
+   "y0": 308,
+   "x1": 432,
+   "y1": 362,
+   "width_px": 54,
+   "connects": "Exterior (acceso marcado con triángulo; que sea un pasillo común es inferido) <-> Hall de acceso",
+   "wall_id": "EXT_E1/EXT_E2",
+   "hinge_px": [
+    421,
+    361
+   ],
+   "swing": "Abre hacia adentro (oeste, -x). Bisagra en la jamba sur. Hoja abierta horizontal x 366,5-421, y 358-362 (largo ≈54,5 px). Arco de (367,358) a (421,308)."
+  },
+  {
+   "id": "VEN_LIV",
+   "kind": "ventanal_corredera",
+   "x0": 113,
+   "y0": 175,
+   "x1": 128.5,
+   "y1": 327,
+   "width_px": 152,
+   "connects": "Living-comedor <-> Balcón",
+   "wall_id": "PIL_W1/PIL_W2",
+   "swing": "Corredera (flecha de deslizamiento x 129-134, y 188-212).",
+   "notes": "Dos hojas: líneas de marco distintas en y 176-226 (x≈119-122) y y 227-327 (x≈119-120); traslape aparente en y≈227-231. No se puede saber cuál hoja es fija."
+  },
+  {
+   "id": "V_D1",
+   "kind": "ventana",
+   "x0": 113,
+   "y0": 57.5,
+   "x1": 128.5,
+   "y1": 151,
+   "width_px": 93.5,
+   "connects": "Dormitorio 1 <-> Exterior (fachada oeste)",
+   "wall_id": "EXT_W1/PIL_W1",
+   "notes": "Tramo sin relleno con marco (líneas x 113-114, 118-122, 127-128). Alto de antepecho no determinable."
+  },
+  {
+   "id": "V_D2",
+   "kind": "ventana",
+   "x0": 113,
+   "y0": 350.5,
+   "x1": 128.5,
+   "y1": 458,
+   "width_px": 107.5,
+   "connects": "Dormitorio 2 <-> Exterior (fachada oeste)",
+   "wall_id": "PIL_W2/EXT_W2",
+   "notes": "Medida en el plano: más larga que V_D1 (107,5 vs 93,5 px)."
+  },
+  {
+   "id": "V_B1",
+   "kind": "ventana_bano",
+   "x0": 342.5,
+   "y0": 13,
+   "x1": 372,
+   "y1": 27.5,
+   "width_px": 29.5,
+   "connects": "Baño 1 <-> Exterior (fachada norte)",
+   "wall_id": "EXT_N1/EXT_N2",
+   "notes": "Sobre la tina. El Baño 2 NO tiene ventana dibujada (solo shaft)."
+  },
+  {
+   "id": "VL_D1",
+   "kind": "vano_libre",
+   "x0": 288.5,
+   "y0": 59.5,
+   "x1": 294.5,
+   "y1": 122,
+   "width_px": 62.5,
+   "connects": "Dormitorio 1 (área cama) <-> vestidor/paso a Baño 1",
+   "wall_id": "T3_A/T3_B",
+   "notes": "Hueco en el tabique T3 entre los dos closets; sin puerta."
+  },
+  {
+   "id": "VL_D2",
+   "kind": "vano_libre",
+   "x0": 288.5,
+   "y0": 399.5,
+   "x1": 294.5,
+   "y1": 451,
+   "width_px": 51.5,
+   "connects": "Dormitorio 2 (área cama) <-> vestidor/paso a Baño 2",
+   "wall_id": "T3_E/T3_F",
+   "notes": "Hueco en el tabique T3 entre los dos closets; sin puerta."
+  },
+  {
+   "id": "VL_COC_LIV",
+   "kind": "vano_libre",
+   "x0": 294,
+   "y0": 181.5,
+   "x1": 295,
+   "y1": 297.5,
+   "width_px": 116,
+   "connects": "Cocina <-> Living-comedor",
+   "wall_id": "T3_C",
+   "notes": "Cocina abierta: no hay muro bajo T3_C. El límite x=294,5 es virtual (prolongación de la cara de T3)."
+  },
+  {
+   "id": "VL_HALL_LIV",
+   "kind": "vano_libre",
+   "x0": 294,
+   "y0": 297.5,
+   "x1": 295,
+   "y1": 324,
+   "width_px": 26.5,
+   "connects": "Hall de acceso <-> Living-comedor",
+   "notes": "Límite virtual entre el living y la zona frente al nicho LV."
+  },
+  {
+   "id": "VL_COC_HALL",
+   "kind": "vano_libre",
+   "x0": 294.5,
+   "y0": 297,
+   "x1": 385,
+   "y1": 298,
+   "width_px": 90.5,
+   "connects": "Cocina <-> Hall de acceso",
+   "wall_id": "T_COC_S",
+   "notes": "Límite virtual y=297,5 (prolongación de la cara norte de T_COC_S)."
+  },
+  {
+   "id": "CL_D1_N",
+   "kind": "puerta_closet",
+   "x0": 294.5,
+   "y0": 58.5,
+   "x1": 336.5,
+   "y1": 59.5,
+   "width_px": 42,
+   "connects": "Closet sup. Dorm. 1 <-> vestidor Dorm. 1",
+   "swing": "Frente hacia el sur (+y).",
+   "notes": "Frente dibujado como línea gris simple: tipo de puerta (corredera/abatible) no determinable."
+  },
+  {
+   "id": "CL_D1_S",
+   "kind": "puerta_closet",
+   "x0": 294.5,
+   "y0": 122.5,
+   "x1": 336.5,
+   "y1": 123.5,
+   "width_px": 42,
+   "connects": "Closet inf. Dorm. 1 <-> vestidor Dorm. 1",
+   "swing": "Frente hacia el norte (-y).",
+   "notes": "Frente como línea gris simple."
+  },
+  {
+   "id": "CL_D2_N",
+   "kind": "puerta_closet",
+   "x0": 294.5,
+   "y0": 398.5,
+   "x1": 338.5,
+   "y1": 399.5,
+   "width_px": 44,
+   "connects": "Closet sup. Dorm. 2 <-> vestidor Dorm. 2",
+   "swing": "Frente hacia el sur (+y).",
+   "notes": "Frente como línea gris simple."
+  },
+  {
+   "id": "CL_D2_S",
+   "kind": "puerta_closet",
+   "x0": 294.5,
+   "y0": 451,
+   "x1": 338.5,
+   "y1": 452.5,
+   "width_px": 44,
+   "connects": "Closet inf. Dorm. 2 <-> vestidor Dorm. 2",
+   "swing": "Frente hacia el norte (-y).",
+   "notes": "Frente como línea gris simple."
+  },
+  {
+   "id": "LV_FRENTE",
+   "kind": "puerta_closet",
+   "x0": 294.5,
+   "y0": 320,
+   "x1": 329,
+   "y1": 326,
+   "width_px": 34.5,
+   "connects": "Nicho LV <-> Hall/Living",
+   "swing": "Frente hacia el norte (-y).",
+   "notes": "Frente con línea curva fina (y≈320-326): posible puerta plegable o cortina; podría ser un vano libre."
+  }
+ ],
+ "rooms": [
+  {
+   "name": "Dormitorio 1",
+   "polygon_px": [
+    [
+     128.5,
+     27.5
+    ],
+    [
+     288.5,
+     27.5
+    ],
+    [
+     288.5,
+     59.5
+    ],
+    [
+     336.5,
+     59.5
+    ],
+    [
+     336.5,
+     122.5
+    ],
+    [
+     288.5,
+     122.5
+    ],
+    [
+     288.5,
+     169
+    ],
+    [
+     128.5,
+     169
+    ]
+   ],
+   "notes": "Área cama x 128,5-288,5 × y 27,5-169 + vestidor/paso x 288,5-336,5 × y 59,5-122,5 que lleva al Baño 1 (baño en suite)."
+  },
+  {
+   "name": "Dormitorio 2",
+   "polygon_px": [
+    [
+     128.5,
+     333
+    ],
+    [
+     288.5,
+     333
+    ],
+    [
+     288.5,
+     399.5
+    ],
+    [
+     338.5,
+     399.5
+    ],
+    [
+     338.5,
+     451
+    ],
+    [
+     288.5,
+     451
+    ],
+    [
+     288.5,
+     474.5
+    ],
+    [
+     128.5,
+     474.5
+    ]
+   ],
+   "notes": "Área cama x 128,5-288,5 × y 333-474,5 + vestidor/paso x 288,5-338,5 × y 399,5-451 que lleva al Baño 2."
+  },
+  {
+   "name": "Living-comedor",
+   "polygon_px": [
+    [
+     128.5,
+     175
+    ],
+    [
+     288.5,
+     175
+    ],
+    [
+     288.5,
+     181.5
+    ],
+    [
+     294.5,
+     181.5
+    ],
+    [
+     294.5,
+     324
+    ],
+    [
+     288.5,
+     324
+    ],
+    [
+     288.5,
+     327
+    ],
+    [
+     128.5,
+     327
+    ]
+   ],
+   "notes": "Borde este (x=294,5, y 181,5-324) virtual: abierto a cocina y hall. No hay comedor dibujado."
+  },
+  {
+   "name": "Cocina",
+   "polygon_px": [
+    [
+     294.5,
+     152.5
+    ],
+    [
+     418,
+     152.5
+    ],
+    [
+     418,
+     297.5
+    ],
+    [
+     294.5,
+     297.5
+    ]
+   ],
+   "notes": "Cocina abierta en L. Bordes oeste (bajo y=181,5) y sur (x<385) virtuales."
+  },
+  {
+   "name": "Hall de acceso",
+   "polygon_px": [
+    [
+     294.5,
+     297.5
+    ],
+    [
+     385,
+     297.5
+    ],
+    [
+     385,
+     305.5
+    ],
+    [
+     418,
+     305.5
+    ],
+    [
+     418,
+     308
+    ],
+    [
+     420,
+     308
+    ],
+    [
+     420,
+     362
+    ],
+    [
+     336,
+     362
+    ],
+    [
+     336,
+     324
+    ],
+    [
+     294.5,
+     324
+    ]
+   ],
+   "notes": "Zona entre cocina, nicho LV y Baño 2 donde llega la puerta de entrada. Bordes norte y oeste virtuales."
+  },
+  {
+   "name": "Baño 1",
+   "polygon_px": [
+    [
+     342,
+     27.5
+    ],
+    [
+     418,
+     27.5
+    ],
+    [
+     418,
+     125.5
+    ],
+    [
+     391.5,
+     125.5
+    ],
+    [
+     391.5,
+     146
+    ],
+    [
+     342,
+     146
+    ]
+   ],
+   "notes": "Excluye el shaft 1 (esquina SE)."
+  },
+  {
+   "name": "Baño 2",
+   "polygon_px": [
+    [
+     344,
+     368
+    ],
+    [
+     420,
+     368
+    ],
+    [
+     420,
+     445
+    ],
+    [
+     388.5,
+     445
+    ],
+    [
+     388.5,
+     474.5
+    ],
+    [
+     344,
+     474.5
+    ]
+   ],
+   "notes": "Excluye el shaft 2 (esquina SE)."
+  },
+  {
+   "name": "Balcón",
+   "polygon_px": [
+    [
+     61,
+     174
+    ],
+    [
+     113,
+     174
+    ],
+    [
+     113,
+     328
+    ],
+    [
+     61,
+     328
+    ]
+   ],
+   "notes": "Piso con grilla de baldosas (paso ≈10,8 px). Rodeado por BAL_W/BAL_N/BAL_S."
+  },
+  {
+   "name": "Closet Dorm. 1 superior",
+   "polygon_px": [
+    [
+     294.5,
+     27.5
+    ],
+    [
+     336.5,
+     27.5
+    ],
+    [
+     336.5,
+     59.5
+    ],
+    [
+     294.5,
+     59.5
+    ]
+   ],
+   "notes": "Relleno gris claro."
+  },
+  {
+   "name": "Closet Dorm. 1 inferior",
+   "polygon_px": [
+    [
+     294.5,
+     122.5
+    ],
+    [
+     336.5,
+     122.5
+    ],
+    [
+     336.5,
+     146
+    ],
+    [
+     294.5,
+     146
+    ]
+   ],
+   "notes": "Relleno gris claro."
+  },
+  {
+   "name": "Closet Dorm. 2 superior",
+   "polygon_px": [
+    [
+     294.5,
+     368
+    ],
+    [
+     338.5,
+     368
+    ],
+    [
+     338.5,
+     399.5
+    ],
+    [
+     294.5,
+     399.5
+    ]
+   ],
+   "notes": "Relleno gris claro."
+  },
+  {
+   "name": "Closet Dorm. 2 inferior",
+   "polygon_px": [
+    [
+     294.5,
+     451
+    ],
+    [
+     338.5,
+     451
+    ],
+    [
+     338.5,
+     474.5
+    ],
+    [
+     294.5,
+     474.5
+    ]
+   ],
+   "notes": "Relleno gris claro."
+  },
+  {
+   "name": "Nicho lavadora (LV)",
+   "polygon_px": [
+    [
+     294.5,
+     324
+    ],
+    [
+     329,
+     324
+    ],
+    [
+     329,
+     362
+    ],
+    [
+     294.5,
+     362
+    ]
+   ],
+   "notes": "Abierto hacia el norte (hall/living)."
+  },
+  {
+   "name": "Shaft 1",
+   "polygon_px": [
+    [
+     397,
+     132
+    ],
+    [
+     418,
+     132
+    ],
+    [
+     418,
+     146
+    ],
+    [
+     397,
+     146
+    ]
+   ],
+   "notes": "Cuadrado con diagonal, esquina SE del Baño 1."
+  },
+  {
+   "name": "Shaft 2",
+   "polygon_px": [
+    [
+     394.5,
+     451
+    ],
+    [
+     420,
+     451
+    ],
+    [
+     420,
+     474.5
+    ],
+    [
+     394.5,
+     474.5
+    ]
+   ],
+   "notes": "Cuadrado con diagonal, esquina SE del Baño 2."
+  }
+ ],
+ "fixtures": [
+  {
+   "name": "Cama D1",
+   "room": "Dormitorio 1",
+   "x0": 156,
+   "y0": 31,
+   "x1": 255,
+   "y1": 137.5,
+   "notes": "Cabecera al norte (almohadas y 44-71). Proporción 99×106,5 px."
+  },
+  {
+   "name": "Velador izq. D1",
+   "room": "Dormitorio 1",
+   "x0": 141,
+   "y0": 29,
+   "x1": 157,
+   "y1": 49
+  },
+  {
+   "name": "Velador der. D1",
+   "room": "Dormitorio 1",
+   "x0": 254,
+   "y0": 29,
+   "x1": 272,
+   "y1": 49
+  },
+  {
+   "name": "Closet sup. D1",
+   "room": "Dormitorio 1",
+   "x0": 294.5,
+   "y0": 27.5,
+   "x1": 336.5,
+   "y1": 59.5,
+   "notes": "Mueble closet (relleno gris claro); frente al sur."
+  },
+  {
+   "name": "Closet inf. D1",
+   "room": "Dormitorio 1",
+   "x0": 294.5,
+   "y0": 122.5,
+   "x1": 336.5,
+   "y1": 146,
+   "notes": "Frente al norte."
+  },
+  {
+   "name": "Cama D2",
+   "room": "Dormitorio 2",
+   "x0": 156,
+   "y0": 365,
+   "x1": 255,
+   "y1": 471.5,
+   "notes": "Cabecera al sur (almohadas y 431-457)."
+  },
+  {
+   "name": "Velador izq. D2",
+   "room": "Dormitorio 2",
+   "x0": 141,
+   "y0": 454,
+   "x1": 157,
+   "y1": 474.5
+  },
+  {
+   "name": "Velador der. D2",
+   "room": "Dormitorio 2",
+   "x0": 254,
+   "y0": 454,
+   "x1": 272,
+   "y1": 474.5
+  },
+  {
+   "name": "Closet sup. D2",
+   "room": "Dormitorio 2",
+   "x0": 294.5,
+   "y0": 368,
+   "x1": 338.5,
+   "y1": 399.5,
+   "notes": "Frente al sur."
+  },
+  {
+   "name": "Closet inf. D2",
+   "room": "Dormitorio 2",
+   "x0": 294.5,
+   "y0": 451,
+   "x1": 338.5,
+   "y1": 474.5,
+   "notes": "Frente al norte."
+  },
+  {
+   "name": "Mueble TV",
+   "room": "Living-comedor",
+   "x0": 170,
+   "y0": 182,
+   "x1": 234,
+   "y1": 203,
+   "notes": "Contra el tabique T_D1_LIV; TV dibujada x 182-221, y 185-190."
+  },
+  {
+   "name": "Alfombra",
+   "room": "Living-comedor",
+   "x0": 148,
+   "y0": 193,
+   "x1": 267,
+   "y1": 301.5,
+   "notes": "Rectángulo fino bajo mueble TV, mesa y sofá."
+  },
+  {
+   "name": "Mesa de centro",
+   "room": "Living-comedor",
+   "x0": 174,
+   "y0": 225,
+   "x1": 230,
+   "y1": 259
+  },
+  {
+   "name": "Sofá 2 cuerpos",
+   "room": "Living-comedor",
+   "x0": 161.5,
+   "y0": 281,
+   "x1": 244,
+   "y1": 323,
+   "notes": "Respaldo al sur (y 313-323), brazos x 161,5-169 y 234-244, cojines divididos en x≈201,5. Mira al norte (hacia la TV)."
+  },
+  {
+   "name": "Pouf / mesa lateral",
+   "room": "Living-comedor",
+   "x0": 136,
+   "y0": 288,
+   "x1": 158,
+   "y1": 313.5,
+   "notes": "Cuadrado pequeño junto al sofá; puede ser pouf o mesa lateral."
+  },
+  {
+   "name": "Mesón en L (tramo norte)",
+   "room": "Cocina",
+   "x0": 294.5,
+   "y0": 152.5,
+   "x1": 388,
+   "y1": 183,
+   "notes": "Borde frontal y≈182-183."
+  },
+  {
+   "name": "Mesón en L (tramo este)",
+   "room": "Cocina",
+   "x0": 387,
+   "y0": 152.5,
+   "x1": 418,
+   "y1": 226.5,
+   "notes": "Borde frontal x≈387-388."
+  },
+  {
+   "name": "Encimera 4 platos",
+   "room": "Cocina",
+   "x0": 325,
+   "y0": 154,
+   "x1": 359,
+   "y1": 180,
+   "notes": "Sobre el tramo norte del mesón."
+  },
+  {
+   "name": "Lavaplatos",
+   "room": "Cocina",
+   "x0": 392.5,
+   "y0": 193,
+   "x1": 416,
+   "y1": 218.5,
+   "notes": "Sobre el tramo este; desagüe en (402,205)."
+  },
+  {
+   "name": "Escurridor",
+   "room": "Cocina",
+   "x0": 393,
+   "y0": 172,
+   "x1": 411,
+   "y1": 188,
+   "notes": "Rectángulo con líneas verticales junto al lavaplatos."
+  },
+  {
+   "name": "Muebles altos (línea discontinua)",
+   "room": "Cocina",
+   "x0": 294.5,
+   "y0": 152.5,
+   "x1": 418,
+   "y1": 226,
+   "notes": "Línea discontinua en y≈170-171 (x 295-400) y x≈398-399 (y 171-226): proyección de muebles altos en L, fondo ≈19 px."
+  },
+  {
+   "name": "Módulo rayado (artefacto ambiguo)",
+   "room": "Cocina",
+   "x0": 387,
+   "y0": 226.5,
+   "x1": 418,
+   "y1": 259.5,
+   "notes": "Contorno negro con rayado horizontal y frente curvo con manilla a la izquierda (x 382,5-388, y 229-257; tic en y≈243). Candidatos: torre de horno/microondas, refrigerador o despensa con repisas. No determinable."
+  },
+  {
+   "name": "Espacio refrigerador (probable)",
+   "room": "Cocina",
+   "x0": 386,
+   "y0": 259.5,
+   "x1": 418,
+   "y1": 297.5,
+   "notes": "Rectángulo con borde oeste discontinuo y punto negro en (404-407, 278-281). Probable espacio para refrigerador (artefacto no incluido) o despensa; no confirmado."
+  },
+  {
+   "name": "Lavadora",
+   "room": "Nicho lavadora (LV)",
+   "x0": 296,
+   "y0": 329.5,
+   "x1": 328,
+   "y1": 361,
+   "notes": "Círculo con texto 'LV' dentro de un cuadrado."
+  },
+  {
+   "name": "Tina Baño 1",
+   "room": "Baño 1",
+   "x0": 342,
+   "y0": 27.5,
+   "x1": 417,
+   "y1": 65.5,
+   "notes": "Contra el muro norte, bajo la ventana V_B1."
+  },
+  {
+   "name": "WC Baño 1",
+   "room": "Baño 1",
+   "x0": 382,
+   "y0": 71,
+   "x1": 418,
+   "y1": 96,
+   "notes": "Estanque contra el muro este (x 408-418), taza hacia el oeste."
+  },
+  {
+   "name": "Vanitorio Baño 1",
+   "room": "Baño 1",
+   "x0": 342,
+   "y0": 121,
+   "x1": 380,
+   "y1": 146,
+   "notes": "Contra T5; lavamanos con desagüe en (360,138). Línea fina y≈137-138 de x 378 a 391 (¿toallero?)."
+  },
+  {
+   "name": "Repisa / tabique bajo de instalaciones B1",
+   "room": "Baño 1",
+   "x0": 408,
+   "y0": 64,
+   "x1": 418,
+   "y1": 125.5,
+   "notes": "Línea gris fina x≈408-409 entre tina y shaft; posible tabique bajo que oculta el estanque. Ambiguo."
+  },
+  {
+   "name": "Tina Baño 2",
+   "room": "Baño 2",
+   "x0": 344,
+   "y0": 368,
+   "x1": 419,
+   "y1": 404.5,
+   "notes": "Contra T9."
+  },
+  {
+   "name": "WC Baño 2",
+   "room": "Baño 2",
+   "x0": 381,
+   "y0": 412,
+   "x1": 420,
+   "y1": 436,
+   "notes": "Estanque contra el muro este (x 411-420)."
+  },
+  {
+   "name": "Vanitorio Baño 2",
+   "room": "Baño 2",
+   "x0": 344,
+   "y0": 451,
+   "x1": 382,
+   "y1": 474.5,
+   "notes": "Contra el muro sur; desagüe en (361,457)."
+  },
+  {
+   "name": "Repisa / tabique bajo de instalaciones B2",
+   "room": "Baño 2",
+   "x0": 410,
+   "y0": 404.5,
+   "x1": 420,
+   "y1": 445,
+   "notes": "Línea punteada x≈410-411 entre tina y shaft. Ambiguo."
+  },
+  {
+   "name": "Marca de acceso (triángulo)",
+   "room": "Exterior",
+   "x0": 430,
+   "y0": 316,
+   "x1": 450,
+   "y1": 353,
+   "notes": "Símbolo de acceso fuera del muro este, apunta hacia la puerta de entrada. No es un objeto físico."
+  },
+  {
+   "name": "Flecha corredera",
+   "room": "Living-comedor",
+   "x0": 129,
+   "y0": 188,
+   "x1": 134,
+   "y1": 212,
+   "notes": "Símbolo de deslizamiento del ventanal. No es un objeto físico."
+  }
+ ],
+ "uncertain": [
+  "Orientación: se usan norte/sur/este/oeste como arriba/abajo/derecha/izquierda de la imagen; el plano no tiene flecha de norte.",
+  "Escala: el plano no tiene cotas ni escala gráfica. Indicios (supuestos, no medidos): puerta de entrada 54 px, puertas de dormitorio 37,5 px, puertas de baño 34 px, cama 99×106,5 px, baldosas del balcón ≈10,8 px. Si la cama es 1,8×2,0 m → ≈0,0188 m/px (entrada ≈1,0 m, dormitorios ≈0,70 m, baños ≈0,64 m, muros ext. ≈0,27 m, tabiques ≈0,11 m, planta ≈6,0×8,9 m). Si la cama es 2,0×2,0 m → ≈0,020 m/px. Hay que fijarla con al menos una cota real.",
+  "Espesores medidos: muro N 14,5 px, muro O 15,5 px, muro S 13 px, muro E 12 px (14 px en el tramo norte si se incluye la línea interior x 418-420). No se sabe si la diferencia es real o es imprecisión del dibujo.",
+  "Precisión: los bordes se midieron sobre el PNG antialiasado; cuando un píxel es gris intermedio se tomó el borde en ,5. Error esperado ±1 px en muros y vanos, ±2 px en muebles.",
+  "Balcón: se ve contorno exterior, dos líneas finas paralelas (baranda o pasamanos) y el borde del piso con baldosas. No se puede determinar si el antepecho es macizo, de vidrio o metálico, ni su altura.",
+  "Ventanal: se ven dos hojas con traslape en y≈227-231 y una flecha de deslizamiento, pero no se puede determinar cuál hoja es fija ni si es corredera de 2 o 3 hojas.",
+  "Altura de antepechos de ventanas y dinteles: no aparecen en planta (habrá que suponer valores estándar).",
+  "Cocina: el 'módulo rayado' (x 387-418, y 226,5-259,5) y el 'rectángulo discontinuo con punto' (x 386-418, y 259,5-297,5) son ambiguos: podrían ser torre de horno, refrigerador, despensa o lavavajillas.",
+  "Frente del nicho LV: línea curva fina; podría ser una puerta plegable, una cortina o solo un vano libre.",
+  "Frentes de closets: línea simple; no se distingue si las puertas son correderas o abatibles.",
+  "Límites entre living, cocina y hall son virtuales (planta abierta); los elegí prolongando las caras de T3 y de T_COC_S.",
+  "Línea x 418-420 del muro este en cocina y Baño 1: separada del relleno gris por un píxel blanco en la cocina; puede ser revestimiento o tabique de instalaciones. Se incluyó dentro de EXT_E1.",
+  "Líneas finas junto a los WC (x≈408-409 en B1 y x≈410-411 en B2): posible tabique bajo/repisa de instalaciones; no confirmado.",
+  "Baño 2 sin ventana dibujada; se asume ventilación por shaft (inferido).",
+  "No hay comedor (mesa + sillas) dibujado pese a que el ambiente se llama living-comedor."
+ ]
+}
