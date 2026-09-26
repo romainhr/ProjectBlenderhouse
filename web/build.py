@@ -5,7 +5,7 @@ Uso:
 
 - Copia web/src/.
 - Convierte los renders de web/renders_png/ (Eevee, 1600 × 1000; tools/render_interior.py) a JPEG y WebP de 1600
-  y 800 px.
+  y 800 px, y genera las muestras de materiales de la portada (img/material-*-{360,720}) desde las texturas propias.
 - Arma web/dist/tour/: la página y el visor v3 vienen de web/src/tour/ y el modelo (tour/modelo/, con su versión
   liviana para teléfono) lo genera web/tour_modelo.py a partir de exports/web/ (fase 6). El visor de la página
   publicada en claude.ai (exports/depto_tour.html) ya no se inyecta: el sitio tiene su propio tour.
@@ -35,6 +35,14 @@ RENDERS = os.path.join(WEB, "renders_png")
 IMAGENES = {"Living": "living", "Living_Sofa": "living-sofa", "Cocina": "cocina", "Dorm1": "dorm1", "Dorm2": "dorm2",
             "Bano1_Vanitorio": "bano", "Balcon": "balcon", "Hall_Recibidor": "recibidor", "Maqueta": "maqueta"}
 ANCHOS = (1600, 800)
+# Muestras de materiales de la portada (ADR 0006, decisión 5; ids elegidos con la sesión de diseño): recorte cuadrado
+# centrado de la textura difusa propia. `fraccion` = lado del recorte / lado de la textura, para que se lea la escala
+# real (docs/deco-industrial.md: ladrillo 1,2 m, concreto y roble 2,4 m, cuero 0,4 m, acero 0,6 m por textura) sin
+# agrandar: el recorte más chico (768 px) todavía alcanza para la variante de 720.
+TEXTURAS = os.path.join(RAIZ, "assets", "texturas", "propias")
+MUESTRAS = {"ladrillo": ("ladrillo", 1.0), "concreto": ("concreto_encofrado", 0.75), "roble": ("piso_roble", 0.75),
+            "cuero": ("cuero", 1.0), "acero": ("acero_pavonado", 1.0)}
+LADOS_MUESTRA = (360, 720)
 RE_SUPABASE = re.compile(r"^https://[a-z0-9]{10,40}\.supabase\.co$")
 RE_PUBLICABLE = re.compile(r"sb_publishable_[A-Za-z0-9_-]{20,}")
 RE_CDN = re.compile(r"https://cdn\.jsdelivr\.net/npm/[A-Za-z0-9._-]+@[0-9][0-9A-Za-z.-]*/")
@@ -65,6 +73,25 @@ def imagenes():
             r = im if im.width == ancho else im.resize((ancho, alto), Image.LANCZOS)
             r.save(os.path.join(DIST, "img", f"{slug}-{ancho}.jpg"), quality=82, optimize=True, progressive=True)
             r.save(os.path.join(DIST, "img", f"{slug}-{ancho}.webp"), quality=80, method=6)
+
+
+def muestras():
+    """img/material-<nombre>-<lado>.{jpg,webp} desde assets/texturas/propias/<id>/<id>_diff_1k.jpg (no desde los
+    renders: así se leen como muestras del material y no como objetos)."""
+    for nombre, (tid, fraccion) in MUESTRAS.items():
+        ruta = os.path.join(TEXTURAS, tid, f"{tid}_diff_1k.jpg")
+        if not os.path.exists(ruta):
+            raise SystemExit(f"falta la textura {ruta} (build/deco_texturas.py)")
+        im = Image.open(ruta).convert("RGB")
+        lado = round(min(im.size) * fraccion)
+        if lado < max(LADOS_MUESTRA):
+            raise SystemExit(f"{nombre}: el recorte de {lado} px no alcanza para {max(LADOS_MUESTRA)} px sin agrandar")
+        x0, y0 = (im.width - lado) // 2, (im.height - lado) // 2
+        recorte = im.crop((x0, y0, x0 + lado, y0 + lado))
+        for l in LADOS_MUESTRA:
+            r = recorte.resize((l, l), Image.LANCZOS)
+            r.save(os.path.join(DIST, "img", f"material-{nombre}-{l}.jpg"), quality=82, optimize=True, progressive=True)
+            r.save(os.path.join(DIST, "img", f"material-{nombre}-{l}.webp"), quality=80, method=6)
 
 
 def tour():
@@ -204,6 +231,7 @@ def main():
         shutil.rmtree(DIST)
     shutil.copytree(SRC, DIST)
     imagenes()
+    muestras()
     escritorio, movil = tour()
     url = configuracion(env)
     politicas(url)
