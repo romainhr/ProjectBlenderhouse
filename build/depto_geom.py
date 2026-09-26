@@ -94,8 +94,11 @@ def cuenco(bm, cx, cy, rx, ry, z0, z1, pared, fondo, seg=24):
         bm.faces.new((it[j], it[i], ib[i], ib[j])).smooth = True     # pared interior
 
 
-def uv_mundo(bm):
-    """UV por proyección de caja en metros de mundo, según el eje dominante de la normal de cada cara."""
+def uv_mundo(bm, girar=False):
+    """UV por proyección de caja en metros de mundo, según el eje dominante de la normal de cada cara.
+    girar: UV girado 90° en cada cara, (u, v) -> (-v, u) (corrección 07c, ronda 1): en una tira horizontal (la visera
+    de la campana, el marco del horno) la V queda a lo largo de la pieza y no en vertical, para que un cepillado que
+    corre a lo largo de V siga el largo de la tira."""
     bm.normal_update()
     uv = bm.loops.layers.uv.verify()
     for f in bm.faces:
@@ -103,7 +106,8 @@ def uv_mundo(bm):
         eje = max(range(3), key=lambda k: abs(n[k]))
         for lp in f.loops:
             c = lp.vert.co
-            lp[uv].uv = (c.x, c.y) if eje == 2 else ((c.y, c.z) if eje == 0 else (c.x, c.z))
+            u, v = (c.x, c.y) if eje == 2 else ((c.y, c.z) if eje == 0 else (c.x, c.z))
+            lp[uv].uv = (-v, u) if girar else (u, v)
 
 
 # ---------------------------------------------------------------------------
@@ -238,11 +242,11 @@ def material(nombre):
     return mat
 
 
-def malla_desde_bmesh(nombre, bm, mat, origen=None, acabado=None):
+def malla_desde_bmesh(nombre, bm, mat, origen=None, acabado=None, uv_girado=False):
     """Normales, UV de mundo y sombreado suave con auto smooth; origen (m, mundo) opcional para el objeto.
 
     acabado: función (centro de cara, normal) -> nombre de material, para asignar un material por cara (muros y
-    losas: el recinto hacia el que mira cada cara). Si se da, `mat` se ignora."""
+    losas: el recinto hacia el que mira cada cara). Si se da, `mat` se ignora. uv_girado: ver uv_mundo(girar)."""
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.normal_update()
     mats = [mat]
@@ -254,7 +258,7 @@ def malla_desde_bmesh(nombre, bm, mat, origen=None, acabado=None):
                 nombres.append(n)
             f.material_index = nombres.index(n)
         mats = [material(n) for n in nombres]
-    uv_mundo(bm)                      # UV con coordenadas de mundo: se calcula antes de mover el origen
+    uv_mundo(bm, uv_girado)           # UV con coordenadas de mundo: se calcula antes de mover el origen
     if origen is not None:
         bmesh.ops.translate(bm, vec=[-c for c in origen], verts=bm.verts)
     suave = any(f.smooth for f in bm.faces)
@@ -272,8 +276,8 @@ def malla_desde_bmesh(nombre, bm, mat, origen=None, acabado=None):
 class Pieza:
     """Acumula cajas y cilindros de un objeto y lo crea de una vez."""
 
-    def __init__(self, nombre, mat_nombre):
-        self.nombre, self.mat_nombre = nombre, mat_nombre
+    def __init__(self, nombre, mat_nombre, uv_girado=False):
+        self.nombre, self.mat_nombre, self.uv_girado = nombre, mat_nombre, uv_girado
         self.bm = bmesh.new()
 
     def caja(self, x0, x1, y0, y1, z0, z1):
@@ -295,7 +299,7 @@ class Pieza:
     def crear(self, col, props=None, origen=None, padre=None, color=(1.0, 1.0, 1.0, 1.0)):
         """Crea el objeto. origen: punto de mundo (m) donde queda el origen del objeto (p.ej. la bisagra).
         padre: objeto con ese mismo origen al que se emparenta (manillas que siguen a la hoja)."""
-        me = malla_desde_bmesh(self.nombre, self.bm, material(self.mat_nombre), origen)
+        me = malla_desde_bmesh(self.nombre, self.bm, material(self.mat_nombre), origen, uv_girado=self.uv_girado)
         ob = bpy.data.objects.new(self.nombre, me)
         if origen is not None and padre is None:
             ob.location = origen

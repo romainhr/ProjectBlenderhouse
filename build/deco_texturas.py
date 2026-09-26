@@ -699,17 +699,22 @@ def tex_acero_pavonado(L, s):
 
 def tex_acero_cepillado(L, s):
     """Acero inoxidable cepillado (electrodomésticos; corrección 07c): gris frío claro, vetas rectas muy finas y parejas
-    a lo largo de V (verticales en la puerta de la nevera), de contraste bajo, y una nube apenas perceptible. Sin
-    ondulación ni vetas anchas de brillo desigual: con ellas (versión 07b) la chapa se leía como madera clara veteada.
-    Rugosidad de 0,25 a 0,35 que sigue a las vetas; el relieve son surcos de décimas de micra para que el brillo se
-    rompa en líneas."""
+    a lo largo de V (verticales en la puerta de la nevera, a lo largo en la visera de la campana y el marco del horno,
+    que llevan el UV girado), de contraste bajo, y una nube apenas perceptible. Sin ondulación ni vetas anchas de brillo
+    desigual: con ellas (versión 07b) la chapa se leía como madera clara veteada.
+    Corrección 07c (ronda 1): sólo queda el rayado submilimétrico, con un paso alto que le quita todo rasgo de más de
+    ~1,5 mm de ancho, y la nube. La capa "medio" (pasadas de 0,7-10 mm, estirada 260 veces) sobrevivía al filtrado de
+    mipmaps y, en un metal, el albedo multiplica el reflejo: a 1-2 m la puerta mostraba franjas verticales de 3 a 8 mm,
+    como vidrio acanalado. El rayado fino se promedia por mip a esa distancia (un píxel del render cubre ~2 mm).
+    Rugosidad de 0,25 a 0,35 que sigue al rayado y a la nube; el relieve son surcos de décimas de micra."""
     fino = L.ruido(s(), 0.004, 0.00025, p=0.3, estira=420, angulo=90.0)     # rayado del cepillo: ~0,25 mm de ancho
-    medio = L.ruido(s(), 0.010, 0.0007, p=0.5, estira=260, angulo=90.0)     # pasadas algo más anchas, igual de rectas
+    fino = fino - L.desenfocar(fino, 0.0005)                                 # paso alto (sigma 0,5 mm): sin franjas
+    fino = fino / (fino.std() + 1e-12)
     nube = L.ruido(s(), 0.12, 0.04, p=1.2)                                  # variación de brillo de la chapa, muy suave
-    c = por_px(col("#C3C7CB"), 1 + 0.014 * fino + 0.008 * medio + 0.006 * nube)
+    c = por_px(col("#C3C7CB"), 1 + 0.014 * fino + 0.006 * nube)
     c = ajustar_media(c, col("#C3C7CB"))
-    rug = 0.30 + 0.016 * fino + 0.010 * medio + 0.010 * nube
-    h = 0.000005 * fino + 0.000003 * medio
+    rug = 0.30 + 0.018 * fino + 0.012 * nube
+    h = 0.000005 * fino
     return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.25, 0.35))
 
 
