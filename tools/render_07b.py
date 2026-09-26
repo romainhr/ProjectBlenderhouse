@@ -478,6 +478,16 @@ def dist_cajas(a, b):
     return math.sqrt(sum(max(0.0, b0[k] - a1[k], a0[k] - b1[k]) ** 2 for k in range(3)))
 
 
+def _dist_nevera():
+    d = dist_cajas(bpy.data.objects["Depto_Mueble_Nevera_Puerta"], bpy.data.objects["Depto_Interruptor_Cocina"])
+    return f"{d:.2f}".replace(".", ",")
+
+
+# marcas del texto de una vista que se completan con una medida del render, con las piezas ya en su estado (07c: las
+# usa también tools/render_07c.py)
+MARCAS = {"{dist_nevera}": _dist_nevera}
+
+
 def led_nevera(on):
     ob = bpy.data.objects.get("_LED_Nevera")
     if on and ob is None:
@@ -567,10 +577,9 @@ def main():
         pend = v.get("balance", BALANCE["lamparas"] if con_lamparas else BALANCE["dia"])
         balance.slope = pend or (1.0, 1.0, 1.0)
         texto = v["texto"]
-        if "{dist_nevera}" in texto:
-            d = dist_cajas(bpy.data.objects["Depto_Mueble_Nevera_Puerta"],
-                           bpy.data.objects["Depto_Interruptor_Cocina"])
-            texto = texto.replace("{dist_nevera}", f"{d:.2f}".replace(".", ","))
+        for marca, fn in MARCAS.items():
+            if marca in texto:
+                texto = texto.replace(marca, fn())
         if pend:
             texto += " Con adaptación cromática parcial de la cámara (las luces siguen a su temperatura)."
         scene.view_settings.exposure = v.get("expo", 0.0)
