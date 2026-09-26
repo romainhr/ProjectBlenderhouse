@@ -1,0 +1,18 @@
+{
+  "inicio.titulo": "Home · Test site",
+  "inicio.descripcion": "Test page for the build's languages.",
+  "inicio.h1": "Welcome to \"Brick & Oak\" <home>",
+  "inicio.bajada": "Brick, oak and warm light.",
+  "inicio.foto": "Living room with a brick wall",
+  "comun.reservar": "Book",
+  "comun.inicio": "Home",
+  "reserva.titulo": "Booking · Test site",
+  "reserva.mes_siguiente": "Next month",
+  "error.titulo": "Not found · Test site",
+  "error.h1": "Page not found",
+  "error.volver": "Back to home",
+  "tour.titulo": "3D tour · Test site",
+  "tour.volver": "Back to the site",
+  "tour.vista": "3D view of the apartment",
+  "js.reserva.enviando": "Sending…"
+}

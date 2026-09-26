@@ -1,0 +1,51 @@
+{
+  "js.reserva.fechas_requeridas": "Choose the check-in and check-out dates.",
+  "js.reserva.fecha_pasada": "Check-in cannot be in the past.",
+  "js.reserva.fecha_lejana": "For now, requests are accepted up to one year ahead.",
+  "js.reserva.min_noches": "The minimum stay is {minNoches} nights.",
+  "js.reserva.max_noches": "The maximum stay is {maxNoches} nights.",
+  "js.reserva.fechas_ocupadas": "Those dates already have a request. Choose other dates.",
+  "js.reserva.datos_invalidos": "Check the details in the form.",
+  "js.reserva.nombre": "Enter your name (2 to 80 characters).",
+  "js.reserva.email": "Enter a valid email address.",
+  "js.reserva.telefono": "The phone number only accepts digits, spaces and + ( ) - .",
+  "js.reserva.mensaje": "The message can be up to 1,000 characters long.",
+  "js.reserva.huespedes": "From 1 to {maxHuespedes} people can stay.",
+  "js.reserva.acepta": "We need your consent to reply to the request.",
+  "js.reserva.red": "Could not connect to the booking server. Try again.",
+  "js.reserva.sin_configurar": "Bookings are not connected on this site yet.",
+
+  "js.reserva.noches.one": "{n} night",
+  "js.reserva.noches.other": "{n} nights",
+  "js.reserva.personas.one": "{n} person",
+  "js.reserva.personas.other": "{n} people",
+
+  "js.reserva.cal.dias_cortos": "Mo,Tu,We,Th,Fr,Sa,Su",
+  "js.reserva.cal.motivo.pasado": "in the past",
+  "js.reserva.cal.motivo.ocupado": "occupied",
+  "js.reserva.cal.motivo.lejano": "more than a year ahead",
+  "js.reserva.cal.motivo.minimo": "minimum {n} nights",
+  "js.reserva.cal.motivo.sin_salida": "fewer than {n} free nights from here",
+  "js.reserva.cal.dia_llegada": "{fecha}, check-in selected",
+  "js.reserva.cal.dia_salida": "{fecha}, check-out selected",
+  "js.reserva.cal.dia_en_rango": "{fecha}, within your stay",
+  "js.reserva.cal.dia_no_disponible": "{fecha}, unavailable: {motivo}",
+  "js.reserva.cal.elige_llegada": "Choose check-in",
+  "js.reserva.cal.elige_salida": "Check-in {entrada} · choose check-out",
+  "js.reserva.cal.rango": "{entrada} → {salida} · {noches}",
+
+  "js.reserva.resumen.noches_por_tarifa": "{noches} × {tarifa}",
+  "js.reserva.resumen.noches": "Nights",
+  "js.reserva.resumen.elige_fechas": "Choose your dates",
+  "js.reserva.resumen.total_ejemplo": "{noches} · example total",
+  "js.reserva.resumen.sin_cobro": "no online payment",
+
+  "js.reserva.envio.enviando": "Sending…",
+  "js.reserva.envio.solicitar": "Request",
+
+  "js.reserva.exito.texto": "You requested {noches}, from {entrada} to {salida}, for {personas}.",
+
+  "js.contenido.alt_generico": "Photo of the apartment",
+  "js.contenido.mas_fotos": "More photos of this space",
+  "js.contenido.ver_foto": "View photo: {alt}"
+}

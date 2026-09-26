@@ -61,6 +61,7 @@ export const MENSAJES = Object.freeze({
   sin_permiso: "Tu cuenta no tiene permiso para hacer esto. ¿Está registrada como propietario?",
   sin_filas: "No se encontró el registro (quizá ya se borró) o tu cuenta no tiene permiso para cambiarlo. Actualiza la lista.",
   falta_migracion: "La base todavía no tiene lo que el portal necesita (tabla, columna o función). Falta aplicar la migración 0003_gestion.sql en Supabase.",
+  falta_idiomas: "La base todavía no tiene las columnas de las traducciones (valor_en y valor_fr): falta aplicar la migración 0005_contenido_idiomas.sql en Supabase. Pulsa «Actualizar» para seguir editando sólo el español.",
   archivo_duplicado: "Ya existe un archivo con ese nombre en Storage.",
   archivo_grande: "La imagen supera el tamaño que acepta el bucket de fotos.",
   archivo_tipo: "Storage no acepta ese tipo de archivo (sólo JPEG, PNG o WebP).",
@@ -70,6 +71,18 @@ export const MENSAJES = Object.freeze({
   sin_configurar: "El portal no está conectado a Supabase en este sitio (falta la configuración del build).",
   desconocido: "Supabase respondió con un error.",
 });
+
+/**
+ * ¿El error dice que una columna no existe? PostgREST lo informa así (HTTP 400):
+ *   42703     columna pedida en select= que Postgres no encuentra («column contenido.valor_en does not exist»);
+ *   PGRST204  columna del cuerpo de un PATCH o POST que no está en su caché de esquema.
+ * El portal lo usa para detectar que falta la migración 0005 (valor_en, valor_fr).
+ */
+export function esColumnaInexistente(err) {
+  if (!err || err.origen === "auth" || err.origen === "storage") return false;
+  if (err.codigo === "42703" || err.codigo === "PGRST204") return true;
+  return err.estado === 400 && /column \S+ does not exist|could not find the '[^']+' column/i.test(String(err.message || ""));
+}
 
 /** Código de MENSAJES que corresponde al error. */
 export function codigoConocido(err) {

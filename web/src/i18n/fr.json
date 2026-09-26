@@ -1,0 +1,51 @@
+{
+  "js.reserva.fechas_requeridas": "Choisissez la date d'arrivée et celle de départ.",
+  "js.reserva.fecha_pasada": "L'arrivée ne peut pas être dans le passé.",
+  "js.reserva.fecha_lejana": "Pour l'instant, les demandes sont acceptées jusqu'à un an à l'avance.",
+  "js.reserva.min_noches": "Le séjour minimum est de {minNoches} nuits.",
+  "js.reserva.max_noches": "Le séjour maximum est de {maxNoches} nuits.",
+  "js.reserva.fechas_ocupadas": "Ces dates font déjà l'objet d'une demande. Choisissez-en d'autres.",
+  "js.reserva.datos_invalidos": "Vérifiez les informations du formulaire.",
+  "js.reserva.nombre": "Indiquez votre nom (2 à 80 caractères).",
+  "js.reserva.email": "Indiquez une adresse e-mail valide.",
+  "js.reserva.telefono": "Le téléphone n'accepte que des chiffres, des espaces et + ( ) - .",
+  "js.reserva.mensaje": "Le message peut contenir jusqu'à 1 000 caractères.",
+  "js.reserva.huespedes": "De 1 à {maxHuespedes} personnes peuvent séjourner.",
+  "js.reserva.acepta": "Nous avons besoin de votre consentement pour répondre à la demande.",
+  "js.reserva.red": "Impossible de se connecter au serveur de réservations. Réessayez.",
+  "js.reserva.sin_configurar": "Les réservations ne sont pas encore connectées sur ce site.",
+
+  "js.reserva.noches.one": "{n} nuit",
+  "js.reserva.noches.other": "{n} nuits",
+  "js.reserva.personas.one": "{n} personne",
+  "js.reserva.personas.other": "{n} personnes",
+
+  "js.reserva.cal.dias_cortos": "lu,ma,me,je,ve,sa,di",
+  "js.reserva.cal.motivo.pasado": "date passée",
+  "js.reserva.cal.motivo.ocupado": "occupé",
+  "js.reserva.cal.motivo.lejano": "plus d'un an à l'avance",
+  "js.reserva.cal.motivo.minimo": "minimum {n} nuits",
+  "js.reserva.cal.motivo.sin_salida": "moins de {n} nuits libres à partir d'ici",
+  "js.reserva.cal.dia_llegada": "{fecha}, arrivée choisie",
+  "js.reserva.cal.dia_salida": "{fecha}, départ choisi",
+  "js.reserva.cal.dia_en_rango": "{fecha}, pendant votre séjour",
+  "js.reserva.cal.dia_no_disponible": "{fecha}, indisponible : {motivo}",
+  "js.reserva.cal.elige_llegada": "Choisissez l'arrivée",
+  "js.reserva.cal.elige_salida": "Arrivée {entrada} · choisissez le départ",
+  "js.reserva.cal.rango": "{entrada} → {salida} · {noches}",
+
+  "js.reserva.resumen.noches_por_tarifa": "{noches} × {tarifa}",
+  "js.reserva.resumen.noches": "Nuits",
+  "js.reserva.resumen.elige_fechas": "Choisissez vos dates",
+  "js.reserva.resumen.total_ejemplo": "{noches} · total d'exemple",
+  "js.reserva.resumen.sin_cobro": "sans paiement en ligne",
+
+  "js.reserva.envio.enviando": "Envoi en cours…",
+  "js.reserva.envio.solicitar": "Demander",
+
+  "js.reserva.exito.texto": "Vous avez demandé {noches}, du {entrada} au {salida}, pour {personas}.",
+
+  "js.contenido.alt_generico": "Photo de l'appartement",
+  "js.contenido.mas_fotos": "Plus de photos de cet espace",
+  "js.contenido.ver_foto": "Voir la photo : {alt}"
+}

@@ -4,7 +4,7 @@ import { crearApi } from "./api.js";
 import { crearApiSimulada } from "./api-simulada.js";
 import { mensajeError, MENSAJES } from "./errores.js";
 import { VISTA_INICIAL, crearCierre, vistaDeHash } from "./logica-portal.js";
-import { decidirModo } from "./modo.js";
+import { decidirModo, pideSinIdiomas } from "./modo.js";
 import { crearCliente } from "./supabase.js";
 import { anunciar, confirmar, el } from "./ui.js";
 import { crearVistaFotos } from "./vista-fotos.js";
@@ -54,7 +54,7 @@ async function iniciar() {
   if (modo === "simulado") {
     $("#aviso-modo").hidden = false;
     document.title = `[Simulado] ${document.title}`;
-    api = crearApiSimulada({ almacen });
+    api = crearApiSimulada({ almacen, idiomas: !pideSinIdiomas(location.search) });
   } else if (modo === "real") {
     api = crearApi(crearCliente({ url: config.url, clave: config.clave, almacen, alPerderSesion: () => salir("sesion_vencida") }));
   }

@@ -7,6 +7,7 @@ import { test } from "node:test";
 import { publicarFoto, quitarFoto, rechazoDefinitivo, reordenarFoto } from "../src/admin/js/acciones-fotos.js";
 import { crearApiSimulada, datosEjemplo } from "../src/admin/js/api-simulada.js";
 import { ErrorApi, codigoConocido, mensajeError } from "../src/admin/js/errores.js";
+import { validarFila, validarTraduccion } from "../src/admin/js/logica-contenido.js";
 import { RE_RUTA, fotosDeEspacio } from "../src/admin/js/logica-fotos.js";
 import { CLAVE_ALMACEN } from "../src/admin/js/sesion.js";
 
@@ -87,6 +88,63 @@ test("simulado: contenido con el mismo check de precio que la base", async () =>
   assert.equal((await api.contenido.guardar("tarifa.noche", "60000")).valor, "60000");
   await assert.rejects(api.contenido.guardar("tarifa.noche", "60.000,5"), (e) => codigoConocido(e) === "regla_base");
   await assert.rejects(api.contenido.guardar("no.existe", "x"), (e) => codigoConocido(e) === "sin_filas");
+});
+
+// ---------------------------------------------------------------------------------------------- idiomas (0005)
+test("simulado: traducciones de ejemplo (algunas en null) y precios sin traducir", () => {
+  const { contenido } = datosEjemplo(HOY);
+  assert.ok(contenido.every((f) => "valor_en" in f && "valor_fr" in f), "todas las filas traen las columnas de la 0005");
+  assert.ok(contenido.some((f) => f.valor_en && f.valor_fr), "hay filas con inglés y francés propios");
+  assert.ok(contenido.some((f) => f.valor_en && f.valor_fr === null), "y filas con un solo idioma");
+  assert.ok(contenido.some((f) => f.tipo !== "precio" && f.valor_en === null && f.valor_fr === null), "y filas sin traducción");
+  assert.ok(contenido.filter((f) => f.tipo === "precio").every((f) => f.valor_en === null && f.valor_fr === null));
+  for (const f of contenido) for (const c of ["valor_en", "valor_fr"]) {
+    if (f[c] !== null) assert.equal(validarTraduccion(f.tipo, f[c]).valor, f[c], `${f.clave}.${c} ya normalizado`);
+  }
+});
+
+test("simulado: listar informa idiomas y guardar recibe los tres valores de la fila", async () => {
+  const { api } = await dentro();
+  const { filas, idiomas } = await api.contenido.listar();
+  assert.equal(idiomas, true);
+  assert.equal(filas.find((f) => f.clave === "hero.bajada").valor_fr.length > 0, true);
+  const antes = filas.find((f) => f.clave === "espacio.cocina.titulo");
+  const v = validarFila(antes, { es: " Cocina ", en: "", fr: "Cuisine" });
+  assert.ok(v.ok);
+  const nueva = await api.contenido.guardar(antes.clave, v.cambios);
+  assert.deepEqual([nueva.valor, nueva.valor_en, nueva.valor_fr], ["Cocina", null, "Cuisine"], "vacío -> null");
+  assert.notEqual(nueva.actualizado, antes.actualizado);
+  const releida = (await api.contenido.listar()).filas.find((f) => f.clave === antes.clave);
+  assert.deepEqual([releida.valor_en, releida.valor_fr], [null, "Cuisine"]);
+});
+
+test("simulado: las traducciones cumplen los checks de la 0005 y el cambio es todo o nada", async () => {
+  const { api } = await dentro();
+  const regla = (e) => codigoConocido(e) === "regla_base";
+  await assert.rejects(api.contenido.guardar("tarifa.noche", { valor: "58000", valor_en: "58000" }), regla, "precio traducido");
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor: "Hola", valor_en: "   " }), regla, "en blanco");
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor: "Hola", valor_fr: "" }), regla, "vacío en vez de null");
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor: "Hola", valor_fr: "x".repeat(4001) }), regla, "largo");
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor: "Nuevo", valor_en: 5 }), regla, "no es texto");
+  const f = (await api.contenido.listar()).filas.find((x) => x.clave === "hero.bajada");
+  assert.notEqual(f.valor, "Nuevo", "un rechazo no deja el español a medio guardar");
+  assert.deepEqual((await api.contenido.guardar("tarifa.noche", { valor: "59000", valor_en: null, valor_fr: null })).valor, "59000");
+});
+
+test("simulado sin la 0005: sin columnas de traducción, aviso al guardarlas y el español se sigue editando", async () => {
+  const api = crearApiSimulada({ almacen: new AlmacenFalso(), retardo: 0, hoy: HOY, idiomas: false });
+  await api.iniciarSesion("cualquiera@example.com", "x");
+  const { filas, idiomas } = await api.contenido.listar();
+  assert.equal(idiomas, false);
+  assert.ok(filas.length && filas.every((f) => !("valor_en" in f) && !("valor_fr" in f)));
+  await assert.rejects(api.contenido.guardar("hero.bajada", { valor: "Hola", valor_en: "Hello" }), (e) => {
+    assert.equal(codigoConocido(e), "falta_idiomas");
+    assert.match(mensajeError(e), /0005/);
+    return true;
+  });
+  const nueva = await api.contenido.guardar("hero.bajada", { valor: "Hola", valor_en: "Hello" }, { idiomas: false });
+  assert.equal(nueva.valor, "Hola");
+  assert.ok(!("valor_en" in nueva));
 });
 
 test("fotos: publicar sube el objeto con ruta generada y crea la fila al final del espacio", async () => {

@@ -1,0 +1,51 @@
+{
+  "js.reserva.fechas_requeridas": "Elige la fecha de llegada y la de salida.",
+  "js.reserva.fecha_pasada": "La llegada no puede ser en el pasado.",
+  "js.reserva.fecha_lejana": "Por ahora se reciben solicitudes hasta un año adelante.",
+  "js.reserva.min_noches": "La estadía mínima es de {minNoches} noches.",
+  "js.reserva.max_noches": "La estadía máxima es de {maxNoches} noches.",
+  "js.reserva.fechas_ocupadas": "Esas fechas ya tienen una solicitud. Elige otras.",
+  "js.reserva.datos_invalidos": "Revisa los datos del formulario.",
+  "js.reserva.nombre": "Escribe tu nombre (2 a 80 caracteres).",
+  "js.reserva.email": "Escribe un correo válido.",
+  "js.reserva.telefono": "El teléfono sólo admite números, espacios y + ( ) - .",
+  "js.reserva.mensaje": "El mensaje admite hasta 1 000 caracteres.",
+  "js.reserva.huespedes": "Pueden alojar de 1 a {maxHuespedes} personas.",
+  "js.reserva.acepta": "Necesitamos tu consentimiento para responder la solicitud.",
+  "js.reserva.red": "No se pudo conectar con el servidor de reservas. Intenta de nuevo.",
+  "js.reserva.sin_configurar": "Las reservas todavía no están conectadas en este sitio.",
+
+  "js.reserva.noches.one": "{n} noche",
+  "js.reserva.noches.other": "{n} noches",
+  "js.reserva.personas.one": "{n} persona",
+  "js.reserva.personas.other": "{n} personas",
+
+  "js.reserva.cal.dias_cortos": "lu,ma,mi,ju,vi,sá,do",
+  "js.reserva.cal.motivo.pasado": "ya pasó",
+  "js.reserva.cal.motivo.ocupado": "ocupado",
+  "js.reserva.cal.motivo.lejano": "más de un año adelante",
+  "js.reserva.cal.motivo.minimo": "mínimo {n} noches",
+  "js.reserva.cal.motivo.sin_salida": "no quedan {n} noches libres desde aquí",
+  "js.reserva.cal.dia_llegada": "{fecha}, llegada elegida",
+  "js.reserva.cal.dia_salida": "{fecha}, salida elegida",
+  "js.reserva.cal.dia_en_rango": "{fecha}, dentro de tu estadía",
+  "js.reserva.cal.dia_no_disponible": "{fecha}, no disponible: {motivo}",
+  "js.reserva.cal.elige_llegada": "Elige la llegada",
+  "js.reserva.cal.elige_salida": "Llegada {entrada} · elige la salida",
+  "js.reserva.cal.rango": "{entrada} → {salida} · {noches}",
+
+  "js.reserva.resumen.noches_por_tarifa": "{noches} × {tarifa}",
+  "js.reserva.resumen.noches": "Noches",
+  "js.reserva.resumen.elige_fechas": "Elige tus fechas",
+  "js.reserva.resumen.total_ejemplo": "{noches} · total de ejemplo",
+  "js.reserva.resumen.sin_cobro": "sin cobro en línea",
+
+  "js.reserva.envio.enviando": "Enviando…",
+  "js.reserva.envio.solicitar": "Solicitar",
+
+  "js.reserva.exito.texto": "Pediste {noches}, del {entrada} al {salida}, para {personas}.",
+
+  "js.contenido.alt_generico": "Foto del departamento",
+  "js.contenido.mas_fotos": "Más fotos de este espacio",
+  "js.contenido.ver_foto": "Ver foto: {alt}"
+}

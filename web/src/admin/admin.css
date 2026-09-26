@@ -120,8 +120,13 @@ code, .mono { font-family: var(--a-mono); font-size: 0.9em; }
 [data-tipo="error"] { color: var(--a-error); font-weight: 500; }
 [data-tipo="ok"] { color: var(--e-confirmada-t); }
 [data-tipo="cargando"], [data-tipo="info"] { color: var(--a-tinta-2); }
+/* aviso que no es un error pero hay que leer (p. ej. falta la migración 0005): tinta sobre papel-2, 13:1 */
+[data-tipo="aviso"] { color: var(--a-tinta); }
 .aviso-linea[data-tipo="error"], .aviso-accion[data-tipo="error"] {
   padding: 10px 12px; border-radius: var(--a-radio); background: var(--e-rechazada-f); color: var(--e-rechazada-t);
+}
+.aviso-linea[data-tipo="aviso"] {
+  padding: 10px 12px; border-radius: var(--a-radio); background: var(--a-papel-2); border-left: 4px solid var(--a-acento);
 }
 .aviso-accion[data-tipo="ok"] {
   padding: 10px 12px; border-radius: var(--a-radio); background: var(--e-confirmada-f); color: var(--e-confirmada-t);
@@ -272,6 +277,14 @@ input[type="file"]::file-selector-button {
 .clave { color: var(--a-tinta-2); overflow-wrap: anywhere; }
 .actualizado { color: var(--a-tinta-2); font-size: 0.85rem; margin-left: auto; }
 .fila-texto .ayuda:empty { display: none; }
+/* tres idiomas por texto (0005): uno bajo otro en el teléfono, lado a lado en pantallas anchas para comparar */
+.fila-titulo { font-weight: 500; }
+.idiomas { display: grid; gap: 14px; }
+.campo-idioma { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.campo-idioma .requisito { font-weight: 400; color: var(--a-tinta-2); }
+@media (min-width: 1024px) {
+  .idiomas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
 /* ------------------------------------------------------------------ fotos */
 .subir { display: grid; gap: 14px; }
