@@ -1,32 +1,16 @@
 // Paneles, textos y controles de la interfaz (no toca three.js). Traduce las acciones del usuario a
 // llamadas de vuelta hacia main.js/interaccion.js; no conoce la escena 3D. Los textos propios salen de t()
 // (claves js.tour.* de web/src/i18n/*.json) y se insertan con textContent o setAttribute, nunca como HTML.
-import { IDIOMAS, t } from "../../js/i18n.js";
+import { escucharSelectorIdioma, t } from "../../js/i18n.js";
 
 const $ = (s) => document.querySelector(s);
 
 // --- selector de idioma ---------------------------------------------------------------------------------------
 // <a data-i18n-alternar="es|en|fr"> (web/build.py le pone el href a este tour en ese idioma). Al elegir se guarda la
-// cookie nf_lang, que en Netlify reemplaza la detección por el idioma del navegador (ADR 0007, decisión 4), antes de
-// que el enlace navegue. El tour no carga js/sitio.js, que hace lo mismo en el resto del sitio.
-export const MAX_EDAD_IDIOMA_S = 31536000;   // un año
-
-/** Texto de document.cookie para recordar `idioma`, o null si no es es, en ni fr. */
-export function cookieIdioma(idioma) {
-  if (!IDIOMAS.includes(idioma)) return null;
-  return `nf_lang=${idioma}; path=/; max-age=${MAX_EDAD_IDIOMA_S}; SameSite=Lax; Secure`;
-}
-
-/** Escucha los clics (y el clic central, que abre otra pestaña) sobre el selector y guarda la cookie. */
+// cookie nf_lang antes de que el enlace navegue, con la misma función que usa js/sitio.js en el resto del sitio
+// (web/src/js/idioma.js: clic, clic central y menú contextual). El tour no carga sitio.js.
 export function iniciarSelectorIdioma(doc = document) {
-  const guardar = (e) => {
-    if (e.type === "auxclick" && e.button !== 1) return;
-    const enlace = e.target && typeof e.target.closest === "function" ? e.target.closest("a[data-i18n-alternar]") : null;
-    const cookie = enlace ? cookieIdioma(enlace.getAttribute("data-i18n-alternar")) : null;
-    if (cookie) doc.cookie = cookie;
-  };
-  doc.addEventListener("click", guardar);
-  doc.addEventListener("auxclick", guardar);
+  escucharSelectorIdioma(doc);
 }
 
 export function marcarTactil(tactil) {

@@ -17,8 +17,6 @@
 <header id="barra-superior">
   <a class="volver panel" href="../"><span aria-hidden="true">←</span> <span data-i18n="tour.volver">Volver al sitio</span></a>
   <p id="nombre-lugar" class="panel">Project-roomVR</p>
-  <!-- el selector cuelga a la izquierda de «Reservar» fuera del flujo: así la pastilla del nombre queda centrada entre
-       «Volver» y «Reservar», como antes del selector -->
   <div class="barra-derecha">
     <nav class="idiomas panel" aria-label="Idioma" data-i18n-attr="aria-label:tour.idioma">
       <a data-i18n-alternar="es"><span aria-hidden="true">ES</span><span class="visually-hidden">Español</span></a>
@@ -126,8 +124,6 @@
   </div>
 </section>
 
-<!-- Sin import map: la CSP del tour es script-src 'self' sin nada en línea. Los módulos importan three.js
-     por ruta relativa a web/src/vendor/three/ (ver js/three.js, que sólo reexporta desde ahí). -->
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

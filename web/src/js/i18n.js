@@ -21,6 +21,7 @@ import { IDIOMA, IDIOMAS, IDIOMA_BASE, LOCALE } from "./idioma.js";
 import TEXTOS_ES from "./textos-es.js";
 
 export { IDIOMA, IDIOMAS, IDIOMA_BASE, LOCALE, LOCALES, idiomaDe, localeDe } from "./idioma.js";
+export { EVENTOS_SELECTOR_IDIOMA, MAX_EDAD_IDIOMA_S, cookieIdioma, escucharSelectorIdioma, recordarIdioma } from "./idioma.js";
 
 // Supuesto: 5 s bastan para un JSON chico del mismo sitio; pasado ese plazo se sigue con el español.
 export const TIEMPO_MAX_MS = 5000;

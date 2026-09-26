@@ -21,9 +21,11 @@ export function traduccion(clave, variables) {
   return texto === clave ? null : texto;
 }
 
-/** Texto -> sufijo de clave: minúsculas, sin tildes y con «_» entre palabras ("Cajón 1 profundo" -> cajon_1_profundo). */
+/** Texto -> sufijo de clave: minúsculas, sin tildes y con «_» entre palabras ("Cajón 1 profundo" -> cajon_1_profundo).
+ *  NFD separa cada letra de sus marcas (tilde, diéresis, cedilla) y \p{M} las quita todas, sin escribir en la regex
+ *  caracteres combinantes, que no se ven. */
 export function claveDeTexto(texto) {
-  return String(texto ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
+  return String(texto ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase()
     .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
 }
 

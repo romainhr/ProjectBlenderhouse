@@ -77,6 +77,15 @@ test("«Project-roomVR» siempre va en un elemento que no se parte", () => {
   assert.match(css["sitio.css"], /\.pie-marca \{[^}]*white-space: nowrap/);
 });
 
+test("la marca del encabezado no se encoge por debajo del nombre (overflow: hidden no lo recorta)", () => {
+  const regla = (css["sitio.css"].match(/\.barra \.marca \{[^}]*\}/) || [""])[0];
+  assert.match(regla, /overflow: hidden/, "la bajada se oculta recortando la segunda fila");
+  assert.match(regla, /min-width: min-content/, "sin esto, en español a 1000-1024 px se recorta «Project-roomVR»");
+  // la separación con el menú va en la bajada: un margin-right en .marca ensancharía su mínimo y recortaría el nombre
+  assert.doesNotMatch(css["sitio.css"], /\.barra \.marca \{[^}]*margin-right/);
+  assert.match(css["sitio.css"], /\.barra \.marca small \{ margin-right: 16px; \}/);
+});
+
 test("encabezado de la portada: .sobre-hero desde el HTML (sin parpadeo) y sólido sin JS", () => {
   const cab = (html["index.html"].match(/<header class="[^"]*barra[^"]*">/) || [])[0];
   assert.equal(cab, '<header class="barra sobre-hero">', "index.html parte sobre el hero (ESPEC-v4 §2.2)");

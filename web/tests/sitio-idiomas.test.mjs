@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import { conGlobales, copiaDelSitio } from "./copia-sitio.mjs";
+import { conGlobales, copiaDelSitio, sinComentarios } from "./copia-sitio.mjs";
 
 const SRC = fileURLToPath(new URL("../src/", import.meta.url));
 const leer = (ruta) => readFileSync(join(SRC, ruta), "utf8");
@@ -34,6 +34,11 @@ test("cada página pública y el tour traen el selector con es, en y fr, y cada 
   }
   // el 404 no carga sitio.js desde otra página: la ruta es absoluta (Netlify lo sirve en cualquier ruta)
   assert.match(leer("404.html"), /<script type="module" src="\/js\/sitio\.js"><\/script>/);
+});
+
+test("las páginas públicas no traen comentarios HTML: el build los copiaría en español a /en/ y /fr/", () => {
+  // las notas van en el CSS o en el JS, que no se publican por idioma
+  for (const p of PAGINAS) assert.doesNotMatch(leer(p), /<!--/, p);
 });
 
 // sitio.js con un DOM mínimo: sin IntersectionObserver, sin hero ni carruseles; sólo precios, año y el selector.
@@ -92,11 +97,46 @@ test("sitio.js: elegir un idioma guarda nf_lang (un año, todo el sitio, Lax y S
     assert.equal(document.cookie, "nf_lang=en; path=/; max-age=31536000; SameSite=Lax; Secure");
     document.elegir("click", "xx");                         // fuera de la lista: no cambia
     assert.match(document.cookie, /^nf_lang=en;/);
-    document.elegir("auxclick", "fr", 2);                   // botón derecho: no elige
+    document.elegir("auxclick", "fr", 2);                   // botón derecho: no elige por auxclick…
     assert.match(document.cookie, /^nf_lang=en;/);
     document.elegir("auxclick", "fr", 1);                   // clic central: sí
     assert.match(document.cookie, /^nf_lang=fr;/);
   });
+});
+
+test("sitio.js: abrir el selector en una pestaña nueva desde el menú contextual también guarda nf_lang", async () => {
+  // clic derecho -> «Abrir en una pestaña nueva», pulsación larga en el teléfono o la tecla de menú: sin la cookie, la
+  // pestaña nueva llegaba a / y la regla Language=en la mandaba de vuelta a /en/
+  await sitioEn("en", ({ document }) => {
+    document.elegir("contextmenu", "es", 2);
+    assert.equal(document.cookie, "nf_lang=es; path=/; max-age=31536000; SameSite=Lax; Secure");
+    document.elegir("contextmenu", "xx", 2);                // fuera de la lista: no cambia
+    assert.match(document.cookie, /^nf_lang=es;/);
+  });
+});
+
+test("cookie del idioma: se arma sólo en idioma.js (recordarIdioma); sitio.js y el tour la usan desde ahí", async () => {
+  const idioma = await import("../src/js/idioma.js");
+  const i18n = await import("../src/js/i18n.js");
+  assert.equal(idioma.cookieIdioma("fr"), "nf_lang=fr; path=/; max-age=31536000; SameSite=Lax; Secure");
+  for (const malo of ["de", "", "en; path=/admin", "EN", undefined, null, 1]) assert.equal(idioma.cookieIdioma(malo), null, String(malo));
+  const doc = { cookie: "" };
+  assert.equal(idioma.recordarIdioma("en", doc), true);
+  assert.equal(doc.cookie, "nf_lang=en; path=/; max-age=31536000; SameSite=Lax; Secure");
+  assert.equal(idioma.recordarIdioma("de", doc), false);   // un código fuera de la lista no toca la cookie
+  assert.match(doc.cookie, /^nf_lang=en;/);
+  assert.equal(idioma.recordarIdioma("es", undefined), false);   // sin document (Node) no falla
+  assert.deepEqual([...idioma.EVENTOS_SELECTOR_IDIOMA], ["click", "auxclick", "contextmenu"]);
+  // i18n.js reexporta las mismas funciones (no copias), como el resto de idioma.js
+  for (const nombre of ["cookieIdioma", "recordarIdioma", "escucharSelectorIdioma", "EVENTOS_SELECTOR_IDIOMA", "MAX_EDAD_IDIOMA_S"]) {
+    assert.equal(i18n[nombre], idioma[nombre], nombre);
+  }
+  // ni sitio.js ni el tour arman la cookie ni escriben document.cookie por su cuenta
+  for (const archivo of ["js/sitio.js", "tour/js/interfaz.js", "tour/js/main.js"]) {
+    const fuente = sinComentarios(leer(archivo));
+    assert.doesNotMatch(fuente, /nf_lang|\.cookie\b|max-age/, archivo);
+    assert.match(fuente, /escucharSelectorIdioma|iniciarSelectorIdioma/, archivo);
+  }
 });
 
 // ---------------------------------------------------------------- diccionarios
