@@ -21,13 +21,14 @@ if (debug) ui.mostrarDepuracion();
 
 // ---------------------------------------------------------------------------------------------- escena
 const canvas = $("#vista");
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: !tactil, powerPreference: "high-performance" });
+// MSAA también en teléfonos con dpr < 2 (en GPU por teselas es barato); con dpr ≥ 2 el propio pixelRatio suaviza.
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !tactil || (window.devicePixelRatio || 1) < 2, powerPreference: "high-performance" });
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-const calidad = crearCalidad(renderer, tactil);
+const calidad = crearCalidad(renderer, tactil, () => { sucio = true; });
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 500);
+const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 500); // 72°: el mismo de la v2 y de los renders
 camera.rotation.order = "YXZ";
 
 const ambiente = new THREE.HemisphereLight(0xe7ecef, 0x746a5c, 0.4);
@@ -35,6 +36,9 @@ scene.add(ambiente);
 // Mapa de entorno neutro (un cuarto con paneles emisivos) para el reflejo difuso y especular del PBR; se
 // genera una sola vez (PMREM de 256 px) y su intensidad por material la fija cada momento del día.
 const pmrem = new THREE.PMREMGenerator(renderer);
+// Con `renderer`, three r160 sube la luz interna de RoomEnvironment de 5 a 900: es el relleno que reemplaza la
+// luz rebotada (sin él el cielo queda negro). Pero a envMapIntensity 0,42 lavaba las texturas (≈7 veces el
+// relleno de la v2; diagnóstico del 2026-09-26): la intensidad por momento (cielo.js) queda a la mitad.
 scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
 pmrem.dispose();
 let panoramas = {};
@@ -101,6 +105,17 @@ async function iniciar() {
   }
   ui.actualizarCarga(1, "Preparando la escena…");
 
+  // Filtrado anisotrópico: la mejora más barata para pisos y muros vistos en ángulo rasante (+30 a +110 % de
+  // nitidez medida). 4 alcanza en teléfonos; en escritorio, 8.
+  const aniso = Math.min(renderer.capabilities.getMaxAnisotropy(), tactil ? 4 : 8);
+  gltf.scene.traverse((o) => {
+    if (!o.isMesh) return;
+    for (const mat of Array.isArray(o.material) ? o.material : [o.material]) {
+      for (const k of ["map", "normalMap", "roughnessMap", "metalnessMap", "aoMap", "emissiveMap"]) {
+        if (mat && mat[k]) { mat[k].anisotropy = aniso; mat[k].needsUpdate = true; }
+      }
+    }
+  });
   const preparado = carga.prepararEscena(gltf.scene, D);
   estado = crearInteraccion(preparado);
   scene.add(estado.estaticoFusionado);

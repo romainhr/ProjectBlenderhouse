@@ -1,9 +1,10 @@
 // Página de reserva: calendario de disponibilidad, datos del huésped, resumen y envío de la solicitud.
 import {
-  MENSAJES, TARIFA, clp, codigoError, esIso, grillaMes, hoyIso, nocheOcupada, salidaMaxima, sumarDias, total,
-  validarDatos, validarRango,
+  MENSAJES, TARIFA, clp, codigoError, esIso, fijarTarifas, grillaMes, hoyIso, nocheOcupada, salidaMaxima, sumarDias,
+  tarifaVigente, total, validarDatos, validarRango,
 } from "./reserva-logica.js";
 import { disponibilidad, simulado, solicitar } from "./reservas-api.js";
+import { tarifas } from "./contenido-publico.js";
 
 const $ = (s) => document.querySelector(s);
 const HOY = hoyIso();
@@ -173,7 +174,7 @@ function resumen() {
   const t = total(v.ok ? v.noches : 0);
   $("#s-entrada").textContent = estado.entrada ? fDia.format(aFecha(estado.entrada)) : "—";
   $("#s-salida").textContent = estado.salida ? fDia.format(aFecha(estado.salida)) : "—";
-  $("#s-noches-txt").textContent = v.ok ? `${v.noches} noches × ${clp(TARIFA.noche)} (ejemplo)` : "Noches";
+  $("#s-noches-txt").textContent = v.ok ? `${v.noches} noches × ${clp(tarifaVigente().noche)} (ejemplo)` : "Noches";
   $("#s-alojamiento").textContent = v.ok ? clp(t.alojamiento) : "—";
   $("#s-limpieza").textContent = v.ok ? clp(t.limpieza) : "—";
   $("#s-total").textContent = v.ok ? clp(t.total) : "—";
@@ -263,3 +264,6 @@ async function cargarDisponibilidad() {
 huespedes(estado.huespedes);
 pintar();
 cargarDisponibilidad();
+// Tarifas que editó el propietario (public.contenido, vía contenido-publico.js). Si no llegan (sin configuración,
+// Supabase caído o la migración 0003 sin aplicar), el resumen sigue con las de ejemplo de TARIFA.
+tarifas().then((t) => { if (t && fijarTarifas(t)) resumen(); }).catch(() => {});

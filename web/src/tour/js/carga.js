@@ -19,9 +19,13 @@ const MATERIALES_VIDRIO = new Set([
   "Depto_Mat_Vidrio", "Depto_Mat_VidrioBombilla", "Depto_Mat_VidrioEsmerilado", "Depto_Mat_VidrioReloj",
 ]);
 
-export function esTactilOPantallaChica() {
-  const tactil = matchMedia("(pointer: coarse)").matches;
-  return tactil || Math.min(window.innerWidth, window.innerHeight) < 900;
+// Variante liviana solo para teléfonos: puntero grueso Y pantalla física chica. Antes bastaba una ventana de
+// menos de 900 px CSS, y eso incluía a la mayoría de los portátiles (1440×900 deja ~850 px de alto útil),
+// que recibían las texturas del teléfono (diagnóstico del 2026-09-26: −90 % de nitidez en el piso).
+export function esTactilOPantallaChica(entorno = globalThis) {
+  const tactil = entorno.matchMedia("(pointer: coarse)").matches;
+  const s = entorno.screen || { width: 0, height: 0 };
+  return tactil && Math.min(s.width, s.height) < 900;
 }
 
 export async function cargarColisiones() {
