@@ -45,15 +45,23 @@ export function cargarGLTF(nombreArchivo, onProgreso) {
 }
 
 function arreglarVidrios(raiz) {
+  // Un material transparente por material de origen (no uno por malla): así la fusión por material de más abajo
+  // junta todos los vidrios iguales en una sola llamada de dibujo.
+  const cache = new Map();
   raiz.traverse((o) => {
     if (!o.isMesh) return;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     mats.forEach((mat, i) => {
       if (!mat || !MATERIALES_VIDRIO.has(mat.name)) return;
+      if (cache.has(mat)) {
+        if (Array.isArray(o.material)) o.material[i] = cache.get(mat); else o.material = cache.get(mat);
+        return;
+      }
       const v = new THREE.MeshStandardMaterial({
         name: mat.name, color: mat.color, roughness: mat.roughness, metalness: 0, transparent: true,
         opacity: mat.name === "Depto_Mat_VidrioEsmerilado" ? 0.55 : 0.16, depthWrite: false, side: THREE.DoubleSide,
       });
+      cache.set(mat, v);
       if (Array.isArray(o.material)) o.material[i] = v; else o.material = v;
     });
   });
