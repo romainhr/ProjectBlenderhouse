@@ -13,8 +13,10 @@ fase 5) o de noche (cielo HDRI casi apagado y sin sol). Escribe <out>/<vista>.pn
 [{archivo, que_muestra, abiertos (todo lo abierto en el render, también lo que el maestro trae abierto), ...}].
 
 Supuestos de revisión (no van al GLB): luz interior de la nevera (LED frío de 5 W, sólo en la vista de la nevera),
-un volumen de irradiancia y un cubemap por baño horneados con el mundo y las luces de cada vista (--sin-gi lo omite)
-y una sonda plana en cada espejo.
+un volumen de irradiancia y un cubemap por recinto horneados con el mundo y las luces de cada vista (--sin-gi lo
+omite), una sonda plana en cada espejo, un suelo neutro oscuro bajo el horizonte del mundo (luz y reflejos), un vidrio
+de revisión (transparente con reflejo de Fresnel, sin sombra) en lugar del vidrio del GLB y, en las vistas con
+lámparas, una adaptación cromática parcial de la cámara en el compositor (el color de las luces no cambia).
 """
 import argparse
 import json
@@ -36,13 +38,23 @@ HDRI_DIA = os.path.join(RAIZ, "assets", "hdri", "kloofendal_48d_partly_cloudy_pu
 DIA = dict(fuerza=1.6, saturacion=0.35, fuerza_camara=0.45)   # supuesto de revisión: cielo de día (HDRI de Poly
 # Haven) desaturado para iluminar (muros blancos sin tinte azul) y con su color, más tenue, para lo que ve la cámara
 # por las ventanas (si no, el exterior se quemaba a blanco al exponer para el interior); el sol de 3 W de la fase 5
+SUELO_MUNDO = (0.12, 0.12, 0.11)   # supuesto de revisión: suelo neutro oscuro bajo el horizonte (lineal, antes de la
+# fuerza) en la luz del mundo, como depto_05.mundo() (SUELO_COLOR): sin él, el roble, la melamina y el acero reflejaban
+# el cielo bajo el horizonte del HDRI (≈ 0,5 lineal con la fuerza de 1,6) y se leían escarchados o con un barrido azul
+# Adaptación cromática parcial de la cámara (ASC-CDL, pendiente por canal, en el compositor; no toca las luces): en las
+# vistas iluminadas por lámparas de 2700-3000 K lo blanco se leía como madera ámbar y el hormigón como entablado.
+# ≈ 50 % de la corrección completa (supuesto de revisión; el color físico de las luces está en el ADR 0004).
+BALANCE = {"lamparas": (0.85, 1.0, 1.45), "dia": None}
+VIDRIOS_REVISION = ("Depto_Mat_Vidrio", "Depto_Mat_VidrioReloj")
 TODOS = "*"
 # Cajones de cocina que el maestro trae abiertos (estado inicial del recorrido): las vistas de ambiente los cierran.
 MUEBLES = ("cajon", "mueble", "nevera", "closet")
 
 # vista: cámara (pos px, z, objetivo px, z objetivo, lente mm) o nombre de una cámara del maestro; abrir, cerrar,
-# ocultar, grupos de luz encendidos, mundo, exposición, look y descripción. cerrar_muebles: cierra todo cajón, mueble,
-# nevera y clóset que no se pida abrir. Orden: las vistas con el mismo horneado (mundo y luces) van seguidas.
+# ocultar, grupos de luz encendidos, mundo, exposición, look, balance (pendiente ASC-CDL o None; por defecto
+# BALANCE), ssr y descripción. cerrar_muebles: cierra
+# todo cajón, mueble, nevera y clóset que no se pida abrir. Orden: las vistas con el mismo horneado (mundo y luces) van
+# seguidas.
 CAM_D1_REPISAS_DER = ((298.0, 64.0), 1.42, (324.0, 140.0), 0.95, 12.0)
 CAM_D2_REPISAS_DER = ((299.5, 404.5), 1.42, (326.0, 470.0), 0.95, 12.0)
 VISTAS = {
@@ -94,49 +106,66 @@ VISTAS = {
         texto="Mismo clóset con la hoja B corrida: la otra columna, con zapatillas, zapatos y botas en el piso y "
               "en la primera repisa, ropa doblada y la caja de zapatos arriba."),
     "nevera_abierta": dict(
-        cam=((338.0, 240.0), 1.50, (400.0, 280.0), 0.95, 14.0), mundo="dia", luces=("cocina_techo",), expo=0.7,
+        cam=((338.0, 240.0), 1.50, (400.0, 280.0), 0.95, 14.0), mundo="dia", luces=(), expo=1.0,
         abrir=("Depto_Mueble_Nevera_Puerta", "Depto_Mueble_Nevera_Freezer"), led_nevera=True,
         texto="Nevera abierta (puerta a 100° y cajón freezer): forro blanco, dos estantes de vidrio, cajón de "
               "verduras con frente de plástico esmerilado, alimentos (lácteos, huevos, fruta, frascos, cartones), "
-              "balcones de la contrapuerta con botellas y salsas, congelados en el freezer y manillas de barra. LED "
-              "interior sólo de revisión."),
-    "interruptor_cocina": dict(
-        cam=((321.0, 214.0), 1.40, (293.4, 173.5), 1.06, 22.0), mundo="dia", luces=("cocina_techo",), expo=0.8,
-        abrir=("Depto_Mueble_Nevera_Puerta",),
-        texto="Interruptor de la cocina en la cara este del remate del tabique T3, sobre el extremo de la "
-              "cubierta, a 0,10 m del remate por donde se entra desde el living. Nevera abierta a 100°: queda a "
-              "1,7 m, fuera de su barrido. Luz de la cocina encendida."),
+              "balcones de la contrapuerta con botellas y salsas, congelados en el freezer y manillas de barra. De día "
+              "con la luz de la cocina apagada; LED interior sólo de revisión."),
     "interruptor_balcon": dict(
         cam=((153.0, 214.0), 1.40, (131.0, 174.0), 1.04, 22.0), mundo="dia", luces=(), expo=1.0,
-        texto="Interruptor del balcón, por dentro, en el muro de ladrillo junto al ventanal (canto a 0,10 m del "
-              "marco, a 1,10 m del piso)."),
-    "interruptor_dorm1_doble": dict(
-        cam=((229.0, 131.0), 1.36, (250.0, 170.25), 1.02, 24.0), mundo="dia", luces=("dorm1_techo",), expo=0.8,
-        cerrar=("Depto_Puerta_D1_Hoja",),
-        texto="Interruptor doble del dormitorio principal (techo y paso de los clósets) a 1,10 m, a 0,10 m del "
-              "marco del lado de la manilla, con la puerta D1 cerrada y la luz de techo encendida."),
-    "interruptor_hall": dict(
-        cam=((393.0, 338.0), 1.38, (416.0, 306.0), 1.02, 24.0), mundo="dia", luces=("hall_techo",), expo=1.6,
-        texto="Interruptor simple del hall (focos del riel) junto a la jamba de la puerta de entrada, del lado de "
-              "la manilla, a 1,10 m, con los focos encendidos (el hall no tiene ventana)."),
+        texto="Interruptor del balcón, por dentro, en el muro de ladrillo junto al ventanal: canto a 0,10 m de la "
+              "arista del vano, centro a 1,10 m del piso, sobre caja de superficie con el conducto visto que baja de "
+              "la derivación en T del interruptor del living."),
     "dia_living": dict(
         cam="Depto_Cam_Living", mundo="dia", luces=(), expo=1.5, cerrar_muebles=True,
-        texto="Día normal en el living: cielo HDRI de día y sol de la fase 5, luces apagadas, luz rebotada horneada."),
+        texto="Día normal en el living: cielo HDRI de día y sol de la fase 5, luces apagadas, luz rebotada horneada; "
+              "el balcón se ve a través de los tres paños del ventanal."),
+    "interruptor_hall": dict(
+        cam=((372.0, 350.0), 1.40, (414.0, 308.0), 1.05, 24.0), mundo="noche", luces=TODOS, expo=0.9, ssr=False,
+        texto="Interruptor simple del hall (focos del riel) junto a la jamba de la puerta de entrada, del lado de "
+              "la manilla de palanca, a 1,10 m. De noche (el hall no tiene ventana), con todas las luces encendidas; "
+              "el tercer foco del riel baña la puerta."),
+    "interruptor_cocina": dict(
+        cam=((321.0, 214.0), 1.40, (293.4, 173.5), 1.06, 22.0), mundo="noche", luces=TODOS, expo=0.8,
+        abrir=("Depto_Mueble_Nevera_Puerta",),
+        texto="Interruptor de la cocina en la cara este del remate del tabique T3, sobre el extremo de la "
+              "cubierta, a 0,10 m del remate por donde se entra desde el living. Nevera abierta a 100°: su puerta "
+              "queda a {dist_nevera} m de la placa (distancia entre sus cajas de mundo, calculada en el render), "
+              "fuera de su barrido. De noche, con todas las luces encendidas."),
+    "interruptor_dorm1_doble": dict(
+        cam=((229.0, 131.0), 1.36, (250.0, 170.25), 1.02, 24.0), mundo="noche", luces=TODOS, expo=0.8,
+        cerrar=("Depto_Puerta_D1_Hoja",),
+        texto="Interruptor doble del dormitorio principal (techo y paso de los clósets) a 1,10 m, a 0,10 m del "
+              "marco del lado de la manilla de palanca, con la puerta D1 cerrada; de noche, con todas las luces "
+              "encendidas."),
     "noche_living": dict(
         cam="Depto_Cam_Living", mundo="noche", luces=TODOS, expo=0.9, cerrar_muebles=True,
-        texto="Noche: living con el colgante de techo, la lámpara de arco sobre el asiento del sofá y, al fondo, el "
-              "colgante del comedor del balcón sobre la mesa (2700 K). Sol apagado y cielo nocturno casi negro."),
+        texto="Noche: living con el colgante de techo y la lámpara de arco sobre el asiento del sofá (2700 K); el "
+              "ventanal refleja tenue el living (≈ 7 %, dos caras del vidrio) y deja ver el balcón con su colgante "
+              "encendido. Sol apagado y cielo nocturno casi negro."),
+    "noche_living_sin_balance": dict(
+        cam="Depto_Cam_Living", mundo="noche", luces=TODOS, expo=0.9, cerrar_muebles=True, balance=None,
+        texto="La misma vista de noche del living sin la adaptación cromática de la cámara: el color de 2700 K tal "
+              "cual (para comparar)."),
     "noche_cocina": dict(
         cam="Depto_Cam_Cocina", mundo="noche", luces=TODOS, expo=0.6, cerrar_muebles=True,
-        texto="Noche: cocina con sus dos colgantes de jaula a 3000 K; cajones cerrados."),
+        texto="Noche: cocina con sus dos colgantes de jaula a 3000 K, de cable corto (fondo de la jaula a ≈ 2,0 m); "
+              "cajones cerrados."),
     "noche_dorm1": dict(
         cam="Depto_Cam_Dorm1", mundo="noche", luces=TODOS, expo=0.6, cerrar_muebles=True,
-        texto="Noche: dormitorio principal con el colgante de techo y la lámpara del velador (2700 K)."),
+        texto="Noche: dormitorio principal con el colgante de techo y las dos lámparas de velador (2700 K)."),
     "noche_bano1": dict(
         cam=((400.0, 67.0), 1.62, (352.0, 131.0), 1.52, 14.0), mundo="noche", luces=TODOS, expo=0.6,
         cerrar_muebles=True, cerrar=("Depto_Puerta_B1_Hoja",),
         texto="Noche: baño principal desde el extremo de la tina hacia el vanitorio, el espejo y la puerta cerrada, "
-              "con el colgante de jaula a 3000 K en primer plano."),
+              "con el colgante de jaula a 3000 K de cable corto en primer plano."),
+    "noche_balcon": dict(
+        cam=((87.5, 190.0), 1.50, (87.5, 285.0), 0.72, 18.0), mundo="noche", luces=TODOS, expo=0.8,
+        cerrar_muebles=True,
+        texto="Noche en el balcón desde su extremo norte, junto a la hoja abierta del ventanal: el colgante de domo "
+              "(Ø 0,28 m, 30 W, 2700 K) a 0,80 m sobre la mesa bistró, de acero pintado, y la luz del living por el "
+              "vidrio (todas las luces encendidas)."),
     "noche_paso_d1": dict(
         cam=((309.0, 121.5), 1.25, (309.0, 40.0), 1.95, 12.0), mundo="noche", luces=("paso_d1",), expo=0.6,
         abrir=("Depto_Closet_D1_Norte_PuertaA",), cerrar_muebles=True,
@@ -249,7 +278,19 @@ def _mundo_hdri(nombre, ruta, fuerza, saturacion=1.0, fuerza_camara=None):
     bg.inputs["Strength"].default_value = fuerza
     out = nt.nodes.new("ShaderNodeOutputWorld")
     nt.links.new(env.outputs["Color"], hsv.inputs["Color"])
-    nt.links.new(hsv.outputs["Color"], bg.inputs["Color"])
+    # suelo neutro oscuro bajo el horizonte en la luz del mundo (y sus reflejos), como depto_05.mundo(): mezcla por la
+    # componente Z de la dirección (Generated), antes de la fuerza del mundo (de día 0,12 × 1,6 ≈ 0,19 lineal)
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    sep = nt.nodes.new("ShaderNodeSeparateXYZ")
+    rango = nt.nodes.new("ShaderNodeMapRange")
+    rango.inputs["From Min"].default_value, rango.inputs["From Max"].default_value = -0.02, 0.05
+    suelo = nt.nodes.new("ShaderNodeMixRGB")
+    suelo.inputs["Color1"].default_value = (*SUELO_MUNDO, 1.0)
+    nt.links.new(tc.outputs["Generated"], sep.inputs["Vector"])
+    nt.links.new(sep.outputs["Z"], rango.inputs["Value"])
+    nt.links.new(rango.outputs["Result"], suelo.inputs["Fac"])
+    nt.links.new(hsv.outputs["Color"], suelo.inputs["Color2"])
+    nt.links.new(suelo.outputs["Color"], bg.inputs["Color"])
     if fuerza_camara is None:
         nt.links.new(bg.outputs["Background"], out.inputs["Surface"])
         return w
@@ -278,10 +319,29 @@ def mundo_dia(scene):
 HORNEADO = {"clave": None}
 
 
+def cajas_recintos():
+    """Cajas (x0, x1, y0, y1 px del plano) de las sondas de reflejo por recinto. Corrección 07b (ronda 2): antes sólo
+    los baños tenían cubemap y el resto reflejaba el mundo (el cielo bajo el horizonte): vetas blancas en el roble,
+    velo en la nevera y un barrido azul en la puerta de acero del hall. Eevee da prioridad a la sonda más chica donde
+    se solapan (los clósets dentro de su paso, por ejemplo)."""
+    X, Y = P.X, P.Y
+    return {
+        "Living": (X["W_I"], X["T3_W"], Y["D1_S"], Y["D2_N"]),
+        "Cocina": (X["T3_E"], X["E_FORRO"], Y["T5_S"], Y["COC_N"]),
+        "Hall": (X["T3_E"], X["E_FORRO"], Y["COC_S"], Y["T9_N"]),
+        "Dorm1": (X["W_I"], X["T3_W"], Y["N_I"], Y["D1_N"]),
+        "Dorm2": (X["W_I"], X["T3_W"], Y["D2_S"], Y["S_I"]),
+        "Paso_D1": (X["T3_E"], X["T4_W"], Y["N_I"], Y["T5_N"]),
+        "Paso_D2": (X["T3_E"], X["T10_W"], Y["T9_S"], Y["S_I"]),
+        "B1": (X["T4_E"], X["E_FORRO"], Y["N_I"], Y["T5_N"]),
+        "B2": (X["T10_E"], X["E_I"], Y["T9_S"], Y["S_I"]),
+    }
+
+
 def sondas(scene):
     """Sondas de revisión (no van al GLB): volumen de irradiancia sobre el depto para la luz rebotada, un cubemap por
-    baño para sus reflejos y una sonda plana en cada espejo (Eevee 3.6: no necesita horneado; sin ella los espejos
-    reflejaban el cielo del mundo)."""
+    recinto para sus reflejos (cajas_recintos) y una sonda plana en cada espejo (Eevee 3.6: no necesita horneado;
+    sin ella los espejos reflejaban el cielo del mundo)."""
     if bpy.data.objects.get("_GI_Depto"):
         return
     pd = bpy.data.lightprobes.new("_GI_Depto", "GRID")
@@ -290,18 +350,19 @@ def sondas(scene):
     ob.location = (0.0, 0.0, P.ALTURA_PISO_CIELO / 2)
     ob.scale = (4.6, 3.1, P.ALTURA_PISO_CIELO / 2 - 0.02)
     pd.grid_resolution_x, pd.grid_resolution_y, pd.grid_resolution_z = 18, 12, 6
-    X, Y = P.X, P.Y
-    for bid, (x0, x1, y0, y1) in (("B1", (X["T4_E"], X["E_FORRO"], Y["N_I"], Y["T5_N"])),
-                                  ("B2", (X["T10_E"], X["E_I"], Y["T9_S"], Y["S_I"]))):
-        a, b = P.a_blender(x0, y0), P.a_blender(x1, y1)
-        cd = bpy.data.lightprobes.new(f"_Cubo_{bid}", "CUBE")
+    m = 0.10 / P.M_POR_PX                                # 0,10 m más allá de cada muro: la caja los contiene
+    for rid, (x0, x1, y0, y1) in cajas_recintos().items():
+        a, b = P.a_blender(x0 - m, y0 - m), P.a_blender(x1 + m, y1 + m)
+        cd = bpy.data.lightprobes.new(f"_Cubo_{rid}", "CUBE")
         cd.influence_type = "BOX"
-        cd.influence_distance = 0.05
-        cd.falloff = 0.3
-        oc = bpy.data.objects.new(f"_Cubo_{bid}", cd)
+        # la caja de influencia es la del objeto (escala) por esta distancia: con 0,05 (el valor de la ronda 1) cubría
+        # el 5 % del recinto y el resto seguía reflejando el mundo (lo encontré por la puerta del hall, negra)
+        cd.influence_distance = 1.0
+        cd.falloff = 0.15
+        oc = bpy.data.objects.new(f"_Cubo_{rid}", cd)
         scene.collection.objects.link(oc)
-        oc.location = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 1.30)
-        oc.scale = (abs(a[0] - b[0]) / 2, abs(a[1] - b[1]) / 2, P.ALTURA_PISO_CIELO / 2)
+        oc.location = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, P.ALTURA_PISO_CIELO / 2)
+        oc.scale = (abs(a[0] - b[0]) / 2, abs(a[1] - b[1]) / 2, P.ALTURA_PISO_CIELO / 2 + 0.10)
     espejo = bpy.data.materials.get("Depto_Mat_Espejo")
     for o in [o for o in bpy.data.objects if o.type == "MESH" and espejo in o.data.materials[:]]:
         idx = [i for i, m in enumerate(o.data.materials) if m == espejo]
@@ -309,11 +370,17 @@ def sondas(scene):
         if not caras:
             continue
         mw = o.matrix_world
-        grande = max(caras, key=lambda f: f.area)
-        n = (mw.to_3x3() @ grande.normal).normalized()
+        # la cara del frente (−Y local en los dos modelos de espejo). Corrección 07b (ronda 2): con max(área) sobre
+        # todas las caras, la elección entre el frente y el respaldo del vidrio (misma área) quedaba al azar del
+        # redondeo, y la sonda sólo funciona con su Z hacia el muro, del lado contrario al que refleja (probado en
+        # noche_bano1: con Z hacia el cuarto el espejo reflejaba el cielo del mundo; con Z hacia el muro, la puerta y
+        # los azulejos). El espejo de pie tenía la orientación mala y el del baño la buena.
+        frente = [f for f in caras if f.normal.y < -0.5] or caras
+        grande = max(frente, key=lambda f: f.area)
+        n = (mw.to_3x3() @ grande.normal).normalized()          # normal del frente (hacia el cuarto)
         pts = [mw @ o.data.vertices[v].co for f in caras for v in f.vertices]
         c = sum(pts, Vector()) / len(pts)
-        rot = n.to_track_quat("Z", "Y")
+        rot = (-n).to_track_quat("Z", "Y")                       # Z de la sonda hacia el muro
         ux, uy = rot @ Vector((1, 0, 0)), rot @ Vector((0, 1, 0))
         hx = max(abs((p - c).dot(ux)) for p in pts) + 0.02
         hy = max(abs((p - c).dot(uy)) for p in pts) + 0.02
@@ -325,28 +392,90 @@ def sondas(scene):
         op.location = c + n * 0.001
         op.rotation_euler = rot.to_euler()
         op.scale = (hx, hy, 1.0)
-        print("SONDA_PLANA", o.name, round(hx * 2, 3), round(hy * 2, 3))
+        print("SONDA_PLANA", o.name, round(hx * 2, 3), round(hy * 2, 3), "frente", tuple(round(x, 3) for x in n))
 
 
 def hornear(scene, clave):
-    """Luz rebotada de Eevee (volumen y cubemaps) horneada con el mundo y las luces de la vista. Se rehace sólo si
-    cambian (las vistas con el mismo horneado van seguidas en VISTAS)."""
+    """Luz rebotada de Eevee (volumen y cubemaps) horneada con el mundo y las luces de la vista (también de día:
+    corrección 07b, ronda 2; antes se horneaba sólo el sol y el cielo y las sombras de una lámpara encendida quedaban
+    grises o negras junto a superficies naranjas). Se rehace sólo si cambian (las vistas con el mismo horneado van
+    seguidas en VISTAS). Cada horneado tarda 4-6 min en esta CPU (medido; casi no depende de la resolución de los
+    cubemaps: 365 s a 256 px y 334 s a 128), así que las vistas comparten horneado todo lo posible."""
     if HORNEADO["clave"] == clave:
         return
     sondas(scene)
     scene.eevee.gi_diffuse_bounces = 2
     scene.eevee.gi_cubemap_resolution = "256"
     scene.eevee.gi_visibility_resolution = "32"
-    # de día se hornea sólo el sol y el cielo (una luz de paso encendida en una vista no debe teñir las demás)
-    apagar = [o for o in bpy.data.objects if o.type == "LIGHT" and o.data.type == "POINT"] if clave[0] == "dia" else []
-    previo = {o.name: (o.hide_render, o.hide_viewport) for o in apagar}
-    for o in apagar:
-        o.hide_render = o.hide_viewport = True
+    # el horneado usa la visibilidad de viewport: se iguala a la de render (fijar_luces y led_nevera sólo tocan esa)
+    luces = [o for o in bpy.data.objects if o.type == "LIGHT"]
+    previo = {o.name: o.hide_viewport for o in luces}
+    for o in luces:
+        o.hide_viewport = o.hide_render
     bpy.ops.scene.light_cache_bake()
-    for o in apagar:
-        o.hide_render, o.hide_viewport = previo[o.name]
+    for o in luces:
+        o.hide_viewport = previo[o.name]
     HORNEADO["clave"] = clave
     print("HORNEADO", clave, time.strftime("%H:%M:%S"))
+
+
+def vidrio_revision():
+    """Vidrio de revisión (sólo en este render; el GLB y el visor no cambian). Corrección 07b (ronda 2): el vidrio del
+    GLB (alfa 0,18, Transmission 1, BLEND, caras traseras visibles y sin backface culling) sumaba en Eevee la sonda del
+    mundo una vez por cara: de día el ventanal se veía lechoso y tapaba el balcón, de noche un velo azul, y los
+    estantes de la nevera placas grises. Aquí: Transparent BSDF casi blanco mezclado con un Glossy nítido por el doble
+    del Fresnel de IOR 1,45 (las dos caras del paño; ≈ 7 % de frente), sin caras traseras ni sombra."""
+    for nombre in VIDRIOS_REVISION:
+        m = bpy.data.materials.get(nombre)
+        if m is None:
+            continue
+        nt = m.node_tree
+        for n in list(nt.nodes):
+            nt.nodes.remove(n)
+        out = nt.nodes.new("ShaderNodeOutputMaterial")
+        mix = nt.nodes.new("ShaderNodeMixShader")
+        fr = nt.nodes.new("ShaderNodeFresnel")
+        fr.inputs["IOR"].default_value = 1.45
+        dos = nt.nodes.new("ShaderNodeMath")          # dos caras del paño (sólo se dibuja la de adelante)
+        dos.operation, dos.use_clamp = "MULTIPLY", True
+        dos.inputs[1].default_value = 2.0
+        nt.links.new(fr.outputs["Fac"], dos.inputs[0])
+        tr = nt.nodes.new("ShaderNodeBsdfTransparent")
+        tr.inputs["Color"].default_value = (0.97, 0.98, 0.98, 1.0)
+        gl = nt.nodes.new("ShaderNodeBsdfGlossy")
+        gl.inputs["Roughness"].default_value = 0.02
+        nt.links.new(dos.outputs["Value"], mix.inputs["Fac"])
+        nt.links.new(tr.outputs["BSDF"], mix.inputs[1])
+        nt.links.new(gl.outputs["BSDF"], mix.inputs[2])
+        nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+        m.blend_method = "BLEND"
+        m.show_transparent_back = False
+        m.use_backface_culling = True
+        m.shadow_method = "NONE"
+
+
+def compositor(scene):
+    """Render Layers -> Color Balance (ASC-CDL) -> Composite; devuelve el nodo de balance (pendiente por vista)."""
+    scene.use_nodes = True
+    nt = scene.node_tree
+    for n in list(nt.nodes):
+        nt.nodes.remove(n)
+    rl = nt.nodes.new("CompositorNodeRLayers")
+    cb = nt.nodes.new("CompositorNodeColorBalance")
+    cb.correction_method = "OFFSET_POWER_SLOPE"
+    co = nt.nodes.new("CompositorNodeComposite")
+    nt.links.new(rl.outputs["Image"], cb.inputs["Image"])
+    nt.links.new(cb.outputs["Image"], co.inputs["Image"])
+    return cb
+
+
+def dist_cajas(a, b):
+    """Distancia entre dos objetos (cajas de mundo alineadas a los ejes, con sus hijos), m."""
+    def caja(o):
+        pts = [q.matrix_world @ Vector(c) for q in [o, *o.children] if q.type == "MESH" for c in q.bound_box]
+        return [min(p[k] for p in pts) for k in range(3)], [max(p[k] for p in pts) for k in range(3)]
+    (a0, a1), (b0, b1) = caja(a), caja(b)
+    return math.sqrt(sum(max(0.0, b0[k] - a1[k], a0[k] - b1[k]) ** 2 for k in range(3)))
 
 
 def led_nevera(on):
@@ -372,6 +501,13 @@ def config(scene, a):
     ee.use_gtao = True
     ee.gtao_distance = 0.2                 # 0,5 dejaba un halo oscuro con anillos alrededor de los florones
     ee.use_ssr = True
+    # corrección 07b (ronda 2): reflejos en pantalla sólo en lo bastante brillante, a resolución completa y con un
+    # espesor de objeto más realista; lo más rugoso refleja la sonda de su recinto. 0,45 deja fuera el roble y la
+    # melamina (0,55) y deja dentro, entera, la cubierta de concreto (mapa de 0,18 a 0,38, medido): con 0,25 el umbral
+    # la partía en manchas de reflejo nítido y difuso
+    ee.ssr_max_roughness = 0.45
+    ee.use_ssr_halfres = False
+    ee.ssr_thickness = 0.1
     ee.use_soft_shadows = True
     ee.use_bloom = True
     ee.bloom_intensity = 0.03
@@ -391,6 +527,8 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     scene = bpy.context.scene
     config(scene, a)
+    vidrio_revision()
+    balance = compositor(scene)
     GRUPOS.update({g["id"]: g for g in json.loads(scene.get("depto_grupos_luz", "[]"))})
     sol = bpy.data.objects.get("Depto_Luz_Sol")
     dia, noche = mundo_dia(scene), mundo_noche(scene)
@@ -403,6 +541,9 @@ def main():
     if solo and os.path.exists(ruta_json):
         with open(ruta_json) as fh:
             previos = [r for r in json.load(fh) if r["vista"] not in solo and r["vista"] in VISTAS]
+    def clave_luz(v):
+        # el LED de la nevera no cambia la clave: sólo alumbra el interior de la nevera (luz directa, sin horneado)
+        return (v["mundo"], "todas" if v["luces"] == TODOS else ",".join(v["luces"]))
     for vista, v in VISTAS.items():
         if solo and vista not in solo:
             continue
@@ -419,9 +560,19 @@ def main():
         if sol:
             sol.hide_render = v["mundo"] == "noche"
         bpy.context.view_layer.update()
+        scene.eevee.use_ssr = v.get("ssr", True)
         if not a.sin_gi:
-            luces_clave = "todas" if v["luces"] == TODOS else ",".join(v["luces"])
-            hornear(scene, (v["mundo"], luces_clave if v["mundo"] == "noche" else ""))
+            hornear(scene, clave_luz(v))
+        con_lamparas = bool(v["luces"])        # grupos de 2700-3000 K (el LED de la nevera es frío: no cuenta)
+        pend = v.get("balance", BALANCE["lamparas"] if con_lamparas else BALANCE["dia"])
+        balance.slope = pend or (1.0, 1.0, 1.0)
+        texto = v["texto"]
+        if "{dist_nevera}" in texto:
+            d = dist_cajas(bpy.data.objects["Depto_Mueble_Nevera_Puerta"],
+                           bpy.data.objects["Depto_Interruptor_Cocina"])
+            texto = texto.replace("{dist_nevera}", f"{d:.2f}".replace(".", ","))
+        if pend:
+            texto += " Con adaptación cromática parcial de la cámara (las luces siguen a su temperatura)."
         scene.view_settings.exposure = v.get("expo", 0.0)
         scene.view_settings.look = v.get("look", "Medium Contrast" if v["mundo"] == "noche" else "None")
         cam = bpy.data.objects[v["cam"]] if isinstance(v["cam"], str) else camara(f"_cam_{vista}", *v["cam"])
@@ -436,7 +587,8 @@ def main():
         bpy.ops.render.render(write_still=True)
         for o in ocultar:
             o.hide_render = False
-        hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": v["texto"],
+        hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto,
+                       "balance_blancos": list(pend) if pend else None,
                        "mundo": v["mundo"], "luces": "todas" if v["luces"] == TODOS else list(v["luces"]),
                        "abiertos": sorted(n for n, e in estado.items() if e),      # todo lo abierto en el render
                        "ocultos": [o.name for o in ocultar], "camara": cam.name,
