@@ -78,16 +78,16 @@ test("prepararEscena: los grupos nacen con su estado de autor y el momento inici
   assert.ok(amp.get("Depto_Mueble_Living_Colgante_Filamento").material.emissiveIntensity > 0);
 });
 
-test("crearLucesTHREE: un domo con cono_deg da un foco hacia abajo (85 %) y una puntual tenue (15 %)", async () => {
+test("crearLucesTHREE: un domo con cono_deg da un solo foco hacia abajo con toda la intensidad", async () => {
   const { crearLucesTHREE, intensidadBase, INTENSIDAD_POR_WATT } = await import("../src/tour/js/luces.js");
   const l = { nombre: "Depto_Luz_X", tipo: "puntual", posicion: [1, 2, 3], potencia_w: 40, color: [1, 0.42, 0.1],
     cono_deg: 60, direccion: [0, -1, 0] };
-  const [foco, puntual, ...resto] = crearLucesTHREE(THREE, l);
-  assert.equal(resto.length, 0);
-  assert.ok(foco.isSpotLight && puntual.isPointLight);
+  const [foco, ...resto] = crearLucesTHREE(THREE, l);
+  assert.equal(resto.length, 0);              // sin la puntual complementaria (corrección 07b, ronda 2: rendimiento)
+  assert.ok(foco.isSpotLight);
+  assert.deepEqual([foco.position.x, foco.position.y, foco.position.z], [1, 2, 3]);
   assert.ok(Math.abs(foco.angle - Math.PI / 3) < 1e-9);
-  const total = intensidadBase(foco) + intensidadBase(puntual);
-  assert.ok(Math.abs(total - 40 * INTENSIDAD_POR_WATT) < 1e-9);
+  assert.ok(Math.abs(intensidadBase(foco) - 40 * INTENSIDAD_POR_WATT) < 1e-9);
   const g = new THREE.Group();
   g.add(foco);
   g.updateMatrixWorld(true);

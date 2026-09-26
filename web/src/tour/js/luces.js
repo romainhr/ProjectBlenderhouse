@@ -116,10 +116,13 @@ export function ordenarInterruptores(lista) {
 // --- A partir de aquí, THREE se recibe por parámetro: no hay `import` en este archivo. ---
 
 // Luces con pantalla (contrato v2.1, sección 2: `cono_deg` y `direccion` en domos y focos). El visor no calcula
-// sombras, así que una PointLight sola iluminaba el cielo sobre cada domo cerrado ~20 veces más que el piso. Se
-// reparte en un foco hacia abajo (FRACCION_CONO de la intensidad: bajo el cono ilumina como antes) y una puntual
-// tenue para el rebote; jaulas, veladores y apliques siguen puntuales.
-export const FRACCION_CONO = 0.85;
+// sombras, así que una PointLight sola iluminaba el cielo sobre cada domo cerrado ~20 veces más que el piso: va un
+// foco hacia abajo con toda la intensidad. Jaulas, veladores y apliques siguen puntuales.
+// Corrección 07b (ronda 2): hasta aquí el domo era un foco (85 %) más una puntual tenue (15 %) para el rebote en el
+// cielo, 8 luces más en la escena. Medido con window.__tour.medirCuadro() de ?debug, de noche a 1280 × 800 en la vista
+// inicial (Intel HD Graphics 4000): 27 luces 48 ms por cuadro, 19 luces 37,5 ms, sólo el sol 15 ms. La puntual
+// complementaria se quitó; el cielo de la vista inicial baja ~13 % de luminancia.
+export const FRACCION_CONO = 1;
 export const PENUMBRA_CONO = 0.5;
 
 export function crearLucesTHREE(THREE, l) {
@@ -130,19 +133,21 @@ export function crearLucesTHREE(THREE, l) {
     return [sol];
   }
   const color = colorLinealAHex(l.color || KELVIN_2700);
-  const puntual = new THREE.PointLight(color, 0, DISTANCIA_LUZ, 2);
-  puntual.position.set(l.posicion[0], l.posicion[1], l.posicion[2]);
-  puntual.userData.potenciaW = l.potencia_w || 40;
-  if (!l.cono_deg) return [puntual];
+  const potenciaW = l.potencia_w || 40;
+  if (!l.cono_deg) {
+    const puntual = new THREE.PointLight(color, 0, DISTANCIA_LUZ, 2);
+    puntual.position.set(l.posicion[0], l.posicion[1], l.posicion[2]);
+    puntual.userData.potenciaW = potenciaW;
+    return [puntual];
+  }
   const d = l.direccion || [0, -1, 0];
   const foco = new THREE.SpotLight(color, 0, DISTANCIA_LUZ, (l.cono_deg * Math.PI) / 180, PENUMBRA_CONO, 2);
-  foco.position.copy(puntual.position);
+  foco.position.set(l.posicion[0], l.posicion[1], l.posicion[2]);
   foco.target.position.set(d[0], d[1], d[2]);   // hijo del foco: se mueve con él
   foco.add(foco.target);
-  foco.userData.potenciaW = puntual.userData.potenciaW;
+  foco.userData.potenciaW = potenciaW;
   foco.userData.fraccion = FRACCION_CONO;
-  puntual.userData.fraccion = 1 - FRACCION_CONO;
-  return [foco, puntual];
+  return [foco];
 }
 
 // Compatibilidad: la primera luz de crearLucesTHREE.

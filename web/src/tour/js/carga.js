@@ -132,7 +132,7 @@ export function prepararEscena(raiz, D) {
   const lucesTHREE = [];
   const ampolletas = [];            // nodos emisivos: quedan fuera de la fusión y van a `sueltos` (se dibujan aparte)
   for (const l of datosLuces) {
-    const lucesDeEsta = crearLucesTHREE(THREE, l);    // una puntual, o foco + puntual si trae cono_deg
+    const lucesDeEsta = crearLucesTHREE(THREE, l);    // una puntual, o un foco si trae cono_deg
     lucesTHREE.push(...lucesDeEsta);
     if (l.tipo !== "puntual") continue;
     const grupo = gruposLuz.get(l.grupo);
