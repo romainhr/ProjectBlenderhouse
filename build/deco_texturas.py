@@ -325,7 +325,11 @@ def tex_microcemento(L, s):
 
 
 def tex_concreto_encofrado(L, s):
-    """Concreto visto de encofrado: tablas de 0,15 m con veta impresa, rebarba en las juntas, nidos y poros."""
+    """Concreto visto de encofrado: tablas de 0,15 m con veta impresa, rebarba en las juntas, nidos y poros.
+    Corrección 07c (ronda 2): en el visor, bajo luz cálida, el cielo se leía como terciado de pino. El tono por tabla
+    baja de σ 0,035 a 0,015, la veta impresa (anillos y fibra) a la mitad de contraste y el gris pasa de #B3AFA8 a
+    #ADADAA, algo más frío, con la mitad del tinte tibio: la lectura la dan las juntas, la rebaba y los nidos, no la
+    madera."""
     r = s.rng
     TABLA = 0.15                                       # docs/deco-industrial.md
     nf = int(round(L.h / TABLA))                       # 16 tablas en 2,4 m
@@ -345,7 +349,7 @@ def tex_concreto_encofrado(L, s):
         a[filas] = np.mod(L.x - inicio, L.w)[None, :]
         dtope[filas] = np.minimum(d, L.w - d).min(1)[None, :]
     nt = nf * 2
-    dz, tono = r.normal(0, 0.0005, nt), r.normal(0, 0.035, nt)
+    dz, tono = r.normal(0, 0.0005, nt), r.normal(0, 0.015, nt)
     comba = r.normal(0, 0.00025, nt)
     c_p, d0 = r.uniform(-0.3, 0.45, nt), r.uniform(0.02, 0.2, nt)
     incl, paso = r.uniform(-0.05, 0.05, nt), r.uniform(0.005, 0.009, nt)
@@ -368,12 +372,12 @@ def tex_concreto_encofrado(L, s):
     u = (b / TABLA - 0.5) * 2
     h = (dz[t] + comba[t] * u * u - 0.0002 * tardia + 0.00004 * fibra + 0.0005 * rebaba
          - 0.0022 * nidos.perfil - 0.0005 * poros.perfil + 0.00002 * grano)
-    v = (1 + tono[t] + 0.04 * nubes - 0.07 * (tardia - media_pulso(8)) + 0.012 * fibra - 0.06 * rebaba
+    v = (1 + tono[t] + 0.04 * nubes - 0.035 * (tardia - media_pulso(8)) + 0.006 * fibra - 0.06 * rebaba
          - 0.05 * agua + 0.04 * lechada + 0.015 * grano)
-    c = por_px(col("#B3AFA8"), v) + np.array([0.006, 0.002, -0.006], np.float32) * L.ruido(s(), 0.6, 0.05)[..., None]
+    c = por_px(col("#ADADAA"), v) + np.array([0.003, 0.001, -0.003], np.float32) * L.ruido(s(), 0.6, 0.05)[..., None]
     c = mezcla(c, c * 0.62, nidos.mascara * (0.6 + 0.4 * nidos.azar))
     c = mezcla(c, c * 0.8, poros.mascara * 0.7)
-    c = ajustar_media(c, col("#B3AFA8"))
+    c = ajustar_media(c, col("#ADADAA"))
     rug = 0.86 + 0.04 * nubes - 0.10 * lechada + 0.03 * fibra + 0.1 * nidos.mascara
     return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.55, 1.0))
 
@@ -706,14 +710,16 @@ def tex_acero_cepillado(L, s):
     ~1,5 mm de ancho, y la nube. La capa "medio" (pasadas de 0,7-10 mm, estirada 260 veces) sobrevivía al filtrado de
     mipmaps y, en un metal, el albedo multiplica el reflejo: a 1-2 m la puerta mostraba franjas verticales de 3 a 8 mm,
     como vidrio acanalado. El rayado fino se promedia por mip a esa distancia (un píxel del render cubre ~2 mm).
-    Rugosidad de 0,25 a 0,35 que sigue al rayado y a la nube; el relieve son surcos de décimas de micra."""
+    Rugosidad de 0,25 a 0,35 que sigue sólo al rayado (corrección 07c, ronda 2: la nube de 0,12 m también movía la
+    rugosidad, de 0,27 a 0,34, y en el visor la puerta mostraba nubes oscuras de 7-15 cm, del tamaño de la nube; queda
+    sólo en el color, a ±0,6 %); el relieve son surcos de décimas de micra."""
     fino = L.ruido(s(), 0.004, 0.00025, p=0.3, estira=420, angulo=90.0)     # rayado del cepillo: ~0,25 mm de ancho
     fino = fino - L.desenfocar(fino, 0.0005)                                 # paso alto (sigma 0,5 mm): sin franjas
     fino = fino / (fino.std() + 1e-12)
     nube = L.ruido(s(), 0.12, 0.04, p=1.2)                                  # variación de brillo de la chapa, muy suave
     c = por_px(col("#C3C7CB"), 1 + 0.014 * fino + 0.006 * nube)
     c = ajustar_media(c, col("#C3C7CB"))
-    rug = 0.30 + 0.018 * fino + 0.012 * nube
+    rug = 0.30 + 0.018 * fino
     h = 0.000005 * fino
     return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.25, 0.35))
 

@@ -17,7 +17,7 @@ las pocas piezas de acento (dos cuadros, libros, cerámica de gres).
 | Rol | Color (sRGB) | Dónde |
 |---|---|---|
 | Concreto claro | #9C9890 | piso de living, cocina y hall (microcemento) |
-| Concreto de cielo | #B3AFA8 | cielo de concreto visto de encofrado |
+| Concreto de cielo | #ADADAA (hasta la corrección 07c, ronda 2: #B3AFA8) | cielo de concreto visto de encofrado; tono por tabla y veta impresa de contraste bajo (se leía como terciado de pino) |
 | Blanco cálido | #ECEAE4 | muros |
 | Ladrillo | #8C4A36 (con variación) | pared del televisor |
 | Acero pavonado | #232426 | patas, marcos de muebles, luminarias, marcos de ventanas y puertas |
