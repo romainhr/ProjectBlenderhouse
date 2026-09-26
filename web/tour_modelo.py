@@ -8,9 +8,9 @@ con GLTFLoader normal:
 - tex_movil/   las mismas texturas a 512 px (lo que hacía web/build.py hasta ahora para el teléfono) MÁS
   su .webp.
 - depto_movil.gltf   igual a depto.gltf, pero con las imágenes apuntando a tex_movil/ en vez de tex/.
-- depto_colisiones.json   copia tal cual; el visor deduce en el navegador (js/luces.js) lo que el contrato
-  de interacción v2 todavía no exporta (grupos de luz, interruptores), y usa clase/etiqueta por defecto
-  cuando faltan.
+- depto_colisiones.json   copia tal cual. Desde el contrato 2.1 el modelo exporta `grupos_luz`,
+  `interruptores` y `recintos_etiquetas` (docs/contrato-interaccion.md, secciones 2, 3 y 5); la deducción
+  por recinto de js/luces.js y la clase/etiqueta por defecto quedan sólo de respaldo para un JSON viejo.
 
 Ambos .gltf declaran la extensión estándar EXT_texture_webp (en extensionsUsed, no en extensionsRequired):
 cada imagen JPG tiene su gemela .webp, y cada textures[i] que usa una imagen trae

@@ -1,7 +1,9 @@
 # Contrato de interacción: modelo (Blender) ↔ visor web
 
 Versión 2.1 (2026-09-26; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
-temperatura y regla del momento del día agregados en la corrección 07b, ADR 0004). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
+temperatura y regla del momento del día agregados en la corrección 07b, ADR 0004). El JSON trae `"version": 2`
+(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.1"`
+(versión completa, desde la ronda 2 de la corrección 07b). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
 
 ## 1. Móviles (`moviles[]`, ya existe, se amplía)
 
@@ -34,7 +36,7 @@ Cada luz puntual trae además `grupo` (id de `grupos_luz`), `color` [r, g, b] li
 ```json
 "grupos_luz": [
   {"id": "living_techo", "etiqueta": "Living · techo", "recinto": "Living", "encendido": true, "kelvin": 2700},
-  {"id": "dorm1_velador", "etiqueta": "Dormitorio principal · lámpara del velador", "recinto": "Dorm1", "encendido": false, "kelvin": 2700}
+  {"id": "dorm1_velador_izq", "etiqueta": "Dormitorio principal · velador izquierdo", "recinto": "Dorm1", "encendido": false, "kelvin": 2700}
 ]
 ```
 
@@ -67,7 +69,7 @@ desde los pies de la cama.
 | `cocina_techo` | 2 colgantes de jaula | Cocina | 3000 K | sí |
 | `hall_techo` | riel de 3 focos | Hall | 2700 K | sí |
 | `dorm1_techo` | colgante de domo | Dorm1 | 2700 K | sí |
-| `dorm1_velador` | lámpara de mesa (velador oeste) | Dorm1 | 2700 K | no |
+| `dorm1_velador_izq`, `dorm1_velador_der` | lámparas de mesa (veladores oeste y este; hasta la ronda 2 de la corrección 07b había una sola, `dorm1_velador`) | Dorm1 | 2700 K | no |
 | `paso_d1` | colgante de jaula de cable corto (nuevo en 07b) | Paso_D1 | 2700 K | sí |
 | `dorm2_techo` | colgante de domo | Dorm2 | 2700 K | sí |
 | `dorm2_aplique_izq`, `dorm2_aplique_der` | apliques de brazo (este y oeste) | Dorm2 | 2700 K | no |
@@ -91,8 +93,8 @@ Detalle (fase 07b):
   envejecido. Centro a 1,10 m, canto a 0,10 m del marco, del lado de la manilla y dentro del recinto. Sin colisión
   (`colision: false`): 12 mm de muro no deben angostar los pasos del recorrido.
 - Teclas hijas de la placa, sin giro propio y con el origen en su eje de giro (horizontal, paralelo al muro, sobre
-  la cara de la placa: traslación local glTF (x, 0, 0,012), o (x, 0, 0,042) sobre la caja de superficie del
-  living): el visor las inclina con `rotation.x`. La espalda de la tecla entra 4,5 mm en la placa, así que al
+  la cara de la placa: traslación local glTF (x, 0, 0,012), o (x, 0, 0,042) sobre las cajas de superficie del
+  living y del balcón): el visor las inclina con `rotation.x`. La espalda de la tecla entra 4,5 mm en la placa, así que al
   inclinarse ±8° no queda rendija.
 - `recinto` de placas y teclas: el recinto donde está la placa, que puede no ser el de sus grupos (la placa del
   balcón está en el living).
@@ -112,12 +114,12 @@ Detalle (fase 07b):
 | `Depto_Interruptor_Hall` | `hall_techo` | tabique cocina/hall, junto a la jamba norte de la entrada |
 | `Depto_Interruptor_Cocina` | `cocina_techo` | cara este del remate del tabique T3, sobre el extremo de la cubierta, a 0,10 m del remate (entrada desde el living; la cocina no tiene puerta). Hasta la corrección 07b iba en el canto del tabique cocina/hall, donde la puerta abierta de la nevera la tapaba |
 | `Depto_Interruptor_Living` | `living_techo`, `balcon` | muro de ladrillo junto a la puerta D1, sobre una caja de superficie de 0,03 m donde entra el conducto visto; el comedor para dos es el del balcón (`docs/deco-industrial.md`) |
-| `Depto_Interruptor_Balcon` | `balcon` | por dentro, muro de ladrillo junto a la hoja móvil del ventanal, con el canto a 0,10 m de la cara interior del marco; `recinto` = `Living` (donde está la placa) |
+| `Depto_Interruptor_Balcon` | `balcon` | por dentro, muro de ladrillo junto a la hoja móvil del ventanal, con el canto a 0,10 m de la arista del vano (hasta la ronda 2 se medía desde el marco, retranqueado 7,4 cm, y quedaba a 2,6 cm de la arista); sobre caja de superficie de 0,03 m, con el conducto visto que viene de la derivación en T del living; `recinto` = `Living` (donde está la placa) |
 | `Depto_Interruptor_Dorm1` | `dorm1_techo`, `paso_d1` | dentro del dormitorio, espalda con espalda con la del living |
 | `Depto_Interruptor_Dorm2` | `dorm2_techo`, `paso_d2` | dentro del dormitorio |
 | `Depto_Interruptor_Bano1`, `_Bano2` | `bano1`, `bano2` | dentro del baño, en el tabique de la puerta |
 
-Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa_{Cuerpo,Pantalla}`
+Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa{O,E}_{Cuerpo,Pantalla}`
 y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
 
 ## 4. Exterior

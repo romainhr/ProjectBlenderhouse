@@ -4,10 +4,13 @@
 // luces[i].nombre sin el prefijo Depto_Luz_". Las funciones que construyen objetos de three.js reciben el
 // espacio de nombres THREE como parámetro (inyección) en vez de importarlo, por la misma razón.
 
+// Respaldo de los nombres de recinto para cuando el JSON no trae `recintos_etiquetas` (la fuente es
+// RECINTOS_ETIQUETAS de build/depto_04_mobiliario.py; web/tests/test_contrato_luces.py exige que coincidan).
 export const NOMBRES_RECINTO = {
-  Hall: "Hall", Living: "Living", Cocina: "Cocina", Dorm1: "Dormitorio 1", Dorm2: "Dormitorio 2",
-  Paso_D1: "Paso del dormitorio 1", Paso_D2: "Paso del dormitorio 2", Bano1: "Baño 1", Bano2: "Baño 2",
-  Balcon: "Balcón",
+  Hall: "Hall", Living: "Living", Cocina: "Cocina", Dorm1: "Dormitorio principal",
+  Dorm2: "Segundo dormitorio", Paso_D1: "Clósets del principal", Paso_D2: "Clósets del segundo",
+  Bano1: "Baño principal", Bano2: "Segundo baño", Balcon: "Balcón", Palier: "Palier",
+  Nicho_LV: "Lavadora",
 };
 
 // 2700 K en sRGB LINEAL (contrato de interacción, sección 2; build/depto_color.py: Planck + CIE 1931, calculado).

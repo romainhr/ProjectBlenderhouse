@@ -6,6 +6,7 @@ Blender: sólo lee exports/web/depto_colisiones.json y exports/web/depto_gltf.js
 import json
 import math
 import os
+import re
 import sys
 import unittest
 
@@ -14,7 +15,8 @@ sys.path.insert(0, os.path.join(RAIZ, "build"))
 import depto_color as DC  # noqa: E402
 
 WEB = os.path.join(RAIZ, "exports", "web")
-APAGADOS = ("dorm1_velador", "dorm2_aplique_izq", "dorm2_aplique_der", "living_lampara_pie")
+APAGADOS = ("dorm1_velador_izq", "dorm1_velador_der", "dorm2_aplique_izq", "dorm2_aplique_der", "living_lampara_pie")
+LUCES_JS = os.path.join(RAIZ, "web", "src", "tour", "js", "luces.js")
 ESPESOR_PLACA, CAJA_SUPERFICIE = 0.012, 0.030
 
 
@@ -100,8 +102,10 @@ class ContratoLuces(unittest.TestCase):
                      and not r["nodo"].startswith("Depto_Interruptor_")}
         for nodo, grupo in (("Depto_Mueble_Living_LamparaArco_Pantalla", "living_lampara_pie"),
                             ("Depto_Mueble_Living_LamparaArco_Tubo", "living_lampara_pie"),
-                            ("Depto_Mueble_D1_LamparaMesa_Pantalla", "dorm1_velador"),
-                            ("Depto_Mueble_D1_LamparaMesa_Cuerpo", "dorm1_velador")):
+                            ("Depto_Mueble_D1_LamparaMesaO_Pantalla", "dorm1_velador_izq"),
+                            ("Depto_Mueble_D1_LamparaMesaO_Cuerpo", "dorm1_velador_izq"),
+                            ("Depto_Mueble_D1_LamparaMesaE_Pantalla", "dorm1_velador_der"),
+                            ("Depto_Mueble_D1_LamparaMesaE_Cuerpo", "dorm1_velador_der")):
             self.assertEqual(clicables.get(nodo), [grupo], nodo)
 
     def test_cajones_atados_a_su_hoja(self):
@@ -115,6 +119,19 @@ class ContratoLuces(unittest.TestCase):
             self.assertIn(c["nodo"], hoja.get("bloquea", []))
             otra = por_nodo[hoja["nodo"][:-1] + "B"]
             self.assertIn(c["nodo"], otra.get("bloquea", []))
+
+    def test_version_del_contrato(self):
+        self.assertEqual(self.D["version"], 2)            # versión mayor (compatibilidad)
+        self.assertEqual(self.D.get("contrato"), "2.1")   # versión completa del contrato de interacción
+
+    def test_nombres_recinto_del_visor(self):
+        """El respaldo NOMBRES_RECINTO de luces.js dice lo mismo que recintos_etiquetas (una sola fuente de verdad:
+        RECINTOS_ETIQUETAS de build/depto_04_mobiliario.py)."""
+        with open(LUCES_JS, encoding="utf-8") as fh:
+            js = fh.read()
+        bloque = re.search(r"export const NOMBRES_RECINTO = \{(.*?)\};", js, re.S).group(1)
+        nombres = dict(re.findall(r'(\w+): "([^"]*)"', bloque))
+        self.assertEqual(nombres, self.D["recintos_etiquetas"])
 
     def test_ampolletas_distintas(self):
         amp = [x["ampolleta"] for x in self.D["luces"] if x["tipo"] == "puntual"]

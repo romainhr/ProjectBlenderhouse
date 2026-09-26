@@ -287,3 +287,27 @@ cuadro();
 // Con ?debug, permite avanzar el mundo "a mano" desde la consola (rAF se pausa si la pestaña queda oculta,
 // p. ej. en pruebas automatizadas): window.__tour.paso(1/60) simula exactamente un cuadro de esa duración.
 if (debug) window.__tour.paso = (dt) => pasoCuadro(dt);
+// Con ?debug, mide el costo real de dibujar la vista actual (sirve también en un teléfono con depuración remota):
+// `n` renders seguidos, cada uno esperando a la GPU con un readPixels de 1 px. Devuelve ms por cuadro (mediana, p90)
+// y cuántas luces de three.js hay visibles. No cambia nada de la escena.
+if (debug) {
+  window.__tour.renderer = renderer;
+  window.__tour.medirCuadro = (n = 30) => {
+    const gl = renderer.getContext();
+    const px = new Uint8Array(4);
+    const t = [];
+    renderer.render(scene, camera);                   // compila lo que falte antes de medir
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    for (let i = 0; i < n; i++) {
+      const t0 = performance.now();
+      renderer.render(scene, camera);
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      t.push(performance.now() - t0);
+    }
+    t.sort((a, b) => a - b);
+    let luces = 0;
+    scene.traverse((o) => { if (o.isLight && o.visible && !o.isHemisphereLight) luces += 1; });
+    return { mediana_ms: +t[n >> 1].toFixed(1), p90_ms: +t[Math.floor(n * 0.9)].toFixed(1), luces,
+      llamadas: renderer.info.render.calls, pixelRatio: renderer.getPixelRatio() };
+  };
+}
