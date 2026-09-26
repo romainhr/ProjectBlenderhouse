@@ -49,7 +49,10 @@ TEXTURA_MAT = {
     "Depto_Mat_MuebleBano": ("roble_ahumado", dict(color=True, rugosidad=True, normal=0.5)),
     # metal, piedra y concreto
     "Depto_Mat_AceroNegro": ("acero_pavonado", dict(color=True, rugosidad=True, normal=0.3)),
-    "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=True, normal=0.3)),
+    # hoja de la entrada: sin el mapa de rugosidad (0,45 constante de depto_geom; el mapa va de 0,23 a 0,49, medido).
+    # Corrección 07b (ronda 2): con el mapa, el reflejo de la hoja era nítido y de noche, con el foco que la baña
+    # desde arriba, la hoja se leía negra; un satinado parejo abre el brillo del foco sobre la chapa.
+    "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=False, normal=0.3)),
     # 07b: sólo el mapa normal, suave. Con el mapa de color o el de rugosidad, sus vetas de alto contraste se leían
     # como madera gris en los renders; el cepillado queda como un relieve fino sobre el color base del acero.
     "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=False, rugosidad=False, normal=0.2)),

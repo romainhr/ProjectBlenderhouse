@@ -26,8 +26,9 @@ columna), u = radio × ángulo, que deja una sola costura atrás en vez de cuatr
 headless.
 
 Materiales (todos ya existen en depto_geom.MATERIALES; este módulo no agrega ninguno): Depto_Mat_MaderaMueble
-(roble ahumado), Depto_Mat_AceroNegro (acero pavonado: mesas y silla plegable) y Depto_Mat_MetalNegroMate (acero
-pintado negro mate: silla de comedor).
+(roble ahumado), Depto_Mat_AceroNegro (acero pavonado: mesa de comedor y silla plegable), Depto_Mat_AceroPintado
+(acero pintado al horno, dieléctrico: mesa bistró) y Depto_Mat_MetalNegroMate (acero pintado negro mate: silla de
+comedor).
 """
 import bisect
 import math
@@ -42,6 +43,7 @@ from deco_living import _barrido, _sec_circulo
 
 MADERA = "Depto_Mat_MaderaMueble"
 ACERO = "Depto_Mat_AceroNegro"
+PINTADO = "Depto_Mat_AceroPintado"
 NEGRO = "Depto_Mat_MetalNegroMate"
 
 # Topes de triángulos por pieza (pedido y docs/deco-industrial.md, «Comedor y balcón»)
@@ -524,7 +526,10 @@ def mesa_bistro(col, prefijo, diametro=0.55, alto=0.72):
     za = K["z_abre"] + K["r_curva"] * math.tan(abre / 2) + 0.004
     CB.revolucion(bm, [(0.0, za), (ra, za), (ra, za + ha), (0.0, za + ha)], seg=16)
     _uv_cilindro(bm, [f for f in bm.faces if f not in varillas])
-    return [B.objeto(col, f"{prefijo}_Estructura", bm, ACERO, suave=True, angulo_suave=50, uv="propia")]
+    # corrección 07b (ronda 2): pintura al horno (dieléctrica) en vez de acero pavonado: con metálico 0,85 la cubierta
+    # casi no devolvía luz difusa y el colgante del balcón, a 0,80 m, no dejaba charco (cubierta L ≈ 28 contra el
+    # piso del balcón bajo la luz L ≈ 120, medido en noche_balcon)
+    return [B.objeto(col, f"{prefijo}_Estructura", bm, PINTADO, suave=True, angulo_suave=50, uv="propia")]
 
 
 # =====================================================================================================

@@ -168,6 +168,8 @@ MATERIALES = {
     "Depto_Mat_FrenteCloset": ((0.62, 0.47, 0.32), 0.55, 0.0, 1.0),     # roble natural (0,55: barniz satinado)
     "Depto_Mat_MuebleBano": ((0.42, 0.31, 0.23), 0.50, 0.0, 1.0),       # roble ahumado
     "Depto_Mat_AceroNegro": ((0.14, 0.14, 0.15), 0.45, 0.85, 1.0),      # acero pavonado de muebles
+    "Depto_Mat_AceroPintado": ((0.06, 0.06, 0.06), 0.55, 0.0, 1.0),     # acero pintado al horno (dieléctrico): mesa
+                                                                        # bistró del balcón (corrección 07b)
     "Depto_Mat_MetalNegroMate": ((0.03, 0.03, 0.03), 0.50, 0.70, 1.0),  # grifería, luminarias, herrajes
     "Depto_Mat_NeveraAcero": ((0.76, 0.75, 0.72), 0.35, 0.85, 1.0),     # acero cepillado del cuerpo de la nevera
     "Depto_Mat_Cuero": ((0.54, 0.29, 0.16), 0.45, 0.0, 1.0),            # coñac

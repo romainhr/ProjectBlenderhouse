@@ -468,10 +468,15 @@ def hall_entrada(c):
     c.contra_muro(HA.banca_entrada, "Hall_Banca", "solido", HALL_MURO, HALL_EJE_Y, "E", ancho=0.66)
     c.contra_muro(HA.perchero_mural, "Hall_Perchero", "solido", HALL_MURO, HALL_EJE_Y, "E", z=PERCHERO_Z,
                   holgura=0.0, ancho=0.60)
-    # focos (giro 0 = −Y local = sur del plano; −90 = oeste): banca y perchero, cuadro (en diagonal) y reloj
-    riel = c.construir(HA.riel_focos, "Hall_Riel", giros=(-90.0, -30.0, 20.0), inclinaciones=(35.0, 30.0, 30.0))
+    # focos (giro 0 = −Y local = sur del plano; −90 = oeste; +90 = este): banca y perchero, cuadro (en diagonal) y
+    # puerta de entrada. Corrección 07b (ronda 2): el tercero apuntaba al reloj y la hoja de acero pavonado de la
+    # entrada no recibía luz directa: de noche se leía negra (sólo se veía la manilla). Diseño: el foco del extremo este
+    # (a ≈ 0,6 m de la hoja) la baña desde arriba; el reloj queda con la luz de los otros dos.
+    riel = c.construir(HA.riel_focos, "Hall_Riel", giros=(-90.0, -30.0, 105.0), inclinaciones=(35.0, 30.0, 35.0))
     c.poner("Hall_Riel", "adorno", riel, *RIEL_HALL, H, "S")          # "S": el riel (x local) corre según x
-    marcar_ampolletas(riel, POTENCIA["foco"], radio=0.01, grupo="hall_techo", cono=CONO_FOCO)   # boca Ø 0,06
+    # radio de la fuente 0,02 (boca Ø 0,06; corrección 07b, ronda 2: con 0,01 la sombra de los focos salía dentada en
+    # el borde de la tecla del interruptor del hall)
+    marcar_ampolletas(riel, POTENCIA["foco"], radio=0.02, grupo="hall_techo", cono=CONO_FOCO)
     fel = c.construir(HA.felpudo, "Palier_Felpudo")
     flo, fhi = c.caja_local(fel)
     c.poner("Palier_Felpudo", "solido", fel, X["E_O"] + 0.02 / S + (fhi.y - flo.y) / 2 / S,
