@@ -119,14 +119,6 @@
    "bytes": 96321
   },
   {
-   "uri": "tex/poly_wool_herringbone_nor_gl_1k.jpg",
-   "bytes": 1045151
-  },
-  {
-   "uri": "tex/poly_wool_herringbone_rough_1k.jpg",
-   "bytes": 161655
-  },
-  {
    "uri": "tex/lana_nor_gl_1k.jpg",
    "bytes": 633435
   },
@@ -147,16 +139,8 @@
    "bytes": 135592
   },
   {
-   "uri": "tex/cuero_diff_1k.jpg",
-   "bytes": 157273
-  },
-  {
    "uri": "tex/cuero_rough_1k.jpg",
    "bytes": 94850
-  },
-  {
-   "uri": "tex/lana_diff_1k.jpg",
-   "bytes": 393237
   },
   {
    "uri": "tex/concreto_oscuro_nor_gl_1k.jpg",
@@ -187,6 +171,10 @@
    "bytes": 55627
   },
   {
+   "uri": "tex/cuero_diff_1k.jpg",
+   "bytes": 157273
+  },
+  {
    "uri": "tex/yute_nor_gl_1k.jpg",
    "bytes": 453436
   },
@@ -197,6 +185,10 @@
   {
    "uri": "tex/yute_rough_1k.jpg",
    "bytes": 68506
+  },
+  {
+   "uri": "tex/lana_diff_1k.jpg",
+   "bytes": 393237
   },
   {
    "uri": "tex/arte_1_diff_1k.jpg",
@@ -211,5 +203,5 @@
    "bytes": 460509
   }
  ],
- "total_bytes": 18851916
+ "total_bytes": 18066919
 }
