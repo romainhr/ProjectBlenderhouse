@@ -1,4 +1,4 @@
-/* LOFT 2D2B: tokens del sistema ("luz de tarde"): claro, cálido, editorial. Los usa loft.css y, por separado,
+/* Project-roomVR: tokens del sistema ("luz de tarde"): claro, cálido, editorial. Los usa sitio.css y, por separado,
    el visor 3D (mismos nombres de variable), así que este archivo sólo trae variables y tipografía, sin selectores
    de componentes. Fuentes autoalojadas (Google Fonts, subconjunto latin: cubre tildes y ñ, Unicode U+0000–00FF). */
 @font-face {
