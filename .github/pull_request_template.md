@@ -9,6 +9,6 @@
 - [ ] Si toca `web/supabase/`: la migración que el usuario debe aplicar en el SQL Editor después de fusionar:
 - [ ] Si toca binarios generados (`exports/web/`, `web/renders_png/`, `assets/texturas/propias/`): van con el cambio del script que los produce
 
-Al fusionar en `main`, el workflow «CI y despliegue» publica el sitio en https://loft-2d2b.netlify.app.
+No fusiones esta PR tú: la revisa, la valida y la fusiona la sesión revisora (`CLAUDE.md`, «Trabajo con git y GitHub»). Al fusionarse en `main`, el workflow «CI y despliegue» publica el sitio en https://loft-2d2b.netlify.app.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
