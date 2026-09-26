@@ -7,7 +7,10 @@
 import { THREE } from "./three.js";
 import { GLTFLoader } from "../../vendor/three/jsm/loaders/GLTFLoader.js";
 import { mergeGeometries } from "../../vendor/three/jsm/utils/BufferGeometryUtils.js";
-import { deducirGrupos, crearLuzTHREE, colorLinealAHex, FUNDIDO_MS, INTENSIDAD_POR_WATT } from "./luces.js";
+import {
+  deducirGrupos, crearLuzTHREE, colorLinealAHex, FUNDIDO_MS, INTENSIDAD_POR_WATT, TILT_TECLA_DEG,
+  interruptorEncendido, ordenarInterruptores,
+} from "./luces.js";
 import { duracionPorClase } from "./animacion.js";
 
 export const RUTA_MODELO = "modelo/";
@@ -83,23 +86,32 @@ export function prepararEscena(raiz, D) {
   }
 
   // --- interruptores y lámparas: cualquier nodo con userData.grupo_luz (viene de los extras del glTF) ---
+  // Primero las teclas con registro propio en interruptores[] (cada una manda sólo su grupo), después el resto
+  // (placas, lámparas y nodos sin registro): una placa doble ya no se queda con las mallas de sus teclas.
   const interruptores = [];
   const explicitos = new Map((D.interruptores || []).map((i) => [i.nodo, i]));
-  raiz.traverse((o) => {
-    if (excluidos.has(o)) return;
-    const grupoLuz = o.userData && o.userData.grupo_luz;
-    if (!grupoLuz) return;
-    const info = explicitos.get(o.name);
+  const registrar = (o, info, grupoLuz) => {
     const grupos = info ? info.grupos : String(grupoLuz).split(",").map((s) => s.trim()).filter(Boolean);
     let tecla = null;
-    if (info && info.tecla) tecla = raiz.getObjectByName(info.tecla);
+    if (info) tecla = info.tecla ? raiz.getObjectByName(info.tecla) : null;
     else o.traverse((h) => { if (!tecla && /_Tecla$/.test(h.name || "")) tecla = h; });
     const reg = { nodo: o, grupos, tecla, encendido: false, faseGrado: 0 };
     interruptores.push(reg);
     o.traverse((d) => {
       excluidos.add(d);
-      if (d.isMesh) { tocables.push(d); mapaTocable.set(d, { tipo: "interruptor", ref: reg }); }
+      if (d.isMesh && !mapaTocable.has(d)) { tocables.push(d); mapaTocable.set(d, { tipo: "interruptor", ref: reg }); }
     });
+  };
+  for (const info of ordenarInterruptores(D.interruptores || [])) {
+    if (!(info.tecla && info.tecla === info.nodo)) break;            // ordenadas: las teclas van primero
+    const o = raiz.getObjectByName(info.nodo);
+    if (o && !interruptores.some((r) => r.nodo === o)) registrar(o, info, null);
+  }
+  raiz.traverse((o) => {
+    const grupoLuz = o.userData && o.userData.grupo_luz;
+    if (!grupoLuz || interruptores.some((r) => r.nodo === o)) return;
+    if (excluidos.has(o) && !explicitos.has(o.name)) return;          // hija de un interruptor ya registrado
+    registrar(o, explicitos.get(o.name), grupoLuz);
   });
 
   // --- luces y sus grupos (deducidos por recinto si el JSON todavía no trae grupos_luz) ---
@@ -138,6 +150,12 @@ export function prepararEscena(raiz, D) {
     for (const luz of grupo.luces) luz.intensity = (luz.userData.potenciaW || 40) * INTENSIDAD_POR_WATT * grupo.intensidad;
     for (const clon of grupo.clones.values()) clon.emissiveIntensity = 1.4 * grupo.intensidad;
   }
+  // Estado inicial de cada interruptor según sus grupos, con la tecla ya inclinada hacia ese lado.
+  for (const reg of interruptores) {
+    reg.encendido = interruptorEncendido(reg.grupos, gruposLuz);
+    reg._grados = reg.encendido ? TILT_TECLA_DEG : -TILT_TECLA_DEG;
+    if (reg.tecla) reg.tecla.rotation.x = (reg._grados * Math.PI) / 180;
+  }
 
   // --- fusión de las mallas estáticas por material, con la transformación de mundo horneada ---
   const porMaterial = new Map();
@@ -162,7 +180,12 @@ export function prepararEscena(raiz, D) {
 
   // Los móviles e interruptores quedan sueltos en la raíz de la escena con su transformación de mundo
   // (Object3D.attach preserva la posición mundial al cambiar de padre).
-  const sueltos = [...moviles.map((v) => v.nodo), ...interruptores.map((i) => i.nodo)].filter(Boolean);
+  // Una tecla con registro propio sigue siendo hija de su placa (gira en su X local, relativa a la placa): sólo se
+  // sueltan los interruptores sin otro interruptor por encima.
+  const nodosInterruptor = new Set(interruptores.map((i) => i.nodo));
+  const bajoOtro = (o) => { for (let p = o.parent; p; p = p.parent) if (nodosInterruptor.has(p)) return true; return false; };
+  const sueltos = [...moviles.map((v) => v.nodo), ...interruptores.map((i) => i.nodo).filter((n) => !bajoOtro(n))]
+    .filter(Boolean);
 
   return { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables, mapaTocable };
 }

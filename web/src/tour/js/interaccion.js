@@ -4,10 +4,9 @@
 import { THREE } from "./three.js";
 import { estadoMovil, chocaMovil } from "./colision.js";
 import { iniciarToggle, pasoAnimacion, congelar, duracionPorClase, valorFundido } from "./animacion.js";
-import { INTENSIDAD_POR_WATT, FUNDIDO_MS } from "./luces.js";
+import { INTENSIDAD_POR_WATT, FUNDIDO_MS, TILT_TECLA_DEG, interruptorEncendido } from "./luces.js";
 
 const DISTANCIA_MAXIMA = 2.5;
-const TILT_TECLA_DEG = 8;
 
 const TEXTO_POR_CLASE = {
   puerta: "puerta", ventana: "ventana", cajon: "cajón", closet: "clóset", nevera: "nevera", mueble: "mueble",
@@ -101,11 +100,8 @@ export function activar(estado, entrada, walker) {
     return true;
   }
   const reg = entrada.ref;
-  const nuevoEstado = !reg.encendido;
-  reg.encendido = nuevoEstado;
-  reg._desdeGrados = reg._grados || 0;
-  reg._hastaGrados = nuevoEstado ? TILT_TECLA_DEG : -TILT_TECLA_DEG;
-  reg._faseTecla = 0;
+  // el estado sale de los grupos (un grupo de techo nace encendido; otra tecla o la lámpara pudo cambiarlo)
+  const nuevoEstado = !interruptorEncendido(reg.grupos, estado.gruposLuz);
   for (const id of reg.grupos) {
     const grupo = estado.gruposLuz.get(id);
     if (!grupo) continue;
@@ -114,7 +110,21 @@ export function activar(estado, entrada, walker) {
     grupo._hasta = nuevoEstado ? 1 : 0;
     grupo.faseMs = 0;
   }
+  sincronizarInterruptores(estado);
   return true;
+}
+
+// Deja cada interruptor en el estado de sus grupos e inclina las teclas que cambiaron (todas las que mandan un
+// mismo grupo quedan iguales: tecla y placa, pantalla y cuerpo de una lámpara, dos puntos de encendido).
+export function sincronizarInterruptores(estado) {
+  for (const reg of estado.interruptores) {
+    const encendido = interruptorEncendido(reg.grupos, estado.gruposLuz);
+    if (reg.encendido === encendido) continue;
+    reg.encendido = encendido;
+    reg._desdeGrados = reg._grados || 0;
+    reg._hastaGrados = encendido ? TILT_TECLA_DEG : -TILT_TECLA_DEG;
+    reg._faseTecla = 0;
+  }
 }
 
 // Enciende ("encender"|"apagar"|"alternar") uno o todos los grupos, para el botón "Apagar/encender todo" y
@@ -126,6 +136,7 @@ export function fijarGrupo(estado, idGrupo, encendido) {
   grupo._desde = grupo.intensidad;
   grupo._hasta = encendido ? 1 : 0;
   grupo.faseMs = 0;
+  sincronizarInterruptores(estado);
 }
 
 // Un paso del mundo interactivo: anima puertas/cajones (deteniéndolos si la hoja topa con el caminante),

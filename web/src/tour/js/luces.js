@@ -66,6 +66,27 @@ export function deducirGrupos({ luces, recintos, recintos_etiquetas: etiquetas =
   return { luces: lucesCompletas, grupos: Array.from(grupos.values()) };
 }
 
+// Inclinación de la tecla de un interruptor según su estado (contrato v2, sección 3: ±8°).
+export const TILT_TECLA_DEG = 8;
+
+// Un interruptor (placa, tecla o lámpara) está "encendido" si alguno de sus grupos lo está. El estado sale de los
+// grupos y no del propio interruptor: varios interruptores pueden mandar el mismo grupo (una tecla y su placa,
+// la pantalla y el cuerpo de una lámpara, dos puntos de encendido) y los grupos de techo nacen encendidos.
+// `gruposLuz`: Map id -> { encendido }.
+export function interruptorEncendido(grupos, gruposLuz) {
+  return grupos.some((id) => {
+    const g = gruposLuz.get(id);
+    return Boolean(g && g.encendido);
+  });
+}
+
+// Orden de registro de interruptores[]: primero las teclas con registro propio (tecla === nodo) y después placas y
+// lámparas, para que una placa doble no se quede con las mallas de sus teclas y cada tecla mande sólo su grupo.
+export function ordenarInterruptores(lista) {
+  const esTecla = (i) => Boolean(i.tecla) && i.tecla === i.nodo;
+  return [...lista.filter(esTecla), ...lista.filter((i) => !esTecla(i))];
+}
+
 // --- A partir de aquí, THREE se recibe por parámetro: no hay `import` en este archivo. ---
 
 export function crearLuzTHREE(THREE, l) {

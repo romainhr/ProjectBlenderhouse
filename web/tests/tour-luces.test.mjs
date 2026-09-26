@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { deducirGrupos, nombreAmpolleta, colorLinealAHex, NOMBRES_RECINTO } from "../src/tour/js/luces.js";
+import {
+  deducirGrupos, nombreAmpolleta, colorLinealAHex, NOMBRES_RECINTO, interruptorEncendido, ordenarInterruptores,
+} from "../src/tour/js/luces.js";
 
 const recintos = { Living: [0, 0], Dorm1: [5, 0] };
 
@@ -47,4 +49,28 @@ test("deducirGrupos: varias luces del mismo recinto comparten un solo grupo", ()
   ];
   const { grupos } = deducirGrupos({ luces, recintos });
   assert.equal(grupos.length, 1);
+});
+
+test("interruptorEncendido: encendido si alguno de sus grupos lo está (el estado sale de los grupos)", () => {
+  const gruposLuz = new Map([["living_techo", { encendido: true }], ["balcon", { encendido: false }]]);
+  assert.equal(interruptorEncendido(["living_techo", "balcon"], gruposLuz), true);
+  assert.equal(interruptorEncendido(["balcon"], gruposLuz), false);
+  assert.equal(interruptorEncendido(["no_existe"], gruposLuz), false);
+  gruposLuz.get("living_techo").encendido = false;
+  assert.equal(interruptorEncendido(["living_techo", "balcon"], gruposLuz), false);
+});
+
+test("ordenarInterruptores: las teclas con registro propio van antes que placas y lámparas", () => {
+  const lista = [
+    { nodo: "Depto_Interruptor_Dorm1", grupos: ["dorm1_techo", "paso_d1"], tecla: null },
+    { nodo: "Depto_Mueble_D1_LamparaMesa_Pantalla", grupos: ["dorm1_velador"], tecla: null },
+    { nodo: "Depto_Interruptor_Dorm1_1_Tecla", grupos: ["dorm1_techo"], tecla: "Depto_Interruptor_Dorm1_1_Tecla" },
+    { nodo: "Depto_Interruptor_Hall", grupos: ["hall_techo"], tecla: "Depto_Interruptor_Hall_Tecla" },
+    { nodo: "Depto_Interruptor_Dorm1_2_Tecla", grupos: ["paso_d1"], tecla: "Depto_Interruptor_Dorm1_2_Tecla" },
+  ];
+  const orden = ordenarInterruptores(lista).map((i) => i.nodo);
+  assert.deepEqual(orden.slice(0, 2), ["Depto_Interruptor_Dorm1_1_Tecla", "Depto_Interruptor_Dorm1_2_Tecla"]);
+  assert.equal(orden.length, lista.length);
+  // una placa simple (tecla distinta de su nodo) no cuenta como tecla
+  assert.ok(orden.indexOf("Depto_Interruptor_Hall") >= 2);
 });
