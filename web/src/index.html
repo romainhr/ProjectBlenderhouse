@@ -5,31 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Project-roomVR · Arriendo turístico</title>
 <meta name="description" content="Departamento de dos dormitorios de estilo industrial. Recórrelo en 3D y solicita tu reserva. Sitio de demostración con imágenes renderizadas.">
-<meta name="theme-color" content="#F7F4EF">
+<meta name="theme-color" content="#F6F1EA">
 <meta property="og:title" content="Project-roomVR · Arriendo turístico">
 <meta property="og:description" content="Recorre el departamento en 3D y solicita tu reserva. Sitio de demostración.">
 <meta property="og:image" content="img/living-1600.jpg">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="css/sitio.css">
+<link rel="preload" as="font" type="font/woff2" href="fonts/fraunces-var.woff2" crossorigin>
 <link rel="preload" as="image" href="img/living-1600.webp" imagesrcset="img/living-800.webp 800w, img/living-1600.webp 1600w" imagesizes="100vw">
+<link rel="stylesheet" href="css/sitio.css">
 <script type="module" src="js/sitio.js"></script>
-<noscript><style>.aparece { opacity: 1 !important; transform: none !important; }</style></noscript>
+<script type="module" src="js/contenido-publico.js"></script>
+<noscript><style>.aparece { opacity: 1 !important; transform: none !important; } .barra.sobre-hero { background: var(--papel); color: var(--tinta); border-bottom-color: var(--linea); } .barra.sobre-hero .marca { visibility: visible; } .barra-movil.oculta { transform: none; visibility: visible; }</style></noscript>
 </head>
 <body class="con-barra-movil">
 
 <a class="saltar" href="#contenido">Saltar al contenido</a>
-<header class="barra">
+<header class="barra sobre-hero">
   <div class="contenedor">
-    <a class="marca" href="./" aria-label="Project-roomVR, inicio">
-      <b>Project-roomVR</b><small>Arriendo turístico</small>
-    </a>
+    <a class="marca" href="./" aria-label="Project-roomVR, inicio"><b>Project-roomVR</b><small>Arriendo turístico</small></a>
     <nav class="menu-nav" aria-label="Principal"><ul class="menu">
       <li><a href="#espacios">Espacios</a></li>
       <li><a href="#tour">Recorrido 3D</a></li>
       <li><a href="#tarifas">Tarifas</a></li>
       <li><a href="#preguntas">Preguntas</a></li>
     </ul></nav>
-    <a class="boton primario" href="reserva.html">Reservar</a>
+    <a class="boton primario reservar" href="reserva.html">Reservar</a>
     <button class="hamburguesa" type="button" aria-label="Abrir menú" aria-controls="panel-menu" aria-expanded="false">
       <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true"><path d="M0 1h20M0 7h20M0 13h20" stroke="currentColor" stroke-width="1.5"/></svg>
     </button>
@@ -45,202 +45,205 @@
 
 <main id="contenido">
   <section class="hero" aria-labelledby="titulo">
-    <div class="contenedor">
-      <h1 id="titulo">Project-roomVR</h1>
-      <p class="bajada">Departamento de dos dormitorios de estilo industrial: concreto, acero y roble, con living luminoso y balcón. Recórrelo en 3D desde el navegador antes de reservar.</p>
-      <div class="acciones">
-        <a class="boton primario" href="tour/">Recorrer en 3D</a>
-        <a class="boton secundario" href="reserva.html">Ver fechas disponibles</a>
+    <picture>
+      <source type="image/webp" srcset="img/living-800.webp 800w, img/living-1600.webp 1600w" sizes="100vw">
+      <img class="hero-img" src="img/living-1600.jpg" srcset="img/living-800.jpg 800w, img/living-1600.jpg 1600w" sizes="100vw" alt="Living con muro de ladrillo a la vista, televisor sobre un mueble flotante de roble y sofá de cuero, con el balcón al fondo" width="1600" height="1000" fetchpriority="high">
+    </picture>
+    <div class="hero-texto">
+      <div class="contenedor">
+        <div class="hero-bloque">
+          <h1 id="titulo"><span class="nombre">Project-roomVR</span></h1>
+          <p class="lema">Ladrillo, roble y luz cálida.</p>
+          <p class="bajada" data-contenido="hero.bajada">Departamento de dos dormitorios de estilo industrial: concreto, acero y roble, con living luminoso y balcón. Recórrelo en 3D desde el navegador antes de reservar.</p>
+          <div class="acciones">
+            <a class="boton primario" href="tour/">Recorrer en 3D</a>
+            <a class="enlace-accion" href="reserva.html#calendario">Ver fechas</a>
+          </div>
+        </div>
+        <p class="hero-pie">Portada: el living, con el balcón al fondo</p>
       </div>
-      <p class="datos"><b>2</b> dormitorios · <b>2</b> baños · <b>balcón</b> · hasta <b>4</b> huéspedes · <b>≈ 54 m²</b> construidos</p>
-      <figure>
-        <picture>
-          <source type="image/webp" srcset="img/living-800.webp 800w, img/living-1600.webp 1600w" sizes="(min-width: 900px) 1176px, 100vw">
-          <img src="img/living-1600.jpg" alt="Living con muro de ladrillo a la vista, televisor sobre un mueble flotante de roble y sofá de cuero, con el balcón al fondo" width="1600" height="1000" fetchpriority="high">
-        </picture>
-      </figure>
     </div>
+  </section>
+
+  <section class="datos" aria-label="Datos del departamento">
+    <p class="contenedor">
+      <span class="dato"><span class="cifra">2</span> dormitorios</span> <span class="sep" aria-hidden="true">·</span>
+      <span class="dato"><span class="cifra">2</span> baños</span> <span class="sep" aria-hidden="true">·</span>
+      <span class="dato">balcón</span> <span class="sep corte-1" aria-hidden="true">·</span>
+      <span class="dato">hasta <span class="cifra">4</span> huéspedes</span> <span class="sep corte-2" aria-hidden="true">·</span>
+      <span class="dato">≈ <span class="cifra">54</span> m² construidos</span>
+    </p>
   </section>
 
   <section id="espacios" class="seccion" aria-labelledby="t-espacios">
     <div class="contenedor">
-      <div class="cabecera aparece">
-        <div>
-          <h2 id="t-espacios">Espacios</h2>
+      <header class="cabecera capitulo aparece">
+        <h2 id="t-espacios">Espacios</h2>
+        <p class="bajada" data-contenido="espacios.bajada">Un living-cocina integrado entre dos dormitorios, cada uno con su baño cerca y closet corredero.</p>
+      </header>
+      <div class="galeria">
+        <div class="espacios desliza" tabindex="0" role="region" aria-label="Espacios del departamento">
+          <article class="espacio e-living aparece">
+            <figure class="fotos" data-fotos="living"><div class="fotos-grid"><div class="foto"><picture>
+              <source type="image/webp" srcset="img/living-sofa-800.webp 800w, img/living-sofa-1600.webp 1600w" sizes="(min-width: 1100px) 700px, (min-width: 700px) calc(100vw - 64px), 82vw">
+              <img src="img/living-sofa-800.jpg" alt="Sofá de cuero coñac con lámpara de arco, cuadros abstractos y la cocina al fondo" width="800" height="500" loading="lazy" decoding="async">
+            </picture></div></div></figure>
+            <h3 data-contenido="espacio.living.titulo">Living</h3>
+            <p data-contenido="espacio.living.texto">Muro de ladrillo a la vista, mueble de TV flotante de roble, sofá de cuero y lámpara de arco. Ventanal corredero al balcón.</p>
+          </article>
+          <article class="espacio e-cocina aparece">
+            <figure class="fotos" data-fotos="cocina"><div class="fotos-grid"><div class="foto"><picture>
+              <source type="image/webp" srcset="img/cocina-800.webp 800w, img/cocina-1600.webp 1600w" sizes="(min-width: 1100px) 500px, (min-width: 700px) calc(50vw - 40px), 82vw">
+              <img src="img/cocina-800.jpg" alt="Cocina en L con frentes carbón, azulejo blanco, repisas de roble y colgantes de jaula" width="800" height="500" loading="lazy" decoding="async">
+            </picture></div></div></figure>
+            <h3 data-contenido="espacio.cocina.titulo">Cocina</h3>
+            <p data-contenido="espacio.cocina.texto">En L, con frentes carbón, cubierta de concreto, anafe con campana de acero, horno y refrigerador. Repisas abiertas de roble.</p>
+          </article>
+          <article class="espacio e-dorm1 aparece">
+            <figure class="fotos" data-fotos="dorm1"><div class="fotos-grid"><div class="foto"><picture>
+              <source type="image/webp" srcset="img/dorm1-800.webp 800w, img/dorm1-1600.webp 1600w" sizes="(min-width: 1100px) 500px, (min-width: 700px) calc(50vw - 40px), 82vw">
+              <img src="img/dorm1-800.jpg" alt="Dormitorio con cama king de cabecero tapizado claro, veladores y lámpara de mesa" width="800" height="500" loading="lazy" decoding="async">
+            </picture></div></div></figure>
+            <h3 data-contenido="espacio.dorm1.titulo">Dormitorio 1</h3>
+            <p data-contenido="espacio.dorm1.texto">Cama king de 1,80 × 2,00 con cabecero tapizado, veladores de acero y roble y closet corredero.</p>
+          </article>
+          <article class="espacio e-dorm2 aparece">
+            <figure class="fotos" data-fotos="dorm2"><div class="fotos-grid"><div class="foto"><picture>
+              <source type="image/webp" srcset="img/dorm2-800.webp 800w, img/dorm2-1600.webp 1600w" sizes="(min-width: 1100px) 290px, (min-width: 700px) calc(50vw - 40px), 82vw">
+              <img src="img/dorm2-800.jpg" alt="Dormitorio con cama king de cabecero de cuero y apliques de brazo para leer" width="800" height="500" loading="lazy" decoding="async">
+            </picture></div></div></figure>
+            <h3 data-contenido="espacio.dorm2.titulo">Dormitorio 2</h3>
+            <p data-contenido="espacio.dorm2.texto">Cama king con cabecero de cuero, apliques de brazo para leer y closet corredero.</p>
+          </article>
+          <article class="espacio e-banos aparece">
+            <figure class="fotos" data-fotos="banos"><div class="fotos-grid"><div class="foto"><picture>
+              <source type="image/webp" srcset="img/bano-800.webp 800w, img/bano-1600.webp 1600w" sizes="(min-width: 1100px) 290px, (min-width: 700px) calc(50vw - 40px), 82vw">
+              <img src="img/bano-800.jpg" alt="Baño con azulejo blanco, lavabo de concreto, grifería negra y espejo redondo" width="800" height="500" loading="lazy" decoding="async">
+            </picture></div></div></figure>
+            <h3 data-contenido="espacio.banos.titulo">Dos baños</h3>
+            <p data-contenido="espacio.banos.texto">Tina con ducha de tubería vista y mampara, lavabo de concreto sobre vanitorio de roble y espejo redondo.</p>
+          </article>
+          <article class="espacio e-balcon aparece">
+            <figure class="fotos" data-fotos="balcon"><div class="fotos-grid"><div class="foto"><picture>
+              <source type="image/webp" srcset="img/balcon-800.webp 800w, img/balcon-1600.webp 1600w" sizes="(min-width: 1100px) 290px, (min-width: 700px) calc(50vw - 40px), 82vw">
+              <img src="img/balcon-800.jpg" alt="Balcón con baranda de vidrio, mesa bistró y dos sillas plegables" width="800" height="500" loading="lazy" decoding="async">
+            </picture></div></div></figure>
+            <h3 data-contenido="espacio.balcon.titulo">Balcón</h3>
+            <p data-contenido="espacio.balcon.texto">Mesa bistró de acero y dos sillas plegables de roble, con baranda de vidrio. Se sale por el ventanal del living.</p>
+          </article>
+          <article class="espacio e-recibidor aparece">
+            <figure class="fotos" data-fotos="recibidor"><div class="fotos-grid"><div class="foto"><picture>
+              <source type="image/webp" srcset="img/recibidor-800.webp 800w, img/recibidor-1600.webp 1600w" sizes="(min-width: 1100px) 290px, (min-width: 700px) calc(50vw - 40px), 82vw">
+              <img src="img/recibidor-800.jpg" alt="Recibidor con banca de roble, perchero de cañería negra y un cuadro" width="800" height="500" loading="lazy" decoding="async">
+            </picture></div></div></figure>
+            <h3 data-contenido="espacio.recibidor.titulo">Recibidor</h3>
+            <p data-contenido="espacio.recibidor.texto">Banca con repisa para zapatos y perchero de cañería negra junto a la entrada.</p>
+          </article>
         </div>
-        <p class="bajada">Un living-cocina integrado entre dos dormitorios, cada uno con su baño cerca y closet corredero.</p>
-      </div>
-      <div class="espacios">
-        <article class="tarjeta espacio aparece">
-          <figure class="fotos">
-            <div class="fotos-grid"><div class="foto">
-              <picture><source type="image/webp" srcset="img/living-sofa-800.webp 800w, img/living-sofa-1600.webp 1600w" sizes="(min-width: 1100px) 58vw, (min-width: 560px) 60vw, 82vw">
-            <img src="img/living-sofa-800.jpg" alt="Sofá de cuero coñac con lámpara de arco, cuadros abstractos y la cocina al fondo" loading="lazy" width="800" height="500"></picture>
-            </div></div>
-            <figcaption>Zona social</figcaption>
-          </figure>
-          <div class="cuerpo"><h3>Living</h3>
-            <p>Muro de ladrillo a la vista, mueble de TV flotante de roble, sofá de cuero y lámpara de arco. Ventanal corredero al balcón.</p></div>
-        </article>
-        <article class="tarjeta espacio aparece">
-          <figure class="fotos">
-            <div class="fotos-grid"><div class="foto">
-              <picture><source type="image/webp" srcset="img/cocina-800.webp 800w, img/cocina-1600.webp 1600w" sizes="(min-width: 1100px) 42vw, (min-width: 560px) 60vw, 82vw">
-            <img src="img/cocina-800.jpg" alt="Cocina en L con frentes carbón, azulejo blanco, repisas de roble y colgantes de jaula" loading="lazy" width="800" height="500"></picture>
-            </div></div>
-            <figcaption>Cocina</figcaption>
-          </figure>
-          <div class="cuerpo"><h3>Cocina</h3>
-            <p>En L, con frentes carbón, cubierta de concreto, anafe con campana de acero, horno y refrigerador. Repisas abiertas de roble.</p></div>
-        </article>
-        <article class="tarjeta espacio aparece">
-          <figure class="fotos">
-            <div class="fotos-grid"><div class="foto">
-              <picture><source type="image/webp" srcset="img/dorm1-800.webp 800w, img/dorm1-1600.webp 1600w" sizes="(min-width: 1100px) 33vw, (min-width: 560px) 60vw, 82vw">
-            <img src="img/dorm1-800.jpg" alt="Dormitorio con cama king de cabecero tapizado claro, veladores y lámpara de mesa" loading="lazy" width="800" height="500"></picture>
-            </div></div>
-            <figcaption>Dormitorio 1</figcaption>
-          </figure>
-          <div class="cuerpo"><h3>Dormitorio 1</h3>
-            <p>Cama king de 1,80 × 2,00 con cabecero tapizado, veladores de acero y roble y closet corredero.</p></div>
-        </article>
-        <article class="tarjeta espacio aparece">
-          <figure class="fotos">
-            <div class="fotos-grid"><div class="foto">
-              <picture><source type="image/webp" srcset="img/dorm2-800.webp 800w, img/dorm2-1600.webp 1600w" sizes="(min-width: 1100px) 33vw, (min-width: 560px) 60vw, 82vw">
-            <img src="img/dorm2-800.jpg" alt="Dormitorio con cama king de cabecero de cuero y apliques de brazo para leer" loading="lazy" width="800" height="500"></picture>
-            </div></div>
-            <figcaption>Dormitorio 2</figcaption>
-          </figure>
-          <div class="cuerpo"><h3>Dormitorio 2</h3>
-            <p>Cama king con cabecero de cuero, apliques de brazo para leer y closet corredero.</p></div>
-        </article>
-        <article class="tarjeta espacio aparece">
-          <figure class="fotos">
-            <div class="fotos-grid"><div class="foto">
-              <picture><source type="image/webp" srcset="img/bano-800.webp 800w, img/bano-1600.webp 1600w" sizes="(min-width: 1100px) 33vw, (min-width: 560px) 60vw, 82vw">
-            <img src="img/bano-800.jpg" alt="Baño con azulejo blanco, lavabo de concreto, grifería negra y espejo redondo" loading="lazy" width="800" height="500"></picture>
-            </div></div>
-            <figcaption>Baños</figcaption>
-          </figure>
-          <div class="cuerpo"><h3>Dos baños</h3>
-            <p>Tina con ducha de tubería vista y mampara, lavabo de concreto sobre vanitorio de roble y espejo redondo.</p></div>
-        </article>
-        <article class="tarjeta espacio aparece">
-          <figure class="fotos">
-            <div class="fotos-grid"><div class="foto">
-              <picture><source type="image/webp" srcset="img/balcon-800.webp 800w, img/balcon-1600.webp 1600w" sizes="(min-width: 1100px) 58vw, (min-width: 560px) 60vw, 82vw">
-            <img src="img/balcon-800.jpg" alt="Balcón con baranda de vidrio, mesa bistró y dos sillas plegables" loading="lazy" width="800" height="500"></picture>
-            </div></div>
-            <figcaption>Exterior</figcaption>
-          </figure>
-          <div class="cuerpo"><h3>Balcón</h3>
-            <p>Mesa bistró de acero y dos sillas plegables de roble, con baranda de vidrio. Se sale por el ventanal del living.</p></div>
-        </article>
-        <article class="tarjeta espacio aparece">
-          <figure class="fotos">
-            <div class="fotos-grid"><div class="foto">
-              <picture><source type="image/webp" srcset="img/recibidor-800.webp 800w, img/recibidor-1600.webp 1600w" sizes="(min-width: 1100px) 42vw, (min-width: 560px) 60vw, 82vw">
-            <img src="img/recibidor-800.jpg" alt="Recibidor con banca de roble, perchero de cañería negra y un cuadro" loading="lazy" width="800" height="500"></picture>
-            </div></div>
-            <figcaption>Acceso</figcaption>
-          </figure>
-          <div class="cuerpo"><h3>Recibidor</h3>
-            <p>Banca con repisa para zapatos y perchero de cañería negra junto a la entrada.</p></div>
-        </article>
+        <div class="progreso" aria-hidden="true"><i></i></div>
+        <p class="frase aparece">Dos dormitorios, cada uno con cama king y closet corredero.</p>
       </div>
     </div>
   </section>
 
-  <section id="tour" class="seccion" aria-labelledby="t-tour">
+  <section id="materiales" class="seccion fondo-arena" aria-labelledby="t-materiales">
     <div class="contenedor">
-      <div class="cabecera aparece">
-        <div>
-          <h2 id="t-tour">Recorrido 3D</h2>
-        </div>
-        <p class="bajada">Camina por el departamento en primera persona, en el computador o en el teléfono.</p>
+      <header class="cabecera aparece">
+        <h2 id="t-materiales">Materiales</h2>
+        <p class="bajada">Las mismas texturas del modelo 3D que ves en las imágenes y en el recorrido.</p>
+      </header>
+      <div class="muestras desliza aparece" tabindex="0" role="region" aria-label="Muestras de materiales">
+        <ul role="list">
+          <li class="muestra"><picture><source type="image/webp" srcset="img/material-ladrillo-360.webp"><img src="img/material-ladrillo-360.jpg" alt="" width="360" height="360" loading="lazy" decoding="async"></picture>
+            <h3>Ladrillo a la vista</h3><p>Muro del living</p></li>
+          <li class="muestra"><picture><source type="image/webp" srcset="img/material-concreto-360.webp"><img src="img/material-concreto-360.jpg" alt="" width="360" height="360" loading="lazy" decoding="async"></picture>
+            <h3>Concreto visto</h3><p>Cielo raso</p></li>
+          <li class="muestra"><picture><source type="image/webp" srcset="img/material-roble-360.webp"><img src="img/material-roble-360.jpg" alt="" width="360" height="360" loading="lazy" decoding="async"></picture>
+            <h3>Tablas de roble</h3><p>Piso de los dormitorios y repisas</p></li>
+          <li class="muestra"><picture><source type="image/webp" srcset="img/material-cuero-360.webp"><img src="img/material-cuero-360.jpg" alt="" width="360" height="360" loading="lazy" decoding="async"></picture>
+            <h3>Cuero coñac</h3><p>Sofá y cabecero del dormitorio&nbsp;2</p></li>
+          <li class="muestra"><picture><source type="image/webp" srcset="img/material-acero-360.webp"><img src="img/material-acero-360.jpg" alt="" width="360" height="360" loading="lazy" decoding="async"></picture>
+            <h3>Acero negro</h3><p>Veladores y mesa bistró</p></li>
+        </ul>
       </div>
-      <div class="tarjeta tour aparece">
-        <figure>
-          <picture><source type="image/webp" srcset="img/maqueta-800.webp 800w, img/maqueta-1600.webp 1600w" sizes="(min-width: 1000px) 58vw, 100vw">
-          <img src="img/maqueta-1600.jpg" alt="Maqueta 3D del departamento vista desde arriba, sin cielo, con todos los muebles" loading="lazy" width="1600" height="1000"></picture>
-        </figure>
-        <div class="cuerpo">
-          <ul class="lista-tecnica">
-            <li><span>En computador</span><span>se camina con el teclado y se mira con el ratón</span></li>
-            <li><span>En teléfono</span><span>se camina y se mira arrastrando la pantalla</span></li>
-            <li><span>Puertas y ventanal</span><span>se abren con un clic o un toque</span></li>
-            <li><span>Descarga</span><span>liviana en teléfono</span></li>
-          </ul>
-          <a class="boton primario bloque" href="tour/">Recorrer en 3D</a>
-          <p class="nota">Modelo hecho desde el plano de arquitectura, sin cotas: las alturas y las terminaciones son una propuesta de decoración.</p>
-        </div>
+    </div>
+  </section>
+
+  <section id="tour" class="seccion fondo-carbon" aria-labelledby="t-tour">
+    <div class="contenedor recorrido">
+      <header class="cabecera capitulo aparece">
+        <h2 id="t-tour">Recorrido 3D</h2>
+        <p class="bajada">Camina por el departamento en primera persona, en el computador o en el teléfono.</p>
+      </header>
+      <figure class="recorrido-media aparece">
+        <a class="recorrido-enlace" href="tour/" tabindex="-1" aria-hidden="true">
+          <picture><source type="image/webp" srcset="img/maqueta-800.webp 800w, img/maqueta-1600.webp 1600w" sizes="(min-width: 1000px) 700px, 100vw">
+            <img src="img/maqueta-1600.jpg" alt="" width="1600" height="1000" loading="lazy" decoding="async"></picture>
+          <span class="icono-3d"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+        </a>
+        <figcaption>La maqueta completa, vista desde arriba y sin cielo.</figcaption>
+      </figure>
+      <div class="recorrido-texto aparece">
+        <ul class="filas">
+          <li><b>En computador</b> — se camina con el teclado (W A S D o las flechas) y se mira con el ratón.</li>
+          <li class="f-telefono"><b>En teléfono</b> — se camina con la palanca de abajo a la izquierda y se mira arrastrando el resto de la pantalla.</li>
+          <li><b>Puertas y ventanal</b> — se abren con un clic o un toque.</li>
+          <li><b>Descarga</b> — en el teléfono carga una versión con texturas más livianas.</li>
+        </ul>
+        <a class="boton primario" href="tour/">Entrar al recorrido</a>
+        <p class="nota">Modelo hecho desde el plano de arquitectura, sin cotas: las alturas y las terminaciones son una propuesta de decoración.</p>
       </div>
     </div>
   </section>
 
   <section id="equipamiento" class="seccion" aria-labelledby="t-equipo">
     <div class="contenedor">
-      <div class="cabecera aparece">
-        <div>
-          <h2 id="t-equipo">Lo que hay</h2>
-        </div>
+      <header class="cabecera aparece">
+        <h2 id="t-equipo">Lo que hay</h2>
         <p class="bajada">Lo que se ve en el modelo, más lo marcado como ejemplo en este sitio de demostración.</p>
-      </div>
-      <div class="equipos aparece">
-        <div class="equipo"><h3>Cocina equipada</h3><p>Anafe, campana, horno y refrigerador.</p></div>
-        <div class="equipo"><h3>Lavadora</h3><p>En un nicho con puerta plegable.</p></div>
-        <div class="equipo"><h3>TV de 55"</h3><p>Sobre el mueble flotante del living.</p></div>
-        <div class="equipo"><h3>Dos baños</h3><p>Tina con ducha y mampara en cada uno.</p></div>
-        <div class="equipo"><h3>Closets</h3><p>Correderos, en los dos dormitorios.</p></div>
-        <div class="equipo"><h3>Balcón</h3><p>Mesa bistró y dos sillas.</p></div>
-        <div class="equipo"><h3>Wi-Fi</h3><p>Ejemplo del sitio de demostración.</p></div>
-        <div class="equipo"><h3>Ropa de cama</h3><p>Sábanas y toallas: ejemplo.</p></div>
-      </div>
+      </header>
+      <ul class="equipos aparece">
+        <li><h3>Cocina equipada</h3><p>Anafe, campana, horno y refrigerador.</p></li>
+        <li><h3>Lavadora</h3><p>En un nicho con puerta plegable.</p></li>
+        <li><h3>TV de 55 pulgadas</h3><p>Sobre el mueble flotante del living.</p></li>
+        <li><h3>Dos baños</h3><p>Tina con ducha y mampara en cada uno.</p></li>
+        <li><h3>Closets</h3><p>Correderos, en los dos dormitorios.</p></li>
+        <li><h3>Balcón</h3><p>Mesa bistró y dos sillas.</p></li>
+        <li><h3>Wi-Fi</h3><p>Valor de ejemplo del sitio de demostración.</p></li>
+        <li><h3>Ropa de cama</h3><p>Sábanas y toallas (ejemplo).</p></li>
+      </ul>
     </div>
   </section>
 
-  <section id="tarifas" class="seccion" aria-labelledby="t-tarifas">
+  <section id="tarifas" class="seccion fondo-terracota" aria-labelledby="t-tarifas">
     <div class="contenedor tarifas">
-      <div class="aparece">
-        <h2 id="t-tarifas">Reserva</h2>
-        <p class="bajada" style="margin-top: 14px">Envías una solicitud con tus fechas y te respondemos por correo para confirmarla. No se cobra nada en línea.</p>
+      <div class="tarifas-info aparece">
+        <h2 id="t-tarifas" class="t-capitulo">Tarifas</h2>
+        <p class="precio-grande"><span class="monto" data-precio="noche">CLP 58.000</span><span class="precio-nota">por noche · ejemplo</span></p>
+        <p class="bajada">Envías una solicitud con tus fechas y te respondemos por correo para confirmarla. No se cobra nada en línea.</p>
         <table class="tabla-tarifas">
           <tbody>
-            <tr><th scope="row">Noche (ejemplo)</th><td data-precio="noche"></td></tr>
-            <tr><th scope="row">Limpieza, una vez (ejemplo)</th><td data-precio="limpieza"></td></tr>
+            <tr><th scope="row">Limpieza, una vez (ejemplo)</th><td><span data-precio="limpieza">CLP 15.000</span></td></tr>
             <tr><th scope="row">Estadía</th><td>de 2 a 30 noches</td></tr>
             <tr><th scope="row">Huéspedes</th><td>hasta 4</td></tr>
-            <tr><th scope="row">Llegada / salida (ejemplo)</th><td>desde 15:00 / hasta 11:00</td></tr>
+            <tr><th scope="row">Llegada (ejemplo)</th><td><span data-contenido="condiciones.llegada">desde 15:00</span></td></tr>
+            <tr><th scope="row">Salida (ejemplo)</th><td><span data-contenido="condiciones.salida">hasta 11:00</span></td></tr>
             <tr><th scope="row">Pago</th><td>se acuerda al confirmar</td></tr>
           </tbody>
         </table>
       </div>
-      <form id="reserva-rapida" class="tarjeta caja-reserva aparece" novalidate>
-        <p class="precio"><span data-precio="noche"></span> <small>/ noche · ejemplo</small></p>
-        <div class="dos">
-          <div class="campo"><label for="r-entrada">Llegada</label><input id="r-entrada" type="date" required></div>
-          <div class="campo"><label for="r-salida">Salida</label><input id="r-salida" type="date" required></div>
-        </div>
-        <div class="campo"><label for="r-huespedes">Huéspedes</label>
-          <select id="r-huespedes"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
-        <p id="r-estimado" class="nota" aria-live="polite"></p>
-        <p id="r-error" class="nota" style="color: var(--error)" aria-live="polite"></p>
-        <button class="boton primario bloque" type="submit">Ver disponibilidad</button>
-        <p class="nota">Sin cobro en línea: te confirmamos por correo.</p>
-      </form>
+      <div class="tarifas-accion aparece">
+        <p>Elige tus noches en el calendario y envía la solicitud. Te confirmamos por correo.</p>
+        <a class="boton invertido" href="reserva.html#calendario">Ver fechas</a>
+      </div>
     </div>
   </section>
 
   <section id="preguntas" class="seccion" aria-labelledby="t-preguntas">
-    <div class="contenedor">
-      <div class="cabecera aparece">
-        <div>
-          <h2 id="t-preguntas">Preguntas</h2>
-        </div>
-      </div>
+    <div class="contenedor preguntas-grid">
+      <h2 id="t-preguntas" class="aparece">Preguntas</h2>
       <div class="preguntas aparece">
-        <details><summary>¿Las imágenes son fotos del departamento?</summary>
+        <details open><summary>¿Las imágenes son fotos del departamento?</summary>
           <p>No. Son renders de un modelo 3D construido desde el plano de arquitectura, que no trae cotas: las medidas se infirieron con un margen de ± 5 % y las alturas, los muebles y las terminaciones son una propuesta de decoración.</p></details>
         <details><summary>¿Cómo se confirma una reserva?</summary>
           <p>Eliges las fechas y envías la solicitud. Queda pendiente y bloquea esas noches en el calendario hasta que te respondemos por correo para confirmarla o rechazarla.</p></details>
@@ -248,10 +251,10 @@
           <p>No. El sitio no pide ni guarda datos de pago. La forma de pago se acuerda al confirmar.</p></details>
         <details><summary>¿Dónde está?</summary>
           <p>La dirección se entrega al confirmar la reserva. Este es un sitio de demostración y no publica la ubicación.</p></details>
-        <details><summary>¿El tour funciona en el teléfono?</summary>
-          <p>Sí. En el teléfono se camina arrastrando el lado izquierdo de la pantalla y se mira arrastrando el derecho. Carga una versión con texturas más livianas.</p></details>
+        <details><summary>¿El recorrido 3D funciona en el teléfono?</summary>
+          <p>Sí. En el teléfono se camina con la palanca de abajo a la izquierda y se mira arrastrando el resto de la pantalla. Carga una versión con texturas más livianas.</p></details>
         <details><summary>¿Qué hacen con mis datos?</summary>
-          <p>Se usan sólo para responder tu solicitud. Detalle en la <a href="privacidad.html">política de privacidad</a>.</p></details>
+          <p>Se usan solo para responder tu solicitud. Detalle en la <a href="privacidad.html">política de privacidad</a>.</p></details>
       </div>
     </div>
   </section>
@@ -259,13 +262,14 @@
 
 <footer class="pie">
   <div class="contenedor">
-    <p class="nota-demo">Sitio de demostración: imágenes renderizadas desde un modelo 3D; tarifas de ejemplo.</p>
-    <p class="derechos">© <span id="anio"></span> Project-roomVR · <a href="privacidad.html">Privacidad</a></p>
+    <a class="pie-marca" href="./">Project-roomVR</a>
+    <p class="nota-pie">Imágenes renderizadas desde un modelo 3D · tarifas de ejemplo</p>
+    <p class="derechos">© <span id="anio">2026</span> <span class="nombre">Project-roomVR</span> · <a href="privacidad.html">Privacidad</a></p>
   </div>
 </footer>
 
-<div class="barra-movil">
-  <p class="precio" style="margin: 0"><span data-precio="noche"></span> <small>/ noche · ejemplo</small></p>
+<div class="barra-movil oculta">
+  <p class="precio"><span data-precio="noche">CLP 58.000</span><small>por noche · ejemplo</small></p>
   <a class="boton primario" href="reserva.html">Reservar</a>
 </div>
 </body>
