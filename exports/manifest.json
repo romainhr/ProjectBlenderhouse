@@ -26,7 +26,7 @@
       "03": "dc7403a96497",
       "04": "903d0853c72a",
       "05": "6c66dff31d4a",
-      "06": "201d7f910ca4"
+      "06": "bd64a0f5917c"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -255,7 +255,7 @@
       "aperturas": {
         "moviles": 35,
         "estaticos": 1824,
-        "pares_de_hojas": 36,
+        "pares_abiertos": 99,
         "max_mm": 0.0
       },
       "nevera_abierta": {

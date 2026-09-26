@@ -318,7 +318,8 @@ def prueba_muebles(datos):
 # Prueba de aperturas (corrección 07c): cada hoja o cajón, abierto en el estado que permite el contrato (con las hojas
 # de su depende_de corridas), no entra más de TOL_APERTURA en ninguna caja estática (mallas visibles que no son móviles)
 # ni en los demás móviles en su estado de referencia: los de mueble (cajón, clóset, nevera, mueble) cerrados, y las
-# puertas y el ventanal como en el modelo. Además, dos hojas de bisagra de mueble abiertas a la vez no se tocan.
+# puertas y el ventanal como en el modelo. Además, dos hojas de bisagra de mueble abiertas a la vez no se tocan, ni una
+# hoja y un cajón del mismo recinto.
 # Cada isla de malla es su caja local llevada al mundo (exacta para las piezas de cajas; giro sólo en Z) y el choque se
 # mide con ejes separadores en planta y el solape en altura.
 # ---------------------------------------------------------------------------
@@ -432,15 +433,23 @@ def prueba_aperturas(root):
         if m.name in peor and peor[m.name][0] > TOL_APERTURA:
             p, ob = peor[m.name]
             fallos.append(f"{m.name} abierto entra {p * 1000:.1f} mm en {ob}")
+    # Pares abiertos a la vez: dos hojas de bisagra de mueble, y una hoja con un cajón del mismo recinto (salvo que el
+    # contrato los ate con depende_de o bloquea: entonces el visor no los deja abiertos juntos).
     hojas = [o for o in moviles if "puerta" in o and o.get("clase") in CLASES_MUEBLE]
+    cajones = [o for o in moviles if o.get("clase") == "cajon"]
+
+    def atados(a, b):
+        lista = lambda o, k: [n for n in str(o.get(k, "")).split(",") if n]   # noqa: E731
+        return b.name in lista(a, "bloquea") + lista(a, "depende_de") or a.name in lista(b, "bloquea") + lista(b, "depende_de")
+    candidatos = [(a, b) for i, a in enumerate(hojas) for b in hojas[i + 1:]]
+    candidatos += [(a, b) for a in hojas for b in cajones if a.get("recinto") == b.get("recinto") and not atados(a, b)]
     pares = 0
-    for i, a in enumerate(hojas):
-        for b in hojas[i + 1:]:
-            pa = max((_pen(x, y) for x in cajas(a, True) for y in cajas(b, True)), default=0.0)
-            pares += 1
-            if pa > TOL_APERTURA:
-                fallos.append(f"{a.name} y {b.name} abiertas a la vez se cruzan {pa * 1000:.1f} mm")
-    informe = {"moviles": len(moviles), "estaticos": len(estaticos), "pares_de_hojas": pares,
+    for a, b in candidatos:
+        pa = max((_pen(x, y) for x in cajas(a, True) for y in cajas(b, True)), default=0.0)
+        pares += 1
+        if pa > TOL_APERTURA:
+            fallos.append(f"{a.name} y {b.name} abiertos a la vez se cruzan {pa * 1000:.1f} mm")
+    informe = {"moviles": len(moviles), "estaticos": len(estaticos), "pares_abiertos": pares,
                "max_mm": round(max((p for p, _ in peor.values()), default=0.0) * 1000, 2)}
     return fallos, informe
 
