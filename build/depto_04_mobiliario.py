@@ -70,7 +70,7 @@ RADIO_PANTALLA_CHICA = 0.012     # m: radio de la fuente dentro de las pantallas
 # (id, etiqueta, recinto, encendido al cargar el visor, temperatura de color en K). 2700 K en general y 3000 K en
 # cocina y baños (encargo 07b); el color lineal sale de la temperatura (build/depto_color.py: Planck + CIE 1931,
 # calculado). Izquierda y derecha de los veladores: mirando la cabecera desde los pies de la cama.
-K2700, K3000 = 2700, 3000
+K2700, K3000, K5000 = 2700, 3000, 5000   # 5000 K: LED de la nevera (supuesto: blanco neutro usual)
 GRUPOS_LUZ = [
     ("living_techo", "Living · techo", "Living", True, K2700),
     ("living_lampara_pie", "Living · lámpara de pie", "Living", False, K2700),
@@ -87,7 +87,12 @@ GRUPOS_LUZ = [
     ("bano1", "Baño principal · techo", "Bano1", True, K3000),
     ("bano2", "Segundo baño · techo", "Bano2", True, K3000),
     ("balcon", "Balcón · colgante del comedor", "Balcon", True, K2700),
+    # corrección 07c (ronda 2): luz interior de la nevera (fase 3, NEVERA_LUZ). Nace apagada y no tiene interruptor: la
+    # prende la puerta de la nevera al abrirse (propiedad `enciende` del móvil; contrato, secciones 1 y 2)
+    ("cocina_nevera", "Cocina · luz de la nevera", "Cocina", False, K5000),
 ]
+# Grupos sin interruptor ni lámpara: los prende un móvil al abrirse (id -> nodo del móvil con `enciende`)
+GRUPOS_DE_MOVIL = {"cocina_nevera": "Depto_Mueble_Nevera_Puerta"}
 RECINTOS_CON_LUZ = ("Hall", "Living", "Cocina", "Dorm1", "Paso_D1", "Bano1", "Dorm2", "Paso_D2", "Bano2", "Balcon")
 # Nombres de los recintos para la interfaz del visor (contrato v2, sección 5); las etiquetas de GRUPOS_LUZ los usan.
 RECINTOS_ETIQUETAS = {
@@ -428,6 +433,12 @@ def cocina(c):
     # 3 cm más abajo alumbraba de lado los frentes del otro tramo en la esquina (prueba sin luz rebotada: el aporte a los
     # frentes altos del rincón pasó de 0,010 a 0,034 de luminancia)
     marcar_ampolletas(led, POTENCIA["bajo_altos"], radio=0.004, grupo="cocina_techo", cono=CONO_LINEAL)
+    # corrección 07c (ronda 2): en Blender, foco hacia abajo (la fase 5 la arma SPOT de 2 × CONO_LINEAL, como el foco del
+    # visor). Una puntual emite también hacia arriba y, a 8,5 mm bajo el piso de los altos, dejaba en los platos de N1
+    # dos manchas quemadas de borde duro (se había atribuido al riel: el par A/B de altos_norte_izquierda lo desmiente)
+    for o in led:
+        if o.get("luz_w"):
+            o["luz_foco"] = True
 
 
 def luz_bajo_altos(col, prefijo):
@@ -760,7 +771,13 @@ def pruebas_luces(root):
     for g in ids:
         if g not in con_luz:
             fallos.append(f"grupo {g} sin ampolletas")
-        if g not in controles:
+        movil = bpy.data.objects.get(GRUPOS_DE_MOVIL.get(g, ""))
+        if g in GRUPOS_DE_MOVIL:
+            if movil is None or g not in str(movil.get("enciende", "")).split(","):
+                fallos.append(f"grupo {g}: el móvil {GRUPOS_DE_MOVIL[g]} no existe o no lo prende (enciende)")
+            if g in controles:
+                fallos.append(f"grupo {g}: lo prende un móvil y no debe tener interruptor ({controles[g]})")
+        elif g not in controles:
             fallos.append(f"grupo {g} sin interruptor ni lámpara que lo prenda")
     for g, nombres in controles.items():
         if g not in ids:
@@ -818,7 +835,8 @@ def main():
     n_int = sum(1 for o in objs if o.name.startswith("Depto_Interruptor_") and o.parent is None)
     # para las fases 5 (color de cada luz) y 6 (grupos_luz del contrato)
     scene["depto_grupos_luz"] = json.dumps([dict(id=i, etiqueta=e, recinto=r, encendido=en, kelvin=k,
-                                                 color=list(DC.kelvin_a_lineal(k)))
+                                                 color=list(DC.kelvin_a_lineal(k)),
+                                                 **({"movil": GRUPOS_DE_MOVIL[i]} if i in GRUPOS_DE_MOVIL else {}))
                                             for i, e, r, en, k in GRUPOS_LUZ], ensure_ascii=False)
     scene["depto_recintos_etiquetas"] = json.dumps(RECINTOS_ETIQUETAS, ensure_ascii=False)
     SE.sellar(scene, "04")

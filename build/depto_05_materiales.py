@@ -38,6 +38,8 @@ LUZ_RADIO = 0.03                   # radio de la fuente (sombras suaves)
 AMPOLLETA_SIN_SOMBRA = ("Depto_Mat_Bombilla", "Depto_Mat_VidrioBombilla")
 LUZ_CLIP_SOMBRA = 0.005            # m: inicio del mapa de sombras de cada luz (Eevee usa 0,05 por defecto: dentro de
                                    # las pantallas cerradas, el tapón a ~5 cm de la ampolleta no hacía sombra)
+FOCO_BORDE = 0.5                   # spot_blend de los focos de Blender: la penumbra del SpotLight del visor
+                                   # (PENUMBRA_CONO de web/src/tour/js/luces.js)
 SOL = dict(elevacion=35.0, azimut=-25.0, energia=3.0)   # supuesto: sol desde el lado del balcón (+Y), 25° al -X
 CIELO_FUERZA = 0.25
 TOPE_TRIANGULOS = G.TOPE_TRIANGULOS
@@ -68,8 +70,15 @@ def luces(col, root, grupos):
             continue
         pts = [o.matrix_world @ v.co for v in o.data.vertices]
         centro = sum(pts, Vector()) / len(pts)
-        ld = bpy.data.lights.new(f"Depto_Luz_{o.name}", "POINT")
+        # corrección 07c (ronda 2): la ampolleta con ["luz_foco"] (la luz lineal bajo los altos) es un foco hacia abajo
+        # de 2 × cono_deg, como el SpotLight del visor; las demás siguen puntuales (su pantalla hace la sombra)
+        foco = bool(o.get("luz_foco")) and bool(o.get("luz_cono_deg"))
+        ld = bpy.data.lights.new(f"Depto_Luz_{o.name}", "SPOT" if foco else "POINT")
         ld.energy = float(w)
+        if foco:
+            ld.spot_size = math.radians(min(180.0, 2.0 * float(o["luz_cono_deg"])))
+            ld.spot_blend = FOCO_BORDE
+            ld.show_cone = False
         g = grupos.get(o.get("luz_grupo"), {})
         ld.color = tuple(g.get("color", LUZ_COLOR))
         ld.shadow_soft_size = float(o.get("luz_radio", LUZ_RADIO))   # la fase 4 lo achica dentro de los focos
@@ -81,6 +90,10 @@ def luces(col, root, grupos):
         if o.get("luz_cono_deg"):
             ob["cono_deg"] = float(o["luz_cono_deg"])
             ob["direccion"] = list(direccion_luz(o))
+            if foco:
+                ob.rotation_euler = Vector(ob["direccion"]).to_track_quat("-Z", "Y").to_euler()   # el foco apunta por -Z
+        if o.get("luz_alcance_m"):
+            ob["alcance_m"] = float(o["luz_alcance_m"])        # contrato 2.2: distancia de corte en el visor
         col.objects.link(ob)
         n += 1
     el, az = math.radians(SOL["elevacion"]), math.radians(SOL["azimut"])
@@ -192,7 +205,8 @@ def main():
     mundo(scene, hacia_sol)
     eevee(scene)
     fallos, mats, total = pruebas(root)
-    sin_grupo = [o.name for o in cols["Depto_Luces"].objects if o.data.type == "POINT" and o.get("grupo") not in grupos]
+    sin_grupo = [o.name for o in cols["Depto_Luces"].objects if o.data.type in ("POINT", "SPOT")
+                 and o.get("grupo") not in grupos]
     if sin_grupo:
         fallos.append(f"luces sin grupo de luz de la fase 4: {sin_grupo}")
     for f in fallos:
