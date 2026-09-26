@@ -101,6 +101,8 @@ test("sitio.js: elegir un idioma guarda nf_lang (un año, todo el sitio, Lax y S
 
 // ---------------------------------------------------------------- diccionarios
 const claves = Object.keys(DICCIONARIOS.es);
+// «:», «?», «;» o «!» ante un espacio o el final, sin U+00A0 ni U+202F antes (el francés los separa con un espacio duro)
+const SIN_ESPACIO_DURO = /(?<![\u00a0\u202f])[:?;!](?=\s|$)/u;
 
 test("diccionarios: «Project-roomVR» nunca se traduce y los títulos de página lo llevan en los tres idiomas", () => {
   for (const k of claves) {
@@ -140,7 +142,7 @@ test("diccionarios: sin «loft», sin marcado HTML y con las mismas claves en lo
 
 test("diccionarios: los textos de las páginas están traducidos (salvo nombres propios, cifras y siglas)", () => {
   // iguales al español a propósito: el mismo término en ese idioma (p. ej. «Cookies», «Disponible», «Joystick»)
-  const iguales = { en: new Set(["privacidad.cookies", "reserva.campo.mensaje", "tour.ayuda.teclas", "tour.ayuda.esc",
+  const iguales = { en: new Set(["privacidad.cookies", "reserva.campo.mensaje", "tour.ayuda.esc",
     "inicio.equipo.closets", "no_encontrada.etiqueta"]),
     fr: new Set(["privacidad.cookies", "reserva.campo.mensaje", "reserva.leyenda.disponible", "reserva.fechas",
       "comun.nav.principal", "comun.nav.menu", "comun.menu.preguntas", "tour.ayuda.palanca"]) };
@@ -152,10 +154,72 @@ test("diccionarios: los textos de las páginas están traducidos (salvo nombres 
   }
 });
 
-test("francés: espacio fino antes de «:», «?», «;» y «!», y dentro de las comillas francesas", () => {
+test("francés: espacio duro antes de «:», «?», «;» y «!», y dentro de las comillas francesas", () => {
+  // U+00A0 o U+202F, nunca el espacio común: con él, el signo puede quedar solo al comienzo de una línea (medido en
+  // /fr/reserva.html: «: nous vous…» a 312 y a 482 px). La versión anterior aceptaba el espacio común, porque \s lo
+  // incluye.
   for (const [k, v] of Object.entries(DICCIONARIOS.fr)) {
     if (k.startsWith("js.reserva.") || k.startsWith("js.contenido.")) continue;   // textos de otra sesión
-    assert.doesNotMatch(v, /[^\s  ][:?;!](\s|$)/u, `fr: ${k}: «${v}»`);
-    assert.doesNotMatch(v, /«(?! )|(?<! )»/u, `fr: ${k}: «${v}»`);
+    assert.doesNotMatch(v, SIN_ESPACIO_DURO, `fr: ${k}: «${v}»`);
+    assert.doesNotMatch(v, /«(?![\u00a0\u202f])|(?<![\u00a0\u202f])»/u, `fr: ${k}: «${v}»`);
+  }
+});
+
+test("la prueba del espacio duro en francés detecta el espacio común y la falta de espacio antes de «:»", () => {
+  assert.match("Sans paiement en ligne : nous", SIN_ESPACIO_DURO);
+  assert.match("Sans paiement en ligne: nous", SIN_ESPACIO_DURO);
+  assert.match("Des questions ?", SIN_ESPACIO_DURO);
+  assert.doesNotMatch("Sans paiement en ligne\u00a0: nous", SIN_ESPACIO_DURO);
+  assert.doesNotMatch("Des questions\u202f?", SIN_ESPACIO_DURO);
+  assert.doesNotMatch("https://ejemplo", SIN_ESPACIO_DURO);
+});
+
+test("inglés y francés: las teclas (W A S D, Z Q S D) van con espacios duros y no se cortan entre líneas", () => {
+  for (const idioma of ["en", "fr"]) {
+    for (const [k, v] of Object.entries(DICCIONARIOS[idioma])) {
+      assert.doesNotMatch(v, /\b[WZ] [AQ]\b|\b[AQ] S\b|\bS D\b/u, `${idioma}: ${k}: «${v}»`);
+    }
+  }
+});
+
+test("francés: sin los calcos que encontró la revisión", () => {
+  const calcos = [
+    [/glisser le reste de l['’]écran/u, "se desliza el dedo sobre la pantalla, no la pantalla"],
+    [/\bCeci est un site/u, "«Il s'agit d'un site…»"],
+    [/\bservies depuis\b/u, "«hébergées sur…»"],
+  ];
+  for (const [k, v] of Object.entries(DICCIONARIOS.fr)) {
+    for (const [re, motivo] of calcos) assert.doesNotMatch(v, re, `fr: ${k}: «${v}» (${motivo})`);
+  }
+  // «Séjour» es el living: la duración de la estadía, en la misma página, no se llama igual
+  assert.notEqual(DICCIONARIOS.fr["inicio.tarifas.estadia"], DICCIONARIOS.fr["espacio.living.titulo"]);
+  // nombre del landmark: «Menu principal, navigation», no el adjetivo solo
+  assert.equal(DICCIONARIOS.fr["comun.nav.principal"], "Menu principal");
+});
+
+test("inglés: el ventanal del living se llama siempre «sliding glass door»", () => {
+  for (const [k, v] of Object.entries(DICCIONARIOS.en)) assert.doesNotMatch(v, /sliding door/u, `en: ${k}: «${v}»`);
+});
+
+test("reserva: el botón de envío dice lo mismo en el HTML y cuando reserva.js lo reescribe tras un error", () => {
+  // reserva.html trae reserva.solicitar; reserva.js le vuelve a poner js.reserva.envio.solicitar después de un error
+  for (const [idioma, d] of Object.entries(DICCIONARIOS)) {
+    assert.equal(d["reserva.solicitar"], d["js.reserva.envio.solicitar"], idioma);
+  }
+  for (const id of ["enviar", "enviar-movil"]) {
+    assert.match(leer("reserva.html"), new RegExp(`<button[^>]*id="${id}"[^>]*data-i18n="reserva\\.solicitar"`), id);
+  }
+});
+
+test("precios de ejemplo sin JS: el texto de respaldo en cada idioma es el mismo que escribe sitio.js", async () => {
+  const { TARIFA, clp } = await import("../src/js/reserva-logica.js");
+  const { localeDe } = await import("../src/js/idioma.js");
+  const marcas = [...leer("index.html").matchAll(/<span[^>]*data-precio="([a-z]+)"[^>]*>/g)];
+  assert.ok(marcas.length >= 3, "¿se perdieron los precios de ejemplo?");
+  for (const [span, precio] of marcas) {
+    assert.match(span, new RegExp(`data-i18n="comun\\.precio\\.${precio}"`), span);
+    for (const [idioma, d] of Object.entries(DICCIONARIOS)) {
+      assert.equal(d[`comun.precio.${precio}`], clp(TARIFA[precio], localeDe(idioma)), `${idioma}: ${precio}`);
+    }
   }
 });

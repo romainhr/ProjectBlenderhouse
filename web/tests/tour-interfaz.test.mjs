@@ -94,3 +94,49 @@ test("tour: el selector de la barra cuelga de «Reservar» fuera del flujo y mid
   assert.match(regla("#barra-superior .idiomas"), /position:\s*absolute/);
   assert.match(regla("#barra-superior .idiomas a"), /min-height:\s*42px/);   // + 2 px de borde del .panel
 });
+
+// ---------------------------------------------------------------- botonera inferior
+// Con left: 50% y sin ancho propio, el ancho disponible de #botonera era la mitad de la vista: entre unos 565 y 690 px,
+// «Floor plan», «Full screen» y «Plein écran» partían en dos líneas y la botonera pasaba de 60 a 72 px (los paneles
+// flotantes, puestos a 66 px del borde, la tapaban). Medido después del cambio a 640 × 360 y 667 × 375: 60 px en los
+// tres idiomas.
+const DICCIONARIOS = Object.fromEntries(["es", "en", "fr"].map((i) =>
+  [i, JSON.parse(readFileSync(new URL(`../src/i18n/${i}.json`, import.meta.url), "utf8"))]));
+const ANCHO_SIN_ETIQUETAS = 560;         // @media (max-width: 560px): bajo ese ancho las etiquetas se ocultan
+
+/** Ancho de `texto` a `px` px con Public Sans 500, por lo alto: 0,62 em por carácter (la media medida en el navegador
+ *  es de unos 0,5 em; así la prueba avisa antes de que una etiqueta no quepa de verdad). */
+const anchoTexto = (texto, px) => [...texto].length * 0.62 * px;
+
+test("tour.css: la botonera tiene su ancho natural y sus etiquetas no parten en dos líneas", () => {
+  assert.match(regla("#botonera"), /width:\s*max-content/);
+  assert.match(regla(".boton-icono span"), /white-space:\s*nowrap/);
+  const oculta = CSS.match(/@media \(max-width: (\d+)px\) \{\s*\.boton-icono span \{ display: none; \}/);
+  assert.ok(oculta, "falta la regla que oculta las etiquetas en el teléfono");
+  assert.equal(Number(oculta[1]), ANCHO_SIN_ETIQUETAS);
+});
+
+test("botonera: por encima de 560 px, con las etiquetas en una línea, cabe en la vista en los tres idiomas", () => {
+  const boton = regla(".boton-icono"), span = regla(".boton-icono span"), barra = regla("#botonera");
+  const minimo = Number(boton.match(/min-width:\s*(\d+)px/)[1]);
+  const relleno = Number(boton.match(/padding:\s*\d+px\s+(\d+)px/)[1]);
+  const letra = Number(span.match(/font-size:\s*([\d.]+)px/)[1]);
+  const hueco = Number(barra.match(/gap:\s*(\d+)px/)[1]), rellenoBarra = Number(barra.match(/padding:\s*(\d+)px/)[1]);
+  const claves = [...HTML.matchAll(/<button class="boton-icono"[\s\S]*?<span data-i18n="([^"]+)">/g)].map((m) => m[1]);
+  assert.deepEqual(claves, ["tour.plano", "tour.luces", "tour.momento", "tour.ayuda", "tour.pantalla"]);
+  const vista = ANCHO_SIN_ETIQUETAS + 1;
+  for (const [idioma, d] of Object.entries(DICCIONARIOS)) {
+    const botones = claves.map((k) => Math.max(minimo, anchoTexto(d[k], letra) + 2 * relleno));
+    const ancho = botones.reduce((a, b) => a + b, 0) + hueco * (botones.length - 1) + 2 * rellenoBarra + 2;
+    assert.ok(ancho <= vista - 20, `${idioma}: la botonera mediría ${Math.round(ancho)} px en una vista de ${vista} px`);
+  }
+});
+
+test("botonera: la etiqueta de «Momento del día» está en el nombre accesible de su botón", () => {
+  // el botón lleva aria-label (bajo 560 px la etiqueta se oculta); el texto visible tiene que estar dentro del nombre
+  const boton = HTML.match(/<button class="boton-icono"[^>]*data-panel="momento"[^>]*>/)[0];
+  const clave = boton.match(/data-i18n-attr="aria-label:([^"]+)"/)[1];
+  for (const [idioma, d] of Object.entries(DICCIONARIOS)) {
+    assert.ok(d[clave].toLowerCase().includes(d["tour.momento"].toLowerCase()), `${idioma}: «${d["tour.momento"]}» / «${d[clave]}»`);
+  }
+});

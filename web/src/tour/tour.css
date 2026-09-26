@@ -72,9 +72,13 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 #pantalla-inicio .idiomas { position: absolute; top: -8px; right: 8px; }
 
 /* ------------------------------------------------------------------ botonera inferior */
+/* ancho propio (max-content): con left: 50% y sin ancho, el disponible era la mitad de la vista y, entre unos 565 y
+   690 px, «Floor plan», «Full screen» o «Plein écran» partían en dos líneas (la botonera pasaba de 60 a 72 px y los
+   paneles flotantes la tapaban). Con las etiquetas en una línea mide 60 px en los tres idiomas; bajo 561 px las
+   etiquetas se ocultan. */
 #botonera {
   position: fixed; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
-  display: flex; gap: 6px; padding: 6px; z-index: 6;
+  width: max-content; display: flex; gap: 6px; padding: 6px; z-index: 6;
 }
 .boton-icono {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 56px;
@@ -82,7 +86,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   color: var(--tinta-2); cursor: pointer;
 }
 .boton-icono svg { width: 20px; height: 20px; }
-.boton-icono span { font-size: 10.5px; font-weight: 500; }
+.boton-icono span { font-size: 10.5px; font-weight: 500; white-space: nowrap; }
 .boton-icono:hover, .boton-icono[aria-pressed="true"] { background: var(--papel-2); color: var(--acento); }
 @media (max-width: 560px) {
   .boton-icono span { display: none; }
