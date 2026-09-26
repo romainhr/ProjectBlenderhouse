@@ -46,7 +46,9 @@ TEXTURA_MAT = {
     # metal, piedra y concreto
     "Depto_Mat_AceroNegro": ("acero_pavonado", dict(color=True, rugosidad=True, normal=0.3)),
     "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=True, normal=0.3)),
-    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=True, rugosidad=True, normal=0.25)),
+    # 07b: sólo el mapa normal, suave. Con el mapa de color o el de rugosidad, sus vetas de alto contraste se leían
+    # como madera gris en los renders; el cepillado queda como un relieve fino sobre el color base del acero.
+    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=False, rugosidad=False, normal=0.2)),
     "Depto_Mat_CubiertaConcreto": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_CubiertaBano": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_Concreto": ("microcemento", dict(color=True, rugosidad=True, normal=0.6, escala_m=0.8)),
@@ -67,6 +69,11 @@ TEXTURA_MAT = {
     "Depto_Mat_RopaCarbon": ("poly_wool_herringbone", dict(color=False, rugosidad=True, normal=0.6)),
     "Depto_Mat_RopaDoblada1": ("lana", dict(color=False, rugosidad=True, normal=0.5)),
     "Depto_Mat_RopaDoblada2": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    "Depto_Mat_RopaBlanco": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    "Depto_Mat_RopaCeleste": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    "Depto_Mat_RopaDenim": ("rough_linen", dict(color=False, rugosidad=True, normal=0.7)),
+    "Depto_Mat_RopaCamel": ("poly_wool_herringbone", dict(color=False, rugosidad=True, normal=0.6)),
+    "Depto_Mat_RopaNegro": ("lana", dict(color=False, rugosidad=True, normal=0.6)),
     # cuadros: lámina con UV 0-1 propia
     "Depto_Mat_Arte1": ("arte_1", dict(color=True, rugosidad=False, normal=None, uv01=True)),
     "Depto_Mat_Arte2": ("arte_2", dict(color=True, rugosidad=False, normal=None, uv01=True)),
