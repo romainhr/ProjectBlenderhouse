@@ -31,7 +31,7 @@ Aplica a todas las sesiones de Claude, las actuales y las futuras. Repositorio p
   - GitHub no permite aprobar una PR propia, y todas salen de la misma cuenta. La aprobación queda como comentario de revisión en la PR, y la fusión la hace la revisora.
 - **Nadie publica en Netlify fuera del pipeline.** Sólo el workflow «CI y despliegue» publica, al fusionar en `main` (o relanzado desde Actions sobre `main`). No se corre `web/desplegar.py` a mano: el bloqueo del modo automático de las sesiones y las reglas deny de `.claude/settings.json` no se esquivan.
 - **Secretos:** `NETLIFY_TOKEN`, `SUPABASE_URL` y `SUPABASE_CLAVE_PUBLICA` son secretos de GitHub Actions y los administra el usuario. Nunca van en archivos, commits, PR ni logs. El CI falla si encuentra algo con forma de secreto.
-- **Qué se versiona:** lo define `.gitignore`. No se versionan `review/`, `web/dist/`, `build/*.blend` ni `ref/depto/`. Si el worktree necesita el maestro, se copia `build/depto.blend` desde la carpeta principal o se regenera con `bash build/depto_run.sh`.
+- **Qué se versiona:** lo define `.gitignore`. No se versionan `review/`, `web/dist/` ni `build/*.blend`, y de `ref/` sólo su README y `ref/plano/`: toda otra foto de referencia queda local por defecto. Si el worktree necesita el maestro, se copia `build/depto.blend` desde la carpeta principal o se regenera con `bash build/depto_run.sh`.
 - **Binarios generados que sí se versionan** (`exports/web/`, `web/renders_png/`, `assets/texturas/propias/`): se commitean sólo en la PR que cambió el script que los produce. Si dos ramas los tocan, se regeneran; no se fusionan a mano.
 - **Migraciones SQL:** el job «Pruebas SQL» aplica `web/supabase/migrations/` y corre `web/supabase/tests/` en un Supabase local del runner. Cada migración nueva va con sus pruebas. El CI no toca el proyecto real: la PR dice qué migración debe aplicar el usuario en el SQL Editor después de fusionar.
 - **Atribución:** cada commit termina con `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` (si la sesión corre con otro modelo, se nombra ese modelo con la misma forma), y cada PR termina con `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
@@ -39,7 +39,7 @@ Aplica a todas las sesiones de Claude, las actuales y las futuras. Repositorio p
 
 ## Lo que no hacer
 
-- No subir fotos de `ref/` a servicios externos sin preguntar en ese momento. Excepción autorizada por el usuario el 2026-09-26: `ref/plano/` se versiona en el repositorio privado. `ref/depto/` no se versiona.
+- No subir fotos de `ref/` a servicios externos sin preguntar en ese momento. Excepción autorizada por el usuario el 2026-09-26: `ref/plano/` se versiona en el repositorio privado. Toda otra carpeta de `ref/` (`ref/depto/`, `ref/perrita/`, …) queda fuera de git (`.gitignore`) y el CI falla si alguna entra.
 - No escribir claves de API en archivos del repositorio. Las claves van en las preferencias del addon.
 - No usar `execute_blender_code` para operaciones destructivas sobre archivos fuera de esta carpeta.
 - No prometer precisión que no se midió: distinguir siempre "medido en foto" de "inferido".

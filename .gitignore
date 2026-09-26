@@ -31,8 +31,11 @@ exports/*.glb
 exports/*.fbx
 exports/depto_glb.b64.txt
 
-# Fotos de otro inmueble: no se suben (CLAUDE.md). De ref/ sólo se versiona el plano.
-ref/depto/
+# Referencias privadas por defecto (CLAUDE.md): de ref/ sólo se versionan su README y el plano (autorizado por el
+# usuario el 2026-09-26). Toda foto nueva (ref/depto/, ref/perrita/, …) queda local salvo autorización explícita.
+ref/*
+!ref/README.md
+!ref/plano/
 
 # Claude Code: worktrees de cada sesión y ajustes personales
 .claude/worktrees/
