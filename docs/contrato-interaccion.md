@@ -242,8 +242,11 @@ como latón.
   `EquirectangularReflectionMapping`. `escala` es el factor que llevó el percentil 97 de la luminancia a 0,9 antes de
   codificar. Desde la 2.4 el visor lo usa: multiplica la intensidad del entorno de cada variante por
   escala_de_referencia / `escala`, con la escala del render con que se midió esa intensidad
-  (`ESCALA_ENTORNO_CALIBRADA` en `web/src/tour/js/cielo.js`: luces 7,80, día 19,62). Así, un render nuevo del entorno
-  (el bloque 08 le puso el exterior en las ventanas: 8,71 y 30,88) no cambia el brillo de los reflejos.
+  (`ESCALA_ENTORNO_CALIBRADA` en `web/src/tour/js/cielo.js`). Así, un render nuevo del entorno no cambia el brillo de
+  los reflejos. La referencia es la del render con el exterior del bloque 08 (luces 8,75, día 30,76), contra el que se
+  volvió a medir en la corrección 08 (ronda 1). La escala sigue a lo más claro del entorno (el cielo de la ventana) y
+  no al promedio que refleja el acero: al entrar el exterior subió 1,6 veces de día y los reflejos de Blender no
+  cambiaron. Por eso, cuando cambia mucho, conviene volver a medir.
 - `caja` [xmin, xmax, zmin, zmax] (glTF), `alto` [ymin, ymax] y `materiales`: el visor clona esos materiales en las
   mallas cuyo centro cae dentro de la caja (también las móviles, como la puerta de la nevera) y les pone como `envMap`
   el mapa prefiltrado (PMREM) de la variante que toca; su intensidad es la de `entornoLocal` del momento del día para
