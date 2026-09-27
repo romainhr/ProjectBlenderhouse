@@ -1,13 +1,14 @@
 # Contrato de interacción: modelo (Blender) ↔ visor web
 
-Versión 2.4 (2026-09-27; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
+Versión 2.5 (2026-09-27; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
 temperatura y regla del momento del día agregados en la corrección 07b, ADR 0004; `enciende`, grupos de móvil,
 `alcance_m` y entornos locales, sección 6, en la ronda 2 de la corrección 07c; exterior con un panorama por momento,
 emisión y materiales de fondo, sección 4, en el bloque 08; vidrio y mancha de luz del exterior, sección 4, y uso de la
-escala del entorno local, sección 6, en la ronda 1 de la corrección 08). El JSON trae `"version": 2`
-(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.4"`
-(versión completa; `"2.3"` en el bloque 08, `"2.2"` en la ronda 2 de la corrección 07c y `"2.1"` desde la ronda 2 de la
-corrección 07b hasta la ronda 1 de la 07c). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
+escala del entorno local, sección 6, en la ronda 1 de la corrección 08; sol de cada panorama, cielos en pantalla con
+la curva Filmic y vidrio uniforme, sección 4, en la ronda 2 de la corrección 08). El JSON trae `"version": 2`
+(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.5"`
+(versión completa; `"2.4"` en la ronda 1 de la corrección 08, `"2.3"` en el bloque 08, `"2.2"` en la ronda 2 de la
+corrección 07c y `"2.1"` desde la ronda 2 de la corrección 07b hasta la ronda 1 de la 07c). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
 
 ## 1. Móviles (`moviles[]`, ya existe, se amplía)
 
@@ -159,22 +160,38 @@ Detalle (fase 07b):
 Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa{O,E}_{Cuerpo,Pantalla}`
 y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
 
-## 4. Exterior (2.3, bloque 08; 2.4, corrección 08, ronda 1)
+## 4. Exterior (2.3, bloque 08; 2.4, corrección 08, ronda 1; 2.5, ronda 2)
 
 ```json
 "exterior": {
   "panoramas": {"dia": "tex/cielo_dia.jpg", "tarde": "tex/cielo_tarde.jpg", "noche": "tex/cielo_noche.jpg"},
+  "panoramas_intensidad": {"dia": 1.0, "tarde": 1.0},
   "rotacion_deg": 149.3, "suelo_y": -12.5, "emision": {"dia": 0.0, "tarde": 0.35, "noche": 1.0},
+  "sol": {"dia": {"azimut_deg": 115.0, "elevacion_deg": 48.0, "hacia_gl": [-0.2828, 0.7431, -0.6064]},
+          "tarde": {"azimut_deg": 116.8, "elevacion_deg": 12.1, "hacia_gl": [-0.4409, 0.2096, -0.8728]},
+          "noche": {"azimut_deg": 113.6, "elevacion_deg": 17.1, "hacia_gl": [-0.3827, 0.294, -0.8759]}},
   "cielos": {"dia": "kloofendal_48d_partly_cloudy_puresky", "tarde": "qwantani_dusk_2_puresky",
              "noche": "kloppenheim_02_puresky"},
   "nota": "..."
 }
 ```
 
-- `panoramas`: un equirectangular por momento (JPG de 2048 × 1024 de Poly Haven, CC0), con la ruta relativa a la
-  carpeta `modelo/` del visor. La fase 6 los copia a `exports/web/tex/` y `web/tour_modelo.py` los lleva a
-  `modelo/tex/` tal cual, sin gemela `.webp` ni copia en `tex_movil/`. Hasta la 2.2 el campo era un único `panorama`,
-  que el visor sigue aceptando.
+- `panoramas`: un equirectangular por momento de 2048 × 1024, con la ruta relativa a la carpeta `modelo/` del visor.
+  `web/tour_modelo.py` los lleva a `modelo/tex/` tal cual, sin gemela `.webp` ni copia en `tex_movil/`. Hasta la 2.2 el
+  campo era un único `panorama`, que el visor sigue aceptando. Desde la 2.5, los que figuran en `panoramas_intensidad`
+  (día y tarde) están ya en pantalla: la fase 6 los hornea desde el HDR 1k de Poly Haven (CC0) por la fuerza del cielo
+  que ve la cámara en los renders de revisión (`cielo_camara` de la fase 08: día 1,6, tarde 0,32), con la vista Filmic
+  sin look de Blender, y toma el detalle de las nubes del JPG de 2048 de Poly Haven (multiplicado por la razón Filmic /
+  JPG suavizada). El visor los dibuja con esa intensidad (1) y sin otra curva: three r160 no aplica tone mapping a un
+  fondo sRGB. Antes el JPG de Poly Haven traía su propio tono (de día más azul y de tarde más rosado que los renders).
+  El de noche sigue siendo el JPG de Poly Haven, copiado tal cual, con la intensidad de fondo del visor
+  (`MOMENTOS.noche.fondoIntensidad`).
+- `sol` (2.5): el sol de cada panorama (la luna de noche), el píxel más brillante del HDR que mide la fase 08, con el
+  azimut ya girado `rotacion_deg`: `azimut_deg` en la convención de Blender (desde +X hacia +Y, antihorario visto desde
+  arriba), `elevacion_deg` y `hacia_gl`, el vector unitario hacia él en glTF. Es el mismo que usan los renders de
+  revisión (`tools/render_08.py`, `orientar_sol`). El visor lo usa para el sol del depto y para el sombreado del
+  exterior; `MOMENTOS[].sol.elevacion` de `cielo.js` queda como respaldo de un modelo sin `sol`, y una prueba exige que
+  coincida con el JSON exportado.
 - `rotacion_deg`: giro de los tres panoramas alrededor de +Y de glTF (+Z de Blender), antihorario visto desde arriba.
   Con la convención común de Blender y de three.js (el centro de la imagen mira hacia +X y u = 0,5 − azimut / 360), el
   píxel u del panorama girado es el u + rotacion_deg / 360 del original. La fase 08 lo mide: lleva el sol del HDR de día
@@ -197,15 +214,25 @@ y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
   `Depto_Ext_Mat_VentanasPropias`) traen en los extras `exterior_vidrio = {reflectividad, rugosidad_vidrio,
   rugosidad_marco}` y un `metallicRoughnessTexture` cuyo canal G separa el vidrio (`rugosidad_vidrio`) del marco y el
   muro (`rugosidad_marco`). El visor les pone como `envMap` el panorama del momento, con la máscara
-  (rugosidad_marco − G) / (rugosidad_marco − rugosidad_vidrio) y `reflectividad` (`MixOperation`); sigue sin luces.
+  (rugosidad_marco − G) / (rugosidad_marco − rugosidad_vidrio) y `reflectividad`; sigue sin luces. Desde la 2.5 el
+  reflejo se suma al difuso (`AddOperation`, como el especular del Principled de Blender) y el mapa trae valores
+  intermedios: la enjuta del muro cortina a 0,35 y las cortinas y persianas detrás del vidrio a 0,45. El vidrio de las
+  barandas (`Depto_Ext_Mat_VidrioBaranda`) trae `exterior_vidrio = {reflectividad, uniforme: true}` sin mapa: todo el
+  paño refleja parejo y no lleva sombreado por vértice. Lo transparente del exterior se dibuja con
+  α' = 1 − (1 − α)^1,35 (`opacidadVisor`): three.js mezcla sobre el lienzo ya codificado en sRGB y Blender en lineal.
 - Mancha de luz (2.4): `Depto_Ext_Mat_LuzSuelo` trae `exterior_aditivo: true`, alfa 0 (en Blender no se ve: los renders
   de revisión alumbran la calle con un foco por luminaria) y la mancha en su `emissiveTexture` (mitad izquierda para el
   asfalto y el pasto, derecha para la vereda, que refleja más). El visor la suma al cuadro con mezcla aditiva,
   escalada por `emision` del momento: de día no se dibuja.
-- El sombreado por vértice se rehace al cambiar de momento con el sol de su panorama (la elevación medida en el HDR,
-  con el azimut del sol de `luces[]`, que `rotacion_deg` ya alineó), y la curva de tono de los materiales de fondo es
+- El sombreado por vértice se rehace al cambiar de momento con el sol de su panorama (`sol[momento]`; en un modelo 2.4,
+  la elevación de `cielo.js` con el azimut del sol de `luces[]`), y la curva de tono de los materiales de fondo es
   la Filmic de Blender (`web/src/tour/js/filmic.js`, medida con `tools/curva_filmic.py`), la de los renders de
-  revisión, en lugar del ACES del resto del visor.
+  revisión, en lugar del ACES del resto del visor. La bruma de las siluetas va hacia el horizonte del panorama tal
+  como se dibuja (su color lineal por la intensidad del fondo; hasta la 2.4 se le aplicaba ACES, que el fondo no lleva).
+- La franja del depto en la fachada (5.º piso de la columna 0, de −0,15 a 2,55 m) lleva desde la 2.5 una piel exterior
+  del edificio (`Depto_Ext_Edificio_Fachada`, material `Depto_Ext_Mat_FachadaPropia`) a 1 cm de los muros propios, con
+  los vanos medidos recortados: el visor la dibuja con el mismo material y sombreado que el resto de la fachada, y los
+  muros del depto (`Depto_Mat_MuroExterior`) quedan detrás.
 - En Blender, los renders de revisión del exterior usan los HDR 1k equivalentes como mundo, con el mismo giro, y el sol
   de la escena orientado hacia el sol medido en el HDR de cada momento (`tools/render_08.py`).
 
@@ -230,7 +257,8 @@ como latón.
    "imagenes": {"luces": "tex/entorno_cocina.jpg", "dia": "tex/entorno_cocina_dia.jpg"},
    "centro": [0.288, 1.3, 1.660], "caja": [-0.921, 1.878, 0.395, 2.766], "alto": [0.0, 2.4],
    "materiales": ["Depto_Mat_NeveraAcero", "Depto_Mat_Acero", "Depto_Mat_AceroInox"], "grupo": "cocina_techo",
-   "escala": {"luces": 7.8, "dia": 19.6}, "muestras": 48, "luces": "luces: grupos que nacen encendidos; dia: sólo el sol y el cielo"}
+   "escala": {"luces": 8.36, "dia": 35.37}, "muestras": 48, "luces": "luces: grupos que nacen encendidos; dia: sólo el sol y el cielo",
+   "mundo": "HDR de día de Poly Haven desaturado a 0,35, fuerza 1,6 (el de los renders de revisión de día)"}
 ]
 ```
 
@@ -243,10 +271,13 @@ como latón.
   codificar. Desde la 2.4 el visor lo usa: multiplica la intensidad del entorno de cada variante por
   escala_de_referencia / `escala`, con la escala del render con que se midió esa intensidad
   (`ESCALA_ENTORNO_CALIBRADA` en `web/src/tour/js/cielo.js`). Así, un render nuevo del entorno no cambia el brillo de
-  los reflejos. La referencia es la del render con el exterior del bloque 08 (luces 8,75, día 30,76), contra el que se
-  volvió a medir en la corrección 08 (ronda 1). La escala sigue a lo más claro del entorno (el cielo de la ventana) y
-  no al promedio que refleja el acero: al entrar el exterior subió 1,6 veces de día y los reflejos de Blender no
-  cambiaron. Por eso, cuando cambia mucho, conviene volver a medir.
+  los reflejos. La referencia es la del render con el mundo de los renders de revisión (luces 8,36, día 35,37), contra
+  el que se volvió a medir en la corrección 08 (ronda 2). La escala sigue a lo más claro del entorno (el cielo de la
+  ventana) y no al promedio que refleja el acero: al entrar el exterior subió 1,6 veces de día y los reflejos de
+  Blender no cambiaron. Por eso, cuando cambia mucho, conviene volver a medir. Desde la 2.5 las dos variantes se
+  renderizan con el mundo que alumbra los renders de revisión de día (el HDR de día desaturado a 0,35, fuerza 1,6),
+  no con el cielo Nishita del maestro: con el cielo saturado por la ventana, el acero del freezer salía azulado en el
+  visor.
 - `caja` [xmin, xmax, zmin, zmax] (glTF), `alto` [ymin, ymax] y `materiales`: el visor clona esos materiales en las
   mallas cuyo centro cae dentro de la caja (también las móviles, como la puerta de la nevera) y les pone como `envMap`
   el mapa prefiltrado (PMREM) de la variante que toca; su intensidad es la de `entornoLocal` del momento del día para

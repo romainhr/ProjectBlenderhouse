@@ -307,22 +307,29 @@ muro norte, con sus antepechos y dinteles, que también son supuestos del brief.
 | Fondo del edificio | 13,6 m | inferido: depto de 6,01 (medido), palier de 1,40 + 0,15 y otra crujía de 6 m |
 | Antejardín, vereda y calzada | 3 + 3 + 8 m; solera de 0,15 m | diseño: calle local usual |
 | Reparto de la calzada de 8 m | estacionamiento de 2,0 m junto a la vereda del edificio + dos pistas de 3,0 m, con la línea central entre ellas | diseño (corrección 08, ronda 1: con autos a los dos lados quedaban pistas de 2,05 m) |
+| Línea central | segmentos de 3 m cada 12 m, de 12 cm, modelados; salta el cruce y los pasos de cebra (x 15-31 en la principal, y 5-21 en la transversal); hasta 150 m del origen | diseño (corrección 08, ronda 2: pintada en la textura caía dentro de las dos cebras) |
+| Franja del depto en la fachada | piel de la pintura exterior a 1 cm de los muros propios, de −0,15 a 2,55 m, con los vanos medidos recortados | diseño (corrección 08, ronda 2: los muros propios se veían como un parche de otro tono) |
 | Luminarias | seis, poste de 7 m, brazo de 1,3 m y refractor encendido de noche; a 4-4,5 m de los árboles de su vereda | diseño |
 | Mancha de luz de una luminaria | foco de 90° (borde suave) a 6,9 m sobre la calzada: radio útil de ≈ 6,9 m | diseño (la misma en Blender, con focos, y en el visor, con una textura) |
-| Balcones corridos del E3 y del E5 | uno por piso tipo (desde el 2.º), vuelo de 1,1 m, vidrio de 1,0 m con pasamanos y vidrio en los extremos; puertas-ventana hasta el piso | diseño |
+| Balcones corridos del E3 y del E5 | uno por piso tipo (desde el 2.º), vuelo de 1,1 m, vidrio de 1,0 m con pasamanos (#3a3c40 desde la ronda 2) y vidrio en los extremos; puertas-ventana hasta el piso | diseño |
 | Calle transversal y cruce | a 14,5 m del muro norte, con pasos de cebra | diseño |
 | Vecinos modelados | E1 a E7, de 1 a 11 pisos, a 15-46 m, con bahías enteras de su variante | diseño |
 | Fachadas vecinas | 4 atlas propios (ladrillo, hormigón, muro cortina y estuco), 8 × 8 bahías-piso; ≈ 35 % de ventanas encendidas de noche | diseño; texturas generadas por código |
+| Rugosidad del muro cortina | vidrio 0,12, enjuta 0,35, cortinas y persianas detrás del vidrio 0,45, marco 0,70 | diseño (enjuta y cortinas, corrección 08, ronda 2) |
 | Barrio intermedio | manzanas de 60 m con calles de 14 m, a 45-150 m | diseño |
 | Árboles de calle | 21, de 7-9 m, fuste de 2,4-3,2 m, copa de icosaedro subdividido | diseño (estilizados, no orgánicos detallados) |
 | Siluetas lejanas | 16 tarjetas en dos capas, a 170-215 y 280-340 m, de 10-52 m de alto | diseño |
 | Giro del cielo | 149,3° | medido: lleva el sol del HDR de día al sol de la fase 5 |
 
 La vista libre desde las ventanas propias, con un abanico de rayos de ±40° y de −35° a +20°, llega a 16,3 m. Ése es el
-primer choque con el exterior. Presupuesto: 9 632 triángulos de exterior (tope del bloque, 15 000) y 198 110 en la
-escena (tope, 200 000), después de la corrección 08 (ronda 1; antes, 9 424 y 197 902).
+primer choque con el exterior. Presupuesto: 9 756 triángulos de exterior (tope del bloque, 15 000) y 198 234 en la
+escena (tope, 200 000), después de la corrección 08 (ronda 2; en la ronda 1, 9 632 y 198 110): la piel de la franja
+del depto y los 96 triángulos de la línea central.
 
 La luz de los tres momentos sale de los panoramas (medido en los HDR, fase 08): el sol de día a 48,0° de elevación, el
 de la tarde a 12,1° y la luna a 17,1°, con el azimut alineado por el giro. Los renders de revisión y el visor orientan
-el sol del depto con esa elevación en cada momento; la fase 5 sigue con su sol de 35° para los demás renders.
+el sol del depto con esa elevación en cada momento; la fase 5 sigue con su sol de 35° para los demás renders. Desde
+la corrección 08 (ronda 2), el modelo exporta el sol de cada panorama (`exterior.sol`, azimut de 115,0°, 116,8° y
+113,6°) y el visor no depende de sus copias en `cielo.js`. Los cielos de día y de tarde del visor son el HDR con la
+curva Filmic de los renders (fuerza del cielo de cámara 1,6 y 0,32) y el detalle del JPG de 2048 de Poly Haven.
 

@@ -252,3 +252,44 @@ Decisiones:
 20. **La escala del entorno local se usa.** El visor multiplica la intensidad del reflejo de la cocina por
     escala_de_referencia / `entornos[].escala`. Un render nuevo del entorno ya no mueve la calibración (sección 6 del
     contrato).
+
+## Adenda 08, corrección de la ronda 2 (2026-09-27): contrato 2.5
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 08. **Revisor humano:** Romain Ange,
+  pendiente.
+
+21. **El sol y el cielo de cada momento salen del modelo (contrato 2.5).** La fase 6 exporta `exterior.sol` (azimut ya
+    girado, elevación y el vector hacia el sol en glTF) desde lo que mide la fase 08 en cada HDR; el visor lo usa para el
+    sol del depto y el sombreado del exterior, y `MOMENTOS[].sol.elevacion` queda sólo de respaldo, con una prueba que
+    lo compara con el JSON. Los cielos de día y de tarde dejan de ser el JPG de Poly Haven, que traía su propio tono: la
+    fase 6 los hornea desde el HDR con la vista Filmic de Blender y la fuerza del cielo de cámara de los renders
+    (`cielo_camara` de la fase 08, que `tools/render_08.py` verifica), con el detalle de las nubes del JPG de 2048, y el
+    visor los dibuja con intensidad 1 (`panoramas_intensidad`). La noche sigue con el JPG: su cielo ya coincidía y en
+    pantalla es tan oscuro que en 8 bits quedaría en escalones. Se descartó desaturar el JPG en el visor: arreglaba el
+    promedio, no el tono de cada región del cielo. De paso, la bruma de las siluetas deja el ACES que se le aplicaba:
+    three r160 no aplica tone mapping a un fondo sRGB.
+22. **La franja del depto lleva la piel del edificio.** La fase 08 tiende una piel con la pintura exterior a 1 cm de
+    los muros propios (5.º piso de la columna 0, de −0,15 a 2,55 m, con los vanos medidos recortados), y los renders de
+    revisión acotan el volumen de irradiancia a la cara interior de los muros perimetrales (distancia de influencia
+    0,10 m, menor que el muro más delgado). Se descartó que la fase 08 cambiara el material de las caras exteriores de
+    los muros de la fase 2: una fase modificaría objetos de otra y perdería la idempotencia por fase.
+23. **La línea central de las calles es geometría** (96 triángulos) que salta el cruce y los pasos de cebra, con una
+    prueba en la fase 08. Con un período de 12 m en la textura, ninguna fase libraba a la vez el cruce y las dos cebras.
+24. **Vidrio.** En el exterior, el reflejo del panorama se suma al difuso (`AddOperation`, como el especular del
+    Principled), la enjuta del muro cortina y las cortinas detrás del vidrio tienen su rugosidad propia, el vidrio de
+    las barandas refleja parejo sin sombreado por vértice (`exterior_vidrio.uniforme`) y lo transparente usa
+    α' = 1 − (1 − α)^1,35, porque three.js mezcla sobre el lienzo ya codificado en sRGB y Blender en lineal. En el depto,
+    el vidrio de ventanas y barandas (`Depto_Mat_Vidrio` en nodos `Depto_Ventana_*` y `Depto_Balcon_*`) no suma luz
+    difusa: refleja el panorama y deja pasar el 92 % de lo de atrás, con una sola cara por paño. Las botellas, repisas,
+    vajilla y mamparas del mismo material siguen como antes: reflejar el cielo dentro de la nevera no tiene sentido.
+25. **Un objetivo de tono único para el interior de tarde:** la pared blanca bajo la luz de techo con R/B lineal ≤ 2,5.
+    Blender, que no adapta, la deja mostaza (≈ 5,7 con 2700 K); la vista `dormitorio_ventana_adaptada` muestra el
+    objetivo con una adaptación de cámara (pendiente ASC-CDL antes de Filmic) y el visor se recalibró para cumplirlo con
+    la luminancia de Blender (pared / cielo y piso del living). No se cambió la temperatura de las lámparas del modelo:
+    con 3000 K la pared seguiría en R/B ≈ 4,4 y es una decisión de diseño pendiente desde la 07b. Las vistas
+    interiores de Blender llevan ahora las lámparas a +0,6 EV con la cámara a 0 EV, en vez de la cámara a +0,6 EV con
+    sólo el cielo compensado: así lo que se ve por la ventana tiene la exposición de las vistas del balcón y se puede
+    comparar con el visor, que no cambia la exposición del exterior desde adentro.
+26. **Entorno local de la cocina con el mundo de los renders de revisión** (el HDR de día desaturado), no con el cielo
+    Nishita del maestro, y la variante de día desaturada a 0,2 al cargarla: el frente del freezer salía azulado. La
+    escala de referencia se volvió a medir con este render.
