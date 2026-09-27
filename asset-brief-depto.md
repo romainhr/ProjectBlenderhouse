@@ -333,3 +333,27 @@ la corrección 08 (ronda 2), el modelo exporta el sol de cada panorama (`exterio
 113,6°) y el visor no depende de sus copias en `cielo.js`. Los cielos de día y de tarde del visor son el HDR con la
 curva Filmic de los renders (fuerza del cielo de cámara 1,6 y 0,32) y el detalle del JPG de 2048 de Poly Haven.
 
+
+## Bloque 09: alfombras, cortinas y plantas (2026-09-27; `build/deco_textiles.py`, `build/deco_plantas.py`)
+
+El plano dibuja una sola alfombra (la del living, que no cambia). Todo lo de este bloque es diseño; las medidas de
+referencia (vanos, muros, muebles, puertas) son las del plano y de las fases 2 a 4. Constantes en la sección «Bloque 09»
+de `build/depto_04_mobiliario.py`.
+
+| Elemento | Valor | Origen |
+|---|---|---|
+| Alfombra del dormitorio principal | bereber de lana cruda de 2,50 × 2,00 × 0,015 m, centrada en la cama, borde norte a 0,40 m del muro de la cabecera; flecos de 7 cm al este y al oeste | diseño; los veladores llegan a 0,39 m del muro y el espejo de pie apoya a 0,26 m del tabique sur (medidos en el modelo) |
+| Alfombra del segundo dormitorio | kilim de 2,30 × 1,60 × 0,010 m, borde norte a 0,36 m del tabique living/D2 (0,20 m más allá de los pies de la cama); flecos de 5,5 cm | diseño; "más chica y de otro diseño" (encargo) |
+| Camino | 0,60 × 1,50 × 0,010 m, de este a oeste entre el hall y el living, a 0,10 m del frente del nicho de lavadora; extremo este a x = 383 px | diseño; fuera del barrido de la hoja de entrada (radio de 1,03 m medido en el plano desde la bisagra) |
+| Pisos de baño | algodón de 0,65 × 0,45 × 0,012 m, esquinas de 4 cm, a 2 cm del frente de la tina y a 5 cm del tabique de la puerta | diseño; el WC queda a ≥ 5 cm (medido en el modelo) |
+| Holgura bajo las hojas abatibles interiores | 2 cm (antes 1 cm; la entrada sigue con 1 cm) | supuesto: la usual con alfombras, y la rendija de ventilación de los baños |
+| Barra de cortinas | eje a 2,26 m (16 cm sobre el dintel de 2,10, 14 cm bajo el cielo de 2,40) y a 7 cm del muro; 0,18 m más allá de cada jamba en los dormitorios; de muro a muro en el living | diseño; al norte del D1 no cabe más: el velador empieza a 0,19 m de la jamba |
+| Paños recogidos | lino natural, 0,30 m y 5 ondas por paño en los dormitorios, 0,26 m y 4 ondas en el living; hondura de 9 cm (15 % más abajo); dobladillo a 1,2 cm del piso | diseño |
+| Plantas | helecho colgado en el rincón del living junto al balcón, anturio en la esquina noroeste del balcón, haworthia en la cubierta de la cocina, calathea en la repisa del baño principal y otra en el velador oeste del segundo dormitorio (en lugar del jarrón) | modelos CC0 de Poly Haven (escaneos); ubicación, escala y maceta: diseño |
+| Macetas | gres blanco, negro o arena, de 0,12 a 0,26 m; la del living colgada con tres cordeles a 0,40 m | diseño |
+
+Inferido o no verificable: la cocina no tiene repisas abiertas desde la corrección 07c (el plano marca muebles altos),
+así que su planta va en la cubierta; en el rincón del living no cabe una maceta de piso (0,26 m entre el sofá y el
+vidrio), así que el helecho cuelga del cielo. Presupuesto: la escena queda en 199 357 triángulos (tope, 200 000)
+después de bajar la resolución de telas de las camas de 0,7 a 0,5 (−7 912) y dejar los árboles de la calle con una
+sola copa (−1 680).

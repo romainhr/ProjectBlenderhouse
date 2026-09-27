@@ -293,3 +293,40 @@ Decisiones:
 26. **Entorno local de la cocina con el mundo de los renders de revisión** (el HDR de día desaturado), no con el cielo
     Nishita del maestro, y la variante de día desaturada a 0,2 al cargarla: el frente del freezer salía azulado. La
     escala de referencia se volvió a medir con este render.
+
+## Adenda 09 (2026-09-27): alfombras, cortinas y plantas
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), constructor del bloque 09. **Revisor humano:** Romain Ange,
+  pendiente.
+
+27. **Textiles por script en la fase 4.** `build/deco_textiles.py` arma las alfombras (losa sin cara inferior con el
+    canto en cuarto de círculo y flecos de tiras planas) y las cortinas (paños con sección senoidal recogidos en una
+    barra negra con anillas, soportes y terminales). La fase 4 las ubica y las prueba: espesor de 1 a 1,5 cm, sin
+    colisión, ninguna dentro de un mueble y, bajo el barrido de una hoja, 3 mm libres hasta su canto. Las texturas son
+    propias (`bereber`, `kilim`, `camino` y `algodon` en `build/deco_texturas.py`, 1024 px y periódicas). El kilim, que
+    tiene guarda, es la alfombra entera con UV 0-1 (como los cuadros); las demás se repiten.
+28. **Holgura de 2 cm bajo las hojas abatibles interiores** (`LUZ_PISO_ABATIBLE` en la fase 3). Con 1 cm, ninguna
+    alfombra de 1-1,5 cm podía quedar bajo el barrido de las puertas de los dormitorios ni de los baños, que abren
+    sobre la zona de los pies de la cama y sobre el frente de la tina. La entrada conserva 1 cm y el camino queda fuera
+    de su barrido. Se descartó dejar las alfombras fuera de los barridos: en el dormitorio principal la del pie de la
+    cama quedaba de 2,0 m de ancho y los pisos de baño no cabían frente a la tina.
+29. **Plantas de Poly Haven importadas, no modeladas** (CLAUDE.md). `build/deco_plantas.py` importa el glTF con
+    `bpy.ops.import_scene.gltf`, toma una variante, la decima con Decimate (colapso) hasta su tope (≤ 8 000 triángulos,
+    entre 900 y 2 200 en la práctica) y la pone en una maceta modelada. Los atlas vinieron en JPEG sin alfa. La silueta
+    se recuperó del canal de rugosidad del ARM (helecho y calathea, cuyo fondo tiene un valor plano) o de la cobertura
+    de las UV (anturio, de hojas modeladas). El color con alfa y la rugosidad se guardan como texturas derivadas
+    versionadas (`--derivar`) y su origen queda en `assets/modelos/polyhaven/manifest.json`. Los materiales van con
+    alfa CLIP (glTF `MASK`, umbral 0,5, dos caras), y `web/tour_modelo.py` conserva el alfa en el `.webp` y en la copia
+    del teléfono. Se descartaron tres alternativas: bajar los PNG con alfa (una descarga nueva no autorizada en esta
+    sesión), recortar por color (el relleno del atlas es el color del borde estirado) y tarjetas opacas.
+30. **Presupuesto de triángulos.** La escena estaba a 1 766 del tope de 200 000. Para las alfombras, las cortinas y las
+    plantas, la resolución de telas de las camas baja de 0,7 a 0,5 (−7 912, con la comparación en
+    `review/09_textiles/cama_r05` y `cama_r07`) y los árboles de la calle quedan con una sola copa (−1 680; lo proponía
+    la bitácora del bloque 08). Se descartó recortar los interiores de clósets o las lámparas: se ven de cerca.
+31. **Colisión:** alfombras, telas, barras, hojas, tierra y cordeles llevan `colision: false`. Las macetas sí chocan.
+    Así el recorrido pasa entre la maceta del balcón y la hoja abierta del ventanal, y la cámara no se traba en los
+    paños del ventanal.
+32. **Consecuencias:** la escena queda en 199 357 triángulos, a 643 del tope. Lo próximo tendrá que ahorrar o subir el
+    tope. El visor pesa 16,99 MB en escritorio (antes 13,64) y 12,13 MB en teléfono (antes 10,78). El entorno local de
+    la cocina ve ahora las cortinas del ventanal y las plantas. Su escala cambia, y el visor la compensa por la
+    referencia (sección 6 del contrato).
