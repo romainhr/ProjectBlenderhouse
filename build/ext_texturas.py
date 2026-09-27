@@ -14,8 +14,10 @@ cada corrida escribe los mismos archivos. Salida en assets/texturas/exterior/ (J
   ventanas del edificio propio. Filas 0-3: ventana de dos hojas; filas 4-7: ventanal corredera. Columnas 0-4 apagadas
   y 5-7 encendidas de noche.
 - calle.jpg (1024 px): corte de la calle de 14 m (vereda de 3, calzada de 8 y vereda de 3) a lo ancho (u) y 12 m a lo
-  largo (v, se repite): baldosas de vereda, solera, faja de estacionamiento de 2 m junto a la vereda A, dos pistas de
-  3 m con huellas de rodado y la línea central segmentada de 3 m entre ellas.
+  largo (v, se repite): baldosas de vereda, solera, faja de estacionamiento de 2 m junto a la vereda A y dos pistas de
+  3 m con huellas de rodado. La línea central segmentada ya no va en la textura (corrección 08, ronda 2): con un
+  período de 12 m no había fase que dejara libres a la vez el cruce y los dos pasos de cebra, así que la fase 08 la
+  modela como geometría y salta el cruce.
 - luz_suelo_emision.jpg (512 × 256): la mancha de luz de una luminaria sobre el suelo, oscuro | vereda, como incremento
   de pantalla de noche (lo que el visor suma al cuadro).
 - terreno.jpg (512 px, 8 m): pasto del antejardín y de los lotes cercanos.
@@ -65,9 +67,14 @@ VARIANTES = {
               encendidas=0.33, semilla=41),
 }
 
-# Rugosidad de los mapas de vidrio (diseño): el paño de vidrio casi liso y el marco, la enjuta y el muro como pintura.
-# El visor la lee como máscara: reflejo del cielo entero donde vale "vidrio" y nada donde vale "marco".
-RUGOSIDAD = {"vidrio": 0.12, "marco": 0.70}
+# Rugosidad de los mapas de vidrio (diseño): el paño de vidrio casi liso y el marco y el muro como pintura. El visor la
+# lee como máscara: reflejo del cielo entero donde vale "vidrio", nada donde vale "marco" y, entre medio, la fracción
+# (marco − r) / (marco − vidrio). Corrección 08, ronda 2: la enjuta del muro cortina (el paño opaco entre pisos, vidrio
+# pintado por detrás o panel de aluminio) tenía la del marco y en el visor quedaba casi negra (sólo su albedo #2b3137),
+# mientras que en Blender, a ese ángulo rasante, refleja el cielo: va a 0,35 (en el visor ≈ 0,6 del reflejo). Las
+# cortinas y persianas detrás del vidrio, a 0,45 (≈ 0,43 del reflejo): con la del vidrio el reflejo del cielo las
+# enfriaba (de (198, 193, 182) en Blender a (169, 174, 181) en el visor, sRGB).
+RUGOSIDAD = {"vidrio": 0.12, "marco": 0.70, "enjuta": 0.35, "cortina": 0.45}
 VARIANTES_VIDRIO = ("C",)        # el muro cortina: su mapa de rugosidad va al material (las otras, rugosidad pareja)
 
 # Colores de ventanas encendidas (sRGB, antes de la intensidad): 2700 K, 3000 K, 4000 K y una pantalla fría.
@@ -76,6 +83,8 @@ LUCES_VENTANA = (((1.00, 0.64, 0.34), 0.40), ((1.00, 0.72, 0.46), 0.30), ((1.00,
 CORTINAS = ("#d9cbb3", "#c8b89c", "#b9c2c6", "#e6dfd2", "#a99a86", "#d6c1a0")
 
 # Paleta de colores planos (sRGB) y su emisión. El índice es la posición en la grilla de 16 × 16 (fila 0 arriba).
+# Corrección 08, ronda 2: el pasamanos de las barandas, de #1c1c1f a #3a3c40 (aluminio anodizado oscuro; con el casi
+# negro se dibujaba en el visor como una raya negra dura de 1 px).
 PALETA = {
     "marca_blanca": "#e8e8e3", "marca_amarilla": "#e2bf3a", "solera": "#9d9b94", "muro_bajo": "#b8b2a6",
     "sendero": "#948c80", "techo": "#6c6c6e", "techo_grava": "#8b877f", "caja_techo": "#aeaeaa",
@@ -83,7 +92,7 @@ PALETA = {
     "arbusto": "#3f5e33", "poste": "#2d2f32", "luminaria": "#d8d6cc", "auto_rojo": "#8c1d18",
     "auto_blanco": "#dcdcd8", "auto_gris": "#74777b", "auto_azul": "#233a66", "auto_negro": "#141517",
     "auto_plata": "#a5a8ab", "vidrio_auto": "#1d2328", "neumatico": "#151515", "losa_balcon": "#a3a19a",
-    "pasamanos": "#1c1c1f", "remate_A": "#7a4535", "remate_B": "#c4c2bc", "remate_C": "#3b4148", "remate_D": "#d3c6a8",
+    "pasamanos": "#3a3c40", "remate_A": "#7a4535", "remate_B": "#c4c2bc", "remate_C": "#3b4148", "remate_D": "#d3c6a8",
     "suelo_lejano": "#5f615d", "vestibulo": "#20262b", "vestibulo_luz": "#2a2c2a", "muro_propio": "#cdcac2",
     "tierra": "#5b4a38", "toldo_verde": "#355a44", "banca": "#6a5440",
 }
@@ -254,9 +263,13 @@ def fachada(var):
     img = np.where(zocalo[..., None], img * 0.72, img)
     em = np.where((vit & encend[cj, ci])[..., None], luces[cj, ci] * (0.8 * inten[cj, ci])[..., None], em)
     # rugosidad (corrección 08, ronda 1): el vidrio (paños y vitrinas) liso y el marco y el muro ásperos; en Blender va
-    # a Roughness y el visor la usa como máscara del reflejo del cielo (extras exterior_vidrio)
+    # a Roughness y el visor la usa como máscara del reflejo del cielo (extras exterior_vidrio). Ronda 2: la enjuta del
+    # muro cortina y las cortinas y persianas detrás del vidrio, con su valor propio (RUGOSIDAD)
     vidrio_m = (dentro & ~en_marco) | vit
     rug = np.where(vidrio_m, RUGOSIDAD["vidrio"], RUGOSIDAD["marco"]).astype(np.float32)
+    rug = np.where(vidrio_m & (en_cortina | en_persiana), RUGOSIDAD["cortina"], rug)
+    if V.get("muro_cortina"):
+        rug = np.where(tipo & (cv < v0) & ~en_marco, RUGOSIDAD["enjuta"], rug)
     return img, _reducir(em, 512), _reducir(rug[..., None], 512)[..., 0]
 
 
@@ -299,7 +312,8 @@ def ventanas_propias():
             r0, c0 = N - (fila + 1) * T, col * T
             img[r0:r0 + T, c0:c0 + T] = t
             em[r0:r0 + T, c0:c0 + T] = e
-            rug[r0:r0 + T, c0:c0 + T] = np.where(en_m, RUGOSIDAD["marco"], RUGOSIDAD["vidrio"])
+            rug[r0:r0 + T, c0:c0 + T] = np.where(en_m, RUGOSIDAD["marco"],
+                                                 np.where(en_c, RUGOSIDAD["cortina"], RUGOSIDAD["vidrio"]))
     return img, _reducir(em, 512), _reducir(rug[..., None], 512)[..., 0]
 
 
@@ -314,10 +328,11 @@ CALLE_ANCHO, CALLE_LARGO = 14.0, 12.0          # m que cubre la textura: vereda 
 VEREDA, CALZADA = 3.0, 8.0
 # Calzada de 8 m (diseño, corrección 08, ronda 1): estacionamiento de 2,0 m junto a la solera del lado de la vereda A
 # (la del edificio propio; u de 3 a 5 m) y dos pistas de 3,0 m, una por sentido. Antes había autos a los dos lados y la
-# línea al medio: quedaban pistas de 2,05 m. La línea central va en el eje de las dos pistas y las huellas, en el
-# centro de cada una.
+# línea al medio: quedaban pistas de 2,05 m. Las huellas van en el centro de cada pista; la línea central, en el eje de
+# las dos, la modela la fase 08 (corrección 08, ronda 2: segmentos de LINEA_CENTRAL que saltan el cruce).
 ESTACIONAMIENTO, PISTA = 2.0, 3.0
 EJE_PISTAS = ESTACIONAMIENTO + PISTA            # 5,0 m desde la solera A
+LINEA_CENTRAL = dict(ancho=0.12, largo=3.0, periodo=12.0)   # diseño: segmento de 3 m cada 12 m, 12 cm de ancho
 
 
 def calle():
@@ -341,9 +356,6 @@ def calle():
     aceite = DT.ss(0.9, 1.6, L.ruido(int(rng.integers(1 << 30)), grande=0.6, chico=0.15, p=0.8))
     en_est = (x_calz > 0.45) & (x_calz < ESTACIONAMIENTO - 0.35)
     img = np.where(en_est[..., None], img * (1.0 - 0.12 * aceite)[..., None], img)
-    raya = (np.abs(x_calz - EJE_PISTAS) < 0.06) & (Yy % CALLE_LARGO < 3.0)
-    desgaste = np.clip(0.8 + 0.2 * fino, 0, 1)
-    img = np.where(raya[..., None], _mezcla(img, _c("#e4e3dc")[None, None, :], desgaste), img)
     # veredas: baldosa de 0,40 m con junta, manchas y la solera clara
     en_vereda = (X < VEREDA) | (X > VEREDA + CALZADA)
     xv = np.where(X < VEREDA, X, CALLE_ANCHO - X)                      # distancia desde el borde exterior

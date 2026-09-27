@@ -12,7 +12,7 @@ Nada del exterior sale del plano, que es una planta del departamento: todo es di
 la fachada, del balcón y de las ventanas propias, que son las medidas de build/depto_plano.py. El supuesto base es el
 de ADR 0004 (decisión 5): el piso del depto queda a ≈ 12,5 m sobre la calzada (5.º piso de 8).
 
-Para el visor (docs/contrato-interaccion.md, sección 4, versión 2.3):
+Para el visor (docs/contrato-interaccion.md, sección 4, versión 2.5):
 - cada objeto lleva colision = False y exterior = True, y cada material Depto_Ext_Mat_* trae en sus extras
   exterior = true y exterior_capa ("cerca" o "lejos"): el visor lo dibuja con un material sin luces
   (MeshBasicMaterial), sin las luces puntuales, con el sombreado del sol calculado por vértice al cargar;
@@ -22,13 +22,17 @@ Para el visor (docs/contrato-interaccion.md, sección 4, versión 2.3):
 - scene["depto_exterior"] guarda los cielos (HDR y JPG de Poly Haven, assets/hdri/manifest.json), el sol medido en
   cada HDR, la rotación que lleva el sol del HDR de día al sol de la escena, la altura del suelo y el conteo.
 - los materiales de vidrio (muro cortina y ventanas propias) traen exterior_vidrio (el visor refleja el panorama donde
-  su mapa de rugosidad dice vidrio) y la mancha de luz de las luminarias, exterior_aditivo (el visor la suma de tarde
-  y de noche; en Blender es invisible y alumbran focos, tools/render_08.py).
+  su mapa de rugosidad dice vidrio; desde la ronda 2, el de las barandas con uniforme = true, sin mapa) y la mancha de
+  luz de las luminarias, exterior_aditivo (el visor la suma de tarde y de noche; en Blender es invisible y alumbran
+  focos, tools/render_08.py).
+- corrección 08, ronda 2: la franja del depto en la fachada lleva la misma piel exterior que el resto del edificio
+  (piel_depto, a 1 cm de los muros propios) y la línea central de las calles es geometría que salta el cruce.
 Pruebas antes de guardar: presupuesto de triángulos (exterior ≤ 15 000 y escena ≤ 200 000), materiales y objetos
 marcados, UV en todo, nada del exterior dentro del volumen del depto, del balcón o del palier, las ventanas propias
 con la vista libre (ningún rayo hacia afuera choca con el exterior antes de 3 m), y desde la corrección 08 (ronda 1)
 los choques entre piezas: cada poste de luminaria a 1,1·R_max + 0,3 m o más del eje de cada árbol y su brazo, carcasa
-y refractor fuera de las copas; y los balcones corridos de los B, uno por piso tipo y ninguno en el techo.
+y refractor fuera de las copas; y los balcones corridos de los B, uno por piso tipo y ninguno en el techo; desde la
+ronda 2, ningún segmento de la línea central dentro del cruce ni de un paso de cebra.
 """
 import json
 import math
@@ -60,6 +64,10 @@ with open(os.path.join(HDRI, "manifest.json")) as _fh:
     CIELOS = json.load(_fh)["cielos"]    # {dia, tarde, noche}: ids de Poly Haven (CC0)
 PANORAMA = "tex/cielo_{}.jpg"            # ruta en la carpeta modelo/ del visor (la fase 6 copia los JPG)
 EMISION_MOMENTO = {"dia": 0.0, "tarde": 0.35, "noche": 1.0}   # diseño: ventanas y luminarias; de tarde, a un tercio
+# Fuerza del cielo que ve la cámara en los renders de revisión (tools/render_08.py, MOMENTOS: fuerza × camara, que
+# render_08 verifica contra este valor): la fase 6 hornea con ella los cielos del visor en pantalla (corrección 08,
+# ronda 2; contrato 2.5)
+CIELO_CAMARA = {"dia": 1.6, "tarde": 0.32, "noche": 0.044}
 
 # ---------------------------------------------------------------------------------------------- alturas (inferidas)
 Z_CALLE = -12.5                          # supuesto (ADR 0004, decisión 5; encargo del bloque 08): piso del depto a
@@ -130,7 +138,17 @@ X_VEREDA_A, X_CALZ_0, X_CALZ_1, X_VEREDA_B = 16.0, 19.0, 27.0, 30.0
 LARGO = 400.0                            # m hasta donde llegan las calles (el visor corta a 2 000 m)
 LEJOS = 900.0                            # suelo lejano, bajo todo, hasta aquí
 CERCA = (-70.0, 70.0, -40.0, 80.0)       # lotes con pasto (xmin, xmax, ymin, ymax); afuera, suelo lejano liso
-FASE_CALLE = X_CALZ_0 - 3.5              # la línea central (3 m de cada 12) no entra al cruce: v = (x − fase) / 12
+FASE_CALLE = X_CALZ_0 - 3.5              # desfase de la textura de calle a lo largo de X: v = (x − fase) / 12
+# Línea central segmentada (corrección 08, ronda 2): geometría, no textura. Con la raya en la textura (3 m de cada 12,
+# v = (x − 15,5) / 12) caía en x 15,5-18,5 y 27,5-30,5, dentro de los dos pasos de cebra que cruzan la principal
+# (x 16,3-18,7 y 27,3-29,7), y ninguna fase de un período de 12 m libraba a la vez el cruce (19-27) y las dos cebras.
+# Segmentos de ext_texturas.LINEA_CENTRAL en el eje de las pistas, 2 cm sobre el asfalto, desde LINEA_FASE + 12·k y
+# saltando LINEA_LIBRE (el cruce, sus cebras y 1 m de margen). Diseño: un segmento termina a 3,3 m de la primera cebra
+# en cada calle; hasta LINEA_ALCANCE m del origen (más lejos, desde el 5.º piso, la raya de 12 cm no alcanza un píxel).
+LINEA_ALCANCE = 150.0
+LINEA_FASE = {"x": 10.0, "y": 0.0}
+LINEA_LIBRE = {"x": (X_VEREDA_A - 1.0, X_VEREDA_B + 1.0), "y": (Y_VEREDA_A - 1.0, Y_VEREDA_B + 1.0)}
+CEBRAS, LINEAS = [], []                   # rectángulos (x0, x1, y0, y1) de los pasos de cebra y de la línea (pruebas)
 
 # ---------------------------------------------------------------------------------------------- vecinos (diseño)
 # (nombre, variante de ext_texturas.VARIANTES, x0, x1, y0, y1, pisos, frente): anchos y fondos en bahías enteras de la
@@ -203,7 +221,13 @@ MATERIALES = {
     # bruma: la capa más lejana, más clara y más azul (diseño; Eevee no tiene perspectiva aérea)
     "Depto_Ext_Mat_Lejanos1": dict(tex="lejanos", emision=True, rugosidad=0.90, tinte=(0.86, 0.90, 0.96), capa="lejos"),
     "Depto_Ext_Mat_Lejanos2": dict(tex="lejanos", emision=True, rugosidad=0.90, tinte=(0.97, 1.00, 1.06), capa="lejos"),
-    "Depto_Ext_Mat_VidrioBaranda": dict(color=(0.70, 0.80, 0.84), alfa=0.28, rugosidad=0.05),
+    # corrección 08, ronda 2: el vidrio de las barandas refleja el cielo parejo (exterior_vidrio con uniforme = true, sin
+    # mapa: todo el paño es vidrio) y no lleva el sombreado por vértice. Antes era un MeshBasic multiplicado por el k de
+    # una cara vertical (≈ 0,44) que sólo restaba luz: una lámina ahumada donde Blender aclara lo de atrás con el reflejo
+    # (+37 % sobre la ventana del E3 detrás de la baranda, balcon_dia). Reflectividad de diseño, calibrada con
+    # tools/medir_08.py (criterio vidrio_baranda)
+    "Depto_Ext_Mat_VidrioBaranda": dict(color=(0.70, 0.80, 0.84), alfa=0.28, rugosidad=0.05,
+                                        vidrio_uniforme=dict(reflectividad=0.25, uniforme=True)),
 }
 
 
@@ -276,6 +300,8 @@ def material_ext(nombre, spec, tex):
         c = spec["color"]
         b.inputs["Base Color"].default_value = (*c, 1.0)
         m.diffuse_color = (*c, spec.get("alfa", 1.0))
+        if spec.get("vidrio_uniforme"):                   # extras exterior_vidrio sin mapa (el visor: reflejo parejo)
+            m["exterior_vidrio"] = dict(spec["vidrio_uniforme"])
     alfa = spec.get("alfa", 1.0)
     b.inputs["Alpha"].default_value = alfa
     if alfa < 1.0:
@@ -405,6 +431,16 @@ class Plano:
 
 FACHADA = Plano(lambda s, z, d: Vector((s, YF + d, z)), (0, 1, 0), -1)
 LATERAL = Plano(lambda s, z, d: Vector((XN + d, s, z)), (1, 0, 0), 1)
+# Piel de la franja del depto (corrección 08, ronda 2). Entre z = −0,15 y 2,55 la fachada y el lateral norte del 5.º
+# piso de la columna 0 eran los muros propios (fase 2, Depto_Mat_MuroExterior): en Blender la luz rebotada del interior
+# (el volumen de irradiancia de los renders de revisión) los dejaba ≈ 40 % más oscuros que la fachada de arriba y de
+# abajo, y en el visor quedaban ≈ 20 % más claros (PBR con las luces del depto contra el MeshBasic de la fachada). Una
+# piel con la misma pintura, UV y sombreado que el resto de la fachada, a PIEL de los muros y con los vanos medidos
+# recortados, cubre la franja con la misma piel exterior en los dos motores. Diseño: 1 cm (a 30 m de distancia la
+# profundidad del visor resuelve ≈ 1 mm).
+PIEL = 0.01
+FACHADA_PIEL = Plano(lambda s, z, d: Vector((s, YF + PIEL + d, z)), (0, 1, 0), -1)
+LATERAL_PIEL = Plano(lambda s, z, d: Vector((XN + PIEL + d, s, z)), (1, 0, 0), 1)
 
 
 def _uv_pintura(p):
@@ -510,6 +546,7 @@ def edificio_propio(col):
         banda = [(Y_ATRAS, YE)] if n in (PISO_DEPTO - 1, PISO_DEPTO) else [(Y_ATRAS, YF)]
         for s0, s1 in banda:
             pared(fach, LATERAL, s0, s1, zn + P.ALTURA_PISO_CIELO, zn + ENTREPISO, [], M_PINTURA)
+    piel_depto(fach)
     # parapeto, techo, fondo y extremo sur (no se ven desde el depto: cierran el volumen para las vistas de afuera)
     pared(fach, FACHADA, X_SUR, XN, Z_TECHO, Z_TECHO + PARAPETO, [], M_PINTURA)
     pared(fach, LATERAL, Y_ATRAS, YF, Z_TECHO, Z_TECHO + PARAPETO, [], M_PINTURA)
@@ -523,6 +560,20 @@ def edificio_propio(col):
     fach.caja(SENDERO[0] - 0.4, SENDERO[1] + 0.4, YF, YF + 1.8, Z_VEREDA + 3.2, Z_VEREDA + 3.38, M_PAL, "losa_balcon",
               caras="xXYzZ")
     return fach.crear(col), balc.crear(col)
+
+
+def piel_depto(malla):
+    """Piel de la franja del depto (PIEL): fachada y lateral norte del 5.º piso de la columna 0, de −0,15 a 2,55, con los
+    vanos medidos recortados (fase 2) y los dos cantos de 1 cm hasta la fachada vecina y el lateral del palier."""
+    z0, z1 = z_piso(PISO_DEPTO) - LOSA, z_piso(PISO_DEPTO) + ENTREPISO
+    pared(malla, FACHADA_PIEL, XS, XN + PIEL, z0, z1, [(a, b, ante, dintel) for a, b, ante, dintel, _ in VANOS],
+          M_PINTURA)
+    pared(malla, LATERAL_PIEL, YE, YF + PIEL, z0, z1,
+          [(a, b, ante, dintel) for a, b, ante, dintel, _ in VANOS_NORTE], M_PINTURA)
+    uvs = [(0.0, _uv_pintura(z0)), (PIEL / T.PINTURA_M, _uv_pintura(z0)), (PIEL / T.PINTURA_M, _uv_pintura(z1)),
+           (0.0, _uv_pintura(z1))]
+    malla.cara([(XS, YF, z0), (XS, YF + PIEL, z0), (XS, YF + PIEL, z1), (XS, YF, z1)], uvs, M_PINTURA, (-1, 0, 0))
+    malla.cara([(XN, YE, z0), (XN + PIEL, YE, z0), (XN + PIEL, YE, z1), (XN, YE, z1)], uvs, M_PINTURA, (0, -1, 0))
 
 
 def vano_plano(malla, plano, sa, sb, za, zb, color, prof=0.20):
@@ -757,16 +808,38 @@ def calles(col):
                 M_PAL, (-1, 0, 0), "solera")
     # pasos de cebra (franjas de 0,5 m con 0,5 m de separación, 2 cm sobre el asfalto)
     zc = Z_CALLE + 0.02
+    CEBRAS.clear()
+    LINEAS.clear()
     for ya, yb in ((Y_VEREDA_A + 0.3, Y_CALZ_0 - 0.3), (Y_CALZ_1 + 0.3, Y_VEREDA_B - 0.3)):   # cruzan la transversal
         x = X_CALZ_0 + 0.25
         while x + 0.5 <= X_CALZ_1 - 0.2:
             m.plana([(x, ya, zc), (x + 0.5, ya, zc), (x + 0.5, yb, zc), (x, yb, zc)], M_PAL, up, "marca_blanca")
+            CEBRAS.append((x, x + 0.5, ya, yb))
             x += 1.0
     for xa, xb in ((X_VEREDA_A + 0.3, X_CALZ_0 - 0.3), (X_CALZ_1 + 0.3, X_VEREDA_B - 0.3)):   # cruzan la principal
         y = Y_CALZ_0 + 0.25
         while y + 0.5 <= Y_CALZ_1 - 0.2:
             m.plana([(xa, y, zc), (xb, y, zc), (xb, y + 0.5, zc), (xa, y + 0.5, zc)], M_PAL, up, "marca_blanca")
+            CEBRAS.append((xa, xb, y, y + 0.5))
             y += 1.0
+    # línea central segmentada de las dos calles (LINEA_*), en el eje de sus pistas
+    LC = T.LINEA_CENTRAL
+    w = LC["ancho"] / 2
+    for eje, centro in (("x", Y_CALZ_0 + T.EJE_PISTAS), ("y", X_CALZ_0 + T.EJE_PISTAS)):
+        libre0, libre1 = LINEA_LIBRE[eje]
+        k = math.ceil((-LINEA_ALCANCE - LINEA_FASE[eje]) / LC["periodo"])
+        while True:
+            a = LINEA_FASE[eje] + k * LC["periodo"]
+            b = a + LC["largo"]
+            k += 1
+            if b > LINEA_ALCANCE:
+                break
+            if b > libre0 and a < libre1:                  # dentro del cruce o de sus cebras: se salta
+                continue
+            r = (a, b, centro - w, centro + w) if eje == "x" else (centro - w, centro + w, a, b)
+            m.plana([(r[0], r[2], zc), (r[1], r[2], zc), (r[1], r[3], zc), (r[0], r[3], zc)], M_PAL, up,
+                    "marca_blanca")
+            LINEAS.append(r)
     return m.crear(col)
 
 
@@ -996,7 +1069,7 @@ def datos_cielo(tris):
         "rotacion_origen": (f"medido: lleva el sol del HDR de día (azimut {fuentes['dia']['sol_azimut_deg']}°) al "
                             f"de la escena ({az_escena:.1f}°, elevación {el_escena:.1f}°); los tres HDR tienen el sol "
                             "a menos de 4° entre sí"),
-        "fuentes": fuentes, "emision": EMISION_MOMENTO,
+        "fuentes": fuentes, "emision": EMISION_MOMENTO, "cielo_camara": CIELO_CAMARA,
         # focos de las luminarias para los renders de Blender (tools/render_08.py): la misma mancha que la textura
         # luz_suelo que suma el visor (ext_texturas.LUZ_SUELO)
         "luminarias": {"posiciones": [list(map(lambda v: round(v, 3), centro_luz(x, y, lado))) for x, y, lado in LUMINARIAS],
@@ -1019,8 +1092,10 @@ def _tris(objs):
 def cajas_prohibidas():
     """Volúmenes del depto, del balcón y del palier (m de Blender): el exterior no entra en ellos (> 1 mm)."""
     pal = bpy.data.objects.get("Depto_Palier_Muros")
+    # el balcón empieza a 2·PIEL de la fachada: la piel de la franja del depto (a PIEL del muro) es el muro, no entra
+    # en el balcón
     out = [("depto", (XS, XN, YE, YF, -LOSA, P.ALTURA_PISO_CIELO + LOSA)),
-           ("balcon", (XB0, XB1, YF, YB, Z_BALCON - LOSA, P.ALTURA_PISO_CIELO + LOSA))]
+           ("balcon", (XB0, XB1, YF + 2 * PIEL, YB, Z_BALCON - LOSA, P.ALTURA_PISO_CIELO + LOSA))]
     if pal:
         pts = [pal.matrix_world @ Vector(c) for c in pal.bound_box]
         out.append(("palier", (min(p.x for p in pts), max(p.x for p in pts), min(p.y for p in pts),
@@ -1033,8 +1108,16 @@ def _dentro_elipsoide(p, centro, radios):
 
 
 def pruebas_piezas():
-    """Choques entre piezas del exterior (corrección 08, ronda 1) y balcones de los vecinos B."""
+    """Choques entre piezas del exterior (corrección 08, ronda 1), balcones de los vecinos B y, desde la ronda 2, la
+    línea central fuera del cruce y de los pasos de cebra."""
     fallos = []
+    cruce = (X_CALZ_0, X_CALZ_1, Y_CALZ_0, Y_CALZ_1)
+    if not LINEAS or not CEBRAS:
+        fallos.append("faltan la línea central o los pasos de cebra")
+    for r in LINEAS:
+        for c in CEBRAS + [cruce]:
+            if _se_cruzan(r, c):
+                fallos.append(f"línea central {tuple(round(v, 2) for v in r)} dentro de {tuple(round(v, 2) for v in c)}")
     r_max = max(c["R"] for c in COPAS)
     minimo = 1.1 * r_max + 0.3                       # la copa, con su jitter, más 30 cm de holgura
     for x, y, lado in LUMINARIAS:
