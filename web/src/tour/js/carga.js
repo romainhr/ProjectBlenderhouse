@@ -12,6 +12,7 @@ import {
   interruptorEncendido, ordenarInterruptores,
 } from "./luces.js";
 import { duracionPorClase } from "./animacion.js";
+import { esExterior, materialExterior, sombrear, haciaSolDe } from "./exterior.js";
 
 export const RUTA_MODELO = "modelo/";
 
@@ -192,9 +193,43 @@ function aplicarEntornos(raiz, entornos, texturas) {
   return clones.size;
 }
 
-// Arma { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables } a partir de
-// `raiz` (gltf.scene) y `D` (depto_colisiones.json ya parseado). `opciones.entornos`: Map id -> textura de
-// cargarEntornos (opcional).
+// Exterior (bloque 08, contrato 2.3, sección 4): las mallas con extras.exterior (en el material o en el nodo) pasan a
+// un material sin luces (exterior.js), con su sombreado por vértice calculado en espacio de mundo, y se fusionan por
+// material en un grupo aparte, `exteriorFusionado`: no entra en el raycast del piso (tocar la calle por la ventana no
+// manda a caminar hacia afuera) y se puede ocultar entero. Devuelve { grupo, materiales }.
+export function prepararExterior(raiz, D, excluidos) {
+  const haciaSol = haciaSolDe(D);
+  const sueloY = D.exterior && typeof D.exterior.suelo_y === "number" ? D.exterior.suelo_y : 0;
+  const clones = new Map();
+  const porMaterial = new Map();
+  raiz.traverse((o) => {
+    if (!o.isMesh || excluidos.has(o) || Array.isArray(o.material) || !esExterior(o.material, o)) return;
+    let mat = clones.get(o.material);
+    if (!mat) { mat = materialExterior(o.material); clones.set(o.material, mat); }
+    const geo = o.geometry.clone();
+    geo.applyMatrix4(o.matrixWorld);
+    sombrear(geo, haciaSol, sueloY, mat.userData.capa);
+    if (!porMaterial.has(mat)) porMaterial.set(mat, []);
+    porMaterial.get(mat).push(geo);
+    excluidos.add(o);
+  });
+  const grupo = new THREE.Group();
+  grupo.name = "Depto_Exterior";
+  for (const [material, geometrias] of porMaterial) {
+    const fusionada = mergeGeometries(geometrias, false);
+    for (const g of geometrias) g.dispose();
+    if (!fusionada) { console.warn("[tour] no se pudo fusionar el exterior", material.name); continue; }
+    const malla = new THREE.Mesh(fusionada, material);
+    malla.name = `Depto_Exterior_${material.name || "sin_nombre"}`;
+    malla.matrixAutoUpdate = false;
+    grupo.add(malla);
+  }
+  return { grupo, materiales: [...clones.values()] };
+}
+
+// Arma { estaticoFusionado, exteriorFusionado, materialesExterior, sueltos, moviles, interruptores, lucesTHREE,
+// gruposLuz, tocables } a partir de `raiz` (gltf.scene) y `D` (depto_colisiones.json ya parseado).
+// `opciones.entornos`: Map id -> textura de cargarEntornos (opcional).
 export function prepararEscena(raiz, D, opciones = {}) {
   arreglarVidrios(raiz);
   raiz.updateWorldMatrix(true, true);
@@ -295,6 +330,9 @@ export function prepararEscena(raiz, D, opciones = {}) {
     if (reg.tecla) reg.tecla.rotation.x = (reg._grados * Math.PI) / 180;
   }
 
+  // --- exterior: fondo barato y aparte (antes de la fusión de lo estático, que ya no lo toma) ---
+  const exterior = prepararExterior(raiz, D, excluidos);
+
   // --- fusión de las mallas estáticas por material, con la transformación de mundo horneada ---
   const porMaterial = new Map();
   raiz.traverse((o) => {
@@ -332,5 +370,6 @@ export function prepararEscena(raiz, D, opciones = {}) {
   const sueltos = [...moviles.map((v) => v.nodo), ...interruptores.map((i) => i.nodo).filter((n) => !bajoOtro(n)),
     ...ampolletas.filter((a) => !bajoSuelto(a))].filter(Boolean);
 
-  return { estaticoFusionado, sueltos, moviles, interruptores, lucesTHREE, gruposLuz, tocables, mapaTocable, ampolletas };
+  return { estaticoFusionado, exteriorFusionado: exterior.grupo, materialesExterior: exterior.materiales, sueltos, moviles,
+    interruptores, lucesTHREE, gruposLuz, tocables, mapaTocable, ampolletas };
 }

@@ -7,6 +7,7 @@ import * as colision from "./colision.js";
 import { crearControles } from "./controles.js";
 import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo, MOTIVO_CAMINO } from "./interaccion.js";
 import { MOMENTOS, MOMENTO_POR_DEFECTO, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
+import { aplicarMomentoExterior } from "./exterior.js";
 import { RoomEnvironment } from "../../vendor/three/jsm/environments/RoomEnvironment.js";
 import { NOMBRES_RECINTO, estadoGruposParaMomento, gruposDelPanel } from "./luces.js";
 import { prepararMinimapa, dibujarMinimapa, recintoTocado } from "./minimapa.js";
@@ -28,7 +29,9 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 const calidad = crearCalidad(renderer, tactil, () => { sucio = true; });
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 500); // 72°: el mismo de la v2 y de los renders
+// 72°: el mismo de la v2 y de los renders. Lejos a 2 000 m (bloque 08): el suelo del exterior llega a 900 m y las
+// siluetas a 340; la precisión de profundidad la fija el plano cercano, no el lejano.
+const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 2000);
 camera.rotation.order = "YXZ";
 
 // Suelo del hemisferio neutro (corrección 07c, ronda 2): con 0x746a5c (marrón) teñía de cálido todo lo que mira hacia
@@ -82,6 +85,9 @@ function aplicarMomento(id, estadoInteraccion) {
   ambiente.intensity = m.ambiente;
   renderer.toneMappingExposure = m.exposicion;
   if (sol) { sol.color.set(m.sol.color); sol.intensity = m.sol.intensidad; }
+  // exterior (bloque 08): tinte, bruma de las siluetas con el horizonte del panorama y emisión de las ventanas vecinas
+  const pano = panoramas[id];
+  aplicarMomentoExterior(materialesExterior, m, id, (D && D.exterior) || {}, pano && pano.userData.horizonte);
   if (estadoInteraccion) {
     // cada grupo vuelve al estado de autor para este momento (grupos_luz[].encendido): el día apaga todo; la tarde y
     // la noche prenden sólo los que nacen encendidos (techos), no los veladores, apliques ni la lámpara de pie
@@ -96,6 +102,7 @@ function aplicarMomento(id, estadoInteraccion) {
 // ---------------------------------------------------------------------------------------------- carga
 let D = null, estado = null, controles = null, M = null;
 let materialesEntorno = [];   // materiales con entorno local (carga.js): su variante sigue a la luz de la cocina
+let materialesExterior = [];  // materiales del paisaje (exterior.js): tinte y emisión por momento
 let sucio = true;
 
 async function iniciar() {
@@ -137,6 +144,8 @@ async function iniciar() {
     if (o.isMesh && o.material.userData && o.material.userData.entornoLocal && !materialesEntorno.includes(o.material)) materialesEntorno.push(o.material);
   });
   scene.add(estado.estaticoFusionado);
+  if (preparado.exteriorFusionado) scene.add(preparado.exteriorFusionado);
+  materialesExterior = preparado.materialesExterior || [];
   for (const nodo of estado.sueltos) scene.attach(nodo);
   for (const luz of estado.lucesTHREE) {
     scene.add(luz);
