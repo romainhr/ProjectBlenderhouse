@@ -886,7 +886,7 @@ def mobiliario(col):
 
 
 # Suelo alrededor de las luminarias (x0, x1, y0, y1, z, clara): la mancha de luz se corta en estas piezas para quedar
-# 3 cm sobre cada superficie; `clara` elige la mitad de la textura de la vereda (albedo RAZON_VEREDA veces el del
+# 3 cm sobre cada superficie; `clara` elige la mitad de la textura de la vereda (que refleja ≈ 8 veces más que el
 # asfalto) o la de lo oscuro (asfalto y pasto).
 INF = 1.0e3
 SUELO_LUMINARIAS = (

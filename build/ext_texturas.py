@@ -16,7 +16,8 @@ cada corrida escribe los mismos archivos. Salida en assets/texturas/exterior/ (J
 - calle.jpg (1024 px): corte de la calle de 14 m (vereda de 3, calzada de 8 y vereda de 3) a lo ancho (u) y 12 m a lo
   largo (v, se repite): baldosas de vereda, solera, faja de estacionamiento de 2 m junto a la vereda A, dos pistas de
   3 m con huellas de rodado y la línea central segmentada de 3 m entre ellas.
-- luz_suelo_emision.jpg (512 × 256): la mancha de luz de una luminaria sobre el suelo, oscuro | vereda.
+- luz_suelo_emision.jpg (512 × 256): la mancha de luz de una luminaria sobre el suelo, oscuro | vereda, como incremento
+  de pantalla de noche (lo que el visor suma al cuadro).
 - terreno.jpg (512 px, 8 m): pasto del antejardín y de los lotes cercanos.
 - fachada_propia.jpg (512 px, 4 m): pintura exterior del edificio propio (el color de Depto_Mat_MuroExterior).
 - lejanos.jpg (512 px, 24 m) y lejanos_emision.jpg (256 px): ventanas tenues de las siluetas lejanas.
@@ -410,11 +411,14 @@ def lejanos():
 # (exterior.emision) sobre la vereda, la calzada y el pasto, bajo cada cabezal. Blender alumbra con un foco por
 # luminaria (tools/render_08.py) y esta textura sigue el mismo perfil: iluminancia de una fuente puntual a `alto` m
 # (cos³ θ / h²) por la máscara de foco de Eevee (smoothstep de (cos θ − cos α) / ((1 − cos α)·borde), α el medio
-# ángulo). La mitad izquierda es la de las superficies oscuras (asfalto y pasto) y la derecha la de la vereda: lo que
-# se suma es albedo × iluminancia, y la baldosa refleja RAZON_VEREDA veces más que el asfalto (medido en los colores
-# de calle(): #aaa69d contra #3d3e40, luminancia lineal 0,380 / 0,047). Diseño: alto, ángulo y borde.
+# ángulo). Diseño: alto, ángulo y borde.
+# El visor la suma al cuadro ya codificado en sRGB (mezcla aditiva de three.js sobre el lienzo): la textura guarda el
+# incremento de pantalla que hace falta de noche, enc(A + (C − A)·perfil) − enc(A), con A el suelo sin luminaria cerca
+# y C bajo el cabezal, por canal, medidos en Blender (review/08_exterior/balcon_noche.png, tools/medir_08.py: regiones
+# noche.calzada_entre / calzada_luz y noche.vereda_entre / vereda_luz, RGB medio de 0 a 255). La mitad izquierda es la
+# del asfalto (también el pasto) y la derecha la de la vereda, que refleja ≈ 8 veces más.
 LUZ_SUELO = dict(alto=6.90, medio_angulo_deg=45.0, borde=1.0, color="#ffcc8c")
-RAZON_VEREDA = 8.1
+LUZ_NOCHE = {"oscuro": ((9.4, 9.5, 10.7), (53.6, 41.2, 27.8)), "claro": ((27.5, 29.4, 32.0), (111.4, 89.9, 62.2))}
 
 
 def perfil_luz_suelo(r):
@@ -436,18 +440,22 @@ def _a_srgb(lin):
     return np.where(lin <= 0.0031308, lin * 12.92, 1.055 * lin ** (1 / 2.4) - 0.055).astype(np.float32)
 
 
+def _a_lineal(srgb):
+    srgb = np.asarray(srgb, np.float64)
+    return np.where(srgb <= 0.04045, srgb / 12.92, ((srgb + 0.055) / 1.055) ** 2.4)
+
+
 def luz_suelo():
-    """Emisión (512 × 256, sRGB): dos cuadrados de 2·radio de lado con la mancha centrada, oscuro | vereda."""
+    """Emisión (512 × 256, valores de pantalla): dos cuadrados de 2·radio de lado con la mancha centrada, oscuro | vereda."""
     n = 256
     R = radio_luz_suelo()
     t = (np.arange(n) + 0.5) / n * 2 - 1
-    r = np.hypot(t[None, :], t[:, None]) * R
-    base = perfil_luz_suelo(r)
-    col_lin = np.array([DT.col(LUZ_SUELO["color"])[k] for k in range(3)], np.float32)
-    col_lin = np.where(col_lin <= 0.04045, col_lin / 12.92, ((col_lin + 0.055) / 1.055) ** 2.4)
-    oscuro = base[..., None] * col_lin[None, None, :] / RAZON_VEREDA
-    claro = base[..., None] * col_lin[None, None, :]
-    return _a_srgb(np.concatenate([oscuro, claro], axis=1))
+    p = perfil_luz_suelo(np.hypot(t[None, :], t[:, None]) * R)[..., None]
+    mitades = []
+    for clave in ("oscuro", "claro"):
+        a, c = (_a_lineal(np.array(v) / 255.0) for v in LUZ_NOCHE[clave])
+        mitades.append(np.clip(_a_srgb(a + (c - a) * p) - _a_srgb(a), 0.0, 1.0))
+    return np.concatenate(mitades, axis=1).astype(np.float32)
 
 
 def uv_luz_suelo(dx, dy, claro):
