@@ -11,7 +11,7 @@
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 57102,
+      "bytes": 57276,
       "estaticos": 854,
       "moviles": 39,
       "luces": 24,
@@ -26,7 +26,7 @@
       "03": "a010728158c8",
       "04": "b1848392b38c",
       "05": "012a8c9fa544",
-      "06": "be96d71adb7b"
+      "06": "b01ea1fbd6f9"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
