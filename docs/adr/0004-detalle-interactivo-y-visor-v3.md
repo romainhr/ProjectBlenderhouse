@@ -227,3 +227,28 @@ Decisiones:
     interior tendrá que ahorrar o pedir que se suba el tope. El entorno local de la cocina (sección 6) ahora ve el
     exterior por las ventanas. Su escala de normalización pasó de 7,8 a 8,7 (luces) y de 19,6 a 30,9 (día), porque los
     vecinos tapan parte del cielo. La intensidad `entornoLocal` del visor no se recalibró.
+
+## Adenda 08, corrección de la ronda 1 (2026-09-27): contrato 2.4
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 08. **Revisor humano:** Romain Ange,
+  pendiente.
+
+17. **Un sol por momento, el de su panorama.** La luz de la tarde tenía la elevación de 35° de la fase 5 bajo un cielo
+    con el sol a 12°. Ahora cada momento orienta el sol con la elevación medida en su HDR: 48,0° de día, 12,1° de tarde
+    y 17,1° para la luna. El azimut es el que ya alineó el giro. Esto vale en `tools/render_08.py`, en el sol del visor
+    y en el sombreado por vértice del exterior, que se rehace al cambiar de momento. La fase 5 conserva sus 35° para
+    los demás renders. La tarde de Blender baja la luz del cielo a 0,4, medido para que el hormigón en sombra quede a
+    0,4-0,6 del de día.
+18. **Curva de tono Filmic en el exterior del visor.** Los renders de revisión salen con Filmic, y con ACES el mismo
+    valor de escena daba otra imagen: sombras más oscuras y claros más claros. Por eso ningún sombreado podía igualar a
+    la vez el ladrillo y el hormigón. Los materiales de fondo aplican la curva Filmic de Blender, medida en Blender por
+    `tools/curva_filmic.py` y guardada en `web/src/tour/js/filmic.js`. El resto del visor sigue con ACES. Se descartó
+    compensar con un tinte por material, porque no se sostiene al cambiar de momento.
+19. **Vidrio y mancha de luz sin luces nuevas.** El muro cortina y las ventanas propias reflejan el panorama del momento
+    (`envMap` en `MeshBasicMaterial`), con la máscara de un mapa de rugosidad propio. La mancha de luz de las
+    luminarias es una malla con una textura propia que se suma con mezcla aditiva. En Blender, en cambio, alumbran seis
+    focos sin sombra. Se descartó darle al visor seis luces puntuales más: cada fragmento del depto las pagaría, y ya
+    hay 24.
+20. **La escala del entorno local se usa.** El visor multiplica la intensidad del reflejo de la cocina por
+    escala_de_referencia / `entornos[].escala`. Un render nuevo del entorno ya no mueve la calibración (sección 6 del
+    contrato).

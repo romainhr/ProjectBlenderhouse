@@ -56,11 +56,13 @@ MANIFIESTO = os.path.join(EXPORTS, "manifest.json")
 TEX_MANIFIESTO = os.path.join(RAIZ, "assets", "texturas", "polyhaven", "manifest.json")
 RADIO = 0.20                          # compuerta 0 / ADR 0002: radio de la cámara del tour con el mobiliario
 OJO = 1.60                            # altura de los ojos (la de las cámaras de revisión)
-CONTRATO = "2.3"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
+CONTRATO = "2.4"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
                                       # sigue siendo la mayor (2), por compatibilidad del visor. 2.2 (corrección 07c,
                                       # ronda 2): enciende / movil (luz de la nevera), alcance_m y entornos[]. 2.3
                                       # (bloque 08): exterior con panoramas por momento, rotacion_deg, suelo_y y emision,
-                                      # y materiales Depto_Ext_Mat_* con exterior = true en sus extras
+                                      # y materiales Depto_Ext_Mat_* con exterior = true en sus extras. 2.4 (corrección
+                                      # 08, ronda 1): extras exterior_vidrio y exterior_aditivo, y la escala del entorno
+                                      # local, que el visor usa para normalizar su intensidad
 INICIO, MIRAR = "Hall", (190, 250)    # crítico de recorrido, fase 3: hall con 0,45 m de holgura, hacia el living
 DETRAS_DE_PUERTA = {"Dorm1", "Dorm2", "Bano1", "Bano2", "Paso_D1", "Paso_D2", "Balcon"}
 
@@ -708,7 +710,7 @@ def _render_entorno(scene, archivo):
 
 
 # ---------------------------------------------------------------------------
-# Exterior (bloque 08; contrato 2.3, sección 4). La fase 08 deja la emisión del paisaje (ventanas vecinas, luminarias)
+# Exterior (bloque 08; contrato 2.4, sección 4). La fase 08 deja la emisión del paisaje (ventanas vecinas, luminarias)
 # en 0 en el maestro, para los renders de día, y en cada material su valor de noche (emision_noche): se exporta con ése
 # y el visor lo escala por momento (exterior.emision). Los cielos JPG de Poly Haven van junto a las texturas.
 # ---------------------------------------------------------------------------
@@ -731,7 +733,7 @@ class emision_exterior:
 
 
 def exterior(scene):
-    """Registro `exterior` del contrato 2.3 y copia de los cielos a exports/web/tex/ (el visor los lee desde modelo/)."""
+    """Registro `exterior` del contrato 2.4 y copia de los cielos a exports/web/tex/ (el visor los lee desde modelo/)."""
     ext = json.loads(scene.get("depto_exterior", "{}"))
     if not ext:
         raise SystemExit("ERROR: el maestro no trae scene['depto_exterior'] (fase 08).")

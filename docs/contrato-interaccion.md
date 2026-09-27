@@ -1,12 +1,13 @@
 # Contrato de interacción: modelo (Blender) ↔ visor web
 
-Versión 2.3 (2026-09-26; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
+Versión 2.4 (2026-09-27; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
 temperatura y regla del momento del día agregados en la corrección 07b, ADR 0004; `enciende`, grupos de móvil,
 `alcance_m` y entornos locales, sección 6, en la ronda 2 de la corrección 07c; exterior con un panorama por momento,
-emisión y materiales de fondo, sección 4, en el bloque 08). El JSON trae `"version": 2`
-(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.3"`
-(versión completa; `"2.2"` en la ronda 2 de la corrección 07c y `"2.1"` desde la ronda 2 de la corrección 07b hasta la
-ronda 1 de la 07c). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
+emisión y materiales de fondo, sección 4, en el bloque 08; vidrio y mancha de luz del exterior, sección 4, y uso de la
+escala del entorno local, sección 6, en la ronda 1 de la corrección 08). El JSON trae `"version": 2`
+(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.4"`
+(versión completa; `"2.3"` en el bloque 08, `"2.2"` en la ronda 2 de la corrección 07c y `"2.1"` desde la ronda 2 de la
+corrección 07b hasta la ronda 1 de la 07c). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
 
 ## 1. Móviles (`moviles[]`, ya existe, se amplía)
 
@@ -158,7 +159,7 @@ Detalle (fase 07b):
 Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa{O,E}_{Cuerpo,Pantalla}`
 y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
 
-## 4. Exterior (2.3, bloque 08)
+## 4. Exterior (2.3, bloque 08; 2.4, corrección 08, ronda 1)
 
 ```json
 "exterior": {
@@ -192,8 +193,21 @@ y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
   `suelo_y`, y los fusiona por material en un grupo aparte (`Depto_Exterior`), fuera del raycast del piso. Por momento
   les aplica el tinte, la emisión y la bruma de las siluetas con el color del horizonte del panorama
   (`MOMENTOS[].exterior` en `cielo.js`).
-- En Blender, los renders de revisión del exterior usan los HDR 1k equivalentes como mundo, con el mismo giro
-  (`tools/render_08.py`).
+- Vidrio (2.4): los materiales con vidrio a la vista (`Depto_Ext_Mat_FachadaC`, el muro cortina, y
+  `Depto_Ext_Mat_VentanasPropias`) traen en los extras `exterior_vidrio = {reflectividad, rugosidad_vidrio,
+  rugosidad_marco}` y un `metallicRoughnessTexture` cuyo canal G separa el vidrio (`rugosidad_vidrio`) del marco y el
+  muro (`rugosidad_marco`). El visor les pone como `envMap` el panorama del momento, con la máscara
+  (rugosidad_marco − G) / (rugosidad_marco − rugosidad_vidrio) y `reflectividad` (`MixOperation`); sigue sin luces.
+- Mancha de luz (2.4): `Depto_Ext_Mat_LuzSuelo` trae `exterior_aditivo: true`, alfa 0 (en Blender no se ve: los renders
+  de revisión alumbran la calle con un foco por luminaria) y la mancha en su `emissiveTexture` (mitad izquierda para el
+  asfalto y el pasto, derecha para la vereda, que refleja más). El visor la suma al cuadro con mezcla aditiva,
+  escalada por `emision` del momento: de día no se dibuja.
+- El sombreado por vértice se rehace al cambiar de momento con el sol de su panorama (la elevación medida en el HDR,
+  con el azimut del sol de `luces[]`, que `rotacion_deg` ya alineó), y la curva de tono de los materiales de fondo es
+  la Filmic de Blender (`web/src/tour/js/filmic.js`, medida con `tools/curva_filmic.py`), la de los renders de
+  revisión, en lugar del ACES del resto del visor.
+- En Blender, los renders de revisión del exterior usan los HDR 1k equivalentes como mundo, con el mismo giro, y el sol
+  de la escena orientado hacia el sol medido en el HDR de cada momento (`tools/render_08.py`).
 
 ## 5. Recintos
 
@@ -226,12 +240,15 @@ como latón.
   recinto) está encendido y `dia` si está apagado. `imagen` repite la de las luces
   para un visor que sólo lea una. El centro de la imagen mira hacia +X de glTF y la derecha hacia +Z, la convención de
   `EquirectangularReflectionMapping`. `escala` es el factor que llevó el percentil 97 de la luminancia a 0,9 antes de
-  codificar (informativo).
+  codificar. Desde la 2.4 el visor lo usa: multiplica la intensidad del entorno de cada variante por
+  escala_de_referencia / `escala`, con la escala del render con que se midió esa intensidad
+  (`ESCALA_ENTORNO_CALIBRADA` en `web/src/tour/js/cielo.js`: luces 7,80, día 19,62). Así, un render nuevo del entorno
+  (el bloque 08 le puso el exterior en las ventanas: 8,71 y 30,88) no cambia el brillo de los reflejos.
 - `caja` [xmin, xmax, zmin, zmax] (glTF), `alto` [ymin, ymax] y `materiales`: el visor clona esos materiales en las
   mallas cuyo centro cae dentro de la caja (también las móviles, como la puerta de la nevera) y les pone como `envMap`
   el mapa prefiltrado (PMREM) de la variante que toca; su intensidad es la de `entornoLocal` del momento del día para
-  esa variante (`web/src/tour/js/cielo.js`, calibrada contra Blender desde las mismas cámaras; `actualizarEntornos` en
-  `carga.js`, en cada cuadro). El reflejo se proyecta en la caja (paralaje, como las sondas de caja de Eevee): sin
+  esa variante (`web/src/tour/js/cielo.js`, calibrada contra Blender desde las mismas cámaras), corregida por la
+  escala (`actualizarEntornos` en `carga.js`, en cada cuadro). El reflejo se proyecta en la caja (paralaje, como las sondas de caja de Eevee): sin
   eso, la visera de la campana, que mira hacia la cubierta y los muebles bajos, reflejaba el piso claro que se ve desde
   el centro. Las demás mallas siguen con el entorno general.
 - Lo produce `entorno_cocina()` en `build/depto_06_exportar.py`; lo usan `cargarEntornos` y `prepararEscena` en

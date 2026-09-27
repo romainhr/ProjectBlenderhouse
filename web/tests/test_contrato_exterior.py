@@ -1,4 +1,4 @@
-"""Contrato de interacción 2.3, sección 4 (exterior, bloque 08) en lo que exporta la fase 6, sin Blender: lee
+"""Contrato de interacción 2.4, sección 4 (exterior, bloque 08 y su corrección) en lo que exporta la fase 6, sin Blender: lee
 exports/web/depto_colisiones.json y exports/web/depto_gltf.json.
 
     python3 -m unittest discover -s web/tests -p 'test_*.py'
@@ -61,6 +61,33 @@ class ContratoExterior(unittest.TestCase):
             self.assertIn(n, emisivos)
         vidrio = next(m for m in ext if m["name"] == "Depto_Ext_Mat_VidrioBaranda")
         self.assertEqual(vidrio.get("alphaMode"), "BLEND")
+
+    def test_vidrio_y_mancha_de_luz(self):
+        """2.4: el vidrio trae su máscara (rugosidad) y exterior_vidrio; la mancha de luz, exterior_aditivo y alfa 0."""
+        por_nombre = {m["name"]: m for m in self.mats}
+        for n in ("Depto_Ext_Mat_FachadaC", "Depto_Ext_Mat_VentanasPropias"):
+            m = por_nombre[n]
+            v = m.get("extras", {}).get("exterior_vidrio")
+            self.assertIsInstance(v, dict, n)
+            self.assertLess(v["rugosidad_vidrio"], v["rugosidad_marco"], n)
+            self.assertTrue(0 < v["reflectividad"] <= 1, n)
+            self.assertIn("metallicRoughnessTexture", m.get("pbrMetallicRoughness", {}), n)
+        luz = por_nombre["Depto_Ext_Mat_LuzSuelo"]
+        self.assertIs(luz["extras"].get("exterior_aditivo"), True)
+        self.assertIn("emissiveTexture", luz)
+        self.assertEqual(luz.get("alphaMode"), "BLEND")
+        self.assertEqual(luz["pbrMetallicRoughness"]["baseColorFactor"][3], 0)      # invisible en Blender
+        # ningún otro material del exterior es aditivo
+        for m in self.mats:
+            if m["name"] != "Depto_Ext_Mat_LuzSuelo":
+                self.assertFalse(m.get("extras", {}).get("exterior_aditivo"), m["name"])
+
+    def test_escala_del_entorno_local(self):
+        """Sección 6 (2.4): cada entorno trae su escala por variante; el visor normaliza la intensidad con ella."""
+        for e in self.D.get("entornos", []):
+            self.assertEqual(set(e["escala"]), set(e["imagenes"]), e["id"])
+            for v in e["escala"].values():
+                self.assertGreater(v, 0)
 
     def test_presupuesto_y_nodos(self):
         nombres_mat = [m["name"] for m in self.mats]

@@ -305,7 +305,11 @@ muro norte, con sus antepechos y dinteles, que también son supuestos del brief.
 | Deptos por piso hacia el sur | dos, el primero en espejo | supuesto: el nuestro es el del extremo norte, porque tiene ventana en el muro norte (V_B1, medido) |
 | Balcones de los otros pisos | los mismos ejes del nuestro (losa, vidrio y pasamanos) | medido en el nuestro; apilados, supuesto |
 | Fondo del edificio | 13,6 m | inferido: depto de 6,01 (medido), palier de 1,40 + 0,15 y otra crujía de 6 m |
-| Antejardín, vereda y calzada | 3 + 3 + 8 m (dos pistas); solera de 0,15 m | diseño: calle local usual |
+| Antejardín, vereda y calzada | 3 + 3 + 8 m; solera de 0,15 m | diseño: calle local usual |
+| Reparto de la calzada de 8 m | estacionamiento de 2,0 m junto a la vereda del edificio + dos pistas de 3,0 m, con la línea central entre ellas | diseño (corrección 08, ronda 1: con autos a los dos lados quedaban pistas de 2,05 m) |
+| Luminarias | seis, poste de 7 m, brazo de 1,3 m y refractor encendido de noche; a 4-4,5 m de los árboles de su vereda | diseño |
+| Mancha de luz de una luminaria | foco de 90° (borde suave) a 6,9 m sobre la calzada: radio útil de ≈ 6,9 m | diseño (la misma en Blender, con focos, y en el visor, con una textura) |
+| Balcones corridos del E3 y del E5 | uno por piso tipo (desde el 2.º), vuelo de 1,1 m, vidrio de 1,0 m con pasamanos y vidrio en los extremos; puertas-ventana hasta el piso | diseño |
 | Calle transversal y cruce | a 14,5 m del muro norte, con pasos de cebra | diseño |
 | Vecinos modelados | E1 a E7, de 1 a 11 pisos, a 15-46 m, con bahías enteras de su variante | diseño |
 | Fachadas vecinas | 4 atlas propios (ladrillo, hormigón, muro cortina y estuco), 8 × 8 bahías-piso; ≈ 35 % de ventanas encendidas de noche | diseño; texturas generadas por código |
@@ -315,6 +319,10 @@ muro norte, con sus antepechos y dinteles, que también son supuestos del brief.
 | Giro del cielo | 149,3° | medido: lleva el sol del HDR de día al sol de la fase 5 |
 
 La vista libre desde las ventanas propias, con un abanico de rayos de ±40° y de −35° a +20°, llega a 16,3 m. Ése es el
-primer choque con el exterior. Presupuesto: 9 424 triángulos de exterior (tope del bloque, 15 000) y 197 902 en la
-escena (tope, 200 000).
+primer choque con el exterior. Presupuesto: 9 632 triángulos de exterior (tope del bloque, 15 000) y 198 110 en la
+escena (tope, 200 000), después de la corrección 08 (ronda 1; antes, 9 424 y 197 902).
+
+La luz de los tres momentos sale de los panoramas (medido en los HDR, fase 08): el sol de día a 48,0° de elevación, el
+de la tarde a 12,1° y la luna a 17,1°, con el azimut alineado por el giro. Los renders de revisión y el visor orientan
+el sol del depto con esa elevación en cada momento; la fase 5 sigue con su sol de 35° para los demás renders.
 
