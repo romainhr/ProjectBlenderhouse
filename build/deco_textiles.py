@@ -10,9 +10,11 @@ esquinas vivas o redondeadas y flecos opcionales en los extremos de la urdimbre 
 apoyadas en el piso, con largo y ángulo sorteados. UV: en metros (textura que se repite, centrada en la alfombra) o
 0-1 (alfombra entera, el kilim).
 
-Cortinas (encargo del bloque 09): paños de lino abiertos a los lados, con pliegues de onda de sección senoidal
-(una onda cada 5 a 6 cm cuando el paño está recogido), un poco más hondos y abiertos abajo, colgados de anillas en una
-barra negra con soportes al muro y terminales. Todo low-poly: 6 columnas por onda y 4 hileras.
+Cortinas (encargo del bloque 09): paños de lino abiertos a los lados, con pliegues de onda (una cada 4 a 6 cm cuando el
+paño está recogido, de ancho y hondura desparejos; la sección es la de una tela apilada: crestas y valles redondos
+unidos por flancos), un poco más hondos, abiertos y corridos hacia un lado abajo, colgados de anillas que apoyan en una
+barra negra con soportes al muro y terminales. Todo low-poly: 8 puntos por onda (vértice en la cresta y en el valle) y
+4 hileras.
 
 Materiales nuevos que registra este módulo (depto_geom.MATERIALES.setdefault); la textura de cada uno la asigna
 build/deco_paleta.py en la fase 5.
@@ -38,8 +40,8 @@ G.MATERIALES.setdefault(KILIM, ((0.64, 0.59, 0.53), 0.90, 0.0, 1.0))      # text
 G.MATERIALES.setdefault(CAMINO, ((0.34, 0.32, 0.29), 0.92, 0.0, 1.0))     # textura camino (espiga carbón y topo)
 G.MATERIALES.setdefault(PISO_BANO, ((0.88, 0.85, 0.81), 0.95, 0.0, 1.0))  # textura algodon
 G.MATERIALES.setdefault(FLECO, ((0.87, 0.84, 0.78), 0.95, 0.0, 1.0))      # hilo de urdimbre crudo (normal de algodon)
-G.MATERIALES.setdefault(LINO, ((0.84, 0.81, 0.75), 0.90, 0.0, 1.0))       # lino natural lavado (#D6CFC0; relieve
-                                                                          # rough_linen de Poly Haven)
+G.MATERIALES.setdefault(LINO, ((0.84, 0.81, 0.75), 0.90, 0.0, 1.0))       # lino natural lavado (#D6CFC0; textura
+                                                                          # propia lino desde la corrección 09)
 
 
 # ---------------------------------------------------------------- alfombras
@@ -137,43 +139,108 @@ def _flecos(col, prefijo, hx, hy, alto, f, rng):
 
 
 # ---------------------------------------------------------------- cortinas
-def _paño(bm, capa, x0, x1, y_eje, z_top, z_hem, ondas, fondo, lado, rng, cols_onda=6):
-    """Un paño recogido entre x0 y x1 (m, a lo largo del muro): sección senoidal alrededor de y_eje con `ondas`
-    ondas y hondura `fondo`; abajo se abre un 7 % hacia el vano (lado = +1: el vano queda hacia +X; −1: hacia −X) y la
-    onda se hace 15 % más honda, con hondura y fase propias por onda (los pliegues no son perfectos). La cara de
-    adelante mira al cuarto (−Y). Devuelve los puntos de cuelgue (x, y) de las anillas: donde la tela cruza la barra."""
-    ncol = ondas * cols_onda
-    filas = [(z_top, 0.0), (z_top - 0.16, 0.10), (0.5 * (z_top + z_hem), 0.55), (z_hem, 1.0)]
-    fases = [rng.uniform(-0.2, 0.2) for _ in range(ondas)]
-    amps = [rng.uniform(0.9, 1.1) for _ in range(ondas)]
+# Corrección 09 (ronda 1). Antes: 6 columnas por onda (vértices cada 60°: la cresta a 90° caía entre dos vértices y
+# quedaba una meseta plana con flancos rectos), todas las ondas del mismo ancho y rectas de arriba abajo: el paño se
+# leía como una persiana vertical. Ahora: 8 puntos por onda (uno en la cresta y otro en el valle, que son semicírculos
+# unidos por flancos rectos: la sección de una tela apilada) y sombreado suave hasta 88°, ancho de cada onda sorteado
+# ±15 % además de la hondura, y en la mitad inferior cada límite entre ondas se corre 1-2 cm hacia un lado (la tela
+# cae, no es un tubo). Las anillas apoyan en la barra
+# (antes estaban centradas en su eje) y la tela sube hasta 2 mm bajo ellas: antes quedaban 2,1 cm de muro a la vista.
+COLS_ONDA = 8                 # vértices cada 45°: cresta (90°) y valle (270°) son vértices
+ANCHO_ONDA_VAR = 0.15         # encargo de la corrección: ancho de cada onda ±15 %
+CORRIMIENTO_ABAJO = (0.01, 0.02)   # encargo de la corrección: cada onda se corre 1-2 cm hacia el lado, abajo
+ANILLA_HOLGURA = 0.0045       # diseño: radio medio de la anilla = radio de la barra + 4,5 mm
+ANILLA_RR = 0.0022            # diseño: radio del alambre de la anilla
+TELA_BAJO_ANILLA = 0.002      # diseño: la cabecera de la tela, 2 mm bajo el fondo de la anilla (la cinta que la cuelga)
+
+
+def _seccion_onda(w, A):
+    """Sección de una onda recogida de ancho w y semihondura A: COLS_ONDA puntos (fracción de w, desplazamiento en y;
+    negativo = hacia el cuarto). Cresta y valle son semicírculos de radio r = min(w/4, A) con vértices a 45°, 90° y
+    135°, unidos por flancos rectos: la tela apilada forma lazos, no una senoide (con A ≫ w la senoide deja la cresta
+    con un radio de 1 mm, un filo)."""
+    r = min(w / 4, A)
+    c, h = 0.7071 * r / w, A - r
+    return [(0.0, 0.0), (0.25 - c, -h - 0.7071 * r), (0.25, -A), (0.25 + c, -h - 0.7071 * r),
+            (0.5, 0.0), (0.75 - c, h + 0.7071 * r), (0.75, A), (0.75 + c, h + 0.7071 * r)]
+
+
+def _corrimientos(ondas, w_min, lado, rng):
+    """Corrimiento lateral (m) de cada límite entre ondas en el dobladillo: 1-2 cm hacia un lado sorteado, sin que
+    dos límites vecinos se separen más de 0,35 · w_min (ninguna onda se cierra), cero en el borde fijo del paño (el del
+    extremo de la barra) y libre en el que da al vano."""
+    tope = 0.35 * w_min
+    o = []
+    for j in range(ondas + 1):
+        v = rng.choice((-1, 1)) * rng.uniform(*CORRIMIENTO_ABAJO)
+        if o:
+            v = max(o[-1] - tope, min(o[-1] + tope, v))
+        o.append(v)
+    fijo = 0 if lado > 0 else ondas
+    d = o[fijo]
+    o = [v - d for v in o]                                 # el borde fijo no se mueve (y los demás se corren igual)
+    for j in range(ondas + 1):                             # el corrimiento de cada límite queda en ±2 cm
+        o[j] = max(-CORRIMIENTO_ABAJO[1], min(CORRIMIENTO_ABAJO[1], o[j]))
+    return o
+
+
+def _paño(bm, capa, x0, x1, y_eje, z_top, z_hem, ondas, fondo, lado, rng, cols_onda=COLS_ONDA):
+    """Un paño recogido entre x0 y x1 (m, a lo largo del muro) alrededor de y_eje: `ondas` ondas de ancho (±15 %) y
+    hondura (±10 %) sorteados, con la sección de _seccion_onda. Abajo se abre un 10 % hacia el vano (lado = +1: el
+    vano queda hacia +X; −1: hacia −X), la onda se hace 15 % más honda y cada límite entre ondas se corre 1-2 cm hacia
+    un lado (desde la hilera del medio, más al llegar al dobladillo). La cara de adelante mira al cuarto (−Y).
+    Devuelve los puntos de cuelgue (x, y) de las anillas (donde la tela cruza la barra, arriba) y el largo de tela de
+    la hilera de arriba."""
+    assert cols_onda == 8, "la sección de la onda tiene 8 puntos"
     ancho = x1 - x0
+    pesos = [1.0 + rng.uniform(-ANCHO_ONDA_VAR, ANCHO_ONDA_VAR) for _ in range(ondas)]
+    lim = [x0]
+    for w in pesos:
+        lim.append(lim[-1] + ancho * w / sum(pesos))
+    lim[-1] = x1
+    amps = [rng.uniform(0.9, 1.1) for _ in range(ondas)]
+    corr = _corrimientos(ondas, min(b - a for a, b in zip(lim[:-1], lim[1:])), lado, rng)
+    filas = [(z_top, 0.0), (z_top - 0.16, 0.10), (0.5 * (z_top + z_hem), 0.55), (z_hem, 1.0)]
     grilla = []
     for z, t in filas:
-        abre = 1 + 0.07 * t
+        abre = 1 + 0.10 * t
+        cae = max(0.0, (t - 0.1) / 0.9) ** 1.3             # 0 en la cabecera, 0,41 en el medio, 1 en el dobladillo
         fila = []
-        for i in range(ncol + 1):
-            s = i / ncol
-            k = min(int(s * ondas), ondas - 1)
-            ang = 2 * math.pi * s * ondas + (2 * math.pi * fases[k] * t if 0 < i < ncol else 0.0)
-            hond = fondo * (1 + 0.15 * t) * (1 + (amps[k] - 1) * (0.4 + 0.6 * t))
-            xa = x0 + s * ancho
-            xa = x0 + (xa - x0) * abre if lado > 0 else x1 - (x1 - xa) * abre
-            fila.append(bm.verts.new((xa, y_eje - 0.5 * hond * math.sin(ang), z)))
+        for k in range(ondas):
+            xa0, xa1 = lim[k] + cae * corr[k], lim[k + 1] + cae * corr[k + 1]
+            A = 0.5 * fondo * (1 + 0.15 * t) * (1 + (amps[k] - 1) * (0.4 + 0.6 * t))
+            sec = _seccion_onda(abre * (xa1 - xa0), A)
+            for i in range(cols_onda + (1 if k == ondas - 1 else 0)):
+                fu, dy = sec[i] if i < cols_onda else (1.0, 0.0)
+                xa = xa0 + fu * (xa1 - xa0)
+                xa = x0 + (xa - x0) * abre if lado > 0 else x1 - (x1 - xa) * abre
+                fila.append(bm.verts.new((xa, y_eje + dy, z)))
         grilla.append(fila)
-    uvs = {}
-    for fila in grilla:                                    # U: largo de tela (arco); V: altura (m)
+    uvs, largo_arriba = {}, 0.0
+    for n, fila in enumerate(grilla):                      # U: largo de tela (arco); V: altura (m)
         acc = 0.0
         for i, v in enumerate(fila):
             if i:
                 acc += (v.co - fila[i - 1].co).length
             uvs[v] = (acc, v.co.z)
+        if n == 0:
+            largo_arriba = acc
+    ncol = len(grilla[0]) - 1
     for a, b in zip(grilla[:-1], grilla[1:]):
         for i in range(ncol):
             f = bm.faces.new((a[i], b[i], b[i + 1], a[i + 1]))
             f.smooth = True
             for lp in f.loops:
                 lp[capa].uv = uvs[lp.vert]
-    return [(x0 + ancho * k / ondas, y_eje) for k in range(ondas + 1)]
+    return [(xk, y_eje) for xk in lim], largo_arriba
+
+
+def anilla_z(z_barra, r_barra):
+    """Centro de una anilla que apoya en la barra y su punto más bajo (m). La anilla es un toro de 6 × 3 con un
+    vértice arriba y otro abajo: su radio interior es R − 0,866 rr y el exterior R + 0,866 rr."""
+    R, rr = r_barra + ANILLA_HOLGURA, ANILLA_RR
+    zc = z_barra + r_barra - (R - 0.866 * rr)
+    return zc, zc - (R + 0.866 * rr)
 
 
 def cortinas(col, prefijo, largo_barra, paneles, z_barra=2.26, sep_muro=0.07, r_barra=0.0125, z_hem=0.012,
@@ -186,30 +253,32 @@ def cortinas(col, prefijo, largo_barra, paneles, z_barra=2.26, sep_muro=0.07, r_
     bm = bmesh.new()
     capa = bm.loops.layers.uv.verify()
     cuelgues = []
-    z_top = z_barra - r_barra - 0.028                     # anilla (Ø int. 3,4 cm) y gancho de 1 cm
+    zc_anilla, z_fondo_anilla = anilla_z(z_barra, r_barra)
+    z_top = z_fondo_anilla - TELA_BAJO_ANILLA              # ≈ 2,236 m con la barra a 2,26
     for x0, x1, lado in paneles:
-        cuelgues += _paño(bm, capa, x0, x1, y_eje, z_top, z_hem, ondas, fondo, lado, rng)
-    tela = B.objeto(col, f"{prefijo}_Tela", bm, LINO, angulo_suave=80, recalc=False, uv="propia")
+        cuelgues += _paño(bm, capa, x0, x1, y_eje, z_top, z_hem, ondas, fondo, lado, rng)[0]
+    tela = B.objeto(col, f"{prefijo}_Tela", bm, LINO, angulo_suave=88, recalc=False, uv="propia")
     # barra, anillas, soportes y terminales (metal negro mate)
     bm = bmesh.new()
     hx = largo_barra / 2
     B.tubo(bm, [(-hx, y_eje, z_barra), (hx, y_eje, z_barra)], r_barra, seg=12)
     for s in (-1, 1):
-        if terminales:                                     # terminal: cuello y esfera achatada
-            B.tubo(bm, [(s * hx, y_eje, z_barra), (s * (hx + 0.012), y_eje, z_barra)], r_barra * 0.7, seg=8)
+        if terminales:                                     # terminal: cuello y esfera achatada (12 lados)
+            B.tubo(bm, [(s * hx, y_eje, z_barra), (s * (hx + 0.012), y_eje, z_barra)], r_barra * 0.7, seg=12)
             anillos = B.torno(bm, [(0.0, -0.022), (0.017, -0.015), (0.022, 0.0), (0.015, 0.015), (0.0, 0.021)],
-                              seg=8)
+                              seg=12)
             for v in (v for an in anillos for v in an):  # eje del torno (Z) a lo largo de la barra
                 v.co = Vector((s * (hx + 0.034 + v.co.z), y_eje + v.co.y, z_barra + v.co.x))
         else:                                              # tapa (barra de muro a muro)
             B.tubo(bm, [(s * hx, y_eje, z_barra), (s * (hx + 0.004), y_eje, z_barra)], r_barra + 0.002, seg=12)
-    for x, y in cuelgues:                                  # anillas: toro de 6 × 3 alrededor de la barra
-        R, rr = r_barra + 0.0045, 0.0022
+    R, rr = r_barra + ANILLA_HOLGURA, ANILLA_RR
+    for x, y in cuelgues:                                  # anillas: toro de 6 × 3 que cuelga de la barra
         anillos = []
         for i in range(6):
-            a = 2 * math.pi * i / 6
-            anillos.append([bm.verts.new((x + rr * math.cos(2 * math.pi * k / 3), y + (R + rr * math.sin(2 * math.pi * k / 3)) * math.cos(a),
-                                          z_barra + (R + rr * math.sin(2 * math.pi * k / 3)) * math.sin(a)))
+            a = 2 * math.pi * i / 6 + math.pi / 2          # vértices arriba (apoyo) y abajo (fondo)
+            anillos.append([bm.verts.new((x + rr * math.cos(2 * math.pi * k / 3),
+                                          y + (R + rr * math.sin(2 * math.pi * k / 3)) * math.cos(a),
+                                          zc_anilla + (R + rr * math.sin(2 * math.pi * k / 3)) * math.sin(a)))
                             for k in range(3)])
         for i in range(6):
             a, b = anillos[i], anillos[(i + 1) % 6]

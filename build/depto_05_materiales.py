@@ -170,6 +170,8 @@ def pruebas(root):
         usados |= {m for m in o.data.materials if m}
     for m in usados:
         otros = {n.type for n in m.node_tree.nodes} - PAL.NODOS_GLTF
+        if PAL.TEXTURA_MAT.get(m.name, (None, {}))[1].get("translucido"):
+            otros -= PAL.NODOS_SOLO_BLENDER
         if otros:
             fallos.append(f"{m.name}: nodos que glTF no exporta {sorted(otros)}")
         if m.name in PAL.TEXTURA_MAT:

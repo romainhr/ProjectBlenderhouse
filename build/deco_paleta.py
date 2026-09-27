@@ -25,7 +25,7 @@ FUENTES = {
 # rugosidad: usar el mapa de rugosidad; normal: fuerza del mapa normal (None = sin); escala_m: fuerza el tamaño
 # real de una repetición; uv01: UV propias 0-1 de la pieza (cuadros, kilim, atlas de las plantas), sin repetición;
 # alfa (bloque 09): el alfa del mapa de color recorta la silueta (Eevee CLIP con umbral 0,5; glTF alphaMode MASK) y
-# el material queda de dos caras.
+# el material queda de dos caras; translucido (corrección 09): fracción de Translucent BSDF mezclada en Blender.
 TEXTURA_MAT = {
     # pisos
     "Depto_Mat_Microcemento": ("microcemento", dict(color=True, rugosidad=True, normal=0.5)),
@@ -74,10 +74,15 @@ TEXTURA_MAT = {
     # Bloque 09: alfombras nuevas (texturas propias de build/deco_texturas.py) y cortinas de lino
     "Depto_Mat_AlfombraBereber": ("bereber", dict(color=True, rugosidad=True, normal=1.0)),
     "Depto_Mat_AlfombraKilim": ("kilim", dict(color=True, rugosidad=True, normal=0.8, uv01=True)),
-    "Depto_Mat_AlfombraCamino": ("camino", dict(color=True, rugosidad=True, normal=0.8)),
+    # corrección 09 (ronda 1): normal de 0,8 a 1,0 con la espiga más grande (columnas de 3,75 cm, sarga de 1 cm)
+    "Depto_Mat_AlfombraCamino": ("camino", dict(color=True, rugosidad=True, normal=1.0)),
     "Depto_Mat_PisoBanoAlgodon": ("algodon", dict(color=True, rugosidad=True, normal=1.0)),
     "Depto_Mat_Fleco": ("algodon", dict(color=False, rugosidad=True, normal=0.6, escala_m=0.06)),
-    "Depto_Mat_Lino": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    # corrección 09 (ronda 1): textura propia `lino` (tafetán de 1 mm con tono por hilo y flameado, 0,50 m) con su
+    # color; antes, sólo el relieve de rough_linen con el color base plano: a 1-3 m la tela quedaba lisa. translucido:
+    # sólo en Blender, 30 % de Translucent BSDF (la luz de la ventana pasa el paño; glTF no lo exporta y el visor no lo
+    # usa)
+    "Depto_Mat_Lino": ("lino", dict(color=True, rugosidad=True, normal=0.6, translucido=0.3)),
     # Bloque 09: plantas de Poly Haven con sus texturas derivadas (build/deco_plantas.py --derivar)
     "Depto_Mat_PlantaAnturio": ("anthurium_botany_01", dict(color=True, rugosidad=True, normal=1.0, uv01=True,
                                                             alfa=True)),
@@ -98,6 +103,9 @@ TEXTURA_MAT = {
     "Depto_Mat_Arte3": ("arte_3", dict(color=True, rugosidad=False, normal=None, uv01=True)),
 }
 NODOS_GLTF = {"OUTPUT_MATERIAL", "BSDF_PRINCIPLED", "TEX_IMAGE", "NORMAL_MAP", "MAPPING", "TEX_COORD", "VERTEX_COLOR"}
+# Nodos sólo para Blender que el exportador de 3.6 salta sin perder nada (busca el Principled BSDF conectado a la salida
+# a través de ellos): la mezcla con Translucent BSDF de los materiales con `translucido`.
+NODOS_SOLO_BLENDER = {"MIX_SHADER", "BSDF_TRANSLUCENT"}
 # Materiales teñidos por vértice (fase 07b): el color base sale del atributo "Col" de la malla (glTF: COLOR_0 por el
 # color base blanco). Ver build/deco_interiores.py (TINTES).
 COLOR_VERTICE = {"Depto_Mat_Tela", "Depto_Mat_TelaGruesa", "Depto_Mat_Calzado", "Depto_Mat_Suela", "Depto_Mat_Alimento"}
@@ -221,6 +229,19 @@ def aplicar(nombre):
         nm.inputs["Strength"].default_value = op["normal"]
         nt.links.new(nodo(t["normal"], True).outputs["Color"], nm.inputs["Color"])
         nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    if op.get("translucido"):                          # Principled (1 − t) + Translucent (t) con el mismo color
+        mix = nt.nodes.new("ShaderNodeMixShader")
+        tr = nt.nodes.new("ShaderNodeBsdfTranslucent")
+        mix.inputs["Fac"].default_value = op["translucido"]
+        if op.get("color"):
+            nt.links.new(n_color.outputs["Color"], tr.inputs["Color"])
+        else:
+            tr.inputs["Color"].default_value = base["Base Color"]
+        if op.get("normal") and t["normal"]:
+            nt.links.new(nm.outputs["Normal"], tr.inputs["Normal"])
+        nt.links.new(bsdf.outputs["BSDF"], mix.inputs[1])
+        nt.links.new(tr.outputs["BSDF"], mix.inputs[2])
+        nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
     if nombre in COLOR_VERTICE:
         _color_vertice(mat)
     mat["textura"] = tid
