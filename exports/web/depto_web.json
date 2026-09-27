@@ -205,7 +205,75 @@
   {
    "uri": "tex/arte_3_diff_1k.jpg",
    "bytes": 460509
+  },
+  {
+   "uri": "tex/fachada_propia.jpg",
+   "bytes": 41915
+  },
+  {
+   "uri": "tex/ventanas_propias_emision.jpg",
+   "bytes": 29960
+  },
+  {
+   "uri": "tex/ventanas_propias.jpg",
+   "bytes": 154806
+  },
+  {
+   "uri": "tex/paleta_emision.jpg",
+   "bytes": 1684
+  },
+  {
+   "uri": "tex/paleta.jpg",
+   "bytes": 1777
+  },
+  {
+   "uri": "tex/fachada_D_emision.jpg",
+   "bytes": 13658
+  },
+  {
+   "uri": "tex/fachada_D.jpg",
+   "bytes": 234476
+  },
+  {
+   "uri": "tex/fachada_A_emision.jpg",
+   "bytes": 20403
+  },
+  {
+   "uri": "tex/fachada_A.jpg",
+   "bytes": 266860
+  },
+  {
+   "uri": "tex/fachada_B_emision.jpg",
+   "bytes": 22308
+  },
+  {
+   "uri": "tex/fachada_B.jpg",
+   "bytes": 232358
+  },
+  {
+   "uri": "tex/fachada_C_emision.jpg",
+   "bytes": 25469
+  },
+  {
+   "uri": "tex/fachada_C.jpg",
+   "bytes": 127916
+  },
+  {
+   "uri": "tex/calle.jpg",
+   "bytes": 256917
+  },
+  {
+   "uri": "tex/terreno.jpg",
+   "bytes": 100955
+  },
+  {
+   "uri": "tex/lejanos_emision.jpg",
+   "bytes": 4013
+  },
+  {
+   "uri": "tex/lejanos.jpg",
+   "bytes": 21501
   }
  ],
- "total_bytes": 18862223
+ "total_bytes": 21474651
 }
