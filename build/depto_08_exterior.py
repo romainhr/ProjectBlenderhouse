@@ -21,9 +21,14 @@ Para el visor (docs/contrato-interaccion.md, sección 4, versión 2.3):
   (scene["depto_exterior"]["emision"]);
 - scene["depto_exterior"] guarda los cielos (HDR y JPG de Poly Haven, assets/hdri/manifest.json), el sol medido en
   cada HDR, la rotación que lleva el sol del HDR de día al sol de la escena, la altura del suelo y el conteo.
+- los materiales de vidrio (muro cortina y ventanas propias) traen exterior_vidrio (el visor refleja el panorama donde
+  su mapa de rugosidad dice vidrio) y la mancha de luz de las luminarias, exterior_aditivo (el visor la suma de tarde
+  y de noche; en Blender es invisible y alumbran focos, tools/render_08.py).
 Pruebas antes de guardar: presupuesto de triángulos (exterior ≤ 15 000 y escena ≤ 200 000), materiales y objetos
-marcados, UV en todo, nada del exterior dentro del volumen del depto, del balcón o del palier, y las ventanas propias
-con la vista libre (ningún rayo hacia afuera choca con el exterior antes de 3 m).
+marcados, UV en todo, nada del exterior dentro del volumen del depto, del balcón o del palier, las ventanas propias
+con la vista libre (ningún rayo hacia afuera choca con el exterior antes de 3 m), y desde la corrección 08 (ronda 1)
+los choques entre piezas: cada poste de luminaria a 1,1·R_max + 0,3 m o más del eje de cada árbol y su brazo, carcasa
+y refractor fuera de las copas; y los balcones corridos de los B, uno por piso tipo y ninguno en el techo.
 """
 import json
 import math
@@ -143,15 +148,27 @@ EDIFICIOS = (
 REMATE = {"A": "remate_A", "B": "remate_B", "C": "remate_C", "D": "remate_D"}
 PARAPETO_VECINO = 0.9                    # diseño
 BALCON_VECINO = 1.1                      # diseño: vuelo de los balcones corridos de la variante B
+BARANDA_VECINO = 1.0                     # diseño: vidrio de 1,0 m con pasamanos, como el del depto (brief)
+VARIANTE_BALCON = {"B": "B_balcon"}      # la cara de la calle de los B lleva el atlas con puertas-ventana hasta el piso;
+                                         # las otras caras y el barrio, el atlas B sin balcón
+BALCONES_VECINOS = {}                    # nombre -> losas de balcón construidas (para pruebas())
 
 # ---------------------------------------------------------------------------------------------- árboles y mobiliario
 ARBOLES = ([(x, 8.3) for x in (-38.0, -30.0, -22.0, -14.0, -5.5, 5.5, 13.5)]
            + [(x, 17.7) for x in (-35.0, -26.0, -17.0, -8.0, 1.0, 10.0)]
            + [(18.3, y) for y in (-14.0, -5.0, 26.0, 34.0)] + [(27.7, y) for y in (-10.0, -1.0, 26.0, 34.0)])
-LUMINARIAS = ([(x, 8.65, 1) for x in (-26.0, -10.0, 9.5)] + [(x, 17.35, -1) for x in (-18.0, -2.0, 13.0)])
-AUTOS = ((-33.0, 10.05, 0.0, "auto_blanco"), (-20.5, 10.05, 0.0, "auto_gris"), (2.5, 10.05, 0.0, "auto_rojo"),
-         (11.0, 10.05, 0.0, "auto_plata"), (-28.0, 15.95, 0.0, "auto_azul"), (-12.0, 15.95, 0.0, "auto_negro"),
-         (6.0, 15.95, 0.0, "auto_blanco"), (20.05, -8.0, 90.0, "auto_gris"))
+# Luminarias (x, y del poste, lado hacia donde sale el brazo): entre dos árboles de su vereda, a 4-4,5 m de cada uno
+# (corrección 08, ronda 1: la de −18,0 atravesaba la copa del árbol de −17,0; pruebas() exige ahora poste–eje de árbol
+# ≥ 1,1·R_max + 0,3 en planta y el cabezal fuera de las copas).
+LUMINARIAS = ([(x, 8.65, 1) for x in (-26.0, -10.0, 9.5)] + [(x, 17.35, -1) for x in (-21.5, -3.5, 14.5)])
+POSTE_ALTO, BRAZO, CABEZAL = 7.0, 1.3, (0.36, 0.55)      # diseño: poste de 7 m, brazo de 1,3 m y cabezal de 36 × 55 cm
+# Autos estacionados en la faja de 2 m junto a la solera de la vereda A (y 9,0-11,0; ext_texturas.ESTACIONAMIENTO) y en
+# la de la transversal (x 19,0-21,0): la calzada de 8 m queda con dos pistas de 3 m (diseño; antes había autos a los
+# dos lados y quedaban pistas de 2,05 m). Lejos del cruce y sin tapar el sendero de la entrada (x −10,2..−7,8).
+Y_AUTOS = Y_CALZ_0 + 1.05
+AUTOS = ((-33.0, Y_AUTOS, 0.0, "auto_blanco"), (-27.5, Y_AUTOS, 0.0, "auto_azul"), (-20.5, Y_AUTOS, 0.0, "auto_gris"),
+         (-13.2, Y_AUTOS, 0.0, "auto_negro"), (2.5, Y_AUTOS, 0.0, "auto_rojo"), (8.2, Y_AUTOS, 0.0, "auto_plata"),
+         (X_CALZ_0 + 1.05, -8.0, 90.0, "auto_gris"), (X_CALZ_0 + 1.05, -15.0, 90.0, "auto_blanco"))
 ARBUSTOS_X = (-20.5, -17.5, -14.5, -12.2, -5.8, -2.5, 0.8, 3.6)   # antejardín propio (el sendero va en −10,2..−7,8)
 SENDERO = (-10.2, -7.8)
 
@@ -165,13 +182,21 @@ CENTRO_VISTA = (0.0, 3.5)                 # las tarjetas miran hacia el balcón
 
 # ---------------------------------------------------------------------------------------------- materiales
 # tex: id de ext_texturas.generar(); capa: "cerca" o "lejos" (el visor aplica la bruma del momento a las lejanas).
+# vidrio (corrección 08, ronda 1): la rugosidad sale del mapa de ext_texturas (vidrio 0,12, marco y muro 0,70) y el
+# material lleva en los extras exterior_vidrio = {reflectividad, rugosidad_vidrio, rugosidad_marco}: el visor refleja
+# el panorama del momento donde el mapa dice vidrio (MeshBasicMaterial con envMap, sin luces). Reflectividad de diseño.
+# aditivo: la mancha de luz de las luminarias; en el maestro es invisible (alfa 0: Blender alumbra con focos en
+# tools/render_08.py) y el visor la suma de tarde y de noche (extras exterior_aditivo).
+VIDRIO_EXT = dict(reflectividad=0.30, rugosidad_vidrio=T.RUGOSIDAD["vidrio"], rugosidad_marco=T.RUGOSIDAD["marco"])
 MATERIALES = {
     "Depto_Ext_Mat_FachadaA": dict(tex="fachada_A", emision=True, rugosidad=0.85),
     "Depto_Ext_Mat_FachadaB": dict(tex="fachada_B", emision=True, rugosidad=0.80),
-    "Depto_Ext_Mat_FachadaC": dict(tex="fachada_C", emision=True, rugosidad=0.35),
+    "Depto_Ext_Mat_FachadaB_balcon": dict(tex="fachada_B_balcon", emision=True, rugosidad=0.80),
+    "Depto_Ext_Mat_FachadaC": dict(tex="fachada_C", emision=True, vidrio=VIDRIO_EXT),
     "Depto_Ext_Mat_FachadaD": dict(tex="fachada_D", emision=True, rugosidad=0.85),
     "Depto_Ext_Mat_FachadaPropia": dict(tex="fachada_propia", rugosidad=0.90),
-    "Depto_Ext_Mat_VentanasPropias": dict(tex="ventanas_propias", emision=True, rugosidad=0.25),
+    "Depto_Ext_Mat_VentanasPropias": dict(tex="ventanas_propias", emision=True, vidrio=VIDRIO_EXT),
+    "Depto_Ext_Mat_LuzSuelo": dict(tex="luz_suelo", emision=True, aditivo=True),
     "Depto_Ext_Mat_Calle": dict(tex="calle", rugosidad=0.90),
     "Depto_Ext_Mat_Terreno": dict(tex="terreno", rugosidad=0.95),
     "Depto_Ext_Mat_Paleta": dict(tex="paleta", emision=True, rugosidad=0.70),
@@ -200,10 +225,37 @@ def material_ext(nombre, spec, tex):
     b.inputs["Roughness"].default_value = spec.get("rugosidad", 0.85)
     b.inputs["Specular"].default_value = 0.5            # otro valor exporta KHR_materials_specular
     b.inputs["Emission Strength"].default_value = 0.0
+    if spec.get("aditivo"):
+        # sólo emisión, invisible en Blender (alfa 0: el Principled de 3.6 apaga también la emisión): el glTF lleva la
+        # textura de emisión y el visor la suma con mezcla aditiva
+        t = tex[spec["tex"]]
+        b.inputs["Base Color"].default_value = (0.0, 0.0, 0.0, 1.0)
+        ie = nt.nodes.new("ShaderNodeTexImage")
+        ie.image = _imagen(t["emision"])
+        ie.name = "Emision"
+        nt.links.new(ie.outputs["Color"], b.inputs["Emission"])
+        m["emision_noche"] = 1.0
+        m["exterior_aditivo"] = True
+        b.inputs["Alpha"].default_value = 0.0
+        m.blend_method = "BLEND"
+        m.shadow_method = "NONE"
+        m.use_backface_culling = True
+        m.show_transparent_back = False
+        m.diffuse_color = (0.0, 0.0, 0.0, 0.0)
+        m["exterior"] = True
+        m["exterior_capa"] = "cerca"
+        return m
     if "tex" in spec:
         t = tex[spec["tex"]]
         im = nt.nodes.new("ShaderNodeTexImage")
         im.image = _imagen(t["color"])
+        if spec.get("vidrio"):
+            ir = nt.nodes.new("ShaderNodeTexImage")
+            ir.image = _imagen(t["rugosidad"])
+            ir.image.colorspace_settings.name = "Non-Color"
+            ir.name = "Rugosidad"
+            nt.links.new(ir.outputs["Color"], b.inputs["Roughness"])
+            m["exterior_vidrio"] = dict(spec["vidrio"])
         if "tinte" in spec:                               # factor de color base (baseColorFactor en glTF)
             mix = nt.nodes.new("ShaderNodeMixRGB")
             mix.blend_type = "MULTIPLY"
@@ -506,17 +558,20 @@ def balcon(malla, c, zn, sin_losa=False):
 
 
 # ---------------------------------------------------------------------------------------------- vecinos
-def fachadas_textura(m, var, x0, x1, y0, y1, pisos, rng):
+def fachadas_textura(m, var, x0, x1, y0, y1, pisos, rng, var_cara=None):
     """Las cuatro caras de un volumen con el atlas de la variante: planta baja en la fila 0 y los pisos tipo en tramos
-    de hasta 7 filas. Devuelve [(esquina izquierda vista desde afuera, esquina derecha, normal)]."""
+    de hasta 7 filas. var_cara {normal: variante}: otra variante para alguna cara (la de los balcones corridos, con la
+    misma bahía y el mismo piso). Devuelve [(esquina izquierda vista desde afuera, esquina derecha, normal)]."""
     V = T.VARIANTES[var]
-    mat = f"Depto_Ext_Mat_Fachada{var}"
     bw, fh, pb = V["bahia"], V["piso"], V["planta_baja"]
     z_pb = Z_VEREDA + pb
     caras = (  # la U crece hacia la derecha de quien mira la cara desde afuera
         ((x0, y0), (x1, y0), (0, -1, 0)), ((x1, y1), (x0, y1), (0, 1, 0)),
         ((x0, y1), (x0, y0), (-1, 0, 0)), ((x1, y0), (x1, y1), (1, 0, 0)))
     for (ax, ay), (bx, by), nrm in caras:
+        vc = (var_cara or {}).get(nrm, var)
+        assert (T.VARIANTES[vc]["bahia"], T.VARIANTES[vc]["piso"], T.VARIANTES[vc]["planta_baja"]) == (bw, fh, pb)
+        mat = f"Depto_Ext_Mat_Fachada{vc}"
         largo = math.hypot(bx - ax, by - ay)
         off = int(rng.integers(8)) * bw
         u0, u1 = off / (T.CELDAS * bw), (largo + off) / (T.CELDAS * bw)
@@ -540,11 +595,14 @@ def alto_vecino(var, pisos):
 
 def edificio_vecino(col, nombre, var, x0, x1, y0, y1, pisos, frente, rng):
     V = T.VARIANTES[var]
-    mat = f"Depto_Ext_Mat_Fachada{var}"
-    m = Malla(f"Depto_Ext_Vecino_{nombre}", [mat, M_PAL, M_VIDRIO])
+    balcones = var in VARIANTE_BALCON
+    cara_calle = (0, frente, 0)
+    var_cara = {cara_calle: VARIANTE_BALCON[var]} if balcones else None
+    mats = [f"Depto_Ext_Mat_Fachada{var}"] + ([f"Depto_Ext_Mat_Fachada{VARIANTE_BALCON[var]}"] if balcones else [])
+    m = Malla(f"Depto_Ext_Vecino_{nombre}", mats + [M_PAL, M_VIDRIO])
     fh, z_pb = V["piso"], Z_VEREDA + V["planta_baja"]
     top = Z_VEREDA + alto_vecino(var, pisos)
-    for (ax, ay), (bx, by), nrm in fachadas_textura(m, var, x0, x1, y0, y1, pisos, rng):
+    for (ax, ay), (bx, by), nrm in fachadas_textura(m, var, x0, x1, y0, y1, pisos, rng, var_cara):
         m.plana([(ax, ay, top), (bx, by, top), (bx, by, top + PARAPETO_VECINO), (ax, ay, top + PARAPETO_VECINO)],
                 M_PAL, nrm, REMATE[var])
     e = 0.2                                            # parapeto: coronación y cara interior
@@ -562,17 +620,27 @@ def edificio_vecino(col, nombre, var, x0, x1, y0, y1, pisos, frente, rng):
         cx, cy = x0 + (x1 - x0) * (0.30 + 0.4 * rng.random()), y0 + (y1 - y0) * (0.35 + 0.3 * rng.random())
         m.caja(cx - 1.6, cx + 1.6, cy - 1.4, cy + 1.4, top, top + 2.6, M_PAL, "caja_techo", caras="xXyYZ")
         m.prisma(cx + 3.0, cy, 0.8, top, top + 1.6, 8, M_PAL, "caja_techo", tapa=True)
-    # balcones corridos de la variante B en la cara de la calle
-    if var == "B":
+    # balcones corridos de la variante B en la cara de la calle: uno por piso tipo, con el piso del balcón al nivel del
+    # piso (z_pb + k·fh, k = 0 es el 2.º piso, sobre la planta baja) y ninguno en el techo. Corrección 08, ronda 1:
+    # el bucle iba de k = 1 a pisos − 1, un piso más arriba (el 2.º sin losa y una losa volada en el techo).
+    if balcones:
         yb = y0 if frente < 0 else y1
         ya = yb + frente * BALCON_VECINO
         ymin, ymax = sorted((ya, yb))
-        for k in range(1, pisos):
+        xa, xb = x0 + 0.3, x1 - 0.3
+        e = 0.025
+        frente_c = "y" if frente < 0 else "Y"
+        losas = []
+        for k in range(pisos - 1):
             z = z_pb + k * fh
-            m.caja(x0 + 0.3, x1 - 0.3, ymin, ymax, z - 0.15, z, M_PAL, "losa_balcon",
-                   caras="xX" + ("y" if frente < 0 else "Y") + "zZ")
-            m.cara([(x0 + 0.3, ya, z), (x1 - 0.3, ya, z), (x1 - 0.3, ya, z + 1.0), (x0 + 0.3, ya, z + 1.0)],
-                   [(0, 0)] * 4, M_VIDRIO, (0, frente, 0))
+            zt = z + BARANDA_VECINO
+            losas.append(round(z, 4))
+            m.caja(xa, xb, ymin, ymax, z - LOSA, z, M_PAL, "losa_balcon", caras="xX" + frente_c + "zZ")
+            m.cara([(xa, ya, z), (xb, ya, z), (xb, ya, zt), (xa, ya, zt)], [(0, 0)] * 4, M_VIDRIO, cara_calle)
+            for x, n in ((xa, (-1, 0, 0)), (xb, (1, 0, 0))):          # vidrio de los extremos del balcón corrido
+                m.cara([(x, yb, z), (x, ya, z), (x, ya, zt), (x, yb, zt)], [(0, 0)] * 4, M_VIDRIO, n)
+            m.caja(xa, xb, ya - e, ya + e, zt - 0.05, zt, M_PAL, "pasamanos", caras=frente_c + "Z")
+        BALCONES_VECINOS[nombre] = dict(losas=losas, top=round(top, 4), pisos=pisos, z_pb=round(z_pb, 4), piso=fh)
     # toldo de la planta baja del café (E6) hacia la calle transversal
     if nombre == "E6":
         m.caja(x1, x1 + 1.6, y0 + 0.5, y1 - 0.5, Z_VEREDA + 2.6, Z_VEREDA + 2.72, M_PAL, "toldo_verde", caras="xXyYzZ")
@@ -726,10 +794,15 @@ def suelo(col):
     return m.crear(col)
 
 
+COPAS = []                               # (centro, radios) de cada copa, con el margen del jitter (para pruebas())
+JITTER_COPA = 0.1
+
+
 def arboles(col):
     m = Malla("Depto_Ext_Arboles", [M_PAL])
     rng = np.random.default_rng(SEMILLA + 5)
     copas = ("copa_1", "copa_2", "copa_3", "copa_4")
+    COPAS.clear()
     for x, y in ARBOLES:
         ht = 2.4 + 0.8 * rng.random()                      # fuste libre (diseño: árboles de calle de 7-9 m)
         R = 2.0 + 0.8 * rng.random()
@@ -738,25 +811,45 @@ def arboles(col):
                  (x + 0.6, y + 0.6, Z_VEREDA + 0.01), (x - 0.6, y + 0.6, Z_VEREDA + 0.01)], M_PAL, (0, 0, 1), "tierra")
         m.prisma(x, y, 0.11 + 0.05 * rng.random(), Z_VEREDA, zc, 6, M_PAL, "tronco")
         color = copas[int(rng.integers(len(copas)))]
-        esfera(m, (x, y, zc), (R, R, 0.85 * R), 1, M_PAL, color, rng)
+        esfera(m, (x, y, zc), (R, R, 0.85 * R), 1, M_PAL, color, rng, JITTER_COPA)
         a = 2 * math.pi * rng.random()
-        esfera(m, (x + 0.45 * R * math.cos(a), y + 0.45 * R * math.sin(a), zc + 0.5 * R), (0.62 * R,) * 2 + (0.55 * R,),
-               1, M_PAL, color, rng)
+        c2 = (x + 0.45 * R * math.cos(a), y + 0.45 * R * math.sin(a), zc + 0.5 * R)
+        r2 = (0.62 * R,) * 2 + (0.55 * R,)
+        esfera(m, c2, r2, 1, M_PAL, color, rng, JITTER_COPA)
+        k = 1 + JITTER_COPA
+        COPAS.append(dict(eje=(x, y), R=R, elipsoides=[((x, y, zc), (k * R, k * R, k * 0.85 * R)),
+                                                       (c2, tuple(k * r for r in r2))]))
     return m.crear(col)
+
+
+def cabezal(x, y, lado):
+    """Cajas del brazo, de la carcasa y del refractor de una luminaria: [(x0, x1, y0, y1, z0, z1)]."""
+    ya, yb = sorted((y, y + lado * BRAZO))
+    yc = y + lado * BRAZO
+    c0, c1 = sorted((yc, yc + lado * CABEZAL[1]))
+    zt = Z_VEREDA + POSTE_ALTO
+    w = CABEZAL[0] / 2
+    return {"brazo": (x - 0.05, x + 0.05, ya, yb, zt - 0.1, zt),
+            "carcasa": (x - w, x + w, c0, c1, zt - 0.13, zt - 0.03),
+            "refractor": (x - w + 0.03, x + w - 0.03, c0 + 0.03, c1 - 0.03, zt - 0.25, zt - 0.13)}
+
+
+def centro_luz(x, y, lado):
+    """Pie de la vertical del refractor (x, y) y su altura z: el centro de la mancha de luz y la posición del foco."""
+    c = cabezal(x, y, lado)["refractor"]
+    return (c[0] + c[1]) / 2, (c[2] + c[3]) / 2, c[4]
 
 
 def mobiliario(col):
     m = Malla("Depto_Ext_Mobiliario", [M_PAL])
     for x, y, lado in LUMINARIAS:                          # poste de 7 m con brazo hacia la calzada
-        m.prisma(x, y, 0.08, Z_VEREDA, Z_VEREDA + 7.0, 6, M_PAL, "poste")
-        ya, yb = sorted((y, y + lado * 1.3))
-        m.caja(x - 0.05, x + 0.05, ya, yb, Z_VEREDA + 6.9, Z_VEREDA + 7.0, M_PAL, "poste", caras="xXyYzZ")
-        yc = y + lado * 1.3
-        m.caja(x - 0.18, x + 0.18, min(yc, yc + lado * 0.55), max(yc, yc + lado * 0.55), Z_VEREDA + 6.82,
-               Z_VEREDA + 6.97, M_PAL, "poste", caras="xXyYZ")
-        m.plana([(x - 0.16, min(yc, yc + lado * 0.53), Z_VEREDA + 6.815), (x + 0.16, min(yc, yc + lado * 0.53), Z_VEREDA + 6.815),
-                 (x + 0.16, max(yc, yc + lado * 0.53), Z_VEREDA + 6.815), (x - 0.16, max(yc, yc + lado * 0.53), Z_VEREDA + 6.815)],
-                M_PAL, (0, 0, -1), "luminaria")
+        m.prisma(x, y, 0.08, Z_VEREDA, Z_VEREDA + POSTE_ALTO, 6, M_PAL, "poste")
+        c = cabezal(x, y, lado)
+        m.caja(*c["brazo"], M_PAL, "poste", caras="xXyYzZ")
+        m.caja(*c["carcasa"], M_PAL, "poste", caras="xXyYZ")
+        # refractor emisivo bajo la carcasa: se ve encendido desde arriba y de lado (corrección 08, ronda 1: la única
+        # cara emisiva miraba hacia abajo y desde el depto sólo se veía la tapa oscura)
+        m.caja(*c["refractor"], M_PAL, "luminaria", caras="xXyYz")
     for x, y, giro, color in AUTOS:                        # autos estacionados junto a la solera (4,3 × 1,8 m)
         a = math.radians(giro)
         ca, sa = math.cos(a), math.sin(a)
@@ -789,6 +882,40 @@ def mobiliario(col):
             for v, n in ((-0.905, (sa, -ca, 0)), (0.905, (-sa, ca, 0))):
                 m.plana([p(u - 0.33, v, 0.0), p(u + 0.33, v, 0.0), p(u + 0.33, v, 0.62), p(u - 0.33, v, 0.62)],
                         M_PAL, n, "neumatico")
+    return m.crear(col)
+
+
+# Suelo alrededor de las luminarias (x0, x1, y0, y1, z, clara): la mancha de luz se corta en estas piezas para quedar
+# 3 cm sobre cada superficie; `clara` elige la mitad de la textura de la vereda (albedo RAZON_VEREDA veces el del
+# asfalto) o la de lo oscuro (asfalto y pasto).
+INF = 1.0e3
+SUELO_LUMINARIAS = (
+    (-INF, INF, Y_CALZ_0, Y_CALZ_1, Z_CALLE, False),                              # calzada principal y cruce
+    (-INF, X_CALZ_0, Y_VEREDA_A, Y_CALZ_0, Z_VEREDA, True), (X_CALZ_1, INF, Y_VEREDA_A, Y_CALZ_0, Z_VEREDA, True),
+    (-INF, X_CALZ_0, Y_CALZ_1, Y_VEREDA_B, Z_VEREDA, True), (X_CALZ_1, INF, Y_CALZ_1, Y_VEREDA_B, Z_VEREDA, True),
+    (X_CALZ_0, X_CALZ_1, -INF, Y_CALZ_0, Z_CALLE, False), (X_CALZ_0, X_CALZ_1, Y_CALZ_1, INF, Z_CALLE, False),
+    (X_VEREDA_A, X_CALZ_0, -INF, Y_VEREDA_A, Z_VEREDA, True), (X_VEREDA_A, X_CALZ_0, Y_VEREDA_B, INF, Z_VEREDA, True),
+    (-INF, X_VEREDA_A, YF, Y_VEREDA_A, Z_VEREDA, False), (-INF, X_VEREDA_A, Y_VEREDA_B, INF, Z_VEREDA, False),
+)
+SOBRE_SUELO_LUZ = 0.03                   # m: sobre el sendero y los pasos de cebra (2 cm)
+
+
+def luz_suelo(col):
+    m = Malla("Depto_Ext_LuzSuelo", ["Depto_Ext_Mat_LuzSuelo"])
+    R = T.radio_luz_suelo()
+    for x, y, lado in LUMINARIAS:
+        cx, cy, _ = centro_luz(x, y, lado)
+        for x0, x1, y0, y1, z, clara in SUELO_LUMINARIAS:
+            a0, a1, b0, b1 = max(x0, cx - R), min(x1, cx + R), max(y0, cy - R), min(y1, cy + R)
+            if a1 - a0 < 0.05 or b1 - b0 < 0.05:
+                continue
+            dx = min(abs(cx - v) for v in (a0, a1)) if not a0 <= cx <= a1 else 0.0
+            dy = min(abs(cy - v) for v in (b0, b1)) if not b0 <= cy <= b1 else 0.0
+            if T.perfil_luz_suelo(math.hypot(dx, dy)) < 0.01:                # la pieza queda fuera de la mancha
+                continue
+            pts = [(a0, b0), (a1, b0), (a1, b1), (a0, b1)]
+            m.cara([(px, py, z + SOBRE_SUELO_LUZ) for px, py in pts],
+                   [T.uv_luz_suelo(px - cx, py - cy, clara) for px, py in pts], "Depto_Ext_Mat_LuzSuelo", (0, 0, 1))
     return m.crear(col)
 
 
@@ -870,6 +997,11 @@ def datos_cielo(tris):
                             f"de la escena ({az_escena:.1f}°, elevación {el_escena:.1f}°); los tres HDR tienen el sol "
                             "a menos de 4° entre sí"),
         "fuentes": fuentes, "emision": EMISION_MOMENTO,
+        # focos de las luminarias para los renders de Blender (tools/render_08.py): la misma mancha que la textura
+        # luz_suelo que suma el visor (ext_texturas.LUZ_SUELO)
+        "luminarias": {"posiciones": [list(map(lambda v: round(v, 3), centro_luz(x, y, lado))) for x, y, lado in LUMINARIAS],
+                       "medio_angulo_deg": T.LUZ_SUELO["medio_angulo_deg"], "borde": T.LUZ_SUELO["borde"],
+                       "color": T.LUZ_SUELO["color"]},
         "altura_piso_m": -Z_CALLE, "piso": PISO_DEPTO, "pisos": PISOS, "triangulos": tris,
         "supuestos": "piso del depto a 12,5 m sobre la calle (5.º de 8), calles, vecinos y árboles de diseño",
     }
@@ -894,6 +1026,38 @@ def cajas_prohibidas():
         out.append(("palier", (min(p.x for p in pts), max(p.x for p in pts), min(p.y for p in pts),
                                max(p.y for p in pts), -LOSA, P.ALTURA_PISO_CIELO + LOSA)))
     return out
+
+
+def _dentro_elipsoide(p, centro, radios):
+    return sum(((p[k] - centro[k]) / radios[k]) ** 2 for k in range(3)) < 1.0
+
+
+def pruebas_piezas():
+    """Choques entre piezas del exterior (corrección 08, ronda 1) y balcones de los vecinos B."""
+    fallos = []
+    r_max = max(c["R"] for c in COPAS)
+    minimo = 1.1 * r_max + 0.3                       # la copa, con su jitter, más 30 cm de holgura
+    for x, y, lado in LUMINARIAS:
+        for c in COPAS:
+            d = math.hypot(x - c["eje"][0], y - c["eje"][1])
+            if d < minimo:
+                fallos.append(f"luminaria ({x}, {y}) a {d:.2f} m del árbol {c['eje']} (mínimo {minimo:.2f} m)")
+        for pieza, (x0, x1, y0, y1, z0, z1) in cabezal(x, y, lado).items():
+            for p in ((a, b, z) for a in (x0, x1) for b in (y0, y1) for z in (z0, z1)):
+                for c in COPAS:
+                    if any(_dentro_elipsoide(p, ce, ra) for ce, ra in c["elipsoides"]):
+                        fallos.append(f"luminaria ({x}, {y}): el {pieza} entra en la copa del árbol {c['eje']}")
+                        break
+    for nombre, *_ in EDIFICIOS:
+        b = BALCONES_VECINOS.get(nombre)
+        if b is None:
+            continue
+        esperadas = [round(b["z_pb"] + k * b["piso"], 4) for k in range(b["pisos"] - 1)]
+        if any(z >= b["top"] - 0.01 for z in b["losas"]):
+            fallos.append(f"{nombre}: una losa de balcón en el techo ({b['losas']}, techo {b['top']})")
+        if sorted(b["losas"]) != esperadas:
+            fallos.append(f"{nombre}: losas de balcón {b['losas']}, se esperaba una por piso tipo {esperadas}")
+    return fallos
 
 
 def pruebas(objs, total_escena):
@@ -926,6 +1090,7 @@ def pruebas(objs, total_escena):
                 if all(min(hi[k], caja[k][1]) - max(lo[k], caja[k][0]) > 1e-3 for k in range(3)):
                     fallos.append(f"{o.name}: una cara entra en el volumen del {nombre} ({lo}, {hi})")
                     break
+    fallos += pruebas_piezas()
     # vista libre: rayos desde cada ventana propia hacia afuera (abanico de ±40° y de −35° a +20°)
     verts, polys = [], []
     for o in objs:
@@ -965,7 +1130,7 @@ def main():
     for e in EDIFICIOS:
         objs.append(edificio_vecino(col, *e, rng))
     objs += [barrio(col, np.random.default_rng(SEMILLA + 13)), calles(col), suelo(col), arboles(col), mobiliario(col),
-             *lejanos(col)]
+             luz_suelo(col), *lejanos(col)]
     bpy.context.view_layer.update()
     visibles = [o for o in root.all_objects if o.type == "MESH" and not o.hide_render
                 and not o.name.startswith("Depto_Ref")]

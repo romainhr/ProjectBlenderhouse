@@ -4,14 +4,19 @@ Uso: lo importa build/depto_08_exterior.py (dentro de Blender). No descarga nada
 todo sale de ruido periódico (build/deco_texturas.py, clase Lienzo) y de dibujos por celda con semillas fijas, así que
 cada corrida escribe los mismos archivos. Salida en assets/texturas/exterior/ (JPEG sRGB):
 
-- fachada_<A|B|C|D>.jpg (1024 px) y fachada_<A|B|C|D>_emision.jpg (512 px): atlas de 8 × 8 celdas; cada celda es
-  una bahía por un piso del edificio vecino. La fila de abajo (v de 0 a 1/8) es la planta baja (locales o vestíbulo)
-  y las otras siete, pisos tipo. La emisión trae las ventanas encendidas de noche (≈ 35 % de los pisos tipo y ≈ 70 %
-  de los locales), con la misma cortina que la textura de color: se sortean juntas por celda.
-- ventanas_propias.jpg (1024 px) y ventanas_propias_emision.jpg (512 px): 8 × 8 ventanas del edificio propio.
-  Filas 0-3: ventana de dos hojas; filas 4-7: ventanal corredera. Columnas 0-4 apagadas y 5-7 encendidas de noche.
+- fachada_<A|B|B_balcon|C|D>.jpg (1024 px) y fachada_<...>_emision.jpg (512 px): atlas de 8 × 8 celdas; cada celda
+  es una bahía por un piso del edificio vecino. La fila de abajo (v de 0 a 1/8) es la planta baja (locales o
+  vestíbulo) y las otras siete, pisos tipo. La emisión trae las ventanas encendidas de noche (≈ 35 % de los pisos tipo
+  y ≈ 70 % de los locales), con la misma cortina que la textura de color: se sortean juntas por celda. B_balcon es la
+  cara de la calle de los B con balcones corridos (puertas-ventana hasta el piso); fachada_C_rugosidad.jpg (512 px,
+  sin gestión de color) separa el vidrio del marco del muro cortina.
+- ventanas_propias.jpg (1024 px), ventanas_propias_emision.jpg y ventanas_propias_rugosidad.jpg (512 px): 8 × 8
+  ventanas del edificio propio. Filas 0-3: ventana de dos hojas; filas 4-7: ventanal corredera. Columnas 0-4 apagadas
+  y 5-7 encendidas de noche.
 - calle.jpg (1024 px): corte de la calle de 14 m (vereda de 3, calzada de 8 y vereda de 3) a lo ancho (u) y 12 m a lo
-  largo (v, se repite): baldosas de vereda, solera, asfalto con huellas de rodado y línea central segmentada de 3 m.
+  largo (v, se repite): baldosas de vereda, solera, faja de estacionamiento de 2 m junto a la vereda A, dos pistas de
+  3 m con huellas de rodado y la línea central segmentada de 3 m entre ellas.
+- luz_suelo_emision.jpg (512 × 256): la mancha de luz de una luminaria sobre el suelo, oscuro | vereda.
 - terreno.jpg (512 px, 8 m): pasto del antejardín y de los lotes cercanos.
 - fachada_propia.jpg (512 px, 4 m): pintura exterior del edificio propio (el color de Depto_Mat_MuroExterior).
 - lejanos.jpg (512 px, 24 m) y lejanos_emision.jpg (256 px): ventanas tenues de las siluetas lejanas.
@@ -43,8 +48,14 @@ VARIANTES = {
               marco="#e6e1d8", marco_m=0.06, alfeizar="#cfc6b6", losa="#a88f7c", ladrillo=True, parteluz=True,
               encendidas=0.36, semilla=11),
     "B": dict(nombre="hormigon", bahia=3.0, piso=2.7, planta_baja=4.0, muro="#b9b7b1", vano=(0.12, 0.88, 0.30, 0.90),
-              marco="#3a3d40", marco_m=0.05, alfeizar=None, losa="#cfcdc7", baranda=True, parteluz=True,
+              marco="#3a3d40", marco_m=0.05, alfeizar=None, losa="#cfcdc7", parteluz=True,
               encendidas=0.34, semilla=23),
+    # la cara de la calle de los B con balcones corridos (la losa, el vidrio y el pasamanos son geometría de la fase 08):
+    # puertas-ventana de piso a cielo (antepecho de 0,19 m) en vez de la ventana de 0,81 m, para que el balcón tenga
+    # acceso. Mismas bahía, piso y planta baja que la B: se arma con las mismas cuentas (corrección 08, ronda 1)
+    "B_balcon": dict(nombre="hormigon con balcones", bahia=3.0, piso=2.7, planta_baja=4.0, muro="#b9b7b1",
+                     vano=(0.12, 0.88, 0.07, 0.90), marco="#3a3d40", marco_m=0.05, alfeizar=None, losa="#cfcdc7",
+                     parteluz=True, encendidas=0.34, semilla=29),
     "C": dict(nombre="vidrio", bahia=1.5, piso=3.5, planta_baja=4.5, muro="#2b3137", vano=(0.0, 1.0, 0.27, 1.0),
               marco="#8d9398", marco_m=0.045, alfeizar=None, losa="#2b3137", muro_cortina=True,
               encendidas=0.42, semilla=37),
@@ -52,6 +63,11 @@ VARIANTES = {
               marco="#f2efe8", marco_m=0.06, alfeizar="#ece4d2", losa="#cabd9f", persianas=True,
               encendidas=0.33, semilla=41),
 }
+
+# Rugosidad de los mapas de vidrio (diseño): el paño de vidrio casi liso y el marco, la enjuta y el muro como pintura.
+# El visor la lee como máscara: reflejo del cielo entero donde vale "vidrio" y nada donde vale "marco".
+RUGOSIDAD = {"vidrio": 0.12, "marco": 0.70}
+VARIANTES_VIDRIO = ("C",)        # el muro cortina: su mapa de rugosidad va al material (las otras, rugosidad pareja)
 
 # Colores de ventanas encendidas (sRGB, antes de la intensidad): 2700 K, 3000 K, 4000 K y una pantalla fría.
 LUCES_VENTANA = (((1.00, 0.64, 0.34), 0.40), ((1.00, 0.72, 0.46), 0.30), ((1.00, 0.86, 0.70), 0.22),
@@ -214,12 +230,6 @@ def fachada(var):
         rayas = 0.5 + 0.5 * L.ruido(rng.integers(1 << 30), grande=0.05, chico=0.01, p=0.0, estira=12.0, angulo=90.0)
         img = np.where(chorreo[..., None], img * (1.0 - 0.06 * rayas * (cv - (v0 - 0.9 / fh)) / (0.9 / fh))[..., None],
                        img)
-    # baranda dibujada (variante B: balcón corrido; la losa del balcón es geometría en la fase 08)
-    if V.get("baranda"):
-        barra = tipo & (cv * fh > 0.15) & (cv * fh < 1.05) & ((np.abs(((cv * fh - 0.15) / 0.3) % 1.0) < 0.12)
-                                                          | (np.abs(cv * fh - 1.02) < 0.03))
-        img = np.where(barra[..., None], _c("#2e3134")[None, None, :], img)
-        em = np.where(barra[..., None], em * 0.25, em)
     # persianas de madera a los lados (variante D)
     if V.get("persianas"):
         ancho_p = (u1 - u0) * 0.5
@@ -242,7 +252,11 @@ def fachada(var):
     zocalo = pb & (cv < 0.08)
     img = np.where(zocalo[..., None], img * 0.72, img)
     em = np.where((vit & encend[cj, ci])[..., None], luces[cj, ci] * (0.8 * inten[cj, ci])[..., None], em)
-    return img, _reducir(em, 512)
+    # rugosidad (corrección 08, ronda 1): el vidrio (paños y vitrinas) liso y el marco y el muro ásperos; en Blender va
+    # a Roughness y el visor la usa como máscara del reflejo del cielo (extras exterior_vidrio)
+    vidrio_m = (dentro & ~en_marco) | vit
+    rug = np.where(vidrio_m, RUGOSIDAD["vidrio"], RUGOSIDAD["marco"]).astype(np.float32)
+    return img, _reducir(em, 512), _reducir(rug[..., None], 512)[..., 0]
 
 
 # ---------------------------------------------------------------------------------------------- ventanas propias
@@ -252,6 +266,7 @@ def ventanas_propias():
     rng = np.random.default_rng(5)
     img = np.zeros((N, N, 3), np.float32)
     em = np.zeros((N, N, 3), np.float32)
+    rug = np.zeros((N, N), np.float32)
     yy, xx = np.mgrid[0:T, 0:T].astype(np.float32)
     su = (xx + 0.5) / T
     sv = 1.0 - (yy + 0.5) / T                                          # v hacia arriba dentro de la baldosa
@@ -283,7 +298,8 @@ def ventanas_propias():
             r0, c0 = N - (fila + 1) * T, col * T
             img[r0:r0 + T, c0:c0 + T] = t
             em[r0:r0 + T, c0:c0 + T] = e
-    return img, _reducir(em, 512)
+            rug[r0:r0 + T, c0:c0 + T] = np.where(en_m, RUGOSIDAD["marco"], RUGOSIDAD["vidrio"])
+    return img, _reducir(em, 512), _reducir(rug[..., None], 512)[..., 0]
 
 
 def uv_ventana_propia(fila, col):
@@ -295,6 +311,12 @@ def uv_ventana_propia(fila, col):
 # ---------------------------------------------------------------------------------------------- calle
 CALLE_ANCHO, CALLE_LARGO = 14.0, 12.0          # m que cubre la textura: vereda 3 + calzada 8 + vereda 3; 12 m a lo largo
 VEREDA, CALZADA = 3.0, 8.0
+# Calzada de 8 m (diseño, corrección 08, ronda 1): estacionamiento de 2,0 m junto a la solera del lado de la vereda A
+# (la del edificio propio; u de 3 a 5 m) y dos pistas de 3,0 m, una por sentido. Antes había autos a los dos lados y la
+# línea al medio: quedaban pistas de 2,05 m. La línea central va en el eje de las dos pistas y las huellas, en el
+# centro de cada una.
+ESTACIONAMIENTO, PISTA = 2.0, 3.0
+EJE_PISTAS = ESTACIONAMIENTO + PISTA            # 5,0 m desde la solera A
 
 
 def calle():
@@ -308,14 +330,17 @@ def calle():
     asf = _c("#3d3e40")[None, None, :] * (1.0 + 0.10 * fino + 0.06 * medio + 0.05 * grande)[..., None]
     img = asf.copy()
     x_calz = X - VEREDA
-    carril = CALZADA / 2
-    for c in (carril * 0.5, carril * 1.5):                             # huellas de rodado (dos por pista)
+    for c in (EJE_PISTAS - PISTA / 2, EJE_PISTAS + PISTA / 2):         # huellas de rodado (dos por pista)
         for d in (-0.85, 0.85):
             h = DT.ss(0.45, 0.0, np.abs(x_calz - c - d))
             img = img * (1.0 - 0.10 * h)[..., None]
     for borde in (0.0, CALZADA):                                       # cuneta más sucia junto a la solera
         img = img * (1.0 - 0.18 * DT.ss(0.5, 0.0, np.abs(x_calz - borde)))[..., None]
-    raya = (np.abs(x_calz - carril) < 0.06) & (Yy % CALLE_LARGO < 3.0)
+    # la faja de estacionamiento, sin huellas: manchas de aceite sueltas donde quedan los motores
+    aceite = DT.ss(0.9, 1.6, L.ruido(int(rng.integers(1 << 30)), grande=0.6, chico=0.15, p=0.8))
+    en_est = (x_calz > 0.45) & (x_calz < ESTACIONAMIENTO - 0.35)
+    img = np.where(en_est[..., None], img * (1.0 - 0.12 * aceite)[..., None], img)
+    raya = (np.abs(x_calz - EJE_PISTAS) < 0.06) & (Yy % CALLE_LARGO < 3.0)
     desgaste = np.clip(0.8 + 0.2 * fino, 0, 1)
     img = np.where(raya[..., None], _mezcla(img, _c("#e4e3dc")[None, None, :], desgaste), img)
     # veredas: baldosa de 0,40 m con junta, manchas y la solera clara
@@ -380,6 +405,57 @@ def lejanos():
     return img, _reducir(em, 256)
 
 
+# ---------------------------------------------------------------------------------------------- luz de las luminarias
+# Mancha de luz de una luminaria sobre el suelo (corrección 08, ronda 1), para el visor: se suma de tarde y de noche
+# (exterior.emision) sobre la vereda, la calzada y el pasto, bajo cada cabezal. Blender alumbra con un foco por
+# luminaria (tools/render_08.py) y esta textura sigue el mismo perfil: iluminancia de una fuente puntual a `alto` m
+# (cos³ θ / h²) por la máscara de foco de Eevee (smoothstep de (cos θ − cos α) / ((1 − cos α)·borde), α el medio
+# ángulo). La mitad izquierda es la de las superficies oscuras (asfalto y pasto) y la derecha la de la vereda: lo que
+# se suma es albedo × iluminancia, y la baldosa refleja RAZON_VEREDA veces más que el asfalto (medido en los colores
+# de calle(): #aaa69d contra #3d3e40, luminancia lineal 0,380 / 0,047). Diseño: alto, ángulo y borde.
+LUZ_SUELO = dict(alto=6.90, medio_angulo_deg=45.0, borde=1.0, color="#ffcc8c")
+RAZON_VEREDA = 8.1
+
+
+def perfil_luz_suelo(r):
+    """Iluminancia relativa (1 bajo el cabezal) a r m del pie de la luminaria."""
+    h = LUZ_SUELO["alto"]
+    c = h / np.sqrt(h * h + np.asarray(r, np.float64) ** 2)                  # cos θ
+    ca = math.cos(math.radians(LUZ_SUELO["medio_angulo_deg"]))
+    mascara = DT.ss(0.0, 1.0, (c - ca) / ((1.0 - ca) * LUZ_SUELO["borde"]))
+    return (c ** 3 * mascara).astype(np.float32)
+
+
+def radio_luz_suelo():
+    """Radio (m) donde la máscara de foco llega a 0: el borde de las piezas de la mancha."""
+    return LUZ_SUELO["alto"] * math.tan(math.radians(LUZ_SUELO["medio_angulo_deg"]))
+
+
+def _a_srgb(lin):
+    lin = np.clip(lin, 0.0, 1.0)
+    return np.where(lin <= 0.0031308, lin * 12.92, 1.055 * lin ** (1 / 2.4) - 0.055).astype(np.float32)
+
+
+def luz_suelo():
+    """Emisión (512 × 256, sRGB): dos cuadrados de 2·radio de lado con la mancha centrada, oscuro | vereda."""
+    n = 256
+    R = radio_luz_suelo()
+    t = (np.arange(n) + 0.5) / n * 2 - 1
+    r = np.hypot(t[None, :], t[:, None]) * R
+    base = perfil_luz_suelo(r)
+    col_lin = np.array([DT.col(LUZ_SUELO["color"])[k] for k in range(3)], np.float32)
+    col_lin = np.where(col_lin <= 0.04045, col_lin / 12.92, ((col_lin + 0.055) / 1.055) ** 2.4)
+    oscuro = base[..., None] * col_lin[None, None, :] / RAZON_VEREDA
+    claro = base[..., None] * col_lin[None, None, :]
+    return _a_srgb(np.concatenate([oscuro, claro], axis=1))
+
+
+def uv_luz_suelo(dx, dy, claro):
+    """UV de un punto a (dx, dy) m del centro de la mancha, en la mitad oscura o en la de la vereda."""
+    R = radio_luz_suelo()
+    return ((0.5 if claro else 0.0) + 0.25 + dx / (4 * R), 0.5 + dy / (2 * R))
+
+
 def paleta():
     n = LADO_PALETA * PX_MUESTRA
     img = np.full((n, n, 3), 0.5, np.float32)
@@ -398,13 +474,17 @@ def generar():
     """Escribe todas las texturas en SALIDA; devuelve {id: {"color": ruta, "emision": ruta o None, "metros": ...}}."""
     out = {}
     for var in VARIANTES:
-        c, e = fachada(var)
+        c, e, r = fachada(var)
         V = VARIANTES[var]
         out[f"fachada_{var}"] = {"color": _guardar(c, f"fachada_{var}.jpg"), "emision": _guardar(e, f"fachada_{var}_emision.jpg"),
                                  "metros": [CELDAS * V["bahia"], CELDAS * V["piso"]], "nombre": V["nombre"]}
-    c, e = ventanas_propias()
+        if var in VARIANTES_VIDRIO:
+            out[f"fachada_{var}"]["rugosidad"] = _guardar(r, f"fachada_{var}_rugosidad.jpg")
+    c, e, r = ventanas_propias()
     out["ventanas_propias"] = {"color": _guardar(c, "ventanas_propias.jpg"),
-                               "emision": _guardar(e, "ventanas_propias_emision.jpg"), "metros": None}
+                               "emision": _guardar(e, "ventanas_propias_emision.jpg"),
+                               "rugosidad": _guardar(r, "ventanas_propias_rugosidad.jpg"), "metros": None}
+    out["luz_suelo"] = {"color": None, "emision": _guardar(luz_suelo(), "luz_suelo_emision.jpg"), "metros": None}
     out["calle"] = {"color": _guardar(calle(), "calle.jpg"), "emision": None, "metros": [CALLE_ANCHO, CALLE_LARGO]}
     out["terreno"] = {"color": _guardar(terreno(), "terreno.jpg"), "emision": None, "metros": [TERRENO_M] * 2}
     out["fachada_propia"] = {"color": _guardar(fachada_propia(), "fachada_propia.jpg"), "emision": None,
