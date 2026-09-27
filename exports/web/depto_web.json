@@ -219,6 +219,10 @@
    "bytes": 154806
   },
   {
+   "uri": "tex/ventanas_propias_rugosidad.jpg",
+   "bytes": 52636
+  },
+  {
    "uri": "tex/paleta_emision.jpg",
    "bytes": 1684
   },
@@ -244,11 +248,19 @@
   },
   {
    "uri": "tex/fachada_B_emision.jpg",
-   "bytes": 22308
+   "bytes": 21115
   },
   {
    "uri": "tex/fachada_B.jpg",
-   "bytes": 232358
+   "bytes": 196440
+  },
+  {
+   "uri": "tex/fachada_B_balcon_emision.jpg",
+   "bytes": 22123
+  },
+  {
+   "uri": "tex/fachada_B_balcon.jpg",
+   "bytes": 192053
   },
   {
    "uri": "tex/fachada_C_emision.jpg",
@@ -259,12 +271,20 @@
    "bytes": 127916
   },
   {
+   "uri": "tex/fachada_C_rugosidad.jpg",
+   "bytes": 34684
+  },
+  {
    "uri": "tex/calle.jpg",
-   "bytes": 256917
+   "bytes": 256789
   },
   {
    "uri": "tex/terreno.jpg",
    "bytes": 100955
+  },
+  {
+   "uri": "tex/luz_suelo_emision.jpg",
+   "bytes": 5528
   },
   {
    "uri": "tex/lejanos_emision.jpg",
@@ -275,5 +295,5 @@
    "bytes": 21501
   }
  ],
- "total_bytes": 21474651
+ "total_bytes": 21771616
 }

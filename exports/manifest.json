@@ -1,12 +1,12 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 19201176,
-    "md5": "7dc355dc5ff53b67952d0ead816da024",
+    "bytes": 19492568,
+    "md5": "77fbbdb01a7cc9fa4d81567b5563e8c2",
     "web": {
       "carpeta": "web",
-      "archivos": 72,
-      "bytes": 21474651,
+      "archivos": 77,
+      "bytes": 21771616,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
@@ -18,7 +18,7 @@
       "grupos_luz": 16,
       "interruptores": 29
     },
-    "fecha": "2026-09-26",
+    "fecha": "2026-09-27",
     "fase": "06",
     "sellos": {
       "01": "b6b8f5f7a659",
@@ -26,8 +26,8 @@
       "03": "20cb29210c7a",
       "04": "f32dce074cf7",
       "05": "c0e8bf796b3d",
-      "08": "0bbb6b26f0ce",
-      "06": "d610f0c1c991"
+      "08": "ebd3c3c05ac3",
+      "06": "bd5b622867f9"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -48,17 +48,19 @@
         2.55
       ]
     },
-    "mallas": 427,
-    "triangulos": 197902,
+    "mallas": 428,
+    "triangulos": 198110,
     "materiales": [
       "Depto_Ext_Mat_Calle",
       "Depto_Ext_Mat_FachadaA",
       "Depto_Ext_Mat_FachadaB",
+      "Depto_Ext_Mat_FachadaB_balcon",
       "Depto_Ext_Mat_FachadaC",
       "Depto_Ext_Mat_FachadaD",
       "Depto_Ext_Mat_FachadaPropia",
       "Depto_Ext_Mat_Lejanos1",
       "Depto_Ext_Mat_Lejanos2",
+      "Depto_Ext_Mat_LuzSuelo",
       "Depto_Ext_Mat_Paleta",
       "Depto_Ext_Mat_Terreno",
       "Depto_Ext_Mat_VentanasPropias",
@@ -139,8 +141,8 @@
     ],
     "dimensiones_nota": "dimensiones_m y bbox_blender_m son del depto, sin el exterior (objetos Depto_Ext_*)",
     "exterior": {
-      "mallas": 16,
-      "triangulos": 9424,
+      "mallas": 17,
+      "triangulos": 9632,
       "dimensiones_m": {
         "x": 1800.0,
         "y": 1800.0,
