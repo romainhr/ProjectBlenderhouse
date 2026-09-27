@@ -220,7 +220,7 @@
   },
   {
    "uri": "tex/ventanas_propias_rugosidad.jpg",
-   "bytes": 52636
+   "bytes": 49271
   },
   {
    "uri": "tex/paleta_emision.jpg",
@@ -272,11 +272,11 @@
   },
   {
    "uri": "tex/fachada_C_rugosidad.jpg",
-   "bytes": 34684
+   "bytes": 37471
   },
   {
    "uri": "tex/calle.jpg",
-   "bytes": 256789
+   "bytes": 255403
   },
   {
    "uri": "tex/terreno.jpg",
@@ -295,5 +295,5 @@
    "bytes": 21501
   }
  ],
- "total_bytes": 21771616
+ "total_bytes": 21781355
 }

@@ -1,17 +1,17 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 19492568,
-    "md5": "77fbbdb01a7cc9fa4d81567b5563e8c2",
+    "bytes": 19499408,
+    "md5": "7da95d25a18df86d7fd317c9c96d46ae",
     "web": {
       "carpeta": "web",
       "archivos": 77,
-      "bytes": 21771616,
+      "bytes": 21781355,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 57866,
+      "bytes": 58481,
       "estaticos": 854,
       "moviles": 39,
       "luces": 24,
@@ -21,13 +21,13 @@
     "fecha": "2026-09-27",
     "fase": "06",
     "sellos": {
-      "01": "b6b8f5f7a659",
-      "02": "2fc7865eb768",
-      "03": "20cb29210c7a",
-      "04": "f32dce074cf7",
-      "05": "c0e8bf796b3d",
-      "08": "ebd3c3c05ac3",
-      "06": "bd5b622867f9"
+      "01": "d3b356e8f5e7",
+      "02": "3ab10b085d98",
+      "03": "74e021610338",
+      "04": "d5b483e888f1",
+      "05": "b3a17b914d66",
+      "08": "1d5c02f74f26",
+      "06": "85e762bb4639"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -49,7 +49,7 @@
       ]
     },
     "mallas": 428,
-    "triangulos": 198110,
+    "triangulos": 198234,
     "materiales": [
       "Depto_Ext_Mat_Calle",
       "Depto_Ext_Mat_FachadaA",
@@ -142,7 +142,7 @@
     "dimensiones_nota": "dimensiones_m y bbox_blender_m son del depto, sin el exterior (objetos Depto_Ext_*)",
     "exterior": {
       "mallas": 17,
-      "triangulos": 9632,
+      "triangulos": 9756,
       "dimensiones_m": {
         "x": 1800.0,
         "y": 1800.0,
