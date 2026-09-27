@@ -79,9 +79,11 @@ VISTAS = {
               "los vecinos y el cielo."),
     "living_sol_tarde": dict(
         cam=((0.3, 2.45, 1.55), (0.9, -3.2, 0.0), 16.0), momento="tarde", expo=0.6,
-        texto="Control de la corrección 08: desde el ventanal hacia el interior del living, de tarde. El sol bajo del "
-              "HDR ({elev}°) entra por el ventanal y la hoja corrida y dibuja en el piso una mancha larga que se corre "
-              "hacia la izquierda de la imagen (+X) a medida que se aleja de la fachada; los vecinos no lo tapan."),
+        texto="Control de la corrección 08: desde el ventanal hacia el interior del living, de tarde con las luces de "
+              "techo. El sol bajo del HDR ({elev}°) entra por el ventanal (los vecinos no lo tapan) y llega al piso "
+              "hasta ≈ 4,7 m de la fachada, corrido hacia +X (la izquierda de la imagen). Es una mancha tenue: con el "
+              "sol tan bajo el piso recibe poco, y el piso al sol queda ≈ 36 % más claro que el resto del piso visible "
+              "(rayos hacia el sol desde una grilla del piso)."),
     "balcon_noche": dict(
         cam=BALCON, momento="noche", expo=0.4,
         texto="Desde el balcón, de noche (kloppenheim_02_puresky casi apagado): las ventanas vecinas encendidas "
