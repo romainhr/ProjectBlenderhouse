@@ -30,7 +30,8 @@ bpy = R.bpy
 MOMENTOS = {
     "dia": dict(fuerza=1.6, saturacion=0.35, camara=1.0, sol=(1.0, "#fff7ec"), luces=()),
     "tarde": dict(fuerza=1.0, saturacion=0.7, camara=0.8, sol=(1.8 / 3.4, "#ffc58f"), luces="autor"),
-    "noche": dict(fuerza=0.08, saturacion=1.0, camara=0.30, sol=None, luces="autor"),
+    "noche": dict(fuerza=0.08, saturacion=1.0, camara=1.0, sol=None, luces="autor"),     # el cielo de la cámara, como
+    # la luz (antes, 0,30: el cielo quedaba 6 veces más oscuro que el del visor)
 }
 LENTE_ANCHA = 14.0
 # vista: cámara ((x, y, z), (x, y, z) mirado, lente mm) en m de Blender, momento, exposición y texto
