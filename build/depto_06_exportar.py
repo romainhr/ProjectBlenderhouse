@@ -57,6 +57,7 @@ LIMITE_TOTAL = 60 * 1024 * 1024
 LIMITE_ARCHIVOS = 240
 MANIFIESTO = os.path.join(EXPORTS, "manifest.json")
 TEX_MANIFIESTO = os.path.join(RAIZ, "assets", "texturas", "polyhaven", "manifest.json")
+MOD_MANIFIESTO = os.path.join(RAIZ, "assets", "modelos", "polyhaven", "manifest.json")   # bloque 09: plantas
 RADIO = 0.20                          # compuerta 0 / ADR 0002: radio de la cámara del tour con el mobiliario
 OJO = 1.60                            # altura de los ojos (la de las cámaras de revisión)
 CONTRATO = "2.5"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
@@ -935,6 +936,20 @@ def armar_glb(carpeta):
             + struct.pack("<II", len(binario), 0x004E4942) + bytes(binario))
 
 
+def modelos_usados(objs):
+    """Créditos de los modelos de Poly Haven que van en el GLB (bloque 09): variantes y piezas que los usan."""
+    with open(MOD_MANIFIESTO) as fh:
+        man = json.load(fh)
+    usos = {}
+    for o in objs:
+        if o.get("planta"):
+            u = usos.setdefault(o["planta"], {"variantes": set(), "piezas": set()})
+            u["variantes"].add(o.get("variante", ""))
+            u["piezas"].add(o.get("pieza", o.name))
+    return {m: {"pagina": man.get("paginas", {}).get(m), "licencia": "CC0", "fuente": man["fuente"],
+                "variantes": sorted(u["variantes"]), "piezas": sorted(u["piezas"])} for m, u in sorted(usos.items())}
+
+
 def md5(ruta):
     h = hashlib.md5()
     with open(ruta, "rb") as fh:
@@ -1033,12 +1048,16 @@ def main():
                      "cielos": ext["cielos"], "rotacion_deg": ext["rotacion_deg"],
                      "fuente": "build/depto_08_exterior.py (diseño e inferido; cielos de Poly Haven, CC0)"},
         "escala": {"m_por_px_plano": P.M_POR_PX, "incertidumbre": "±5 % (inferida de elementos estándar; sin cota real)"},
-        "exportacion": {"formato": "GLB", "imagenes": "JPEG", "extras": True, "camaras": False, "luces": False,
+        "exportacion": {"formato": "GLB", "imagenes": "JPEG (PNG con alfa sólo en las hojas de las plantas)",
+                        "extras": True, "camaras": False, "luces": False,
                         "blender": bpy.app.version_string},
         "texturas": {tid: {"nombre": t["nombre"], "autores": t["autores"], "pagina": t["pagina"], "licencia": "CC0"}
                      for tid, t in tex["texturas"].items()},
         "texturas_propias": {"granito_gris_512": "generada por build/depto_05_materiales.py",
-                             "exterior": "assets/texturas/exterior/*.jpg, generadas por build/ext_texturas.py (fase 08)"},
+                             "exterior": "assets/texturas/exterior/*.jpg, generadas por build/ext_texturas.py (fase 08)",
+                             "alfombras": "bereber, kilim, camino y algodon en assets/texturas/propias/, generadas por "
+                                          "build/deco_texturas.py (bloque 09)"},
+        "modelos": modelos_usados(objs),
         "prueba_recorrido": informe,
         "fuente": "ref/plano/plano_depto.png (plano del usuario); medidas en asset-brief-depto.md",
     }
