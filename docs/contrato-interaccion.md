@@ -1,10 +1,12 @@
 # Contrato de interacción: modelo (Blender) ↔ visor web
 
-Versión 2.2 (2026-09-26; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
+Versión 2.3 (2026-09-26; secciones 2, 3 y 5 completadas en la fase 07b; `depende_de`/`bloquea`, color por
 temperatura y regla del momento del día agregados en la corrección 07b, ADR 0004; `enciende`, grupos de móvil,
-`alcance_m` y entornos locales, sección 6, en la ronda 2 de la corrección 07c). El JSON trae `"version": 2`
-(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.2"`
-(versión completa; `"2.1"` desde la ronda 2 de la corrección 07b hasta la ronda 1 de la 07c). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
+`alcance_m` y entornos locales, sección 6, en la ronda 2 de la corrección 07c; exterior con un panorama por momento,
+emisión y materiales de fondo, sección 4, en el bloque 08). El JSON trae `"version": 2`
+(versión mayor: un visor que la entiende puede leer cualquier 2.x e ignorar lo que no conoce) y `"contrato": "2.3"`
+(versión completa; `"2.2"` en la ronda 2 de la corrección 07c y `"2.1"` desde la ronda 2 de la corrección 07b hasta la
+ronda 1 de la 07c). Lo produce `build/depto_06_exportar.py` en `depto_colisiones.json` y en los `extras` de los nodos glTF (three.js los deja en `object.userData`). Coordenadas en glTF: +Y arriba, frente del depto hacia −Z (Blender (x, y, z) → glTF (x, z, −y); `gl()` en depto_06).
 
 ## 1. Móviles (`moviles[]`, ya existe, se amplía)
 
@@ -156,9 +158,42 @@ Detalle (fase 07b):
 Lámparas clicables: `Depto_Mueble_Living_LamparaArco_{Tubo,Pantalla}`, `Depto_Mueble_D1_LamparaMesa{O,E}_{Cuerpo,Pantalla}`
 y `Depto_Mueble_D2_Aplique{O,E}_{Metal,Pantalla}`.
 
-## 4. Exterior
+## 4. Exterior (2.3, bloque 08)
 
-`exterior: {"panorama": "tex/<archivo>.jpg", "rotacion_deg": n, "suelo_y": n}`: panorama equirectangular (Poly Haven, CC0) que el visor usa como fondo y como reflejo tenue. En Blender se usa el HDRI equivalente como mundo para los renders de revisión.
+```json
+"exterior": {
+  "panoramas": {"dia": "tex/cielo_dia.jpg", "tarde": "tex/cielo_tarde.jpg", "noche": "tex/cielo_noche.jpg"},
+  "rotacion_deg": 149.3, "suelo_y": -12.5, "emision": {"dia": 0.0, "tarde": 0.35, "noche": 1.0},
+  "cielos": {"dia": "kloofendal_48d_partly_cloudy_puresky", "tarde": "qwantani_dusk_2_puresky",
+             "noche": "kloppenheim_02_puresky"},
+  "nota": "..."
+}
+```
+
+- `panoramas`: un equirectangular por momento (JPG de 2048 × 1024 de Poly Haven, CC0), con la ruta relativa a la
+  carpeta `modelo/` del visor. La fase 6 los copia a `exports/web/tex/` y `web/tour_modelo.py` los lleva a
+  `modelo/tex/` tal cual, sin gemela `.webp` ni copia en `tex_movil/`. Hasta la 2.2 el campo era un único `panorama`,
+  que el visor sigue aceptando.
+- `rotacion_deg`: giro de los tres panoramas alrededor de +Y de glTF (+Z de Blender), antihorario visto desde arriba.
+  Con la convención común de Blender y de three.js (el centro de la imagen mira hacia +X y u = 0,5 − azimut / 360), el
+  píxel u del panorama girado es el u + rotacion_deg / 360 del original. La fase 08 lo mide: lleva el sol del HDR de día
+  (el píxel más brillante, azimut −34,3°) al sol de la escena de la fase 5 (115,0°). Los otros dos HDR tienen el sol, o
+  la luna, a menos de 4° de ése. En Blender es un nodo Mapping que gira −θ la dirección de consulta
+  (`tools/render_08.py`); three r160 no tiene `scene.backgroundRotation`, así que el visor gira la imagen en un canvas
+  (`prepararPanorama` en `web/src/tour/js/exterior.js`).
+- `suelo_y`: altura de la calzada en glTF (m). Es un supuesto: el piso del depto queda a 12,5 m sobre la calle.
+- `emision`: fuerza de la emisión del exterior por momento. El glTF trae la de noche: ventanas encendidas de los
+  vecinos y del edificio propio, locales y luminarias. En el maestro queda en 0, para los renders de día, y la fase 6
+  la sube a su valor de noche sólo mientras exporta.
+- Materiales de fondo: todo material `Depto_Ext_Mat_*` trae en sus `extras` `exterior: true` y `exterior_capa`, con
+  `"cerca"` o `"lejos"` (las siluetas lejanas). Los nodos `Depto_Ext_*` traen `exterior: true` y `colision: false`: no
+  entran en `estaticos`. El visor (`prepararExterior` en `carga.js`) los pasa a `MeshBasicMaterial`, que no recibe
+  luces puntuales, sol ni entorno. Les calcula al cargar un sombreado por vértice con el sol de `luces[]` y
+  `suelo_y`, y los fusiona por material en un grupo aparte (`Depto_Exterior`), fuera del raycast del piso. Por momento
+  les aplica el tinte, la emisión y la bruma de las siluetas con el color del horizonte del panorama
+  (`MOMENTOS[].exterior` en `cielo.js`).
+- En Blender, los renders de revisión del exterior usan los HDR 1k equivalentes como mundo, con el mismo giro
+  (`tools/render_08.py`).
 
 ## 5. Recintos
 

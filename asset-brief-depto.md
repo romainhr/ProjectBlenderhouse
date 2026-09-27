@@ -136,7 +136,7 @@ El plano no tiene cotas. La escala se estimó de forma independiente con cuatro 
 
 - Todas las alturas (tabla anterior), cielos lisos, sin vigas a la vista y sin cielo falso.
 - Terminaciones y materiales: ninguna está en el plano. Propuesta neutra, sin copiar las fotos ajenas: piso laminado claro en áreas secas, cerámica en baños, cocina y balcón, muros blancos, muebles de cocina blancos con cubierta gris.
-- El exterior: la fachada vista desde afuera, el pasillo común de la entrada y la vista desde las ventanas. Para el tour se propone un fondo de cielo (HDRI de Poly Haven, CC0, previa aprobación) y un piso exterior neutro, sin inventar edificios vecinos.
+- El exterior: la fachada vista desde afuera, el pasillo común de la entrada y la vista desde las ventanas. Para el tour se propone un fondo de cielo (HDRI de Poly Haven, CC0, previa aprobación) y un piso exterior neutro, sin inventar edificios vecinos. **Reemplazado en el bloque 08** por el paisaje de la sección «Bloque 08: exterior» (pedido del usuario, ADR 0004, decisión 5).
 - La orientación solar: no hay norte. Se propone luz de día entrando por la fachada del balcón.
 - Iluminación artificial: un punto de luz de cielo por ambiente (supuesto).
 
@@ -290,3 +290,31 @@ Pedido de Romain Ange: rediseñar la decoración en estilo industrial moderno mi
   - Archivos: `index.html` más los 53 de `exports/web/`: `depto_web.json`, `depto_gltf.json`, `depto_bin.b64.txt` (4,7 MB), `depto_colisiones.json` y 49 imágenes en `tex/`. Se quitó `depto_glb.b64.txt` de la versión 1.
   - Prueba previa en local con `tools/servidor_csp.py`: carga completa, texturas visibles y sin errores de consola.
   - No se subió nada de `ref/`.
+
+## Bloque 08: exterior (2026-09-26; `build/depto_08_exterior.py`, `build/ext_texturas.py`)
+
+Nada del exterior está en el plano: es una planta del depto. Lo medido es lo que ya usaban las fases 2 y 3: la cara
+exterior de la fachada (x 114,45 px → y = 3,005 m), el balcón y los ejes de su baranda, y los vanos de la fachada y del
+muro norte, con sus antepechos y dinteles, que también son supuestos del brief. Todo lo demás es inferido o de diseño.
+
+| Elemento | Valor | Origen |
+|---|---|---|
+| Piso del depto sobre la calzada | 12,5 m (5.º piso de 8) | supuesto del encargo (ADR 0004, decisión 5) |
+| Entrepiso | 2,55 m | derivado: 2,40 de piso a cielo + losa de 0,15 (dos supuestos del brief) |
+| Planta baja del edificio propio | 4,55 m, vidriada | derivado del entrepiso y de los 12,5 m |
+| Deptos por piso hacia el sur | dos, el primero en espejo | supuesto: el nuestro es el del extremo norte, porque tiene ventana en el muro norte (V_B1, medido) |
+| Balcones de los otros pisos | los mismos ejes del nuestro (losa, vidrio y pasamanos) | medido en el nuestro; apilados, supuesto |
+| Fondo del edificio | 13,6 m | inferido: depto de 6,01 (medido), palier de 1,40 + 0,15 y otra crujía de 6 m |
+| Antejardín, vereda y calzada | 3 + 3 + 8 m (dos pistas); solera de 0,15 m | diseño: calle local usual |
+| Calle transversal y cruce | a 14,5 m del muro norte, con pasos de cebra | diseño |
+| Vecinos modelados | E1 a E7, de 1 a 11 pisos, a 15-46 m, con bahías enteras de su variante | diseño |
+| Fachadas vecinas | 4 atlas propios (ladrillo, hormigón, muro cortina y estuco), 8 × 8 bahías-piso; ≈ 35 % de ventanas encendidas de noche | diseño; texturas generadas por código |
+| Barrio intermedio | manzanas de 60 m con calles de 14 m, a 45-150 m | diseño |
+| Árboles de calle | 21, de 7-9 m, fuste de 2,4-3,2 m, copa de icosaedro subdividido | diseño (estilizados, no orgánicos detallados) |
+| Siluetas lejanas | 16 tarjetas en dos capas, a 170-215 y 280-340 m, de 10-52 m de alto | diseño |
+| Giro del cielo | 149,3° | medido: lleva el sol del HDR de día al sol de la fase 5 |
+
+La vista libre desde las ventanas propias, con un abanico de rayos de ±40° y de −35° a +20°, llega a 16,3 m. Ése es el
+primer choque con el exterior. Presupuesto: 9 424 triángulos de exterior (tope del bloque, 15 000) y 197 902 en la
+escena (tope, 200 000).
+

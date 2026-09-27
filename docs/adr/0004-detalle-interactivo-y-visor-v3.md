@@ -197,3 +197,33 @@ Decisiones:
     pasada de render más por cuadro) y a hornear el reflejo en la textura (fijo, no cambia con el punto de vista).
 11. **Revisión sin adaptación cromática:** los renders de revisión dejan de aplicar la pendiente fija de las vistas
     con lámparas, que el visor no tiene; la luz lineal bajo los altos es un foco hacia abajo también en Blender.
+
+## Adenda 08 (2026-09-26): exterior y paisaje
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), constructor del bloque 08. **Revisor humano:** Romain Ange,
+  pendiente.
+
+12. **Paisaje modelado por script en una fase propia, la 08, entre la 5 y la exportación.** `build/depto_08_exterior.py`
+    arma la colección `Depto_Exterior` (prefijo `Depto_Ext_`) desde constantes con origen. Incluye la fachada del
+    edificio propio (8 pisos, tres deptos por piso, balcones apilados sobre los ejes medidos del nuestro), la calle con
+    su cruce, siete vecinos con fachadas de textura propia, un barrio intermedio de manzanas y 21 árboles de calle de
+    pocos polígonos. En la cadena de sellos, la 08 va después de la 05 y antes de la 06 (`ORDEN` en
+    `build/depto_sellos.py`), así que exportar siempre la reconstruye. El exterior no toca el plano: salvo la fachada,
+    el balcón y los vanos propios, todo es diseño o inferido (brief, sección «Bloque 08»).
+13. **Texturas generadas por código, no descargadas:** cuatro atlas de fachada de 8 × 8 bahías-piso, con emisión de las
+    ventanas encendidas sorteada junto con sus cortinas; más ventanas propias, calle, pasto, pintura, siluetas y una
+    paleta de colores planos (`build/ext_texturas.py`). Se evitó la transparencia en las siluetas lejanas: la
+    exportación pasa todas las imágenes a JPEG. Por eso son tarjetas con el contorno en la geometría.
+14. **Contrato 2.3 (sección 4):** `exterior` con un panorama por momento, `rotacion_deg` (medido: lleva el sol del HDR de
+    día al de la escena), `suelo_y` y `emision` por momento. Los materiales `Depto_Ext_Mat_*` traen `exterior: true`
+    en los extras y el visor los dibuja como fondo barato: `MeshBasicMaterial` sin luces, sombreado por vértice
+    calculado al cargar, emisión y bruma sumadas en el shader. Van en un grupo aparte del raycast del piso. Se
+    descartó dejarles un material con luces: sin sombras, las puntuales del depto alumbrarían las fachadas vecinas, y
+    cada fragmento pagaría las 24 luces. La emisión se exporta con su valor de noche y el visor la escala. El maestro
+    la deja en 0 para que los renders de día no tengan ventanas encendidas.
+15. **Panorama girado en un canvas:** three r160 no tiene `scene.backgroundRotation`. El visor corre la imagen al
+    cargarla (`prepararPanorama`) y mide ahí el color del horizonte para la bruma de las siluetas.
+16. **Consecuencias:** la escena queda en 197 902 triángulos, a 2 098 del tope de 200 000. El próximo contenido del
+    interior tendrá que ahorrar o pedir que se suba el tope. El entorno local de la cocina (sección 6) ahora ve el
+    exterior por las ventanas. Su escala de normalización pasó de 7,8 a 8,7 (luces) y de 19,6 a 30,9 (día), porque los
+    vecinos tapan parte del cielo. La intensidad `entornoLocal` del visor no se recalibró.
