@@ -26,7 +26,9 @@ FASES = {
            "deco_objetos.py", "deco_comedor.py", "deco_hall.py"),
     "05": ("depto_05_materiales.py", "deco_paleta.py", "deco_texturas.py", "../assets/texturas/propias/manifest.json"),
     "08": ("depto_08_exterior.py", "ext_texturas.py", "../assets/hdri/manifest.json"),
-    "06": ("depto_06_exportar.py",),   # no sella el maestro: el sello va en exports/manifest.json
+    # no sella el maestro: el sello va en exports/manifest.json. render_07b.py (corrección 08, ronda 2): el mundo con
+    # que se renderiza el entorno local de la cocina es el de los renders de revisión de día
+    "06": ("depto_06_exportar.py", "../tools/render_07b.py"),
 }
 ORDEN = ("01", "02", "03", "04", "05", "08", "06")   # orden de la cadena (y del pipeline)
 
