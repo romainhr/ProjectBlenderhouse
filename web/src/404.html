@@ -3,19 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>No encontrado · Project-roomVR</title>
+<title data-i18n="no_encontrada.titulo">No encontrado · Project-roomVR</title>
 <meta name="theme-color" content="#F6F1EA">
 <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/css/sitio.css">
+<script type="module" src="/js/sitio.js"></script>
 </head>
 <body>
 <main class="no-encontrada">
   <div class="contenedor">
-    <p class="etiqueta">Error 404</p>
-    <h1>Página no encontrada</h1>
-    <p class="bajada">Esa página no existe o cambió de lugar. Desde el inicio puedes ver los espacios, el recorrido 3D y las fechas.</p>
-    <a class="boton primario" href="/">Volver al inicio</a>
+    <p class="etiqueta" data-i18n="no_encontrada.etiqueta">Error 404</p>
+    <h1 data-i18n="no_encontrada.h1">Página no encontrada</h1>
+    <p class="bajada" data-i18n="no_encontrada.bajada">Esa página no existe o cambió de lugar. Desde el inicio puedes ver los espacios, el recorrido 3D y las fechas.</p>
+    <a class="boton primario" href="/" data-i18n="no_encontrada.volver">Volver al inicio</a>
     <p><a class="pie-marca" href="/">Project-roomVR</a></p>
+    <nav class="idiomas pastillas" aria-label="Idioma" data-i18n-attr="aria-label:comun.idioma">
+      <a data-i18n-alternar="es"><span aria-hidden="true">ES</span><span class="visually-hidden">Español</span></a>
+      <a data-i18n-alternar="en"><span aria-hidden="true">EN</span><span class="visually-hidden">English</span></a>
+      <a data-i18n-alternar="fr"><span aria-hidden="true">FR</span><span class="visually-hidden">Français</span></a>
+    </nav>
   </div>
 </main>
 </body>

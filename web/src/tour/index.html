@@ -3,90 +3,97 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Tour 3D · Project-roomVR</title>
+<title data-i18n="tour.titulo">Tour 3D · Project-roomVR</title>
 <meta name="theme-color" content="#F7F4EF">
-<meta name="description" content="Recorre en 3D el departamento de Project-roomVR, en computador o teléfono.">
+<meta name="description" content="Recorre en 3D el departamento de Project-roomVR, en computador o teléfono." data-i18n-attr="content:tour.descripcion">
 <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../css/tokens.css">
 <link rel="stylesheet" href="tour.css">
 </head>
 <body>
 
-<canvas id="vista" tabindex="0" aria-label="Vista 3D del departamento"></canvas>
+<canvas id="vista" tabindex="0" aria-label="Vista 3D del departamento" data-i18n-attr="aria-label:tour.vista"></canvas>
 
 <header id="barra-superior">
-  <a class="volver panel" href="../"><span aria-hidden="true">←</span> Volver al sitio</a>
+  <a class="volver panel" href="../"><span aria-hidden="true">←</span> <span data-i18n="tour.volver">Volver al sitio</span></a>
   <p id="nombre-lugar" class="panel">Project-roomVR</p>
-  <a class="btn-reservar panel" href="../reserva.html">Reservar</a>
+  <div class="barra-derecha">
+    <nav class="idiomas panel" aria-label="Idioma" data-i18n-attr="aria-label:tour.idioma">
+      <a data-i18n-alternar="es"><span aria-hidden="true">ES</span><span class="visually-hidden">Español</span></a>
+      <a data-i18n-alternar="en"><span aria-hidden="true">EN</span><span class="visually-hidden">English</span></a>
+      <a data-i18n-alternar="fr"><span aria-hidden="true">FR</span><span class="visually-hidden">Français</span></a>
+    </nav>
+    <a class="btn-reservar panel" href="../reserva.html" data-i18n="tour.reservar">Reservar</a>
+  </div>
 </header>
 
-<nav id="botonera" class="panel" aria-label="Herramientas del recorrido">
-  <button class="boton-icono" type="button" data-panel="plano" aria-expanded="false" aria-controls="panel-plano" aria-label="Plano">
+<nav id="botonera" class="panel" aria-label="Herramientas del recorrido" data-i18n-attr="aria-label:tour.herramientas">
+  <button class="boton-icono" type="button" data-panel="plano" aria-expanded="false" aria-controls="panel-plano" aria-label="Plano" data-i18n-attr="aria-label:tour.plano">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2Z"/><path d="M9 3v16M15 5v16"/></svg>
-    <span>Plano</span>
+    <span data-i18n="tour.plano">Plano</span>
   </button>
-  <button class="boton-icono" type="button" data-panel="luces" aria-expanded="false" aria-controls="panel-luces" aria-label="Luces">
+  <button class="boton-icono" type="button" data-panel="luces" aria-expanded="false" aria-controls="panel-luces" aria-label="Luces" data-i18n-attr="aria-label:tour.luces">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 18h6M10 21h4M8 13a4 4 0 1 1 8 0c0 2-1.5 2.7-2 4.5-.1.5-.5.5-.5.5h-3s-.4 0-.5-.5C9.5 15.7 8 15 8 13Z"/></svg>
-    <span>Luces</span>
+    <span data-i18n="tour.luces">Luces</span>
   </button>
-  <button class="boton-icono" type="button" data-panel="momento" aria-expanded="false" aria-controls="panel-momento" aria-label="Momento del día">
+  <button class="boton-icono" type="button" data-panel="momento" aria-expanded="false" aria-controls="panel-momento" aria-label="Momento del día" data-i18n-attr="aria-label:tour.momento_boton">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.2 4.2l2 2M17.8 17.8l2 2M2 12h3M19 12h3M4.2 19.8l2-2M17.8 6.2l2-2"/></svg>
-    <span>Momento</span>
+    <span data-i18n="tour.momento">Momento</span>
   </button>
-  <button class="boton-icono" type="button" data-panel="ayuda" aria-expanded="false" aria-controls="panel-ayuda" aria-label="Ayuda">
+  <button class="boton-icono" type="button" data-panel="ayuda" aria-expanded="false" aria-controls="panel-ayuda" aria-label="Ayuda" data-i18n-attr="aria-label:tour.ayuda">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9.2"/><path d="M9.3 9.3a2.7 2.7 0 1 1 3.7 2.5c-.9.4-1 1-1 2"/><circle cx="12" cy="16.6" r=".3" fill="currentColor"/></svg>
-    <span>Ayuda</span>
+    <span data-i18n="tour.ayuda">Ayuda</span>
   </button>
-  <button class="boton-icono" id="btn-pantalla-completa" type="button" aria-label="Pantalla completa" hidden>
+  <button class="boton-icono" id="btn-pantalla-completa" type="button" aria-label="Pantalla completa" hidden data-i18n-attr="aria-label:tour.pantalla_completa">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-    <span>Pantalla</span>
+    <span data-i18n="tour.pantalla">Pantalla</span>
   </button>
 </nav>
 
-<figure id="panel-plano" class="flotante panel" role="dialog" aria-label="Plano" hidden>
-  <button class="cerrar" type="button" aria-label="Cerrar plano">×</button>
-  <canvas id="lienzo-plano" width="380" height="560" tabindex="0" aria-label="Plano: toca un recinto para ir ahí"></canvas>
-  <p>Toca un recinto del plano para ir ahí.</p>
+<figure id="panel-plano" class="flotante panel" role="dialog" aria-label="Plano" hidden data-i18n-attr="aria-label:tour.plano">
+  <button class="cerrar" type="button" aria-label="Cerrar plano" data-i18n-attr="aria-label:tour.cerrar_plano">×</button>
+  <canvas id="lienzo-plano" width="380" height="560" tabindex="0" aria-label="Plano: toca un recinto para ir ahí" data-i18n-attr="aria-label:tour.plano.lienzo"></canvas>
+  <p data-i18n="tour.plano.ayuda">Toca un recinto del plano para ir ahí.</p>
 </figure>
 
-<section id="panel-luces" class="flotante panel" role="dialog" aria-label="Luces" hidden>
-  <button class="cerrar" type="button" aria-label="Cerrar luces">×</button>
-  <h2>Luces</h2>
+<section id="panel-luces" class="flotante panel" role="dialog" aria-label="Luces" hidden data-i18n-attr="aria-label:tour.luces">
+  <button class="cerrar" type="button" aria-label="Cerrar luces" data-i18n-attr="aria-label:tour.cerrar_luces">×</button>
+  <h2 data-i18n="tour.luces">Luces</h2>
   <div id="lista-grupos-luz"></div>
   <div id="luces-todo">
-    <button type="button" data-accion="apagar">Apagar todo</button>
-    <button type="button" data-accion="encender">Encender todo</button>
+    <button type="button" data-accion="apagar" data-i18n="tour.luces.apagar_todo">Apagar todo</button>
+    <button type="button" data-accion="encender" data-i18n="tour.luces.encender_todo">Encender todo</button>
   </div>
 </section>
 
-<section id="panel-momento" class="flotante panel" role="dialog" aria-label="Momento del día" hidden>
-  <button class="cerrar" type="button" aria-label="Cerrar momento del día">×</button>
-  <h2>Momento del día</h2>
-  <div class="opcion-momento" role="group" aria-label="Momento del día">
-    <button type="button" data-momento="dia">Día</button>
-    <button type="button" data-momento="tarde" aria-pressed="true">Tarde</button>
-    <button type="button" data-momento="noche">Noche</button>
+<section id="panel-momento" class="flotante panel" role="dialog" aria-label="Momento del día" hidden data-i18n-attr="aria-label:tour.momento_del_dia">
+  <button class="cerrar" type="button" aria-label="Cerrar momento del día" data-i18n-attr="aria-label:tour.cerrar_momento">×</button>
+  <h2 data-i18n="tour.momento_del_dia">Momento del día</h2>
+  <div class="opcion-momento" role="group" aria-label="Momento del día" data-i18n-attr="aria-label:tour.momento_del_dia">
+    <button type="button" data-momento="dia" data-i18n="tour.momento.dia">Día</button>
+    <button type="button" data-momento="tarde" aria-pressed="true" data-i18n="tour.momento.tarde">Tarde</button>
+    <button type="button" data-momento="noche" data-i18n="tour.momento.noche">Noche</button>
   </div>
 </section>
 
-<aside id="panel-ayuda" class="flotante panel" role="dialog" aria-label="Controles" hidden>
-  <button class="cerrar" type="button" aria-label="Cerrar ayuda">×</button>
-  <h2>Controles</h2>
+<aside id="panel-ayuda" class="flotante panel" role="dialog" aria-label="Controles" hidden data-i18n-attr="aria-label:tour.controles">
+  <button class="cerrar" type="button" aria-label="Cerrar ayuda" data-i18n-attr="aria-label:tour.cerrar_ayuda">×</button>
+  <h2 data-i18n="tour.controles">Controles</h2>
   <dl>
     <div class="solo-raton">
-      <dt>W A S D</dt><dd>caminar (o las flechas)</dd>
-      <dt>Mayús</dt><dd>caminar más rápido</dd>
-      <dt>Ratón</dt><dd>mirar alrededor</dd>
-      <dt>E o clic</dt><dd>abrir o cerrar lo que mires</dd>
-      <dt>Esc</dt><dd>soltar el ratón</dd>
+      <dt data-i18n="tour.ayuda.teclas">W A S D</dt><dd data-i18n="tour.ayuda.teclas.texto">caminar (o las flechas)</dd>
+      <dt data-i18n="tour.ayuda.mayus">Mayús</dt><dd data-i18n="tour.ayuda.mayus.texto">caminar más rápido</dd>
+      <dt data-i18n="tour.ayuda.raton">Ratón</dt><dd data-i18n="tour.ayuda.raton.texto">mirar alrededor</dd>
+      <dt data-i18n="tour.ayuda.clic">E o clic</dt><dd data-i18n="tour.ayuda.clic.texto">abrir o cerrar lo que mires</dd>
+      <dt data-i18n="tour.ayuda.esc">Esc</dt><dd data-i18n="tour.ayuda.esc.texto">soltar el ratón</dd>
     </div>
     <div class="solo-tactil">
-      <dt>Palanca</dt><dd>tócala y arrastra para caminar</dd>
-      <dt>Arrastrar</dt><dd>en el resto de la pantalla, para mirar</dd>
-      <dt>Toque</dt><dd>en un objeto lo abre o cierra; en el piso, caminas hasta ahí</dd>
+      <dt data-i18n="tour.ayuda.palanca">Palanca</dt><dd data-i18n="tour.ayuda.palanca.texto">tócala y arrastra para caminar</dd>
+      <dt data-i18n="tour.ayuda.arrastrar">Arrastrar</dt><dd data-i18n="tour.ayuda.arrastrar.texto">en el resto de la pantalla, para mirar</dd>
+      <dt data-i18n="tour.ayuda.toque">Toque</dt><dd data-i18n="tour.ayuda.toque.texto">en un objeto lo abre o cierra; en el piso, caminas hasta ahí</dd>
     </div>
   </dl>
-  <small>Modelo hecho desde un plano sin cotas: las alturas y las terminaciones son inferidas, no medidas.</small>
+  <small data-i18n="tour.ayuda.nota">Modelo hecho desde un plano sin cotas: las alturas y las terminaciones son inferidas, no medidas.</small>
 </aside>
 
 <div id="mira" hidden></div>
@@ -98,22 +105,25 @@
 
 <section id="pantalla-inicio" aria-live="polite">
   <div class="tarjeta">
-    <h1>Recorre el departamento</h1>
-    <p class="bajada">Dos dormitorios, dos baños, living con balcón y cocina en L. Camina, abre puertas y
+    <nav class="idiomas" aria-label="Idioma" data-i18n-attr="aria-label:tour.idioma">
+      <a data-i18n-alternar="es"><span aria-hidden="true">ES</span><span class="visually-hidden">Español</span></a>
+      <a data-i18n-alternar="en"><span aria-hidden="true">EN</span><span class="visually-hidden">English</span></a>
+      <a data-i18n-alternar="fr"><span aria-hidden="true">FR</span><span class="visually-hidden">Français</span></a>
+    </nav>
+    <h1 data-i18n="tour.inicio.titulo">Recorre el departamento</h1>
+    <p class="bajada" data-i18n="tour.inicio.bajada">Dos dormitorios, dos baños, living con balcón y cocina en L. Camina, abre puertas y
       cajones, y enciende las luces de cada ambiente.</p>
-    <p class="instrucciones solo-raton">En el computador: clic en «Recorrer» y usa W A S D para caminar, el
+    <p class="instrucciones solo-raton" data-i18n="tour.inicio.raton">En el computador: clic en «Recorrer» y usa W A S D para caminar, el
       ratón para mirar y E o clic para interactuar.</p>
-    <p class="instrucciones solo-tactil">En el teléfono: toca «Recorrer», usa la palanca de abajo a la
+    <p class="instrucciones solo-tactil" data-i18n="tour.inicio.tactil">En el teléfono: toca «Recorrer», usa la palanca de abajo a la
       izquierda para caminar y arrastra el resto de la pantalla para mirar. Un toque corto abre lo que
       tocas o camina hasta ese punto del piso.</p>
     <div id="barra-carga"><i></i></div>
-    <p id="texto-estado">Cargando el modelo…</p>
-    <button id="entrar" type="button" disabled>Recorrer</button>
+    <p id="texto-estado" data-i18n="tour.inicio.cargando">Cargando el modelo…</p>
+    <button id="entrar" type="button" disabled data-i18n="tour.inicio.recorrer">Recorrer</button>
   </div>
 </section>
 
-<!-- Sin import map: la CSP del tour es script-src 'self' sin nada en línea. Los módulos importan three.js
-     por ruta relativa a web/src/vendor/three/ (ver js/three.js, que sólo reexporta desde ahí). -->
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

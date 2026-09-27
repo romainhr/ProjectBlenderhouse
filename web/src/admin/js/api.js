@@ -1,15 +1,21 @@
 // API del portal sobre el cliente de Supabase (modo real). La misma forma la implementa api-simulada.js.
-// Tablas y columnas según el contrato de la migración 0003_gestion.sql (todavía no aplicada al escribir esto):
+// Tablas y columnas según el contrato de las migraciones 0003_gestion.sql y 0005_contenido_idiomas.sql:
 //   reservas: + nota_interna, actualizada; el propietario puede select, delete y update SÓLO de (estado, nota_interna)
-//   contenido(clave, valor, tipo, etiqueta, grupo, orden, actualizado)
+//   contenido(clave, valor, valor_en, valor_fr, tipo, etiqueta, grupo, orden, actualizado); valor_en y valor_fr los
+//     agrega la 0005: mientras no esté aplicada, el portal lee y guarda sólo el español (contenido.listar -> idiomas)
 //   fotos(id, espacio, ruta, alt, orden, visible, creada) y bucket público «fotos»
 //   es_propietario() -> boolean
-import { ErrorApi } from "./errores.js";
+import { ErrorApi, esColumnaInexistente } from "./errores.js";
 import { RE_CLAVE } from "./logica-contenido.js";
 import { BUCKET } from "./logica-fotos.js";
 
 export const COLUMNAS_RESERVA = "id,codigo,creada,entrada,salida,huespedes,nombre,email,telefono,mensaje,estado,nota_interna,actualizada";
-export const COLUMNAS_CONTENIDO = "clave,valor,tipo,etiqueta,grupo,orden,actualizado";
+export const COLUMNAS_CONTENIDO_BASE = "clave,valor,tipo,etiqueta,grupo,orden,actualizado";             // 0003
+export const COLUMNAS_CONTENIDO = "clave,valor,valor_en,valor_fr,tipo,etiqueta,grupo,orden,actualizado"; // 0003 + 0005
+const ORDEN_CONTENIDO = "order=grupo.asc,orden.asc,clave.asc";
+// lo único que el portal cambia de un texto: sin la 0005, sólo el español
+const CAMBIOS_CONTENIDO = Object.freeze(["valor", "valor_en", "valor_fr"]);
+const CAMBIOS_CONTENIDO_BASE = Object.freeze(["valor"]);
 export const COLUMNAS_FOTO = "id,espacio,ruta,alt,orden,visible,creada";
 const CAMBIOS_FOTO = Object.freeze(["orden", "visible", "alt"]);     // lo único que el portal cambia de una foto
 const RE_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -52,9 +58,41 @@ export function crearApi(cliente) {
     },
 
     contenido: {
-      listar: () => cliente.rest(`/contenido?select=${COLUMNAS_CONTENIDO}&order=grupo.asc,orden.asc,clave.asc`),
-      guardar: async (k, valor) => unaFila(await cliente.rest(
-        `/contenido?clave=eq.${clave(k)}&select=${COLUMNAS_CONTENIDO}`, { metodo: "PATCH", cuerpo: { valor }, prefer: REP })),
+      /**
+       * -> { filas, idiomas }. Pide también valor_en y valor_fr; si PostgREST responde que no existen (0005 sin
+       * aplicar), vuelve a pedir sin ellas e informa idiomas: false. Si esa segunda lectura también falla, el problema
+       * es otro (p. ej. falta la 0003) y se propaga ese error.
+       */
+      listar: async () => {
+        try {
+          return { filas: await cliente.rest(`/contenido?select=${COLUMNAS_CONTENIDO}&${ORDEN_CONTENIDO}`), idiomas: true };
+        } catch (e) {
+          if (!esColumnaInexistente(e)) throw e;
+          return { filas: await cliente.rest(`/contenido?select=${COLUMNAS_CONTENIDO_BASE}&${ORDEN_CONTENIDO}`), idiomas: false };
+        }
+      },
+      /**
+       * Guarda en un solo PATCH las columnas que trae `cambios`, cualquier subconjunto de { valor, valor_en, valor_fr }
+       * (null = sin traducción propia), o sólo el texto en español. Las que no vienen no se tocan: la vista manda sólo
+       * las que cambiaron, para no pisar lo guardado entretanto en otro lado. Con idiomas: false (base sin la 0005) se
+       * manda sólo `valor`. Si la base rechaza las columnas de traducción, el error es «falta_idiomas» (y no se guarda
+       * nada: el PATCH es una sola sentencia).
+       */
+      guardar: async (k, cambios, { idiomas = true } = {}) => {
+        const ruta = `/contenido?clave=eq.${clave(k)}&select=${idiomas ? COLUMNAS_CONTENIDO : COLUMNAS_CONTENIDO_BASE}`;
+        const datos = typeof cambios === "string" ? { valor: cambios } : cambios || {};
+        const permitidos = idiomas ? CAMBIOS_CONTENIDO : CAMBIOS_CONTENIDO_BASE;
+        const cuerpo = Object.fromEntries(Object.entries(datos).filter(([c]) => permitidos.includes(c)));
+        if (!Object.keys(cuerpo).length) throw new ErrorApi({ codigo: "respuesta_invalida" });
+        try {
+          return unaFila(await cliente.rest(ruta, { metodo: "PATCH", cuerpo, prefer: REP }));
+        } catch (e) {
+          if (idiomas && esColumnaInexistente(e)) {
+            throw new ErrorApi({ estado: e.estado, codigo: "falta_idiomas", mensaje: e.message, detalle: e.detalle, origen: e.origen });
+          }
+          throw e;
+        }
+      },
     },
 
     fotos: {

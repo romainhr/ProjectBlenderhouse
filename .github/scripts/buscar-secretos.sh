@@ -21,7 +21,9 @@ PATRONES=(
 )
 
 # Rutas que nunca se versionan (.gitignore las excluye; esto atrapa un git add -f)
-PROHIBIDOS='(^|/)\.env(\.[^/]*)?$|\.(pem|key|p12)$|^web/src/(admin/)?js/config\.js$|^web/dist/|^review/|^ref/depto/|^build/[^/]*\.blend$'
+PROHIBIDOS='(^|/)\.env(\.[^/]*)?$|\.(pem|key|p12)$|^web/src/(admin/)?js/config\.js$|^web/dist/|^review/|^build/[^/]*\.blend$'
+# De ref/ sólo se versionan su README y el plano (autorizado); cualquier otra foto de referencia es privada
+REF_PERMITIDO='^ref/(README\.md$|plano/)'
 
 hallazgos=0
 for p in "${PATRONES[@]}"; do
@@ -38,6 +40,11 @@ while IFS= read -r archivo; do
   echo "ARCHIVO_PROHIBIDO ${archivo}"
   hallazgos=$((hallazgos + 1))
 done < <(git ls-files | grep -E "$PROHIBIDOS" || true)
+while IFS= read -r archivo; do
+  [ -n "$archivo" ] || continue
+  echo "REFERENCIA_PRIVADA ${archivo}"
+  hallazgos=$((hallazgos + 1))
+done < <(git ls-files -- ref | grep -vE "$REF_PERMITIDO" || true)
 
 if [ "$hallazgos" -gt 0 ]; then
   echo "::error::${hallazgos} hallazgo(s): quita el secreto del commit (y rótalo si llegó a GitHub) o saca el archivo de git."

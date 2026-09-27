@@ -20,7 +20,7 @@ function textoVisible(html) {
 for (const pagina of PAGINAS) {
   const html = readFileSync(join(SRC, pagina), "utf8");
   test(`${pagina}: el título usa el nombre de marca.json`, () => {
-    const titulo = (html.match(/<title>([^<]*)<\/title>/) || [])[1] || "";
+    const titulo = (html.match(/<title(?:\s[^>]*)?>([^<]*)<\/title>/) || [])[1] || "";   // con o sin data-i18n
     assert.ok(titulo.includes(nombre), `título «${titulo}» sin «${nombre}»`);
   });
   test(`${pagina}: no dice "loft" en el texto visible`, () => {

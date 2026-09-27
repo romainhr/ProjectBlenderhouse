@@ -29,6 +29,23 @@ test("index.html: meta charset exacto (el build cuelga ahí la CSP), noindex y s
   assert.match(html, /<html lang="es">/);
 });
 
+test("index.html: el portal sigue sólo en español (sin marcas de traducción del sitio público) y explica los idiomas", () => {
+  assert.match(html, /<html lang="es">/);
+  assert.doesNotMatch(html, /data-i18n/, "el build traduce sólo el sitio público; /admin no se genera en /en/ ni /fr/");
+  for (const s of Object.values(fuentes)) assert.doesNotMatch(s, /data-i18n/);
+  const ayuda = (html.match(/<section id="vista-textos"[\s\S]*?<\/section>/) || [""])[0].replace(/\s+/g, " ");
+  assert.match(ayuda, /el español es obligatorio/);
+  assert.match(ayuda, /el inglés y el francés son opcionales/);
+  assert.match(ayuda, /Si dejas vacío el inglés o el francés, el sitio en ese idioma muestra el texto fijo de la página/);
+  // hallazgo P3: la traducción fija depende del marcado data-i18n de cada página (PR posterior); sin él, /en/ y /fr/
+  // muestran el español, y la ayuda no debe prometer una traducción que el sitio todavía no tiene
+  assert.match(ayuda, /mientras esa página no esté traducida, el original en español/);
+  assert.doesNotMatch(ayuda, /muestra su traducción fija/);
+  assert.match(ayuda, /si cambias el español, escribe también el inglés y el francés/, "la fija no sigue al español editado");
+  assert.match(ayuda, /Los precios no se traducen/);
+  assert.match(css, /\.aviso-linea\[data-tipo="aviso"\]/, "el aviso de la 0005 tiene estilo propio");
+});
+
 test("index.html: los ids que usan los módulos existen y los enlaces locales apuntan a archivos reales", () => {
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
   const usados = new Set();

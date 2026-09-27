@@ -54,12 +54,21 @@ for nombre in "${!SECRETOS[@]}"; do
 done
 
 for ruta in .env web/.env.local claves/servidor.pem web/src/js/config.js web/dist/index.html review/x/a.txt \
-            ref/depto/foto.txt build/depto.blend; do
+            ref/depto/foto.txt ref/perrita/foto.jpg ref/suelta.jpg ref/plano_falso/x.png build/depto.blend; do
   d="$(repo "p_${ruta//\//_}")"
   mkdir -p "$d/$(dirname "$ruta")"
   echo "contenido" > "$d/$ruta"
   git -C "$d" add -f "$ruta"
   esperar "prohibido $ruta" 1 "" "$d"
+done
+
+# de ref/ sí se versionan su README y el plano (autorizado)
+for ruta in ref/README.md ref/plano/plano_depto.png ref/plano/README.md; do
+  d="$(repo "r_${ruta//\//_}")"
+  mkdir -p "$d/$(dirname "$ruta")"
+  echo "contenido" > "$d/$ruta"
+  git -C "$d" add -f "$ruta"
+  esperar "permitido $ruta" 0 "" "$d"
 done
 
 # sin seguimiento (sólo en disco) no cuenta: el buscador revisa lo versionado

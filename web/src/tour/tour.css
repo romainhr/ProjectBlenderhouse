@@ -50,10 +50,35 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .btn-reservar { background: var(--acento); color: #fff; border-radius: var(--radio); font-weight: 600; }
 .btn-reservar:hover { background: var(--acento-2); }
 
+/* selector de idioma (ADR 0007): <a data-i18n-alternar> con aria-current="true" en el idioma de la página (lo pone
+   web/build.py). En la barra superior desde 700 px; en la tarjeta de inicio siempre (la barra queda bajo su velo). */
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.idiomas { display: flex; align-items: center; }
+.idiomas a { display: inline-grid; place-items: center; min-width: 36px; min-height: 44px; padding: 0 4px;
+  border-radius: calc(var(--radio) - 3px); font-size: 12.5px; font-weight: 600; letter-spacing: .05em;
+  color: var(--tinta-2); text-decoration: none; }
+.idiomas a:hover { color: var(--acento); }
+.idiomas a[aria-current] { color: var(--tinta); text-decoration: underline; text-underline-offset: 4px; }
+/* En la barra, fuera del flujo, a la izquierda de «Reservar» (.barra-derecha mide lo mismo que el botón): la pastilla
+   del nombre sigue centrada entre «Volver» y «Reservar» y la barra mide 44 px, como sin selector. Bajo 700 px no hay
+   lugar para ella y el selector sin pisarse (medido a 641 px: se montaban 5 px). */
+.barra-derecha { position: relative; display: flex; }
+#barra-superior .idiomas { position: absolute; top: 0; right: calc(100% + 8px); padding: 0 4px; }
+#barra-superior .idiomas a { min-height: 42px; }          /* + 1 px de borde arriba y abajo = 44 px, como los vecinos */
+/* En la tarjeta, en la esquina superior derecha y fuera del flujo: no le suma alto (en un teléfono en horizontal, a
+   375 px de alto, la tarjeta en español cabe justo, como sin selector). Los enlaces sobresalen 8 px por arriba del
+   borde de la tarjeta para que el texto quede en el margen superior, sobre la línea del título. */
+#pantalla-inicio .tarjeta { position: relative; }
+#pantalla-inicio .idiomas { position: absolute; top: -8px; right: 8px; }
+
 /* ------------------------------------------------------------------ botonera inferior */
+/* ancho propio (max-content): con left: 50% y sin ancho, el disponible era la mitad de la vista y, entre unos 565 y
+   690 px, «Floor plan», «Full screen» o «Plein écran» partían en dos líneas (la botonera pasaba de 60 a 72 px y los
+   paneles flotantes la tapaban). Con las etiquetas en una línea mide 60 px en los tres idiomas; bajo 561 px las
+   etiquetas se ocultan. */
 #botonera {
   position: fixed; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
-  display: flex; gap: 6px; padding: 6px; z-index: 6;
+  width: max-content; display: flex; gap: 6px; padding: 6px; z-index: 6;
 }
 .boton-icono {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 56px;
@@ -61,7 +86,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   color: var(--tinta-2); cursor: pointer;
 }
 .boton-icono svg { width: 20px; height: 20px; }
-.boton-icono span { font-size: 10.5px; font-weight: 500; }
+.boton-icono span { font-size: 10.5px; font-weight: 500; white-space: nowrap; }
 .boton-icono:hover, .boton-icono[aria-pressed="true"] { background: var(--papel-2); color: var(--acento); }
 @media (max-width: 560px) {
   .boton-icono span { display: none; }
@@ -131,14 +156,19 @@ body.tactil .solo-raton { display: none; }
   white-space: nowrap; pointer-events: none; z-index: 5;
 }
 #pista kbd { font: inherit; font-weight: 600; padding: 1px 6px; border: 1px solid var(--linea); border-radius: 5px; }
+/* ancho propio (max-content) y no el que queda desde `left` hasta el borde: así interfaz.js lo mide y lo corre para
+   que no se salga de la pantalla cuando el toque cae cerca de un borde (mostrarChip) */
 #chip-tactil {
-  position: fixed; padding: 8px 14px; font-size: 13px; font-weight: 500; pointer-events: none; z-index: 5;
-  transform: translate(-50%, -140%);
+  position: fixed; width: max-content; padding: 8px 14px; font-size: 13px; font-weight: 500; text-align: center;
+  pointer-events: none; z-index: 5; transform: translate(-50%, -140%);
 }
 #aviso {
   position: fixed; left: 50%; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
   padding: 8px 14px; font-size: 13px; white-space: nowrap; pointer-events: none; z-index: 8;
 }
+/* avisos y chips más largos en inglés o francés: en el teléfono parten en dos líneas en vez de salirse de la pantalla
+   (el chip, además, lo acomoda mostrarChip: con left en la x del toque y translate(-50%), max-width sola no basta) */
+#aviso, #chip-tactil { max-width: calc(100vw - 20px); }
 
 /* ------------------------------------------------------------------ joystick táctil */
 #joystick {
@@ -155,8 +185,10 @@ body.tactil .solo-raton { display: none; }
   position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 10;
   background: linear-gradient(180deg, rgba(30,28,25,.12), rgba(30,28,25,.32));
 }
+/* margin: auto centra igual que place-items, pero si la tarjeta no cabe queda pegada arriba y no se corta por los dos
+   lados: con overflow-y (pantallas bajas, abajo) lo que sobra se alcanza desplazando */
 #pantalla-inicio .tarjeta {
-  width: min(440px, 100%); padding: 26px 26px 22px; background: var(--tarjeta); border-radius: var(--radio);
+  margin: auto; width: min(440px, 100%); padding: 26px 26px 22px; background: var(--tarjeta); border-radius: var(--radio);
   box-shadow: var(--sombra); border: 1px solid var(--linea);
 }
 #pantalla-inicio h1 { margin: 0 0 6px; font-family: var(--f-titulo); font-size: 30px; font-weight: 500;
@@ -179,9 +211,18 @@ body.tactil .solo-raton { display: none; }
   * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
 }
 
+/* teléfono en horizontal: la tarjeta en francés es más alta (medido a 667 × 375 y 844 × 390: 16..395 px, con el
+   botón en 372). Más ancha, sus párrafos ocupan menos líneas y cabe; si aun así no cabe, se desplaza. */
+@media (max-height: 480px) {
+  #pantalla-inicio { overflow-y: auto; overscroll-behavior: contain; }
+  :lang(fr) #pantalla-inicio .tarjeta { width: min(540px, 100%); }
+}
+
 /* ------------------------------------------------------------------ chico */
+@media (max-width: 699px) { #barra-superior .idiomas { display: none; } }
 @media (max-width: 640px) {
   #nombre-lugar { display: none; }
+  #aviso { white-space: normal; width: max-content; text-align: center; }
   .flotante { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); width: calc(100% - 20px); }
   #pantalla-inicio h1 { font-size: 25px; }
 }
