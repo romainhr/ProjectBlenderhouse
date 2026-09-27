@@ -723,9 +723,10 @@ PLANTAS = {
     # erguido y colgado no caía bajo la maceta. Calathea orbifolia variante a (la grande del escaneo, 5 904 triángulos) a
     # 0,64 y girada para que lo angosto (0,34 m) quede entre el paño de la cortina (x ≤ 134,1) y el sofá (x ≥ 155,0), en
     # una maceta alta de gres negro de Ø 0,30 × 0,42 m: ≈ 0,66 m de alto en total, sobre el brazo del sofá (diseño).
-    "Living_Planta": dict(modelo="calathea_orbifolia_01", nodos="calathea_orbifolia_01_a", tope=1300, escala=0.64,
+    "Living_Planta": dict(modelo="calathea_orbifolia_01", nodos="calathea_orbifolia_01_a", tope=1200, escala=0.64,
                           giro=-90.0, xy=(145.5, 300.3), z=0.0,
-                          maceta=dict(diametro=0.30, alto=0.42, material="Depto_Mat_GresNegro", conicidad=0.88)),
+                          maceta=dict(diametro=0.30, alto=0.42, material="Depto_Mat_GresNegro", conicidad=0.88,
+                                      seg=24)),   # 24 lados: con 16, de cerca la silueta se veía facetada
     # balcón: anturio en maceta de piso en la esquina noroeste, junto a la baranda; deja libre el paso desde la hoja
     # abierta hacia la mesa (el punto del recorrido del balcón queda a 11,4 px de la maceta; la cámara mide 10,5).
     # Variante c a 0,85 (0,51 × 0,56 m y 0,31 de alto) en una maceta de 0,26 × 0,24: con la d (0,30 m) en una de

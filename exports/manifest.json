@@ -1,12 +1,12 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 29826500,
-    "md5": "7b806334bae37571f607c5c65780863b",
+    "bytes": 29827824,
+    "md5": "7e74dc935a8d111f32aac2eed0c7192e",
     "web": {
       "carpeta": "web",
       "archivos": 101,
-      "bytes": 32190281,
+      "bytes": 32192042,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
@@ -24,10 +24,10 @@
       "01": "a15736e3997b",
       "02": "c2f134da46b8",
       "03": "32a875a5c76e",
-      "04": "1a556264929a",
-      "05": "828f447e1038",
-      "08": "6da5c6cdf37e",
-      "06": "9ad482b08be0"
+      "04": "5fbb1bb1857b",
+      "05": "fd7c50a9a605",
+      "08": "7ad23afeb352",
+      "06": "32a0f771e0a1"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -49,7 +49,7 @@
       ]
     },
     "mallas": 453,
-    "triangulos": 199848,
+    "triangulos": 199892,
     "materiales": [
       "Depto_Ext_Mat_Calle",
       "Depto_Ext_Mat_FachadaA",
