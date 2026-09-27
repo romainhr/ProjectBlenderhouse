@@ -1,11 +1,13 @@
 // Modo simulado del portal: la misma API que api.js, con datos de EJEMPLO en memoria y un login falso que acepta
 // cualquier correo y contraseña no vacíos. Sólo se activa en un host local (modo.js). Imita las reglas de la base que el
 // portal debe saber mostrar: choque de fechas (23P01), checks (23514), filas inexistentes y límites del bucket.
+// Con `idiomas: false` imita una base sin la migración 0005 (sin valor_en ni valor_fr): en el navegador,
+// ?simulado=1&sin-idiomas=1 (modo.js, pideSinIdiomas).
 // Todos los nombres, correos y teléfonos son inventados (dominio reservado example.com).
 import { hoyIso, solapa, sumarDias } from "../../js/reserva-logica.js";
 import { ErrorApi } from "./errores.js";
 import { ACTIVOS, ESTADOS, LIMITE_NOTA } from "./logica-reservas.js";
-import { validarValor } from "./logica-contenido.js";
+import { COLUMNA_IDIOMA, TRADUCCIONES, validarTraduccion, validarValor } from "./logica-contenido.js";
 import { ESPACIOS, MAX_SUBIDA, TIPOS_ACEPTADOS, nombreEspacio, validarAlt } from "./logica-fotos.js";
 import { borrarSesion, guardarSesion, leerSesion } from "./sesion.js";
 import { largo } from "./util.js";
@@ -53,6 +55,17 @@ export function datosEjemplo(hoy = hoyIso()) {
     r(d(-12), d(-9), { nombre: "Gabriela Pasada", email: "gabriela@example.com", estado: "confirmada", creada: creada(-40) }),
     r(d(-30), d(-27), { nombre: "Hugo Antiguo", email: "hugo@example.com", estado: "rechazada", creada: creada(-50) }),
   ];
+  // Traducciones de ejemplo (0005): algunas filas con inglés y francés propios, otras con uno solo y el resto en null
+  // (= el sitio muestra el texto fijo de la página). Los precios no se traducen: siempre null.
+  const TRADUCCIONES_EJEMPLO = {
+    "hero.bajada": {
+      valor_en: "Sample text in simulated mode: two-bedroom, two-bathroom apartment for short-term rental.",
+      valor_fr: "Texte d’exemple du mode simulé : appartement de deux chambres et deux salles de bains en location saisonnière.",
+    },
+    "espacio.living.titulo": { valor_en: "Living room", valor_fr: "Séjour" },
+    "espacio.cocina.titulo": { valor_en: "Kitchen", valor_fr: null },
+    "condiciones.llegada": { valor_en: "From 3:00 pm (example)", valor_fr: "À partir de 15 h (exemple)" },
+  };
   const contenido = [
     { clave: "hero.bajada", grupo: "portada", orden: 10, tipo: "parrafo", etiqueta: "Bajada de la portada",
       valor: "Texto de ejemplo del modo simulado: departamento de dos dormitorios y dos baños para arriendo turístico." },
@@ -65,7 +78,7 @@ export function datosEjemplo(hoy = hoyIso()) {
     { clave: "tarifa.limpieza", grupo: "tarifas", orden: 41, tipo: "precio", etiqueta: "Limpieza (ejemplo)", valor: "15000" },
     { clave: "condiciones.llegada", grupo: "condiciones", orden: 50, tipo: "texto", etiqueta: "Llegada (ejemplo)", valor: "Desde las 15:00 (ejemplo)" },
     { clave: "condiciones.salida", grupo: "condiciones", orden: 51, tipo: "texto", etiqueta: "Salida (ejemplo)", valor: "Hasta las 11:00 (ejemplo)" },
-  ].map((f) => ({ ...f, actualizado: `${d(-3)}T12:00:00.000Z` }));
+  ].map((f) => ({ valor_en: null, valor_fr: null, ...f, ...TRADUCCIONES_EJEMPLO[f.clave], actualizado: `${d(-3)}T12:00:00.000Z` }));
   const fotos = [
     { espacio: "living", ruta: `living/${hoy.replace(/-/g, "")}-0a1b2c3d.webp`, alt: "Living de ejemplo con sofá y ventanal", orden: 0, visible: true, tono: "#8E6F55" },
     { espacio: "living", ruta: `living/${hoy.replace(/-/g, "")}-1a2b3c4d.webp`, alt: "Otro ángulo del living (ejemplo)", orden: 10, visible: true, tono: "#6F7F66" },
@@ -75,7 +88,7 @@ export function datosEjemplo(hoy = hoyIso()) {
   return { reservas, contenido, fotos };
 }
 
-export function crearApiSimulada({ almacen, retardo = 250, hoy = hoyIso(), ahora = () => Date.now() } = {}) {
+export function crearApiSimulada({ almacen, retardo = 250, hoy = hoyIso(), ahora = () => Date.now(), idiomas = true } = {}) {
   const db = datosEjemplo(hoy);
   const objetos = new Map();           // ruta -> { url, tipo, tamano }
   for (const f of db.fotos) objetos.set(f.ruta, { url: f._url, tipo: "image/webp", tamano: 100000 });
@@ -83,6 +96,8 @@ export function crearApiSimulada({ almacen, retardo = 250, hoy = hoyIso(), ahora
 
   const esperar = () => (retardo > 0 ? new Promise((ok) => setTimeout(ok, retardo)) : Promise.resolve());
   const sinPrivados = (f) => { const { _url, ...resto } = f; return resto; };
+  // sin la 0005 la base no tiene valor_en ni valor_fr: tampoco las devuelve
+  const comoBase = (f) => { if (idiomas) return copia(f); const { valor_en, valor_fr, ...resto } = f; return copia(resto); };
   const exigirSesion = () => (sesion ? null : new ErrorApi({ codigo: "sesion_vencida", estado: 401 }));
 
   async function paso(fn) {
@@ -153,15 +168,33 @@ export function crearApiSimulada({ almacen, retardo = 250, hoy = hoyIso(), ahora
     },
 
     contenido: {
-      listar: () => paso(() => copia(db.contenido)),
-      guardar: (k, valor) => paso(() => {
+      listar: () => paso(() => ({ filas: db.contenido.map(comoBase), idiomas })),
+      // Como api.js: cambios = cualquier subconjunto de { valor, valor_en, valor_fr } (la vista manda sólo las columnas
+      // que cambiaron) o el texto en español. Las columnas que no vienen quedan como están. Todo o nada, como un PATCH.
+      guardar: (k, cambios, { idiomas: conIdiomas = true } = {}) => paso(() => {
+        const datos = typeof cambios === "string" ? { valor: cambios } : { ...(cambios || {}) };
+        if (!conIdiomas) for (const i of TRADUCCIONES) delete datos[COLUMNA_IDIOMA[i]];
         const f = db.contenido.find((x) => x.clave === k);
         if (!f) throw new ErrorApi({ codigo: "sin_filas" });
-        const v = validarValor(f.tipo, valor, f.clave);
-        if (!v.ok || v.valor !== valor) throw new ErrorApi({ estado: 400, codigo: "23514", mensaje: "violates check constraint" });
-        f.valor = valor;
+        // api.js pide valor_en y valor_fr en la respuesta: sin la 0005, la base responde que no existen
+        if (!idiomas && conIdiomas) {
+          throw new ErrorApi({ estado: 400, codigo: "falta_idiomas", mensaje: "column contenido.valor_en does not exist" });
+        }
+        const traducciones = TRADUCCIONES.map((i) => COLUMNA_IDIOMA[i]).filter((c) => c in datos);
+        const rechazo = () => new ErrorApi({ estado: 400, codigo: "23514", mensaje: "violates check constraint" });
+        if ("valor" in datos) {
+          const v = validarValor(f.tipo, datos.valor, f.clave);
+          if (!v.ok || v.valor !== datos.valor) throw rechazo();
+        }
+        for (const c of traducciones) {
+          const x = datos[c];
+          if (x === null) continue;                            // null: sin traducción propia
+          const t = validarTraduccion(f.tipo, x);              // precio con traducción, en blanco o largo: 23514
+          if (typeof x !== "string" || !t.ok || t.valor !== x) throw rechazo();
+        }
+        for (const c of ["valor", ...traducciones]) if (c in datos) f[c] = datos[c];
         f.actualizado = new Date(ahora()).toISOString();
-        return copia(f);
+        return comoBase(f);
       }),
     },
 

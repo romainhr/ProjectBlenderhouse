@@ -8,15 +8,31 @@ import { crearControles } from "./controles.js";
 import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo, MOTIVO_CAMINO } from "./interaccion.js";
 import { MOMENTOS, MOMENTO_POR_DEFECTO, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
 import { RoomEnvironment } from "../../vendor/three/jsm/environments/RoomEnvironment.js";
-import { NOMBRES_RECINTO, estadoGruposParaMomento, gruposDelPanel } from "./luces.js";
+import { estadoGruposParaMomento, gruposDelPanel } from "./luces.js";
 import { prepararMinimapa, dibujarMinimapa, recintoTocado } from "./minimapa.js";
 import { crearCalidad, activarDepuracion, textoDepuracion } from "./calidad.js";
 import * as ui from "./interfaz.js";
+import { listo, t } from "../../js/i18n.js";
+import { nombreRecinto } from "./textos.js";
 
 const $ = (s) => document.querySelector(s);
 const tactil = matchMedia("(pointer: coarse)").matches;
 const debug = activarDepuracion();
 ui.marcarTactil(tactil);
+ui.iniciarSelectorIdioma();
+// Textos del JS en el idioma de la página: en /en/tour/ y /fr/tour/ su diccionario llega por la red (i18n.js). La
+// carga del modelo no lo espera; mientras tanto la barra avanza con el texto del HTML, que el build ya tradujo, y
+// todo lo que se escribe después («Listo», luces, plano, pistas) espera `listo`. Los errores no: salen al instante
+// (sin red, `listo` tarda hasta 5 s) y se vuelven a escribir cuando llega el diccionario (ver mostrarError).
+let textosListos = false;
+listo.then(() => { textosListos = true; });
+
+/** Escribe el error `clave` enseguida con t(), que ya tiene el respaldo en español, y otra vez cuando `listo` se
+ *  cumple, por si mientras tanto llegó el diccionario del idioma de la página. */
+function mostrarError(clave) {
+  ui.marcarError(t(clave));
+  if (!textosListos) listo.then(() => ui.marcarError(t(clave)));
+}
 if (debug) ui.mostrarDepuracion();
 
 // ---------------------------------------------------------------------------------------------- escena
@@ -103,20 +119,22 @@ async function iniciar() {
   try {
     D = await carga.cargarColisiones();
   } catch (e) {
-    ui.marcarError("No se pudieron leer los datos de colisión. Recarga la página.");
     console.error(e);
+    mostrarError("js.tour.error.colisiones");
     return;
   }
   const variante = carga.esTactilOPantallaChica() ? "depto_movil.gltf" : "depto.gltf";
   let gltf;
   try {
-    gltf = await carga.cargarGLTF(variante, (f) => ui.actualizarCarga(f, `Cargando el modelo… ${Math.round(f * 100)} %`));
+    gltf = await carga.cargarGLTF(variante, (f) => ui.actualizarCarga(f,
+      textosListos ? t("js.tour.carga.modelo", { porcentaje: Math.round(f * 100) }) : null));
   } catch (e) {
-    ui.marcarError("No se pudo cargar el modelo 3D. Revisa la conexión y recarga la página.");
     console.error(e);
+    mostrarError("js.tour.error.modelo");
     return;
   }
-  ui.actualizarCarga(1, "Preparando la escena…");
+  await listo;                       // antes de escribir textos y de nombrar grupos de luz y recintos
+  ui.actualizarCarga(1, t("js.tour.carga.escena"));
 
   // Filtrado anisotrópico: la mejora más barata para pisos y muros vistos en ángulo rasante (+30 a +110 % de
   // nitidez medida). 4 alcanza en teléfonos; en escritorio, 8.
@@ -167,7 +185,7 @@ async function iniciar() {
   ui.iniciarPantallaCompleta();
   ui.iniciarPaneles();
 
-  ui.actualizarCarga(1, `Listo · ${D.estaticos.length} obstáculos estáticos`);
+  ui.actualizarCarga(1, t("js.tour.carga.listo", { n: D.estaticos.length }));
   ui.habilitarEntrar();
   sucio = true;
 }
@@ -176,7 +194,7 @@ function irARecinto(nombre) {
   const p = D.recintos[nombre];
   const [x, z] = colision.libreCercano(p[0], p[1], D.estaticos, estado.moviles, D.radio);
   controles.yo.x = x; controles.yo.z = z;
-  ui.mostrarAviso((D.recintos_etiquetas && D.recintos_etiquetas[nombre]) || NOMBRES_RECINTO[nombre] || nombre, 1400);
+  ui.mostrarAviso(nombreRecinto(nombre, D.recintos_etiquetas), 1400);
   sucio = true;
 }
 
@@ -188,7 +206,7 @@ function cablearControles() {
     controles.empezarMarcha();
     sucio = true;
   });
-  controles.onPointerLockPerdido = () => ui.mostrarAviso("Clic en la vista para seguir mirando", 2500);
+  controles.onPointerLockPerdido = () => ui.mostrarAviso(t("js.tour.aviso.seguir_mirando"), 2500);
   controles.onActivar = () => {
     if (!estado.objetoApuntado) return;
     const entrada = estado.mapaTocable.get(estado.objetoApuntado);
@@ -196,7 +214,7 @@ function cablearControles() {
     if (activar(estado, entrada, { x: controles.yo.x, z: controles.yo.z, radio: D.radio })) {
       ui.refrescarGruposLuzUI(estado.gruposLuz);
     } else if (entrada.tipo === "movil") {
-      ui.mostrarAviso(estado.motivo || MOTIVO_CAMINO, 2000);
+      ui.mostrarAviso(t(estado.motivo || MOTIVO_CAMINO), 2000);
     }
     sucio = true;
   };
@@ -210,7 +228,7 @@ function cablearControles() {
         ui.mostrarChip(etiqueta, clientX, clientY);
         chipHasta = performance.now() + 1400;
       } else if (hit.entrada.tipo === "movil") {
-        ui.mostrarAviso(estado.motivo || MOTIVO_CAMINO, 2000);
+        ui.mostrarAviso(t(estado.motivo || MOTIVO_CAMINO), 2000);
       }
       sucio = true;
       return;

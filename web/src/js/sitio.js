@@ -1,6 +1,10 @@
-// Comportamiento común del sitio: menú de teléfono, aparición al entrar en pantalla, precios de ejemplo, encabezado
-// sobre el hero, barra fija de la portada y progreso del carrusel de Espacios (web/diseno/ESPEC-v4.md §6.2).
+// Comportamiento común del sitio: menú de teléfono, selector de idioma, aparición al entrar en pantalla, precios de
+// ejemplo, encabezado sobre el hero, barra fija de la portada y progreso del carrusel de Espacios
+// (web/diseno/ESPEC-v4.md §6.2).
+// El locale de la página sale de idioma.js y no de i18n.js: este módulo no escribe textos del diccionario, así que
+// no pide ninguno por la red ni espera nada para poner los precios (ADR 0007, decisión 2).
 import { TARIFA, clp } from "./reserva-logica.js";
+import { LOCALE, escucharSelectorIdioma } from "./idioma.js";
 
 const $ = (s, r = document) => r.querySelector(s);
 document.documentElement.classList.add("js");        // el CSS muestra lo que sólo tiene sentido con JS (.progreso)
@@ -21,6 +25,12 @@ if (boton && panel) {
   });
 }
 
+// Selector de idioma: <a data-i18n-alternar="es|en|fr">, con el href que le pone web/build.py. Al elegir (clic, clic
+// central o menú contextual), antes de que el enlace navegue, idioma.js guarda la cookie nf_lang: así quien eligió
+// español se queda en español aunque su navegador pida inglés (ADR 0007, decisión 4). El tour no carga este módulo:
+// llama a la misma función desde web/src/tour/js/interfaz.js.
+escucharSelectorIdioma(document);
+
 // aparición al entrar en pantalla. El contenido nunca queda oculto (RA-16): sin JS, sin IntersectionObserver o sin
 // desplazarse se ve igual. Sólo se anima (.visible) lo que entra desde abajo después de la carga; lo que ya estaba en
 // pantalla o se cruza hacia arriba queda quieto.
@@ -37,8 +47,9 @@ if ("IntersectionObserver" in window && !matchMedia("(prefers-reduced-motion: re
   document.querySelectorAll(".aparece").forEach((el) => obs.observe(el));
 }
 
-// precios de ejemplo escritos en el HTML con data-precio (el texto del HTML es el respaldo sin JS)
-document.querySelectorAll("[data-precio]").forEach((el) => { el.textContent = clp(TARIFA[el.dataset.precio]); });
+// precios de ejemplo escritos en el HTML con data-precio (el texto del HTML es el respaldo sin JS), con el formato del
+// idioma de la página: CLP 58.000, CLP 58,000 o CLP 58 000
+document.querySelectorAll("[data-precio]").forEach((el) => { el.textContent = clp(TARIFA[el.dataset.precio], LOCALE); });
 const anio = $("#anio");
 if (anio) anio.textContent = String(new Date().getFullYear());
 

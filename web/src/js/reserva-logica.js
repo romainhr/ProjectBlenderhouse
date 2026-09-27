@@ -21,7 +21,7 @@ export const PRECIO_MAX = 10_000_000;
 let vigente = Object.freeze({ noche: TARIFA.noche, limpieza: TARIFA.limpieza });
 
 /** Tarifas con que se calcula el total: { noche, limpieza } en CLP (congelado), las de TARIFA o las fijadas.
- *  Todo texto con un precio se arma al pintar con esto; MENSAJES no lleva precios, así no queda desfasado. */
+ *  Todo texto con un precio se arma al pintar con esto; los mensajes (CODIGOS) no llevan precios. */
 export function tarifaVigente() {
   return vigente;
 }
@@ -107,8 +107,29 @@ export function total(n, t = vigente) {
   return { noches: n, alojamiento, limpieza: n > 0 ? t.limpieza : 0, total: n > 0 ? alojamiento + t.limpieza : 0 };
 }
 
-export function clp(monto) {
-  return "CLP " + new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 }).format(monto);
+const formatosClp = new Map();
+
+/** Monto en pesos chilenos: «CLP» y el número entero con el separador de miles de `locale` (es-CL por defecto, el que
+ *  usa el portal): es-CL «CLP 189.000», en-US «CLP 189,000», fr-FR «CLP 189 000» (espacio fino de Intl). La moneda es
+ *  siempre CLP: el idioma sólo cambia cómo se escribe el número. */
+export function clp(monto, locale = "es-CL") {
+  if (!formatosClp.has(locale)) formatosClp.set(locale, new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }));
+  return "CLP " + formatosClp.get(locale).format(monto);
+}
+
+const LUNES = Date.UTC(2024, 0, 1);                      // el 1 de enero de 2024 fue lunes
+
+/** Los siete días de la semana, de lunes a domingo, con Intl en `locale` (weekday: "long", "short" o "narrow"). */
+export function nombresDias(locale, formato = "long") {
+  const f = new Intl.DateTimeFormat(locale, { weekday: formato, timeZone: "UTC" });
+  return Array.from({ length: 7 }, (_, i) => f.format(new Date(LUNES + i * DIA_MS)));
+}
+
+/** Abreviaturas de la cabecera del calendario desde un texto «lu,ma,mi,ju,vi,sá,do» (el de js.reserva.cal.dias_cortos).
+ *  Si no trae siete abreviaturas no vacías, usa las cortas de Intl en `locale`. */
+export function diasCortos(texto, locale) {
+  const dias = typeof texto === "string" ? texto.split(",").map((d) => d.trim()) : [];
+  return dias.length === 7 && dias.every(Boolean) ? dias : nombresDias(locale, "short");
 }
 
 /** Semanas del mes (lunes primero): [[null, "2026-10-01", ...], ...] */
@@ -153,26 +174,37 @@ export function validarDatos({ nombre = "", email = "", telefono = "", mensaje =
   return e;
 }
 
-export const MENSAJES = Object.freeze({
-  fechas_requeridas: "Elige la fecha de llegada y la de salida.",
-  fecha_pasada: "La llegada no puede ser en el pasado.",
-  fecha_lejana: "Por ahora se reciben solicitudes hasta un año adelante.",
-  min_noches: `La estadía mínima es de ${TARIFA.minNoches} noches.`,
-  max_noches: `La estadía máxima es de ${TARIFA.maxNoches} noches.`,
-  fechas_ocupadas: "Esas fechas ya tienen una solicitud. Elige otras.",
-  datos_invalidos: "Revisa los datos del formulario.",
-  nombre: "Escribe tu nombre (2 a 80 caracteres).",
-  email: "Escribe un correo válido.",
-  telefono: "El teléfono sólo admite números, espacios y + ( ) - .",
-  mensaje: "El mensaje admite hasta 1 000 caracteres.",
-  huespedes: `Pueden alojar de 1 a ${TARIFA.maxHuespedes} personas.`,
-  acepta: "Necesitamos tu consentimiento para responder la solicitud.",
-  red: "No se pudo conectar con el servidor de reservas. Intenta de nuevo.",
-  sin_configurar: "Las reservas todavía no están conectadas en este sitio.",
+// Códigos de los mensajes para el visitante: los devuelven validarRango, validarDatos y el servidor (PostgREST pone el
+// texto de la excepción en `message`), más «red» y «sin_configurar» de reservas-api.js. Sus textos están en
+// web/src/i18n/{es,en,fr}.json como js.reserva.<código>; este módulo no los carga (no depende de i18n.js ni de fetch:
+// lo importan también el portal y las pruebas en Node), así que quien muestra un mensaje pasa su traductor a
+// textoMensaje(). Los textos no llevan precios, así no quedan desfasados si el propietario cambia las tarifas.
+export const CODIGOS = Object.freeze([
+  "fechas_requeridas", "fecha_pasada", "fecha_lejana", "min_noches", "max_noches", "fechas_ocupadas", "datos_invalidos",
+  "nombre", "email", "telefono", "mensaje", "huespedes", "acepta", "red", "sin_configurar",
+]);
+export const PREFIJO_MENSAJES = "js.reserva.";
+// Las cifras de los mensajes salen de TARIFA, para que el texto no se separe de la regla ({minNoches} en el JSON).
+export const VARIABLES_MENSAJES = Object.freeze({
+  minNoches: TARIFA.minNoches,
+  maxNoches: TARIFA.maxNoches,
+  maxHuespedes: TARIFA.maxHuespedes,
 });
+
+/** ¿Es `c` uno de CODIGOS? */
+export function esCodigo(c) {
+  return typeof c === "string" && CODIGOS.includes(c);
+}
+
+/** Texto del mensaje `codigo` con el traductor `t` (el t de i18n.js o uno de prueba): t("js.reserva.<código>",
+ *  VARIABLES_MENSAJES). Sin traductor devuelve la clave, igual que t() cuando falta un texto. */
+export function textoMensaje(codigo, t) {
+  const clave = PREFIJO_MENSAJES + String(codigo);
+  return typeof t === "function" ? t(clave, VARIABLES_MENSAJES) : clave;
+}
 
 /** Código conocido a partir del error del servidor (PostgREST devuelve el texto de la excepción en `message`). */
 export function codigoError(err) {
   const m = (err && (err.codigo || err.message)) || "";
-  return Object.prototype.hasOwnProperty.call(MENSAJES, m) ? m : "red";
+  return esCodigo(m) ? m : "red";
 }

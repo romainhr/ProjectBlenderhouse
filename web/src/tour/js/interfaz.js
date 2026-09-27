@@ -1,8 +1,18 @@
 // Paneles, textos y controles de la interfaz (no toca three.js). Traduce las acciones del usuario a
-// llamadas de vuelta hacia main.js/interaccion.js; no conoce la escena 3D.
+// llamadas de vuelta hacia main.js/interaccion.js; no conoce la escena 3D. Los textos propios salen de t()
+// (claves js.tour.* de web/src/i18n/*.json) y se insertan con textContent o setAttribute, nunca como HTML.
+import { escucharSelectorIdioma, t } from "../../js/i18n.js";
 import { gruposDelPanel } from "./luces.js";
 
 const $ = (s) => document.querySelector(s);
+
+// --- selector de idioma ---------------------------------------------------------------------------------------
+// <a data-i18n-alternar="es|en|fr"> (web/build.py le pone el href a este tour en ese idioma). Al elegir se guarda la
+// cookie nf_lang antes de que el enlace navegue, con la misma función que usa js/sitio.js en el resto del sitio
+// (web/src/js/idioma.js: clic, clic central y menú contextual). El tour no carga sitio.js.
+export function iniciarSelectorIdioma(doc = document) {
+  escucharSelectorIdioma(doc);
+}
 
 export function marcarTactil(tactil) {
   document.body.classList.toggle("tactil", tactil);
@@ -47,7 +57,7 @@ export function pintarGruposLuz(gruposLuz, { onCambiar, onTodo }) {
     nombre.textContent = grupo.etiqueta;
     const interruptor = document.createElement("button");
     interruptor.type = "button"; interruptor.className = "interruptor"; interruptor.setAttribute("role", "switch");
-    interruptor.setAttribute("aria-label", `Luz: ${grupo.etiqueta}`);
+    interruptor.setAttribute("aria-label", t("js.tour.luz.interruptor", { nombre: grupo.etiqueta }));
     interruptor.setAttribute("aria-pressed", String(grupo.encendido));
     interruptor.addEventListener("click", () => {
       const nuevo = !grupo.encendido;
@@ -99,8 +109,19 @@ export function marcarMiraActiva(activa) { $("#mira").classList.toggle("activa",
 export function mostrarMira() { $("#mira").hidden = false; }
 export function mostrarPista(texto) { const p = $("#pista"); p.textContent = texto; p.hidden = false; }
 export function ocultarPista() { $("#pista").hidden = true; }
-export function mostrarChip(texto, x, y) {
-  const p = $("#chip-tactil"); p.textContent = texto; p.style.left = `${x}px`; p.style.top = `${y}px`; p.hidden = false;
+export const MARGEN_CHIP_PX = 10;   // igual que max-width: calc(100vw - 20px) de #chip-tactil en tour.css
+
+/** `left` del chip (su centro, por el translate(-50%) de tour.css) para que un chip de `ancho` px quede entero dentro
+ *  de una vista de `anchoVista` px, lo más cerca posible de la x del toque. */
+export function centroChip(x, ancho, anchoVista, margen = MARGEN_CHIP_PX) {
+  const min = ancho / 2 + margen, max = anchoVista - ancho / 2 - margen;
+  if (max < min) return anchoVista / 2;
+  return Math.min(Math.max(x, min), max);
+}
+export function mostrarChip(texto, x, y, anchoVista = window.innerWidth) {
+  const p = $("#chip-tactil");
+  p.textContent = texto; p.hidden = false;       // visible antes de medir: con hidden, offsetWidth es 0
+  p.style.left = `${centroChip(x, p.offsetWidth, anchoVista)}px`; p.style.top = `${y}px`;
 }
 export function ocultarChip() { $("#chip-tactil").hidden = true; }
 let avisoHasta = 0;

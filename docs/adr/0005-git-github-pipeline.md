@@ -102,3 +102,14 @@
   - las reglas deny de `.claude/settings.json`;
   - el propio CI: en `main`, el job de despliegue vuelve a correr todas las verificaciones y no publica si alguna falla. Una fusión en rojo ensuciaría la historia de `main`, pero no llegaría a producción.
 - Para tener protección real: pasar a GitHub Pro o hacer público el repositorio. El JSON de la protección (PR obligatoria, las cuatro verificaciones, sin push forzado ni borrado, también para administradores) está listo para aplicarlo con `gh api`.
+
+## Adenda: revisión y fusión centralizadas (2026-09-26)
+
+- **Modelo de IA utilizado:** Claude Opus 5.5 (`claude-opus-5-5`), en la sesión «Configurar git, GitHub y el pipeline CI/CD». **Revisor humano:** Romain Ange, que pidió el cambio: «cualquier PR que hagan las otras sesiones quiero que las analices, valides y apruebes a main».
+- **Reemplaza la decisión 7.** Las sesiones autoras ya no fusionan. La sesión «Configurar git, GitHub y el pipeline CI/CD» revisa cada PR (revisión de código con el skill `code-review` y validación de lo que el CI no cubre) y la fusiona o devuelve observaciones.
+- **Antecedente:** las PR #2 a #8 las fusionaron sus propias sesiones con el CI en verde, según la regla anterior. Según la sesión autora, Romain aprobó en su chat, después de ver capturas, las PR #4, #5 y #7.
+- **Aprobación en GitHub:** todas las PR salen de la cuenta `romainhr` y GitHub no permite aprobar una PR propia. La aprobación queda como comentario en la PR.
+- **Sin regla deny para `gh pr merge`:** también bloquearía a la sesión revisora, y rodearla con otra vía sería esquivar un control. La regla es de conducta y está en `CLAUDE.md`.
+- **Consecuencias:**
+  - Una revisión más antes de cada despliegue, y un cuello de botella si la sesión revisora no está activa. En ese caso Romain puede fusionar desde GitHub.
+  - Hay trazabilidad: cada PR queda con su comentario de revisión.

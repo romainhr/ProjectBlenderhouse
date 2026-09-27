@@ -7,16 +7,23 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { TARIFA, clp, fijarTarifas, tarifaVigente, total } from "../src/js/reserva-logica.js";
+import { IDIOMA, LOCALE, fijarTextos } from "../src/js/i18n.js";
 import {
-  ALT_GENERICO, BUCKET_FOTOS, CLAVES_TARIFA, MAX_MINIATURAS, RUTA_CONTENIDO, RUTA_FOTOS, aplicar, aplicarContenido,
-  aplicarFotos, cabecerasPublicas, indexarContenido, indexarFotos, leerFilas, obtenerDatos, precioValido, rutaValida,
-  tarifas, tarifasDe, textoContenido, urlFotoValida, urlPublica,
+  BUCKET_FOTOS, CAMPOS_VALOR, CLAVES_TARIFA, CLAVE_ALT_GENERICO, MAX_MINIATURAS, RUTA_CONTENIDO, RUTA_FOTOS,
+  altGenerico, aplicar, aplicarContenido, aplicarFotos, cabecerasPublicas, indexarContenido, indexarFotos, leerFilas,
+  obtenerDatos, precioValido, rutaValida, tarifas, tarifasDe, textoContenido, urlFotoValida, urlPublica,
 } from "../src/js/contenido-publico.js";
+import { MODULOS_I18N, conGlobales, copiaDelSitio, hasta } from "./copia-sitio.mjs";
 
 const BASE = "https://abcdefghijklmnopqrst.supabase.co";            // ficticia: estas pruebas no usan la red
 const OTRO = "https://zyxwvutsrqponmlkjihg.supabase.co";            // otro proyecto, también ficticio
 const PUB = `${BASE}/storage/v1/object/public/${BUCKET_FOTOS}`;
 const leer = (ruta) => readFileSync(new URL(ruta, import.meta.url), "utf8");
+// Textos del módulo (alt de respaldo, etiquetas de las miniaturas): en Node no hay document y i18n.js no carga nada;
+// se fijan los de es.json, los de una página en español.
+const DICCIONARIOS = Object.fromEntries(["es", "en", "fr"].map((i) => [i, JSON.parse(leer(`../src/i18n/${i}.json`))]));
+fijarTextos(DICCIONARIOS.es);
+const ALT_GENERICO = DICCIONARIOS.es[CLAVE_ALT_GENERICO];
 
 // ---------------------------------------------------------------- DOM falso
 class Nodo {
@@ -112,7 +119,7 @@ const SEMILLA_0003 = [
 // ---------------------------------------------------------------- lógica pura
 test("indexarContenido: acepta filas bien formadas y descarta el resto", () => {
   const m = indexarContenido([
-    { clave: "titulo", valor: "Departamento nuevo", tipo: "texto" },
+    { clave: "titulo", valor: "Departamento nuevo", tipo: "texto", valor_en: null, valor_fr: null },
     { clave: "tarifa.noche", valor: "65000", tipo: "precio" },
     { clave: "huespedes", valor: 4 },                          // número y sin tipo -> texto
     { clave: "Mayus", valor: "x", tipo: "texto" },             // clave inválida
@@ -123,8 +130,30 @@ test("indexarContenido: acepta filas bien formadas y descarta el resto", () => {
   ]);
   assert.deepEqual([...m.keys()], ["titulo", "tarifa.noche", "huespedes"]);
   assert.deepEqual(m.get("huespedes"), { valor: 4, tipo: "texto" });
+  assert.deepEqual(m.get("titulo"), { valor: "Departamento nuevo", tipo: "texto" });   // traducciones null: no van
   assert.equal(indexarContenido(null).size, 0);
   assert.equal(indexarContenido({ message: "relation does not exist" }).size, 0);
+});
+
+test("textos del módulo desde es.json: alt de respaldo (el de antes) y claves en los tres idiomas", () => {
+  assert.equal(ALT_GENERICO, "Foto del departamento");
+  assert.equal(altGenerico(), ALT_GENERICO);
+  for (const clave of [CLAVE_ALT_GENERICO, "js.contenido.mas_fotos", "js.contenido.ver_foto"]) {
+    for (const [idioma, d] of Object.entries(DICCIONARIOS)) assert.ok(d[clave]?.trim(), `${idioma}.json sin ${clave}`);
+  }
+  // el alt de respaldo no se fija al leer la base (indexarFotos deja ""), sino al aplicar: sale en el idioma que tenga
+  // t() en ese momento, aunque las lecturas hayan llegado antes que el diccionario (hallazgo JS-3)
+  const m = indexarFotos([{ espacio: "living", ruta: "living/a.jpg", alt: "", orden: 1 }], BASE);
+  assert.equal(m.get("living")[0].alt, "");
+  try {
+    fijarTextos(DICCIONARIOS.en, DICCIONARIOS.es);
+    assert.equal(altGenerico(), "Photo of the apartment");
+    const f = figura("living");
+    aplicarFotos(new Documento([f.fig]), m, { base: BASE });
+    assert.equal(f.img.getAttribute("alt"), "Photo of the apartment");
+  } finally {
+    fijarTextos(DICCIONARIOS.es);
+  }
 });
 
 test("precioValido y textoContenido: CLP entero, formato es-CL y vacíos que dejan el estático", () => {
@@ -224,6 +253,131 @@ test("tarifasDe -> fijarTarifas: el total de la reserva usa las tarifas editadas
   assert.equal(total(3).total, 3 * TARIFA.noche + TARIFA.limpieza);
 });
 
+// ---------------------------------------------------------------- idiomas (valor, valor_en, valor_fr)
+// Filas como las devuelve select=* después de la migración que agrega valor_en y valor_fr (las demás columnas de la
+// 0003 también llegan y se ignoran).
+const FILAS_IDIOMAS = [
+  { clave: "hero.bajada", valor: "Bajada editada", valor_en: "Edited lead", valor_fr: "Chapeau modifié", tipo: "parrafo",
+    etiqueta: "Bajada", grupo: "portada", orden: 1, actualizado: "2026-09-26T12:00:00Z" },
+  { clave: "tour.titulo", valor: "Recorrido", valor_en: "Tour", valor_fr: null, tipo: "texto" },
+  { clave: "faq.uno", valor: "Pregunta", valor_en: "   ", tipo: "texto" },                   // en blanco: no cuenta
+  { clave: "tarifa.noche", valor: "70000", valor_en: null, valor_fr: null, tipo: "precio" },
+  { clave: "raro", valor: "Algo", valor_en: { a: 1 }, valor_fr: 7, tipo: "texto" },
+];
+
+test("indexarContenido guarda valor_en y valor_fr cuando son texto (o número); la fila sigue exigiendo valor", () => {
+  const m = indexarContenido(FILAS_IDIOMAS);
+  assert.deepEqual(CAMPOS_VALOR, { es: "valor", en: "valor_en", fr: "valor_fr" });
+  assert.deepEqual(m.get("hero.bajada"), { valor: "Bajada editada", tipo: "parrafo", valor_en: "Edited lead", valor_fr: "Chapeau modifié" });
+  assert.deepEqual(m.get("tour.titulo"), { valor: "Recorrido", tipo: "texto", valor_en: "Tour" });
+  assert.deepEqual(m.get("raro"), { valor: "Algo", tipo: "texto", valor_fr: 7 });
+  assert.equal(indexarContenido([{ clave: "x", valor: null, valor_en: "Only English", tipo: "texto" }]).size, 0);
+});
+
+test("textoContenido por idioma: la columna del idioma o null (queda el estático, nunca se cae al español)", () => {
+  const m = indexarContenido(FILAS_IDIOMAS);
+  const e = (k) => m.get(k);
+  assert.equal(textoContenido(e("hero.bajada")), "Bajada editada");               // Node: IDIOMA es «es»
+  assert.equal(textoContenido(e("hero.bajada"), "es"), "Bajada editada");
+  assert.equal(textoContenido(e("hero.bajada"), "en"), "Edited lead");
+  assert.equal(textoContenido(e("hero.bajada"), "fr"), "Chapeau modifié");
+  assert.equal(textoContenido(e("tour.titulo"), "fr"), null);                     // null en la base
+  assert.equal(textoContenido(e("faq.uno"), "en"), null);                         // en blanco
+  assert.equal(textoContenido(e("faq.uno"), "fr"), null);                         // columna ausente (antes de migrar)
+  assert.equal(textoContenido(e("raro"), "fr"), "7");
+  assert.equal(textoContenido(e("hero.bajada"), "de"), "Bajada editada");         // idioma desconocido: el base
+  // un precio usa siempre `valor`, escrito con el locale del idioma
+  assert.equal(textoContenido(e("tarifa.noche"), "es"), clp(70000));
+  assert.equal(textoContenido(e("tarifa.noche"), "en"), "CLP 70,000");
+  assert.equal(textoContenido(e("tarifa.noche"), "fr"), clp(70000, "fr-FR"));
+  assert.match(textoContenido(e("tarifa.noche"), "fr"), /^CLP 70[\u00a0\u202f ]000$/);
+  assert.equal(textoContenido({ valor: "65.000", tipo: "precio" }, "en"), null);
+});
+
+test("aplicarContenido en inglés y en francés: textos del idioma, estáticos si falta y precios con su formato", () => {
+  const pagina = () => {
+    const bajada = conTexto(n("p", { "data-contenido": "hero.bajada" }), "Static lead");
+    const titulo = conTexto(n("h2", { "data-contenido": "tour.titulo" }), "Texto estático traducido");
+    const faq = conTexto(n("p", { "data-contenido": "faq.uno" }), "Static question");
+    // precios: lo que escribe hoy sitio.js en toda página, clp(TARIFA[…]) sin locale, es decir, en formato es-CL
+    const precio = conTexto(n("span", { "data-contenido": "tarifa.noche" }), clp(TARIFA.noche));
+    const pNoche = conTexto(n("td", { "data-precio": "noche" }), clp(TARIFA.noche));
+    const pLimpieza = conTexto(n("td", { "data-precio": "limpieza" }), clp(TARIFA.limpieza));
+    return { doc: new Documento([bajada, titulo, faq, precio, pNoche, pLimpieza]), bajada, titulo, faq, precio, pNoche, pLimpieza };
+  };
+  const contenido = indexarContenido(FILAS_IDIOMAS);
+  assert.equal(clp(TARIFA.limpieza), "CLP 15.000");
+
+  const en = pagina();
+  assert.equal(aplicarContenido(en.doc, contenido, "en"), 5);                     // bajada, título y tres precios
+  assert.equal(en.bajada.textContent, "Edited lead");
+  assert.equal(en.titulo.textContent, "Tour");
+  assert.equal(en.faq.textContent, "Static question");                            // en blanco: queda el del build
+  assert.equal(en.precio.textContent, "CLP 70,000");
+  assert.equal(en.pNoche.textContent, "CLP 70,000");
+  // hallazgo JS-4: la limpieza no editada también pasa al formato del idioma (antes quedaba «CLP 15.000» de sitio.js
+  // al lado de «CLP 70,000»)
+  assert.equal(en.pLimpieza.textContent, "CLP 15,000");
+  for (const el of [en.precio, en.pNoche, en.pLimpieza]) assert.match(el.textContent, /^CLP \d{1,3}(,\d{3})*$/);
+
+  const fr = pagina();
+  assert.equal(aplicar(fr.doc, { contenido, fotos: new Map(), base: BASE }, "fr").textos, 4);   // bajada y tres precios
+  assert.equal(fr.bajada.textContent, "Chapeau modifié");
+  assert.equal(fr.titulo.textContent, "Texto estático traducido");                // valor_fr null: no se pone el español
+  assert.equal(fr.faq.textContent, "Static question");
+  assert.equal(fr.precio.textContent, clp(70000, "fr-FR"));
+  assert.equal(fr.pNoche.textContent, clp(70000, "fr-FR"));
+  assert.equal(fr.pLimpieza.textContent, clp(TARIFA.limpieza, "fr-FR"));
+  assert.match(fr.pLimpieza.textContent, /^CLP 15[\u00a0\u202f ]000$/);
+
+  // por defecto, el idioma de la página (en Node, español) con su locale
+  assert.equal(IDIOMA, "es");
+  assert.equal(LOCALE, "es-CL");
+  const es = pagina();
+  assert.equal(aplicarContenido(es.doc, contenido), 6);                           // los tres textos y tres precios
+  assert.equal(es.bajada.textContent, "Bajada editada");
+  assert.equal(es.faq.textContent, "Pregunta");
+  assert.equal(es.pNoche.textContent, "CLP 70.000");
+  assert.equal(es.pLimpieza.textContent, "CLP 15.000");
+
+  // sin tarifas editadas no se tocan los precios: quedan como los escribió sitio.js (su formato es asunto de sitio.js)
+  const sinTarifas = pagina();
+  const soloTextos = indexarContenido(FILAS_IDIOMAS.filter((f) => f.tipo !== "precio"));
+  assert.equal(aplicarContenido(sinTarifas.doc, soloTextos, "en"), 2);
+  assert.equal(sinTarifas.pNoche.textContent, clp(TARIFA.noche));
+  assert.equal(sinTarifas.pLimpieza.textContent, clp(TARIFA.limpieza));
+});
+
+test("antes de la migración (select=* sin valor_en ni valor_fr): en otro idioma quedan los textos estáticos", () => {
+  const contenido = indexarContenido([
+    { clave: "hero.bajada", valor: "Bajada editada", tipo: "parrafo", etiqueta: "Bajada", grupo: "portada", orden: 1 },
+    { clave: "tarifa.noche", valor: "65000", tipo: "precio", etiqueta: "Noche", grupo: "tarifas", orden: 1 },
+  ]);
+  const bajada = conTexto(n("p", { "data-contenido": "hero.bajada" }), "Static lead");
+  const pNoche = conTexto(n("td", { "data-precio": "noche" }), "CLP 58,000");
+  assert.equal(aplicarContenido(new Documento([bajada, pNoche]), contenido, "en"), 1);
+  assert.equal(bajada.textContent, "Static lead");
+  assert.equal(pNoche.textContent, "CLP 65,000");                                 // la tarifa sí vale en todo idioma
+  assert.deepEqual(tarifasDe(contenido), { noche: 65000, limpieza: TARIFA.limpieza });
+});
+
+test("miniaturas: etiquetas aria en el idioma de los textos (t de i18n.js)", () => {
+  const fotos = indexarFotos([1, 2].map((k) => ({ espacio: "dorm1", ruta: `dorm1/${k}.jpg`, alt: `Foto ${k}`, orden: k })), BASE);
+  try {
+    for (const [idioma, lista, boton] of [["en", "More photos of this space", "View photo: Foto 2"],
+      ["fr", "Plus de photos de cet espace", "Voir la photo\u00a0: Foto 2"]]) {
+      fijarTextos(DICCIONARIOS[idioma], DICCIONARIOS.es);
+      const f = figura("dorm1", { "data-galeria": "" });
+      aplicarFotos(new Documento([f.fig]), fotos);
+      const ul = f.fig.querySelector("[data-miniaturas]");
+      assert.equal(ul.getAttribute("aria-label"), lista, idioma);
+      assert.equal(ul.querySelector("button").getAttribute("aria-label"), boton, idioma);
+    }
+  } finally {
+    fijarTextos(DICCIONARIOS.es);
+  }
+});
+
 test("rutaValida y urlPublica: sólo objetos dentro del bucket, con cada segmento codificado", () => {
   assert.equal(urlPublica(BASE, "living/foto 1.jpg"), `${PUB}/living/foto%201.jpg`);
   assert.equal(urlPublica(`${BASE}/`, "a.webp"), `${PUB}/a.webp`);
@@ -275,7 +429,7 @@ test("urlFotoValida: sólo la URL pública del bucket «fotos» propio, con cada
   }
 });
 
-test("indexarFotos: agrupa por espacio, ordena de forma estable y completa el texto alternativo", () => {
+test("indexarFotos: agrupa por espacio, ordena de forma estable y deja \"\" si falta el alt (se completa al aplicar)", () => {
   const m = indexarFotos([
     { espacio: "living", ruta: "living/b.jpg", alt: "B", orden: 2 },
     { espacio: "living", ruta: "living/a.jpg", alt: " A ", orden: 1 },
@@ -289,8 +443,11 @@ test("indexarFotos: agrupa por espacio, ordena de forma estable y completa el te
   assert.deepEqual([...m.keys()], ["living", "cocina"]);
   assert.deepEqual(m.get("living").map((f) => [f.alt, f.url]), [
     ["A", `${PUB}/living/a.jpg`], ["B", `${PUB}/living/b.jpg`], ["C", `${PUB}/living/c.jpg`]]);
-  assert.deepEqual(m.get("cocina").map((f) => f.alt), [ALT_GENERICO, "S"]);
+  assert.deepEqual(m.get("cocina").map((f) => f.alt), ["", "S"]);
   assert.ok(!("i" in m.get("living")[0]));
+  const f = figura("cocina");
+  aplicarFotos(new Documento([f.fig]), m, { base: BASE });
+  assert.equal(f.img.getAttribute("alt"), ALT_GENERICO);
   assert.equal(indexarFotos(null, BASE).size, 0);
 });
 
@@ -317,7 +474,7 @@ test("aplicarContenido: textContent en [data-contenido] y precios editados en [d
     { clave: "vacio", valor: "", tipo: "texto" },
   ]);
   const cambiados = aplicarContenido(doc, contenido);
-  assert.equal(cambiados, 4);                                     // titulo, bajada, precio y [data-precio="noche"]
+  assert.equal(cambiados, 5);                                     // titulo, bajada, precio y los dos [data-precio]
   assert.equal(titulo.textContent, "<img src=x onerror=alert(1)>"); // queda como texto, no como HTML
   assert.equal(titulo.children.length, 0);
   assert.equal(bajada.textContent, "Nueva bajada");
@@ -326,7 +483,7 @@ test("aplicarContenido: textContent en [data-contenido] y precios editados en [d
   assert.equal(precio.textContent, clp(70000));
   assert.equal(vacio.textContent, "se queda");
   assert.equal(pNoche.textContent, clp(70000));
-  assert.equal(pLimpieza.textContent, clp(TARIFA.limpieza));      // no se editó: queda el ejemplo
+  assert.equal(pLimpieza.textContent, clp(TARIFA.limpieza));      // no se editó: el ejemplo, con el mismo formato
   assert.equal(pOtro.textContent, "2");
   assert.equal(aplicarContenido(doc, new Map()), 0);
 });
@@ -342,11 +499,15 @@ test("aplicarContenido: limpieza en 0 se muestra como CLP 0; noche en 0 deja el 
     { clave: "tarifa.noche", valor: "0", tipo: "precio" },
     { clave: "tarifa.limpieza", valor: "0", tipo: "precio" },
   ]));
-  assert.equal(cambiados, 2);                                     // las dos de limpieza
+  assert.equal(cambiados, 4);                                     // las cuatro tarifas, con un solo formato
   assert.equal(pLimpieza.textContent, clp(0));
   assert.equal(cLimpieza.textContent, clp(0));
-  assert.equal(pNoche.textContent, clp(TARIFA.noche));            // noche en 0: no editada
-  assert.equal(cNoche.textContent, "estático");                   // misma regla por data-contenido
+  assert.equal(pNoche.textContent, clp(TARIFA.noche));            // noche en 0: no editada, queda la de ejemplo
+  assert.equal(cNoche.textContent, clp(TARIFA.noche));            // misma regla por data-contenido
+  // con la noche en 0 como única «edición» no hay tarifas editadas: no se toca nada
+  const solo0 = conTexto(n("span", { "data-contenido": "tarifa.noche" }), "estático");
+  assert.equal(aplicarContenido(new Documento([solo0]), indexarContenido([{ clave: "tarifa.noche", valor: "0", tipo: "precio" }])), 0);
+  assert.equal(solo0.textContent, "estático");
   assert.equal(pRaro.textContent, "se queda");
 });
 
@@ -474,6 +635,7 @@ test("aplicarFotos con data-galeria: miniaturas de las demás que se intercambia
   const lista = f.fig.querySelector("[data-miniaturas]");
   assert.equal(lista.tagName, "UL");
   assert.equal(lista.className, "miniaturas");
+  assert.equal(lista.getAttribute("aria-label"), "Más fotos de este espacio");
   assert.deepEqual(f.fig.children.map((c) => c.tagName), ["PICTURE", "UL", "FIGCAPTION"]);  // figcaption sigue al final
   const botones = lista.querySelectorAll("button");
   assert.equal(botones.length, 2);
@@ -541,7 +703,7 @@ test("leerFilas: filas, errores de PostgREST, respuesta que no es arreglo y red 
   const pedidos = [];
   const f = async (url, op) => { pedidos.push({ url, op }); return respuesta([{ clave: "a", valor: "b", tipo: "texto" }]); };
   assert.deepEqual(await leerFilas(BASE, "sb_publishable_x", RUTA_CONTENIDO, { fetch: f }), [{ clave: "a", valor: "b", tipo: "texto" }]);
-  assert.equal(pedidos[0].url, `${BASE}/rest/v1/contenido?select=clave,valor,tipo`);
+  assert.equal(pedidos[0].url, `${BASE}/rest/v1/contenido?select=*`);
   assert.equal(pedidos[0].op.headers.apikey, "sb_publishable_x");
   assert.equal(pedidos[0].op.method, undefined);                  // GET: nunca escribe
   assert.equal(pedidos[0].op.body, undefined);
@@ -591,4 +753,48 @@ test("obtenerDatos: sin configuración no llama a la red; con ella lee las dos t
 
 test("tarifas(): sin js/config.js (no existe en src/, lo genera el build) devuelve null", async () => {
   assert.equal(await tarifas(), null);
+});
+
+// ---------------------------------------------------------------- orden de carga en una página (hallazgo JS-3)
+test("en /en/: las lecturas de la base empiezan antes de que llegue el diccionario y los textos se aplican después", async () => {
+  // copia de los módulos con un js/config.js ficticio (no hay red: el fetch es falso y la URL, inventada)
+  const copia = copiaDelSitio([...MODULOS_I18N, "contenido-publico.js", "reserva-logica.js"], {
+    "js/config.js": `export const SUPABASE_URL = "${BASE}";\nexport const SUPABASE_CLAVE_PUBLICA = "clave-publica-de-prueba";\n`,
+  });
+  const eventos = [];
+  let soltar;
+  const diccionario = new Promise((ok) => { soltar = ok; });
+  const fetchFalso = async (url) => {
+    const u = new URL(String(url));
+    if (u.protocol === "file:") {                                   // ../i18n/en.json, relativo a la copia de i18n.js
+      eventos.push(`pide ${u.pathname.split("/").slice(-2).join("/")}`);
+      await diccionario;
+      eventos.push("llega el diccionario");
+      return respuesta(DICCIONARIOS.en);
+    }
+    eventos.push(`pide ${u.pathname}`);
+    if (u.pathname === "/rest/v1/contenido") return respuesta(FILAS_IDIOMAS);
+    if (u.pathname === "/rest/v1/fotos") return respuesta([{ espacio: "living", ruta: "living/1.jpg", alt: "", orden: 1 }]);
+    return respuesta(null, 404);
+  };
+  const bajada = conTexto(n("p", { "data-contenido": "hero.bajada" }), "Static lead");
+  const living = figura("living");
+  const doc = new Documento([bajada, living.fig]);
+  doc.documentElement = { lang: "en" };
+  await conGlobales({ document: doc, fetch: fetchFalso }, async () => {
+    // con await de nivel superior en i18n.js, esta importación no terminaría hasta soltar el diccionario
+    await Promise.race([import(copia.url("js/contenido-publico.js")),
+      new Promise((_, no) => setTimeout(() => no(new Error("importar contenido-publico.js esperó al diccionario")), 1000))]);
+    await hasta(() => eventos.filter((e) => e.startsWith("pide /rest/v1/")).length === 2);
+    assert.deepEqual(eventos.slice().sort(), ["pide /rest/v1/contenido", "pide /rest/v1/fotos", "pide i18n/en.json"],
+      "las dos lecturas de la base salieron con el diccionario todavía pendiente");
+    await new Promise((ok) => setTimeout(ok, 20));
+    assert.equal(bajada.textContent, "Static lead", "los textos esperan al diccionario");
+    soltar();
+    await hasta(() => bajada.textContent === "Edited lead");
+    assert.equal(eventos.indexOf("llega el diccionario"), 3);
+    // el alt de respaldo sale en inglés: se resolvió al aplicar, con el diccionario ya cargado
+    assert.equal(living.img.getAttribute("alt"), DICCIONARIOS.en[CLAVE_ALT_GENERICO]);
+    assert.equal(living.img.getAttribute("src"), `${PUB}/living/1.jpg`);
+  });
 });

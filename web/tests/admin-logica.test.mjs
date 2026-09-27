@@ -7,14 +7,20 @@ import {
   ACCIONES, ESTADOS, accionesPermitidas, contarPorEstado, enPeriodo, enlaceCorreo, enlaceTelefono, filtrarReservas,
   pendientesPorResolver, reemplazar, situacion, validarNota,
 } from "../src/admin/js/logica-reservas.js";
-import { LIMITE_VALOR, agruparContenido, previaPrecio, tituloGrupo, validarValor } from "../src/admin/js/logica-contenido.js";
+import {
+  AVISO_SIN_IDIOMAS, COLUMNA_IDIOMA, IDIOMAS, LIMITE_VALOR, MENSAJES_VALOR, TEXTO_FIJO, TRADUCCIONES, agruparContenido,
+  ayudaCampo, columnasCambiadas, esTraducible, hayCambiosFila, idiomasDeFila, previaPrecio, rotuloIdioma, tituloGrupo,
+  validarFila, validarTraduccion, validarValor, valoresDeFila,
+} from "../src/admin/js/logica-contenido.js";
 import {
   ESPACIOS, MAX_SUBIDA, RE_RUTA, contarPorEspacio, dimensionesPorCabecera, dimensionesReducidas, esEspacio, extensionPara,
   fotosDeEspacio, moverFoto, pasosReduccion, rutaCodificada, rutaFoto, siguienteOrden, sufijoAleatorio, tipoPorFirma,
   urlPublica, validarAlt, validarArchivo,
 } from "../src/admin/js/logica-fotos.js";
-import { configValida, decidirModo, esLocal } from "../src/admin/js/modo.js";
-import { ErrorApi, codigoConocido, errorDesdeRespuesta, esErrorDeSesion, mensajeError } from "../src/admin/js/errores.js";
+import { configValida, decidirModo, esLocal, pideSinIdiomas } from "../src/admin/js/modo.js";
+import {
+  ErrorApi, MENSAJES, codigoConocido, errorDesdeRespuesta, esColumnaInexistente, esErrorDeSesion, mensajeError,
+} from "../src/admin/js/errores.js";
 import { formatearDia, hrefSeguro, largo, peso, rangoCorto } from "../src/admin/js/util.js";
 
 const HOY = "2026-10-05";
@@ -143,6 +149,114 @@ test("textos: agrupar por grupo, filas por orden y grupos por su menor orden", (
   assert.deepEqual(agruparContenido([]), []);
 });
 
+// ---------------------------------------------------------------------------------------------- textos en tres idiomas (0005)
+test("idiomas: español obligatorio, inglés y francés opcionales, con las columnas de la 0005", () => {
+  assert.deepEqual(IDIOMAS, ["es", "en", "fr"]);
+  assert.deepEqual(TRADUCCIONES, ["en", "fr"]);
+  assert.deepEqual(COLUMNA_IDIOMA, { es: "valor", en: "valor_en", fr: "valor_fr" });
+  assert.deepEqual(rotuloIdioma("es"), { nombre: "Español", requisito: "obligatorio" });
+  assert.deepEqual(rotuloIdioma("en"), { nombre: "Inglés", requisito: "opcional" });
+  assert.deepEqual(rotuloIdioma("fr"), { nombre: "Francés", requisito: "opcional" });
+});
+
+test("idiomas: traducción vacía -> null (traducción fija del sitio); con texto, la misma validación que el español", () => {
+  for (const vacia of ["", "   ", "\n\t ", null, undefined]) {
+    assert.deepEqual(validarTraduccion("parrafo", vacia), { ok: true, valor: null }, JSON.stringify(vacia));
+    assert.deepEqual(validarTraduccion("texto", vacia), { ok: true, valor: null });
+  }
+  assert.deepEqual(validarTraduccion("texto", "  Living \n room "), validarValor("texto", "  Living \n room "));
+  assert.deepEqual(validarTraduccion("texto", "  Living \n room "), { ok: true, valor: "Living room" });
+  assert.deepEqual(validarTraduccion("parrafo", "Ligne 1\r\nLigne 2  "), { ok: true, valor: "Ligne 1\nLigne 2" });
+  assert.ok(validarTraduccion("parrafo", "é".repeat(LIMITE_VALOR)).ok, "4000 puntos de código, como char_length");
+  assert.equal(validarTraduccion("parrafo", "a".repeat(LIMITE_VALOR + 1)).error, "largo");
+  assert.equal(validarTraduccion("html", "x").error, "tipo");
+  assert.equal(validarTraduccion("html", "").error, "tipo");
+  // el precio no se traduce: sólo vacío
+  assert.deepEqual(validarTraduccion("precio", ""), { ok: true, valor: null });
+  assert.equal(validarTraduccion("precio", "58000").error, "precio_sin_traduccion");
+  assert.ok(MENSAJES_VALOR.precio_sin_traduccion);
+});
+
+test("idiomas: validarFila valida y normaliza los tres valores de la fila (vacío -> null)", () => {
+  const texto = { clave: "hero.bajada", tipo: "parrafo" };
+  assert.deepEqual(validarFila(texto, { es: " Hola ", en: "Hello ", fr: "  " }),
+    { ok: true, cambios: { valor: "Hola", valor_en: "Hello", valor_fr: null } });
+  assert.deepEqual(validarFila(texto, { es: "", en: "Hello", fr: "x".repeat(LIMITE_VALOR + 1) }),
+    { ok: false, errores: { es: "vacio", fr: "largo" } }, "el español no puede quedar vacío; el francés, largo");
+  // sin la 0005: sólo el español, aunque vengan otros campos
+  assert.deepEqual(validarFila(texto, { es: "Hola", en: "Hello" }, { idiomas: false }), { ok: true, cambios: { valor: "Hola" } });
+  // el precio: un solo campo, con su regla de siempre, y nunca manda traducciones
+  const noche = { clave: "tarifa.noche", tipo: "precio" };
+  assert.deepEqual(validarFila(noche, { es: "58.000", en: "1", fr: "2" }), { ok: true, cambios: { valor: "58000" } });
+  assert.deepEqual(validarFila(noche, { es: "0" }), { ok: false, errores: { es: "precio_noche_cero" } });
+  assert.deepEqual(validarFila({ clave: "x.y", tipo: "texto" }, {}), { ok: false, errores: { es: "vacio" } },
+    "sin campos: faltan el español (las traducciones vacías son null)");
+});
+
+test("idiomas: qué campos lleva cada fila, valores iniciales y cambios sin guardar", () => {
+  const texto = { clave: "a.b", tipo: "texto", valor: "Hola", valor_en: "Hello", valor_fr: null };
+  const precio = { clave: "tarifa.noche", tipo: "precio", valor: "58000", valor_en: null, valor_fr: null };
+  assert.equal(esTraducible(texto), true);
+  assert.equal(esTraducible(precio), false);
+  assert.deepEqual(idiomasDeFila(texto), ["es", "en", "fr"]);
+  assert.deepEqual(idiomasDeFila(texto, { idiomas: false }), ["es"], "sin la 0005, sólo el español");
+  assert.deepEqual(idiomasDeFila(precio), ["es"], "el precio tiene un solo campo");
+  assert.deepEqual(valoresDeFila(texto), { es: "Hola", en: "Hello", fr: "" });
+  assert.deepEqual(valoresDeFila({ valor: "Hola" }), { es: "Hola", en: "", fr: "" }, "fila leída sin la 0005");
+  const original = valoresDeFila(texto);
+  assert.equal(hayCambiosFila(original, { es: "Hola", en: "Hello", fr: "" }), false);
+  assert.equal(hayCambiosFila(original, { es: "Hola", en: "Hello", fr: "Bonjour" }), true);
+  assert.equal(hayCambiosFila(original, { es: "Hola" }), false, "sólo cuentan los campos pintados");
+  assert.equal(hayCambiosFila(original, { es: "Hola!" }), true);
+});
+
+test("idiomas: columnasCambiadas deja sólo las columnas de los campos que cambiaron (hallazgo P1)", () => {
+  const original = valoresDeFila({ valor: "Cocina", valor_en: "Kitchen", valor_fr: null });
+  const validar = (escritos) => validarFila({ clave: "espacio.cocina.titulo", tipo: "texto" }, escritos).cambios;
+  // sólo el español: no se reenvían el inglés ni el francés cargados
+  let escritos = { es: "Cocina equipada", en: "Kitchen", fr: "" };
+  assert.deepEqual(columnasCambiadas(validar(escritos), original, escritos), { valor: "Cocina equipada" });
+  // sólo el inglés: no se reenvía el español cargado
+  escritos = { es: "Cocina", en: " Kitchen  and dining ", fr: "" };
+  assert.deepEqual(columnasCambiadas(validar(escritos), original, escritos), { valor_en: "Kitchen and dining" },
+    "lo que se manda es lo normalizado por validarFila");
+  // vaciar una traducción la manda como null; escribir una nueva, como texto
+  escritos = { es: "Cocina", en: "   ", fr: "Cuisine" };
+  assert.deepEqual(columnasCambiadas(validar(escritos), original, escritos), { valor_en: null, valor_fr: "Cuisine" });
+  // nada cambió (o se volvió a lo cargado): no hay nada que guardar
+  escritos = { es: "Cocina", en: "Kitchen", fr: "" };
+  assert.deepEqual(columnasCambiadas(validar(escritos), original, escritos), {});
+  // un campo sin tocar no se reenvía aunque la base lo tenga con otros espacios (validarFila lo normalizaría)
+  const sucio = valoresDeFila({ valor: "Cocina  amplia", valor_en: "Kitchen", valor_fr: null });
+  escritos = { es: "Cocina  amplia", en: "Kitchen", fr: "Cuisine" };
+  assert.deepEqual(columnasCambiadas(validar(escritos), sucio, escritos), { valor_fr: "Cuisine" });
+  // sólo los idiomas pintados (precio o base sin la 0005) y sólo las columnas validadas
+  assert.deepEqual(columnasCambiadas({ valor: "16000" }, valoresDeFila({ valor: "15000" }), { es: "16.000" }), { valor: "16000" });
+  assert.deepEqual(columnasCambiadas({ valor: "Hola" }, valoresDeFila({ valor: "Hola", valor_en: "Hi" }), { es: "Hola", en: "" }), {},
+    "sin la columna validada no se inventa un cambio");
+  assert.deepEqual(columnasCambiadas(undefined, undefined, undefined), {});
+});
+
+test("idiomas: la ayuda dice qué muestra el sitio si el inglés o el francés quedan vacíos", () => {
+  // hallazgo P3: sin el marcado data-i18n de la página, /en/ y /fr/ muestran el español; la ayuda no promete más
+  assert.equal(TEXTO_FIJO, "el texto fijo de la página (el original en español mientras esa página no esté traducida)");
+  assert.equal(ayudaCampo({ tipo: "texto", idioma: "en", valor: "" }),
+    "Vacío: el sitio en inglés muestra el texto fijo de la página (el original en español mientras esa página no esté traducida).");
+  assert.equal(ayudaCampo({ tipo: "parrafo", idioma: "fr", valor: "  " }),
+    "Vacío: el sitio en francés muestra el texto fijo de la página (el original en español mientras esa página no esté traducida).");
+  assert.ok(AVISO_SIN_IDIOMAS.endsWith(`el sitio en inglés y en francés muestra ${TEXTO_FIJO}.`));
+  for (const s of [AVISO_SIN_IDIOMAS, ayudaCampo({ tipo: "texto", idioma: "en", valor: "" })]) {
+    assert.doesNotMatch(s, /traducci(ón|ones) fijas?/, "no promete una traducción que el sitio quizá todavía no tiene");
+  }
+  assert.equal(ayudaCampo({ tipo: "texto", idioma: "en", valor: "Living room" }), "");
+  assert.equal(ayudaCampo({ tipo: "parrafo", idioma: "en", valor: "Hello" }), "5 / 4.000 caracteres");
+  assert.equal(ayudaCampo({ tipo: "parrafo", idioma: "es", valor: "" }), "0 / 4.000 caracteres", "el español no es opcional");
+  assert.equal(ayudaCampo({ tipo: "texto", idioma: "es", valor: "x".repeat(3201) }), "3.201 / 4.000 caracteres");
+  assert.match(ayudaCampo({ tipo: "precio", valor: "58000" }), /«CLP 58\.000».*mismo en los tres idiomas/);
+  assert.match(AVISO_SIN_IDIOMAS, /0005_contenido_idiomas\.sql/);
+  assert.match(AVISO_SIN_IDIOMAS, /editar el español/);
+});
+
 // ---------------------------------------------------------------------------------------------- fotos
 test("fotos: validación de archivo por tipo y peso", () => {
   assert.ok(validarArchivo({ type: "image/jpeg", size: 3e6 }).ok);
@@ -257,6 +371,15 @@ test("fotos: orden por espacio, siguiente orden y mover arriba/abajo con sólo l
 });
 
 // ---------------------------------------------------------------------------------------------- modo
+test("modo simulado: ?sin-idiomas=1 imita una base sin la 0005", () => {
+  assert.equal(pideSinIdiomas("?simulado=1&sin-idiomas=1"), true);
+  assert.equal(pideSinIdiomas("?sin-idiomas=1"), true);
+  assert.equal(pideSinIdiomas("?simulado=1"), false);
+  assert.equal(pideSinIdiomas("?sin-idiomas=si"), false);
+  assert.equal(pideSinIdiomas(""), false);
+  assert.equal(pideSinIdiomas(), false);
+});
+
 test("modo simulado sólo en un host local; fuera de él sin configuración no hay login", () => {
   const cfg = { url: "https://abcdefghijklmnopqrst.supabase.co", clave: "sb_publishable_abcdefghijklmnopqrstuvwxyz" };
   assert.equal(decidirModo({ hostname: "localhost", search: "", config: { url: "", clave: "" } }), "simulado");
@@ -275,6 +398,23 @@ test("modo simulado sólo en un host local; fuera de él sin configuración no h
 });
 
 // ---------------------------------------------------------------------------------------------- errores
+test("errores: columna inexistente (42703, PGRST204) = falta la 0005 en contenido; no en Auth ni Storage", () => {
+  assert.ok(esColumnaInexistente(errorDesdeRespuesta(400, { code: "42703", message: "column contenido.valor_en does not exist" })));
+  assert.ok(esColumnaInexistente(errorDesdeRespuesta(400,
+    { code: "PGRST204", message: "Could not find the 'valor_fr' column of 'contenido' in the schema cache" })));
+  assert.ok(esColumnaInexistente(errorDesdeRespuesta(400, { message: "column contenido.valor_fr does not exist" })),
+    "sin código, por el mensaje");
+  assert.ok(!esColumnaInexistente(errorDesdeRespuesta(400, { code: "23514", message: "violates check constraint" })));
+  assert.ok(!esColumnaInexistente(errorDesdeRespuesta(404, { code: "PGRST205", message: "Could not find the table" })));
+  assert.ok(!esColumnaInexistente(errorDesdeRespuesta(400, { error: "column x does not exist" }, "storage")));
+  assert.ok(!esColumnaInexistente(new ErrorApi({ codigo: "red" })));
+  assert.ok(!esColumnaInexistente(null));
+  const e = new ErrorApi({ estado: 400, codigo: "falta_idiomas" });
+  assert.equal(codigoConocido(e), "falta_idiomas");
+  assert.equal(mensajeError(e), MENSAJES.falta_idiomas);
+  assert.match(MENSAJES.falta_idiomas, /0005_contenido_idiomas\.sql/);
+});
+
 test("errores: cuerpos de PostgREST, Auth y Storage a mensajes claros", () => {
   const choque = errorDesdeRespuesta(409, { code: "23P01", message: 'conflicting key value violates exclusion constraint "reservas_sin_solape"', details: "Key ..." }, "rest");
   assert.equal(codigoConocido(choque), "fechas_chocan");

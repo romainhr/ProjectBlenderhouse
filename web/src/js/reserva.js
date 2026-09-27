@@ -1,8 +1,15 @@
 // Página de reserva: calendario de disponibilidad, datos del huésped, resumen y envío de la solicitud.
+// Todo texto visible y toda etiqueta aria sale de t()/tn() de i18n.js (claves js.reserva.* de web/src/i18n/*.json), y
+// las fechas y los montos se escriben con el LOCALE del idioma de la página (es-CL, en-US o fr-FR).
+// Antes de pintar se espera `listo` de i18n.js (en español se cumple enseguida; en /en/ y /fr/, cuando llega su
+// diccionario o vence el plazo, y entonces sigue el español). La disponibilidad se pide antes de esa espera, para que
+// la lectura de la base no vaya detrás del diccionario.
 import {
-  MENSAJES, TARIFA, clp, codigoError, esIso, fijarTarifas, grillaMes, hayMesSiguiente, hoyIso, mesesPorPagina,
-  nocheOcupada, noches, salidaMaxima, sumarDias, tarifaVigente, total, validarDatos, validarRango,
+  TARIFA, clp, codigoError, diasCortos, esIso, fijarTarifas, grillaMes, hayMesSiguiente, hoyIso, mesesPorPagina,
+  nocheOcupada, noches, nombresDias, salidaMaxima, sumarDias, tarifaVigente, textoMensaje, total, validarDatos,
+  validarRango,
 } from "./reserva-logica.js";
+import { LOCALE, listo, t, tn } from "./i18n.js";
 import { disponibilidad, simulado, solicitar } from "./reservas-api.js";
 import { tarifas } from "./contenido-publico.js";
 
@@ -10,11 +17,16 @@ const $ = (s) => document.querySelector(s);
 const HOY = hoyIso();
 const LLEGADA_MAX = sumarDias(HOY, TARIFA.anticipacionMaxDias);   // la base rechaza llegadas más lejanas (fecha_lejana)
 const HASTA = sumarDias(LLEGADA_MAX, TARIFA.maxNoches);          // última salida posible
-const DIAS = ["lu", "ma", "mi", "ju", "vi", "sá", "do"];
-const DIAS_LARGOS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
-const fMes = new Intl.DateTimeFormat("es-CL", { month: "long", year: "numeric", timeZone: "UTC" });
-const fDia = new Intl.DateTimeFormat("es-CL", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
-const fLargo = new Intl.DateTimeFormat("es-CL", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const primeraDisponibilidad = disponibilidad(HOY, HASTA);        // ya, sin esperar los textos (cargarDisponibilidad)
+primeraDisponibilidad.catch(() => {});                           // el error lo muestra cargarDisponibilidad
+await listo;
+const DIAS = diasCortos(t("js.reserva.cal.dias_cortos"), LOCALE);   // cabecera: lu ma mi … (Mo Tu We …, lu ma me …)
+const DIAS_LARGOS = nombresDias(LOCALE);                          // abbr de cada columna, para lectores de pantalla
+const fMes = new Intl.DateTimeFormat(LOCALE, { month: "long", year: "numeric", timeZone: "UTC" });
+const fDia = new Intl.DateTimeFormat(LOCALE, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+const fLargo = new Intl.DateTimeFormat(LOCALE, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const mensaje = (codigo) => textoMensaje(codigo, t);
+const nNoches = (n) => tn("js.reserva.noches", n);
 const aFecha = (s) => new Date(s + "T00:00:00Z");
 /** Ancho disponible para los meses: el de contenido de #calendario. No se mide #meses: con un solo mes, el CSS lo
  *  angosta a 392 px (.cal-cuerpo:has(.mes:only-child)) y la cuenta se quedaba en 1 aunque la ventana creciera. */
@@ -59,13 +71,23 @@ function salidaPosible(d) {
 }
 
 function motivo(d) {
-  if (d < HOY) return "ya pasó";
-  if (nocheOcupada(d, estado.ocupados)) return "ocupado";
-  if (d > LLEGADA_MAX) return "más de un año adelante";
+  if (d < HOY) return t("js.reserva.cal.motivo.pasado");
+  if (nocheOcupada(d, estado.ocupados)) return t("js.reserva.cal.motivo.ocupado");
+  if (d > LLEGADA_MAX) return t("js.reserva.cal.motivo.lejano");
   if (estado.entrada && !estado.salida && d > estado.entrada && d < sumarDias(estado.entrada, TARIFA.minNoches)) {
-    return `mínimo ${TARIFA.minNoches} noches`;
+    return t("js.reserva.cal.motivo.minimo", { n: TARIFA.minNoches });
   }
-  return `no quedan ${TARIFA.minNoches} noches libres desde aquí`;
+  return t("js.reserva.cal.motivo.sin_salida", { n: TARIFA.minNoches });
+}
+
+/** Nombre accesible de un día: la fecha larga y, si corresponde, su papel en la estadía o por qué no se puede elegir. */
+function etiquetaDia(dia, { esEntrada, esSalida, enRango, habilitado }) {
+  const fecha = fLargo.format(aFecha(dia));
+  if (esEntrada) return t("js.reserva.cal.dia_llegada", { fecha });
+  if (esSalida) return t("js.reserva.cal.dia_salida", { fecha });
+  if (enRango) return t("js.reserva.cal.dia_en_rango", { fecha });
+  if (!habilitado) return t("js.reserva.cal.dia_no_disponible", { fecha, motivo: motivo(dia) });
+  return fecha;
 }
 
 function pintar() {
@@ -114,9 +136,7 @@ function pintar() {
         if (enRango) b.classList.add("en-rango");
         if (dia === HOY) { b.classList.add("hoy"); b.setAttribute("aria-current", "date"); }
         if (esEntrada || esSalida) b.setAttribute("aria-pressed", "true");
-        const extra = esEntrada ? ", llegada elegida" : esSalida ? ", salida elegida" : enRango ? ", dentro de tu estadía"
-          : !habilitado ? `, no disponible: ${motivo(dia)}` : "";
-        b.setAttribute("aria-label", fLargo.format(aFecha(dia)) + extra);
+        b.setAttribute("aria-label", etiquetaDia(dia, { esEntrada, esSalida, enRango, habilitado }));
         td.append(b);
       }
     }
@@ -128,10 +148,10 @@ function pintar() {
   $("#mes-ant").disabled = estado.enviando || inicio <= new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth(), 1));
   // la última página alcanzable es la que contiene HASTA (con uno o dos meses por página)
   $("#mes-sig").disabled = estado.enviando || !hayMesSiguiente(estado.mes.anio, estado.mes.mes, estado.porPagina, HASTA);
-  $("#rango-texto").textContent = !estado.entrada ? "Elige la llegada"
-    : !estado.salida ? `Llegada ${fDia.format(aFecha(estado.entrada))} · elige la salida`
-      : `${fDia.format(aFecha(estado.entrada))} → ${fDia.format(aFecha(estado.salida))} · ` +
-        `${noches(estado.entrada, estado.salida)} noches`;
+  $("#rango-texto").textContent = !estado.entrada ? t("js.reserva.cal.elige_llegada")
+    : !estado.salida ? t("js.reserva.cal.elige_salida", { entrada: fDia.format(aFecha(estado.entrada)) })
+      : t("js.reserva.cal.rango", { entrada: fDia.format(aFecha(estado.entrada)),
+        salida: fDia.format(aFecha(estado.salida)), noches: nNoches(noches(estado.entrada, estado.salida)) });
   // conservar el foco (ESPEC-v4 §8.3). replaceChildren() lo deja en el body, así que se decide con lo que había antes:
   // el mismo día si sigue habilitado; si no (una salida que no sirve de llegada queda deshabilitada), #rango-texto, que
   // anuncia el rango; y si una flecha llegó al tope, la otra flecha.
@@ -193,17 +213,20 @@ function rangoActual() {
 
 function resumen() {
   const v = rangoActual();
-  const t = total(v.ok ? v.noches : 0);
+  const monto = total(v.ok ? v.noches : 0);
   $("#s-entrada").textContent = estado.entrada ? fDia.format(aFecha(estado.entrada)) : "—";
   $("#s-salida").textContent = estado.salida ? fDia.format(aFecha(estado.salida)) : "—";
-  $("#s-noches-txt").textContent = v.ok ? `${v.noches} noches × ${clp(tarifaVigente().noche)}` : "Noches";
-  $("#s-alojamiento").textContent = v.ok ? clp(t.alojamiento) : "—";
-  $("#s-limpieza").textContent = v.ok ? clp(t.limpieza) : "—";
-  $("#s-total").textContent = v.ok ? clp(t.total) : "—";
-  $("#m-total").textContent = v.ok ? clp(t.total) : "Elige tus fechas";
+  $("#s-noches-txt").textContent = v.ok
+    ? t("js.reserva.resumen.noches_por_tarifa", { noches: nNoches(v.noches), tarifa: clp(tarifaVigente().noche, LOCALE) })
+    : t("js.reserva.resumen.noches");
+  $("#s-alojamiento").textContent = v.ok ? clp(monto.alojamiento, LOCALE) : "—";
+  $("#s-limpieza").textContent = v.ok ? clp(monto.limpieza, LOCALE) : "—";
+  $("#s-total").textContent = v.ok ? clp(monto.total, LOCALE) : "—";
+  $("#m-total").textContent = v.ok ? clp(monto.total, LOCALE) : t("js.reserva.resumen.elige_fechas");
   $("#m-total").classList.toggle("vacio", !v.ok);
-  $("#m-noches").textContent = v.ok ? `${v.noches} noches · total de ejemplo` : "sin cobro en línea";
-  if (estado.entrada && estado.salida && !v.ok && v.error) mostrarError($("#cal-error"), MENSAJES[v.error]);
+  $("#m-noches").textContent = v.ok ? t("js.reserva.resumen.total_ejemplo", { noches: nNoches(v.noches) })
+    : t("js.reserva.resumen.sin_cobro");
+  if (estado.entrada && estado.salida && !v.ok && v.error) mostrarError($("#cal-error"), mensaje(v.error));
   // sin fechas válidas los botones siguen activos (aria-disabled): al tocarlos, el envío explica qué falta y lleva al
   // calendario. disabled de verdad, solo mientras se envía.
   for (const b of [$("#enviar"), $("#enviar-movil")]) {
@@ -241,7 +264,7 @@ $("#formulario").addEventListener("submit", async (ev) => {
   datos.acepta = $("#acepta").checked;
   const v = rangoActual();
   if (!v.ok) {
-    mostrarError($("#cal-error"), MENSAJES[v.error || "fechas_requeridas"]);
+    mostrarError($("#cal-error"), mensaje(v.error || "fechas_requeridas"));
     verCalendario();
     return;
   }
@@ -249,7 +272,7 @@ $("#formulario").addEventListener("submit", async (ev) => {
   for (const c of [...campos, "acepta"]) $("#" + c).setAttribute("aria-invalid", String(Boolean(errores[c])));
   const claves = Object.keys(errores);
   if (claves.length) {
-    mostrarError($("#form-error"), claves.map((k) => MENSAJES[k]).join(" "));
+    mostrarError($("#form-error"), claves.map((k) => mensaje(k)).join(" "));
     $("#" + claves[0])?.focus();
     return;
   }
@@ -260,17 +283,17 @@ $("#formulario").addEventListener("submit", async (ev) => {
   if ($("#sitio").value) { exito("—", v.noches, pedido); return; }   // campo trampa lleno: un bot; no se envía nada
   estado.enviando = true;
   pintar();
-  rotuloEnvio("Enviando…");
+  rotuloEnvio(t("js.reserva.envio.enviando"));
   let r;
   try {
     [r] = await solicitar(pedido);
   } catch (err) {
     const c = codigoError(err);
     estado.enviando = false;
-    rotuloEnvio("Solicitar");
+    rotuloEnvio(t("js.reserva.envio.solicitar"));
     if (c === "fechas_ocupadas") await cargarDisponibilidad();
     const aviso = c === "fechas_ocupadas" || c.startsWith("fecha") ? $("#cal-error") : $("#form-error");
-    mostrarError(aviso, MENSAJES[c]);
+    mostrarError(aviso, mensaje(c));
     pintar();
     if (!document.activeElement || document.activeElement === document.body) {
       origen?.focus({ preventScroll: true });
@@ -280,14 +303,15 @@ $("#formulario").addEventListener("submit", async (ev) => {
     return;
   }
   estado.enviando = false;
-  rotuloEnvio("Solicitar");
+  rotuloEnvio(t("js.reserva.envio.solicitar"));
   exito(r.codigo, r.noches, pedido);
 });
 
 function exito(codigo, n, p) {
   $("#codigo").textContent = codigo;
-  $("#exito-texto").textContent = `Pediste ${n} noches, del ${fLargo.format(aFecha(p.entrada))} al ` +
-    `${fLargo.format(aFecha(p.salida))}, para ${p.huespedes} ${p.huespedes === 1 ? "persona" : "personas"}.`;
+  $("#exito-texto").textContent = t("js.reserva.exito.texto", { noches: nNoches(n),
+    entrada: fLargo.format(aFecha(p.entrada)), salida: fLargo.format(aFecha(p.salida)),
+    personas: tn("js.reserva.personas", p.huespedes) });
   document.querySelector(".reserva").hidden = true;
   document.querySelector(".barra-movil").hidden = true;
   const s = $("#exito");
@@ -296,20 +320,20 @@ function exito(codigo, n, p) {
   s.scrollIntoView({ block: "start" });
 }
 
-async function cargarDisponibilidad() {
+async function cargarDisponibilidad(pedido = disponibilidad(HOY, HASTA)) {
   try {
-    estado.ocupados = await disponibilidad(HOY, HASTA);
+    estado.ocupados = await pedido;
     if (estado.entrada && !llegadaPosible(estado.entrada)) { estado.entrada = null; estado.salida = null; }
     if (estado.salida && !rangoActual().ok) estado.salida = null;
   } catch (err) {
-    mostrarError($("#cal-error"), MENSAJES[codigoError(err)]);
+    mostrarError($("#cal-error"), mensaje(codigoError(err)));
   }
   pintar();
 }
 
 huespedes(estado.huespedes);
 pintar();
-cargarDisponibilidad();
+cargarDisponibilidad(primeraDisponibilidad);
 // Tarifas que editó el propietario (public.contenido, vía contenido-publico.js). Si no llegan (sin configuración,
 // Supabase caído o la migración 0003 sin aplicar), el resumen sigue con las de ejemplo de TARIFA.
-tarifas().then((t) => { if (t && fijarTarifas(t)) resumen(); }).catch(() => {});
+tarifas().then((editadas) => { if (editadas && fijarTarifas(editadas)) resumen(); }).catch(() => {});

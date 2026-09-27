@@ -12,8 +12,11 @@ import {
   interruptorEncendido, ordenarInterruptores,
 } from "./luces.js";
 import { duracionPorClase } from "./animacion.js";
+import { etiquetaGrupo } from "./textos.js";
 
-export const RUTA_MODELO = "modelo/";
+// Carpeta del modelo relativa a este módulo (/tour/js/ -> /tour/modelo/) y no a la página: /en/tour/ y /fr/tour/ usan
+// este mismo JS y el mismo modelo de /tour/ (ADR 0007, decisión 5; web/build.py, tour_traducible()).
+export const RUTA_MODELO = new URL("../modelo/", import.meta.url).href;
 
 // Materiales de vidrio REALES (nombres exactos del contrato de interacción): Depto_Mat_VidrioNegro es el
 // anafe y el frente del horno, opaco a propósito. Antes se usaba una expresión /Vidrio/ que también lo
@@ -252,8 +255,10 @@ export function prepararEscena(raiz, D, opciones = {}) {
   // --- luces y sus grupos (deducidos por recinto si el JSON todavía no trae grupos_luz) ---
   const { luces: datosLuces, grupos: datosGrupos } = deducirGrupos(D);
   // encendidoInicial: el estado de autor (grupos_luz[].encendido), que aplicarMomento() respeta al cambiar de momento.
+  // La etiqueta queda en el idioma de la página (etiquetaGrupo: js.tour.luz.<id>, o la del modelo si no hay clave).
   const gruposLuz = new Map(datosGrupos.map((g) => [g.id, {
-    ...g, encendidoInicial: Boolean(g.encendido), luces: [], clones: new Map(), intensidad: g.encendido ? 1 : 0,
+    ...g, etiqueta: etiquetaGrupo(g, D.recintos_etiquetas), encendidoInicial: Boolean(g.encendido), luces: [],
+    clones: new Map(), intensidad: g.encendido ? 1 : 0,
     _desde: g.encendido ? 1 : 0, _hasta: g.encendido ? 1 : 0, faseMs: FUNDIDO_MS, // ya "asentado": sin fundido al iniciar
   }]));
   const lucesTHREE = [];
