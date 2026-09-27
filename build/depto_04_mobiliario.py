@@ -9,6 +9,10 @@ Cada pieza se construye en el origen, se mide su caja local y se ubica: contra u
 del muro más una holgura), colgada del cielo (con el cable recortado para que nada baje de ALTURA_LIBRE en zonas
 de paso) o apoyada sobre otra pieza. La versión 1 (mobiliario neutro) está en archivo/v1_neutro/.
 
+Bloque 09 (textiles y plantas): alfombras nuevas en los dormitorios, el camino del hall y los baños, cortinas de lino
+en las ventanas de los dormitorios y paños laterales en el ventanal, y cinco plantas de Poly Haven en macetas
+(build/deco_textiles.py, build/deco_plantas.py; constantes y pruebas en la sección «Bloque 09» de este archivo).
+
 Idempotente: exige el maestro con el sello vigente de la fase 3, borra y reconstruye sólo su colección
 (Depto_Mobiliario) y sella scene["depto_fase04"]. Pruebas antes de guardar (si una falla, no guarda):
 - camas contra su dibujo del plano (centro a ≤ 2,5 px; las demás piezas se rediseñaron y no se contrastan),
@@ -35,6 +39,8 @@ import deco_dormitorio as DO  # noqa: E402
 import deco_hall as HA  # noqa: E402
 import deco_living as LV  # noqa: E402
 import deco_objetos as OB  # noqa: E402
+import deco_plantas as PL  # noqa: E402  (bloque 09)
+import deco_textiles as TX  # noqa: E402  (bloque 09)
 import depto_03_formas as F3  # noqa: E402  (medidas de cocina y baños)
 import depto_color as DC  # noqa: E402
 import depto_geom as G  # noqa: E402
@@ -49,7 +55,7 @@ ALTURA_LIBRE = 1.85        # m: nada colgante por debajo en zonas de paso (la c�
 COLGANTE_CABLE_CORTO = 0.10   # m: cable de los colgantes de jaula de pasos, cocina y baños (diseño; con la jaula de
                               # 0,17 m el fondo queda a ≈ 2,0 m del piso, sobre la cabeza y lejos de la ducha)
 HOLGURA_MURO = 0.01        # m entre la espalda de una pieza y el muro
-ALFOMBRA_ALTO = 0.008      # lo que se levantan las piezas apoyadas en una alfombra
+ALFOMBRA_ALTO = 0.008      # lo que se levantan las piezas apoyadas en la alfombra de yute del living
 TOL_PENETRACION = 0.001
 TOPE_TRIANGULOS = G.TOPE_TRIANGULOS
 HOLGURA_CAMARA = 0.20
@@ -101,8 +107,9 @@ RECINTOS_ETIQUETAS = {
     "Bano1": "Baño principal", "Bano2": "Segundo baño", "Balcon": "Balcón", "Palier": "Palier",
     "Nicho_LV": "Lavadora",
 }
-RESOLUCION_CAMA = 0.7     # deco_dormitorio.cama: 13 100 triángulos en vez de 20 000, sin diferencia visible
-                          # (review/deco/piezas/cama_r0.7 vs r1.0); deja presupuesto para las piezas de la tanda 2
+RESOLUCION_CAMA = 0.5     # deco_dormitorio.cama: 9 164 triángulos por cama (13 120 con 0,7 y 20 000 con 1). Bloque
+                          # 09: de 0,7 a 0,5 para hacer lugar a alfombras, cortinas y plantas bajo el tope de 200 000
+                          # (review/09_textiles/cama_resolucion: mismos cantos y pliegues, cuerdas más largas)
 APLIQUE_PLACA_Z = 1.20    # diseño: centro de la placa de los apliques de lectura del dormitorio 2
 CONDUCTO_SEP = 0.014      # eje del conducto a la cara del cielo o del muro (deco_objetos.conducto: radio + 4 mm)
 CONDUCTO_T_Z = H - 0.25   # diseño: altura de la caja en T y del tramo horizontal que une las cajas de los
@@ -188,6 +195,7 @@ class Colocador:
         self.col = col
         self.piezas = []        # (nombre, clase, objs)
         self.minimo_colgante = {}   # colgantes fuera de las zonas de paso: altura mínima propia
+        self.apoyos = {}        # bloque 09: pieza -> objetos de la alfombra en que se apoya (camas)
 
     def construir(self, fn, nombre, **params):
         objs = [o for o in fn(self.col, f"Depto_Mueble_{nombre}", **params) if o is not None]
@@ -364,10 +372,13 @@ def lado_cama(d, lado):
 
 def dormitorios(c):
     for did, d in CAMAS.items():
-        rug_y = d["muro"] + (1.25 / S if d["mira"] == "S" else -1.25 / S)   # sin pisar los veladores
-        c.centro(LV.alfombra, f"{did}_Alfombra", "solido", d["cx"], rug_y, mira=d["mira"], ancho=2.4, largo=1.6)
-        cama = c.contra_muro(DO.cama, f"{did}_Cama", "solido", d["muro"], d["cx"], d["mira"], z=ALFOMBRA_ALTO,
-                             tapiz=d["tapiz"], resolucion=RESOLUCION_CAMA)
+        alf = alfombra_dormitorio(c, did)                          # bloque 09: bereber (D1) y kilim (D2)
+        alto = ALFOMBRAS[did]["alto"]
+        # la cama se apoya en la alfombra; las patas de la cabecera y los pies del cabecero, que quedan fuera de ella
+        # (empieza a ≥ 0,36 m del muro), bajan hasta el piso (pruebas_bloque09 lo verifica pata por pata)
+        cama = c.contra_muro(DO.cama, f"{did}_Cama", "solido", d["muro"], d["cx"], d["mira"], z=alto,
+                             tapiz=d["tapiz"], resolucion=RESOLUCION_CAMA, bajada_cabecera=alto)
+        c.apoyos[f"{did}_Cama"] = alf
         lo, hi = c.caja_local(cama)
         for lado in (-1, 1):
             vel = c.construir(DO.velador, f"{did}_Velador{'O' if lado < 0 else 'E'}", ancho=VELADOR_ANCHO)
@@ -398,9 +409,8 @@ def dormitorios(c):
                 if lado > 0:        # los libros bajan a la repisa del velador, bajo la lámpara
                     lib = c.construir(OB.libros, f"{did}_Libros", n=3, apilados=True, semilla=7)
                     c.poner(f"{did}_Libros", "adorno", lib, vx, vy, alturas_repisa(vel)[0], d["mira"])
-            elif lado < 0:
-                jar = c.construir(OB.jarron, f"{did}_Jarron", variante=2)
-                c.poner(f"{did}_Jarron", "adorno", jar, vx, vy, zt, d["mira"])
+            elif lado < 0:                   # bloque 09: una calathea en maceta en vez del jarrón
+                planta_en(c, "D2_Planta", PLANTAS["D2_Planta"], vx, vy, zt, d["mira"])
             else:
                 lib = c.construir(OB.libros, f"{did}_Libros", n=3, apilados=True, semilla=7 if did == "D1" else 11)
                 c.poner(f"{did}_Libros", "adorno", lib, vx, vy, zt, d["mira"])
@@ -626,6 +636,287 @@ def conductos(c):
 
 
 # ---------------------------------------------------------------------------
+# Bloque 09: alfombras, cortinas y plantas (px del plano; diseño salvo donde se indica)
+# ---------------------------------------------------------------------------
+# Alfombras de los dormitorios, centradas en su cama (cx), con el ancho de este a oeste y flecos en esos extremos.
+# Desde la corrección de puertas del bloque 09 las hojas abatibles interiores dejan 2 cm sobre el piso
+# (depto_03_formas.LUZ_PISO_ABATIBLE): las alfombras de 1-1,5 cm pueden quedar bajo su barrido.
+ALFOMBRAS = {
+    # principal: bereber de 2,50 × 2,00 × 0,015 m bajo los dos tercios de la cama hacia los pies. Borde norte a 0,40 m
+    # del muro de la cabecera (los veladores llegan a 0,39 m y no se pisan) y borde sur a 0,34 m del tabique D1/living
+    # (el espejo de pie apoya a 0,26 m de ese tabique). Así sobresale 0,27 m a cada lado de la cama y 0,24 m al pie.
+    "D1": dict(material=TX.BEREBER, ancho=2.50, largo=2.00, alto=0.015, borde_norte=Y["N_I"] + 0.40 / S,
+               uv="metros", tam_uv=(1.25, 1.0), flecos=dict(largo=0.07, ancho=0.012, paso=0.030), semilla=21),
+    # segundo: kilim de 2,30 × 1,60 × 0,010 m (más chico y de otro diseño), con el borde norte a 0,36 m del tabique
+    # living/D2 (el espejo apoya a 0,26 m): pasa 0,20 m los pies de la cama y termina a 0,77 m del muro de la
+    # cabecera, antes de los veladores. Sobresale 0,16 m a cada lado de la cama.
+    "D2": dict(material=TX.KILIM, ancho=2.30, largo=1.60, alto=0.010, borde_norte=Y["D2_S"] + 0.36 / S,
+               uv="01", tam_uv=None, flecos=dict(largo=0.055, ancho=0.008, paso=0.025), semilla=22),
+}
+# Camino del hall: de este a oeste por el paso del hall al living, al norte del nicho de lavadora y de la banca. El
+# extremo este queda fuera del barrido de la hoja de entrada (radio 1,03 m desde la bisagra, que conserva 1 cm de
+# holgura: la esquina más cercana del camino queda a 1,08 m) y a 7 cm de la nevera y del tabique cocina/hall.
+CAMINO = dict(material=TX.CAMINO, ancho=0.60, largo=1.50, alto=0.010, x_este=383.0, y_sur=Y["LV_F"] - 0.10 / S,
+              tam_uv=(0.60, 0.40))
+# Pisos de baño de algodón de 0,65 × 0,45 × 0,012 m (esquinas de 4 cm) frente a la tina, a 2 cm de su frente y a
+# 5 cm del tabique de la puerta; el WC queda a ≥ 5 cm. La hoja del baño, abierta, pasa sobre ellos.
+PISO_BANO = dict(material=TX.PISO_BANO, ancho=0.65, largo=0.45, alto=0.012, esquina=0.04, desde_tina=0.02,
+                 desde_tabique=0.05, tam_uv=(0.24, 0.24))
+# Cortinas de lino (encargo del bloque 09): dos paños abiertos a los lados en cada ventana de dormitorio y paños
+# laterales en el ventanal. La barra (eje) a CORTINA_Z, 16 cm sobre el dintel de las ventanas (2,10) y 14 cm bajo el
+# cielo, y a CORTINA_SEP del muro: los paños quedan entre 2 y 12 cm de él, fuera de veladores, espejos y apliques
+# (que empiezan a ≥ 13 cm del muro de la fachada). Cada paño termina a CORTINA_BORDE del extremo de la barra; el
+# soporte va en medio, a CORTINA_SOPORTE del extremo.
+CORTINA_Z = 2.26
+CORTINA_SEP = 0.07
+CORTINA_FONDO = 0.09          # diseño: hondura de las ondas recogidas (15 % más abajo)
+CORTINA_BORDE = 0.08
+CORTINA_SOPORTE = 0.05
+CORTINAS = {
+    # dormitorios: barra 0,18 m más allá de cada jamba (al norte del D1 no cabe más: el velador empieza a 0,19 m)
+    "D1": dict(vano=(Y["V_D1_A"], Y["V_D1_B"]), extension=(0.18, 0.18), ancho=0.30, ondas=5, terminales=True),
+    # D2: el paño sur se corre hacia el vano para no bajar sobre el velador (tope: 2 cm antes de su cara norte)
+    "D2": dict(vano=(Y["V_D2_A"], Y["V_D2_B"]), extension=(0.18, 0.18), ancho=0.30, ondas=5, terminales=True,
+               tope_sur="D2_VeladorO"),
+    # living: el ventanal va de muro a muro; barra con tapas a 3 cm de cada tabique y soporte al medio; paños de
+    # 0,26 m (4 ondas) que dejan libre casi todo el vidrio y la hoja abierta del balcón (0,68 m de paso)
+    "Living": dict(vano=(Y["D1_S"] + 0.03 / S, Y["D2_N"] - 0.03 / S), extension=(0.0, 0.0), ancho=0.26, ondas=4,
+                   terminales=False, soporte_medio=True),
+}
+# Plantas (encargo del bloque 09: 4 o 5, cada una decimada a ≤ 8 000 triángulos; hojas con alfa CLIP). tope: su
+# presupuesto de triángulos (la escena llega al tope de 200 000); escala y giro sobre el escaneo; z: apoyo (m) o el
+# nombre del objeto sobre el que se apoya (su cara de arriba).
+PLANTAS = {
+    # rincón del living junto al balcón (extremo sur del ventanal, sobre el brazo del sofá): helecho en maceta colgada
+    # del cielo; en el piso no cabe (0,26 m entre el sofá y el vidrio). Entre el paño de la cortina (x ≤ 134,0), la
+    # lámpara de arco (x ≥ 162,4) y el tabique living/D2 (y 328,3).
+    # Variante c (2 248 triángulos, frondas más tupidas que la a, que en el visor se veía rala), a 0,6 y girada 90°:
+    # lo angosto (0,46 m) entre el paño y la lámpara.
+    "Living_Planta": dict(modelo="fern_02", nodos="fern_02_c", tope=1500, escala=0.60, giro=90.0, xy=(148.5, 312.0),
+                          z=1.62, maceta=dict(tipo="colgante", diametro=0.22, alto=0.16,
+                                              material="Depto_Mat_GresBlanco", largo=0.40)),
+    # balcón: anturio en maceta de piso en la esquina noroeste, junto a la baranda; deja libre el paso desde la hoja
+    # abierta hacia la mesa (el punto del recorrido del balcón queda a 11,4 px de la maceta; la cámara mide 10,5).
+    # Variante c a 0,85 (0,51 × 0,56 m y 0,31 de alto) en una maceta de 0,26 × 0,24: con la d (0,30 m) en una de
+    # 0,30 × 0,30 la maceta pesaba más que la planta.
+    "Balcon_Planta": dict(modelo="anthurium_botany_01", nodos="anthurium_botany_01_c", tope=2200, escala=0.85,
+                          giro=0.0, xy=(75.5, 189.5), z=Z_BALCON,
+                          maceta=dict(diametro=0.26, alto=0.24, material="Depto_Mat_GresNegro")),
+    # cocina: no quedan repisas abiertas (corrección 07c: muebles altos del plano), va en la cubierta del tramo norte,
+    # entre el anafe y la esquina de la L: haworthia con su propia maceta del escaneo
+    "Cocina_Planta": dict(modelo="potted_plant_04", nodos=("potted_plant_04_pot", "potted_plant_04_dirt",
+                                                           "potted_plant_04_ground", "potted_plant_04_plant"),
+                          tope=1500, escala=1.0, giro=20.0, xy=(374.0, 160.0), z="Depto_Cocina_Cubierta", maceta=None),
+    # baño principal: calathea chica sobre la repisa de instalaciones (1,10 m), lejos del pulsador
+    "B1_Planta": dict(modelo="calathea_orbifolia_01", nodos="calathea_orbifolia_01_e", tope=900, escala=0.78,
+                      giro=0.0, xy=(413.35, 110.0), z="Depto_Sanitario_B1_Repisa",
+                      maceta=dict(diametro=0.12, alto=0.10, material="Depto_Mat_GresBlanco")),
+    # segundo dormitorio: calathea en el velador oeste, en lugar del jarrón (la ubica dormitorios())
+    "D2_Planta": dict(modelo="calathea_orbifolia_01", nodos="calathea_orbifolia_01_c", tope=1200, escala=0.80,
+                      giro=0.0, maceta=dict(diametro=0.13, alto=0.11, material="Depto_Mat_GresArena")),
+}
+
+
+def alfombra_dormitorio(c, did):
+    a = ALFOMBRAS[did]
+    cy = a["borde_norte"] + a["largo"] / 2 / S
+    objs = c.centro(TX.alfombra, f"{did}_Alfombra", "solido", CAMAS[did]["cx"], cy, mira="S", ancho=a["ancho"],
+                    largo=a["largo"], alto=a["alto"], material=a["material"], uv=a["uv"], tam_uv=a["tam_uv"],
+                    flecos=a["flecos"], semilla=a["semilla"])
+    for o in objs:
+        o["colision"] = False
+    return objs
+
+
+def textiles(c):
+    """Camino del hall, pisos de baño y cortinas (las alfombras de los dormitorios las pone dormitorios())."""
+    k = CAMINO
+    cx, cy = k["x_este"] - k["largo"] / 2 / S, k["y_sur"] - k["ancho"] / 2 / S
+    objs = list(c.centro(TX.alfombra, "Hall_Camino", "solido", cx, cy, mira="E", ancho=k["ancho"], largo=k["largo"],
+                         alto=k["alto"], material=k["material"], tam_uv=k["tam_uv"]))   # copia: c.piezas guarda la suya
+    for bid in ("B1", "B2"):
+        tx0, tx1, tym, ts = F3.BANOS[bid]["tina"]
+        frente = tym + ts * F3.px(F3.TINA_FONDO)
+        b = PISO_BANO
+        x = tx0 + (b["desde_tabique"] + b["ancho"] / 2) / S
+        y = frente + ts * (b["desde_tina"] + b["largo"] / 2) / S
+        objs += c.centro(TX.alfombra, f"{bid}_PisoBano", "solido", x, y, mira="S", ancho=b["ancho"], largo=b["largo"],
+                         alto=b["alto"], material=b["material"], esquina=b["esquina"], tam_uv=b["tam_uv"],
+                         canto=0.009)
+    for o in objs:
+        o["colision"] = False
+    cortinas(c)
+
+
+def _caja_plano(objs):
+    """(x0, x1, y0, y1) en px del plano de los vértices de mundo de objs."""
+    bpy.context.view_layer.update()
+    pts = [P.a_plano(*(o.matrix_world @ v.co)[:2]) for o in objs if o.type == "MESH" for v in o.data.vertices]
+    return (min(p[0] for p in pts), max(p[0] for p in pts), min(p[1] for p in pts), max(p[1] for p in pts))
+
+
+def cortinas(c):
+    piezas = {n: objs for n, _, objs in c.piezas}
+    for nombre, k in CORTINAS.items():
+        ya, yb = k["vano"]
+        yn, ys = ya - k["extension"][0] / S, yb + k["extension"][1] / S     # extremos de la barra (px)
+        yc, hx = (yn + ys) / 2, (ys - yn) * S / 2
+        ancho = k["ancho"]
+        # x local = hacia el norte (mira "E"): x = (yc − y) · S
+        x_n1 = hx - CORTINA_BORDE
+        x_s0 = -hx + CORTINA_BORDE
+        if k.get("tope_sur"):
+            lim = _caja_plano(piezas[k["tope_sur"]])[2] - 0.02 / S           # 2 cm antes de la cara norte
+            x_s0 = max(x_s0, (yc - lim) * S)
+        paneles = [(x_s0, x_s0 + ancho, +1), (x_n1 - ancho, x_n1, -1)]
+        sop = (-hx + CORTINA_SOPORTE, hx - CORTINA_SOPORTE) + ((0.0,) if k.get("soporte_medio") else ())
+        objs = c.construir(TX.cortinas, f"{nombre}_Cortinas", largo_barra=2 * hx, paneles=paneles, z_barra=CORTINA_Z,
+                           sep_muro=CORTINA_SEP, ondas=k["ondas"], fondo=CORTINA_FONDO, soportes=sop,
+                           terminales=k["terminales"], semilla=len(nombre))
+        c.poner(f"{nombre}_Cortinas", "adorno", objs, X["W_I"], yc, 0.0, "E")
+        for o in objs:
+            o["colision"] = False          # tela y barra: el recorrido no se choca con ellas (la barra va a 2,26 m)
+
+
+def planta_en(c, nombre, cfg, x, y, z, mira="N"):
+    """Planta de PLANTAS con su maceta, apoyada en (x, y, z) px/m. Maceta sólida (choca en el recorrido); hojas,
+    tierra, cordeles y florón sin colisión."""
+    pref = f"Depto_Mueble_{nombre}"
+    m = cfg["maceta"]
+    if m is None:                                          # el escaneo trae su maceta
+        objs = [PL.planta(c.col, pref, cfg["modelo"], cfg["nodos"], cfg["tope"], cfg["escala"], cfg["giro"])]
+    else:
+        if m.get("tipo") == "colgante":
+            pot = PL.maceta_colgante(c.col, pref, m["diametro"], m["alto"], m["material"], m["largo"], H - z)
+        else:
+            pot = PL.maceta(c.col, pref, m["diametro"], m["alto"], m["material"])
+        objs = PL.en_maceta(c.col, pref, cfg["modelo"], cfg["nodos"], cfg["tope"], pot, cfg["escala"], cfg["giro"])
+    for o in objs:
+        if o.name not in c.col.objects:
+            c.col.objects.link(o)
+    return c.poner(nombre, "adorno", objs, x, y, z, mira)
+
+
+def plantas(c):
+    for nombre, cfg in PLANTAS.items():
+        if "xy" not in cfg:                                # la del velador la ubica dormitorios()
+            continue
+        z = cfg["z"]
+        if isinstance(z, str):                             # cara de arriba del objeto de apoyo
+            bpy.context.view_layer.update()
+            o = bpy.data.objects[z]
+            z = max((o.matrix_world @ v.co).z for v in o.data.vertices)
+        planta_en(c, nombre, cfg, *cfg["xy"], z, "N")
+
+
+def _en_barrido(o, puertas):
+    """Hojas abatibles (pivote, radio, z de su canto inferior) cuyo barrido alcanza algún vértice de o."""
+    out = []
+    pts = [o.matrix_world @ v.co for v in o.data.vertices]
+    for nombre, piv, radio, z0 in puertas:
+        if any(math.hypot(p.x - piv.x, p.y - piv.y) < radio + 0.01 for p in pts):
+            out.append((nombre, z0))
+    return out
+
+
+def pruebas_bloque09(root, c):
+    """Alfombras (espesor de 1 a 1,5 cm, sin colisión, bajo el barrido de una hoja sólo si queda 3 mm libre), camas
+    apoyadas pata por pata (en la alfombra o en el piso), cortinas (dobladillo sobre el piso, sin tocar muros ni
+    muebles), plantas (tope de triángulos, material con alfa, sin tocar muros, muebles ni cortinas) y resumen."""
+    fallos, resumen = [], {"alfombras": {}, "cortinas": {}, "plantas": {}}
+    bpy.context.view_layer.update()
+    piezas = {n: (cl, objs) for n, cl, objs in c.piezas}
+    puertas = []
+    for o in root.all_objects:
+        if o.type == "MESH" and "puerta" in o:
+            piv = o.matrix_world.translation
+            vs = [o.matrix_world @ v.co for v in o.data.vertices]
+            puertas.append((o.name, piv, max(math.hypot(p.x - piv.x, p.y - piv.y) for p in vs), min(p.z for p in vs)))
+    alfombras = [n for n in piezas if n.endswith(("_Alfombra", "_Camino", "_PisoBano")) and n != "Living_Alfombra"]
+    for n in alfombras:
+        cl, objs = piezas[n]
+        tri = 0
+        for o in objs:
+            zs = [(o.matrix_world @ v.co).z for v in o.data.vertices]
+            if o.get("colision") is not False:
+                fallos.append(f"{o.name}: alfombra con colisión")
+            if o.name.endswith("_Alfombra") and not 0.010 - 1e-4 <= max(zs) <= 0.015 + 1e-4:
+                fallos.append(f"{o.name}: espesor {max(zs) * 100:.2f} cm (se pide de 1 a 1,5 cm)")
+            for hoja, z0 in _en_barrido(o, puertas):
+                if max(zs) > z0 - 0.003:
+                    fallos.append(f"{o.name} bajo el barrido de {hoja}: {max(zs) * 1000:.1f} mm contra el canto a "
+                                  f"{z0 * 1000:.1f} mm")
+            o.data.calc_loop_triangles()
+            tri += len(o.data.loop_triangles)
+        caja = _caja_plano(objs)
+        resumen["alfombras"][n] = dict(triangulos=tri, planta_px=[round(v, 1) for v in caja],
+                                       m=[round((caja[1] - caja[0]) * S, 2), round((caja[3] - caja[2]) * S, 2)])
+    # camas: cada pata (isla de la estructura que toca abajo) sobre la alfombra o sobre el piso
+    for n, alf in c.apoyos.items():
+        est = next(o for o in piezas[n][1] if o.name.endswith("_Estructura"))
+        a = next(o for o in alf if o.name.endswith("_Alfombra"))
+        ax0, ax1, ay0, ay1 = _caja_plano([a])
+        top = max((a.matrix_world @ v.co).z for v in a.data.vertices)
+        for isla in G.islas_mundo(est):
+            z0 = min(p.z for p in isla)
+            if z0 > 0.05:
+                continue
+            cx, cy = P.a_plano(sum(p.x for p in isla) / len(isla), sum(p.y for p in isla) / len(isla))
+            sobre = ax0 <= cx <= ax1 and ay0 <= cy <= ay1
+            esperado = top if sobre else 0.0
+            if abs(z0 - esperado) > 5e-4:
+                fallos.append(f"{n}: pata en ({cx:.1f}; {cy:.1f}) px a z = {z0 * 1000:.1f} mm "
+                              f"({'sobre la alfombra' if sobre else 'fuera de la alfombra'}: {esperado * 1000:.1f})")
+    # cortinas y plantas contra la arquitectura y las piezas (sólidas y adornos, salvo la propia)
+    mis = {o for _, _, objs in c.piezas for o in objs}
+    arq = [o for o in root.all_objects if o.type == "MESH" and not o.hide_render and o not in mis
+           and not o.name.startswith(("Depto_Ref", "Depto_Ext_"))]
+    arq_s = G.solidos(arq)
+    sol_piezas = {n2: G.solidos([o for o in objs2 if o.type == "MESH"]) for n2, (cl2, objs2) in piezas.items()}
+    otras = lambda propio: [s for n2, sol in sol_piezas.items() if n2 != propio for s in sol]   # noqa: E731
+    for n in [n for n in piezas if n.endswith("_Cortinas")]:
+        objs = piezas[n][1]
+        tela = next(o for o in objs if o.name.endswith("_Tela"))
+        zmin = min((tela.matrix_world @ v.co).z for v in tela.data.vertices)
+        if zmin < 0.01 - 1e-4:
+            fallos.append(f"{n}: el dobladillo baja a {zmin * 1000:.1f} mm del piso")
+        contra = arq_s + otras(n)
+        for o, A in G.solidos(objs):
+            for ob, Bb in contra:
+                if G.penetracion(A, Bb) > TOL_PENETRACION:
+                    fallos.append(f"{o.name} entra {G.penetracion(A, Bb) * 1000:.1f} mm en {ob.name}")
+        caja = _caja_plano([tela])
+        resumen["cortinas"][n] = dict(triangulos=B_tri(objs), tela_px=[round(v, 1) for v in caja])
+    for n in [n for n in piezas if n.endswith("_Planta")]:
+        objs = piezas[n][1]
+        hojas = next(o for o in objs if o.name.endswith("_Hojas"))
+        hojas.data.calc_loop_triangles()
+        th = len(hojas.data.loop_triangles)
+        cfg = PLANTAS[n]
+        if th > min(PL.TOPE_PLANTA, cfg["tope"]):
+            fallos.append(f"{n}: {th} triángulos en las hojas (tope {min(PL.TOPE_PLANTA, cfg['tope'])})")
+        if [m.name for m in hojas.data.materials] != [PL.MATERIAL[cfg["modelo"]]]:
+            fallos.append(f"{n}: material de las hojas {[m.name for m in hojas.data.materials]}")
+        contra = arq_s + otras(n)
+        for o, A in G.solidos(objs):
+            for ob, Bb in contra:
+                if G.penetracion(A, Bb) > TOL_PENETRACION:
+                    fallos.append(f"{o.name} entra {G.penetracion(A, Bb) * 1000:.1f} mm en {ob.name}")
+        resumen["plantas"][n] = dict(modelo=cfg["modelo"], variante=hojas["variante"], hojas=th,
+                                     escaneo=hojas["triangulos_escaneo"], total=B_tri(objs))
+    return fallos, resumen
+
+
+def B_tri(objs):
+    t = 0
+    for o in objs:
+        if o.type == "MESH":
+            o.data.calc_loop_triangles()
+            t += len(o.data.loop_triangles)
+    return t
+
+
+# ---------------------------------------------------------------------------
 # Instancias: piezas repetidas comparten una sola malla
 # ---------------------------------------------------------------------------
 def firma_malla(me):
@@ -820,13 +1111,18 @@ def main():
     pasos(c)
     interruptores(c)
     conductos(c)
+    textiles(c)
+    plantas(c)
     compartidos, unicas, antes = compartir_mallas([o for _, _, objs in c.piezas for o in objs])
     fallos, holguras, total = pruebas(root, c)
     fallos += pruebas_luces(root)
+    f09, resumen09 = pruebas_bloque09(root, c)
+    fallos += f09
     for f in fallos:
         print("FALLA", f)
     print("CHECK holgura de cámaras (m):", holguras)
     print(f"CHECK instancias: {antes} mallas -> {unicas} únicas; {compartidos} objetos comparten la malla de otro")
+    print("CHECK bloque 09:", json.dumps(resumen09, ensure_ascii=False))
     if fallos:
         raise SystemExit(f"ERROR: {len(fallos)} pruebas de la fase 4 fallan; no se guarda el maestro.")
     objs = list(col.all_objects)

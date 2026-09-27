@@ -23,7 +23,13 @@ FASES = {
     "02": ("depto_02_blockout.py", "depto_geom.py"),
     "03": ("depto_03_formas.py", "deco_base.py", "deco_interiores.py"),
     "04": ("depto_04_mobiliario.py", "depto_color.py", "deco_living.py", "deco_dormitorio.py", "deco_cocina_bano.py",
-           "deco_objetos.py", "deco_comedor.py", "deco_hall.py"),
+           "deco_objetos.py", "deco_comedor.py", "deco_hall.py",
+           # bloque 09: textiles y plantas, los escaneos de Poly Haven que se importan y su manifiesto (con el origen de
+           # las texturas derivadas)
+           "deco_textiles.py", "deco_plantas.py", "../assets/modelos/polyhaven/manifest.json",
+           *(f"../assets/modelos/polyhaven/{m}/{a}" for m in ("anthurium_botany_01", "calathea_orbifolia_01",
+                                                               "fern_02", "potted_plant_04")
+             for a in (f"{m}_1k.gltf", f"{m}.bin"))),
     "05": ("depto_05_materiales.py", "deco_paleta.py", "deco_texturas.py", "../assets/texturas/propias/manifest.json"),
     "08": ("depto_08_exterior.py", "ext_texturas.py", "../assets/hdri/manifest.json"),
     # no sella el maestro: el sello va en exports/manifest.json. render_07b.py (corrección 08, ronda 2): el mundo con

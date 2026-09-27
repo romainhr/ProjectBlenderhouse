@@ -18,11 +18,14 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTES = {
     "propias": os.path.join(RAIZ, "assets", "texturas", "propias"),
     "polyhaven": os.path.join(RAIZ, "assets", "texturas", "polyhaven"),
+    "modelos": os.path.join(RAIZ, "assets", "modelos", "polyhaven"),    # bloque 09: plantas (texturas derivadas)
 }
 
 # material -> (id de textura, opciones). color: usar el mapa de color (si no, el color base constante);
 # rugosidad: usar el mapa de rugosidad; normal: fuerza del mapa normal (None = sin); escala_m: fuerza el tamaño
-# real de una repetición; uv01: UV propias 0-1 de la pieza (cuadros), sin repetición.
+# real de una repetición; uv01: UV propias 0-1 de la pieza (cuadros, kilim, atlas de las plantas), sin repetición;
+# alfa (bloque 09): el alfa del mapa de color recorta la silueta (Eevee CLIP con umbral 0,5; glTF alphaMode MASK) y
+# el material queda de dos caras.
 TEXTURA_MAT = {
     # pisos
     "Depto_Mat_Microcemento": ("microcemento", dict(color=True, rugosidad=True, normal=0.5)),
@@ -68,6 +71,20 @@ TEXTURA_MAT = {
     "Depto_Mat_Textil": ("rough_linen", dict(color=False, rugosidad=True, normal=0.6)),
     "Depto_Mat_Cobertor": ("rough_linen", dict(color=False, rugosidad=True, normal=1.0)),
     "Depto_Mat_Alfombra": ("yute", dict(color=True, rugosidad=True, normal=1.0)),
+    # Bloque 09: alfombras nuevas (texturas propias de build/deco_texturas.py) y cortinas de lino
+    "Depto_Mat_AlfombraBereber": ("bereber", dict(color=True, rugosidad=True, normal=1.0)),
+    "Depto_Mat_AlfombraKilim": ("kilim", dict(color=True, rugosidad=True, normal=0.8, uv01=True)),
+    "Depto_Mat_AlfombraCamino": ("camino", dict(color=True, rugosidad=True, normal=0.8)),
+    "Depto_Mat_PisoBanoAlgodon": ("algodon", dict(color=True, rugosidad=True, normal=1.0)),
+    "Depto_Mat_Fleco": ("algodon", dict(color=False, rugosidad=True, normal=0.6, escala_m=0.06)),
+    "Depto_Mat_Lino": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
+    # Bloque 09: plantas de Poly Haven con sus texturas derivadas (build/deco_plantas.py --derivar)
+    "Depto_Mat_PlantaAnturio": ("anthurium_botany_01", dict(color=True, rugosidad=True, normal=1.0, uv01=True,
+                                                            alfa=True)),
+    "Depto_Mat_PlantaCalathea": ("calathea_orbifolia_01", dict(color=True, rugosidad=True, normal=1.0, uv01=True,
+                                                               alfa=True)),
+    "Depto_Mat_PlantaHelecho": ("fern_02", dict(color=True, rugosidad=True, normal=1.0, uv01=True, alfa=True)),
+    "Depto_Mat_PlantaHaworthia": ("potted_plant_04", dict(color=True, rugosidad=True, normal=1.0, uv01=True)),
     # Interiores de clósets (fase 07b): sólo el relieve de las telas del depto; el color va por vértice.
     "Depto_Mat_Tela": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
     # Corrección 07b (ronda 2): el tejido de las prendas gruesas, 2,5 veces más fino que el de los cojines (repetición de
@@ -106,6 +123,16 @@ def _manifiestos():
                                 color=os.path.join(FUENTES["polyhaven"], m["Diffuse"]["archivo"]),
                                 normal=os.path.join(FUENTES["polyhaven"], m["nor_gl"]["archivo"]),
                                 rugosidad=os.path.join(FUENTES["polyhaven"], m["Rough"]["archivo"]))
+    mo = os.path.join(FUENTES["modelos"], "manifest.json")
+    if os.path.exists(mo):
+        with open(mo) as fh:
+            derivadas = json.load(fh).get("derivadas", {})
+        for tid, t in derivadas.items():
+            if not isinstance(t, dict) or "color" not in t:
+                continue
+            out[tid] = dict(fuente="modelos", tam_m=(1.0, 1.0), color=os.path.join(FUENTES["modelos"], t["color"]),
+                            normal=os.path.join(FUENTES["modelos"], t["normal"]),
+                            rugosidad=os.path.join(FUENTES["modelos"], t["rugosidad"]))
     pr = os.path.join(FUENTES["propias"], "manifest.json")
     if os.path.exists(pr):
         with open(pr) as fh:
@@ -178,7 +205,15 @@ def aplicar(nombre):
         nt.links.new(mp.outputs["Vector"], n.inputs["Vector"])
         return n
     if op.get("color"):
-        nt.links.new(nodo(t["color"], False).outputs["Color"], bsdf.inputs["Base Color"])
+        n_color = nodo(t["color"], False)
+        nt.links.new(n_color.outputs["Color"], bsdf.inputs["Base Color"])
+        if op.get("alfa"):                            # silueta de las hojas: MASK en glTF (el PNG lleva el alfa)
+            n_color.image.alpha_mode = "STRAIGHT"
+            nt.links.new(n_color.outputs["Alpha"], bsdf.inputs["Alpha"])
+            mat.blend_method = "CLIP"
+            mat.alpha_threshold = 0.5
+            mat.shadow_method = "CLIP"
+            mat.use_backface_culling = False
     if op.get("rugosidad") and t["rugosidad"]:
         nt.links.new(nodo(t["rugosidad"], True).outputs["Color"], bsdf.inputs["Roughness"])
     if op.get("normal") and t["normal"]:
