@@ -855,6 +855,174 @@ def tex_concreto_oscuro(L, s):
     return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.18, 0.85))
 
 
+# ------------------------------------------------------------------------ textiles del bloque 09 (alfombras)
+def cuantizar(L, paso_u, paso_v):
+    """Coordenadas (m) llevadas al centro de su celda de nudo o de pasada (paso_u × paso_v, ajustados para dividir
+    exacto el lienzo): lo que se dibuja con ellas sale escalonado como en un tejido, sin romper la periodicidad."""
+    pu = L.w / max(1, int(round(L.w / paso_u)))
+    pv = L.h / max(1, int(round(L.h / paso_v)))
+    return (np.floor(L.X / pu) + 0.5) * pu, (np.floor(L.Y / pv) + 0.5) * pv
+
+
+def tex_bereber(L, s):
+    """Alfombra bereber anudada a mano (tipo Beni Ourain): pelo de lana cruda en mechones de ≈ 7 mm, retícula de rombos
+    de 0,42 × 0,50 m en lana carbón a mano alzada (trazo de 2,4 a 4 cm con el borde escalonado del nudo de 5 mm),
+    rombitos sueltos en algunas celdas y variación de tono por partida de lana (abrash) en bandas."""
+    r = s.rng
+    # mechones: celdas de Voronoi con alto y tono propios; surco entre mechones (f2 − f1 chico)
+    v = L.voronoi(s(), 0.007, 0.95)
+    alto = f32(r.uniform(0.6, 1.0, v.n))[v.id]
+    tono_m = f32(r.random(v.n))[v.id]
+    surco = ss(0.0, 0.0035, v.f2 - v.f1)
+    fibras = L.ruido(s(), 0.0016, 0.0003, p=0.4)
+    peinado = L.ruido(s(), 0.004, 0.0008, p=0.6, estira=4, angulo=float(r.uniform(0, 180)))
+    pelo = np.clip(alto * (0.35 + 0.65 * surco ** 0.6) + 0.10 * fibras + 0.06 * peinado, 0, 1.2)
+    # retícula (3 × 2 rombos por repetición): líneas U + V ∈ Z y U − V ∈ Z, desplazadas a mano alzada (periódico)
+    A_, B_ = 3, 2
+    xq, yq = cuantizar(L, 0.005, 0.005)                  # nudo de 5 mm
+    wx = 0.011 * L.ruido(s(), 0.14, 0.02, p=1.6)
+    wy = 0.011 * L.ruido(s(), 0.14, 0.02, p=1.6)
+    U = (xq + wx) / L.w * A_
+    V = (yq + wy) / L.h * B_
+    k = math.hypot(A_ / L.w, B_ / L.h)                   # |∇(U ± V)| en 1/m
+    p_, q_ = U + V, U - V
+    d = np.minimum(np.abs(p_ - np.round(p_)), np.abs(q_ - np.round(q_))) / k
+    media = 0.0125 + 0.0028 * L.ruido(s(), 0.09, 0.015, p=1.3)   # medio ancho del trazo: 0,9 a 1,6 cm
+    linea = ss(media + 0.0012, media - 0.0012, d)
+    # rombitos sueltos: centro de cada rombo en (U, V) ∈ {(i + ½, j), (i, j + ½)}; uno de cada tres lleva uno
+    cu, cv = (np.floor(p_) + np.floor(q_) + 1) / 2, (np.floor(p_) - np.floor(q_)) / 2
+    idx = (np.mod(np.round(2 * cu), 2 * A_) * (2 * B_) + np.mod(np.round(2 * cv), 2 * B_)).astype(np.int64)
+    lleva = (r.random(4 * A_ * B_) < 0.34)[idx]
+    du, dv = (xq / L.w * A_ - cu) * L.w / A_, (yq / L.h * B_ - cv) * L.h / B_     # sin el trazo a mano alzada
+    rd = np.abs(du) / 0.030 + np.abs(dv) / 0.036
+    rombito = lleva & (rd < 1.0) & ((rd > 0.45) | (np.abs(du) + np.abs(dv) < 0.004))   # rombo hueco con punto
+    carbon = np.clip(np.maximum(linea, rombito.astype(np.float32)), 0, 1)
+    carbon = np.clip(L.desenfocar(carbon, 0.0007), 0, 1)
+    # tono: partidas de lana en bandas (a lo largo de la trama) y mechones
+    abrash = L.ruido(s(), 0.35, 0.06, p=1.6, estira=5, angulo=0)
+    crudo = por_px(mezcla(col("#E4DBCA"), col("#EEE7DA"), tono_m), (1 + 0.025 * abrash) * (0.80 + 0.22 * pelo))
+    oscuro = por_px(mezcla(col("#2B2825"), col("#3C3732"), tono_m), 0.85 + 0.2 * pelo)
+    c = mezcla(crudo, oscuro, carbon)
+    c = ajustar_media(c, col("#E1D8C8"), mascara=1 - carbon)
+    h = 0.0045 * pelo - 0.0006 * carbon
+    rug = 0.97 - 0.05 * np.clip(pelo, 0, 1) + 0.02 * fibras
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.86, 1.0))
+
+
+def tex_kilim(L, s):
+    """Kilim tejido plano en tonos sobrios (2,30 × 1,60 m, una sola vez sobre la alfombra, UV 0-1): cabezales de trama
+    carbón en los extremos de la urdimbre (U), guarda con diente de lobo avena sobre carbón entre filetes de avena y
+    ladrillo, y campo avena con rombos escalonados carbón y ladrillo de centro ocre. Todo cuantizado a la pasada del
+    tejido (1,25 × 0,8 cm): los contornos salen escalonados; bandas de tono por partida de trama y relieve de las
+    pasadas."""
+    xq, yq = cuantizar(L, 0.0125, 0.008)
+    W, H_ = L.w, L.h
+    carbon, avena, ladrillo = col("#2E2C2A"), col("#D6CCB9"), col("#8C4B38")
+    ocre, gris = col("#AE873F"), col("#8E867A")
+    cab = 0.035                                          # cabezal de trama en cada extremo de la urdimbre
+    eu = np.minimum(xq - cab, W - cab - xq)              # distancia a los cabezales (a lo largo de la urdimbre)
+    ev = np.minimum(yq, H_ - yq)                         # distancia a los orillos
+    e = np.minimum(eu, ev)
+    c = np.broadcast_to(avena, (L.ny, L.nx, 3)).copy()
+    # guarda: filete carbón, avena, banda de 7 cm (diente de lobo), avena, filete ladrillo
+    t = np.where(eu < ev, yq, xq)                        # coordenada a lo largo de la guarda
+    nn = np.clip((e - 0.03) / 0.07, 0, 1)
+    tri = np.abs(np.mod(t / 0.08, 1.0) - 0.5) * 2         # onda triangular de 8 cm
+    diente = np.abs(nn - (0.18 + 0.64 * tri)) < 0.2
+    banda = (e >= 0.03) & (e < 0.10)
+    c = np.where(((e < 0.015) | (banda & ~diente))[..., None], carbon, c)
+    c = np.where((banda & diente & (np.abs(nn - 0.5) < 0.12) & (tri < 0.2))[..., None], ladrillo, c)
+    c = np.where(((e >= 0.115) & (e < 0.13))[..., None], ladrillo, c)
+    # campo (dentro de la guarda): grilla de 5 × 3 rombos escalonados de 0,31 × 0,37 m, contorno carbón, relleno
+    # ladrillo y ojo ocre; crucecitas grises en las esquinas interiores de la grilla
+    campo = e >= 0.13
+    cu0, cu1, cv0, cv1 = cab + 0.13, W - cab - 0.13, 0.13, H_ - 0.13
+    celu, celv = (cu1 - cu0) / 5, (cv1 - cv0) / 3
+    fu, fv = (xq - cu0) / celu, (yq - cv0) / celv
+    du = (fu - np.floor(fu) - 0.5) * celu
+    dv = (fv - np.floor(fv) - 0.5) * celv
+    rom = np.abs(du) / 0.155 + np.abs(dv) / 0.185
+    c = np.where((campo & (rom < 1.0) & (rom >= 0.80))[..., None], carbon, c)
+    c = np.where((campo & (rom < 0.64) & (rom >= 0.30))[..., None], ladrillo, c)
+    c = np.where((campo & (rom < 0.15))[..., None], ocre, c)
+    ku, kv = np.round(fu), np.round(fv)
+    a_, b_ = np.abs(fu - ku) * celu, np.abs(fv - kv) * celv
+    interior = (ku > 0) & (ku < 5) & (kv > 0) & (kv < 3)
+    cruz = interior & (((a_ < 0.032) & (b_ < 0.009)) | ((a_ < 0.0095) & (b_ < 0.03)))
+    c = np.where(cruz[..., None], gris, c)
+    # cabezales: trama carbón lisa con una pasada avena
+    cabezal = (xq < cab) | (xq > W - cab)
+    c = np.where(cabezal[..., None], carbon, c)
+    c = np.where((cabezal & (np.abs(np.minimum(xq, W - xq) - 0.018) < 0.005))[..., None], avena, c)
+    # tejido: pasadas de trama (a lo largo de V), partidas de tono en bandas y fibra
+    pasadas = 0.5 + 0.5 * np.cos(2 * math.pi * L.X / (W / int(round(W / 0.0045))))
+    partidas = L.ruido(s(), 0.18, 0.03, p=1.5, estira=8, angulo=90)
+    fibra = L.ruido(s(), 0.004, 0.0012, p=0.7, estira=5, angulo=90)
+    ondula = L.ruido(s(), 0.25, 0.05, p=1.6)
+    c = por_px(c, (1 + 0.035 * partidas + 0.03 * fibra) * (0.93 + 0.07 * pasadas))
+    h = 0.0005 * pasadas + 0.00025 * fibra + 0.0006 * ondula
+    rug = 0.9 + 0.03 * fibra - 0.03 * pasadas
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.8, 0.98))
+
+
+def tex_camino(L, s):
+    """Camino de lana tejido plano en espiga (0,60 m de ancho a lo largo de U; se repite cada 0,40 m en V, a lo largo
+    del camino): columnas de 1 cm con la sarga en direcciones alternadas, hilos carbón y gris topo, y orillos avena con
+    dos filetes carbón en los dos bordes largos (en U = 0 y U = 0,60, que se tocan en la repetición)."""
+    r = s.rng
+    col_u = L.w / int(round(L.w / 0.010))                # columnas de la espiga (1 cm)
+    paso = L.h / int(round(L.h / 0.004))                 # paso de la sarga (4 mm)
+    ic = np.floor(L.X / col_u)
+    lado = np.where(np.mod(ic, 2) == 0, 1.0, -1.0)
+    fase = (L.Y + lado * (L.X - ic * col_u)) / paso
+    sarga = 0.5 + 0.5 * np.cos(2 * math.pi * fase)
+    hilo = L.ruido(s(), 0.003, 0.0008, p=0.6, estira=6, angulo=90)
+    e = np.minimum(L.X, L.w - L.X)
+    carbon, topo, avena = col("#34322F"), col("#5E5850"), col("#CFC5B2")
+    c = mezcla(carbon, topo, np.clip(sarga + 0.15 * hilo, 0, 1))
+    orillo = (e >= 0.016) & (e < 0.056)
+    filete = orillo & ((np.abs(e - 0.027) < 0.0025) | (np.abs(e - 0.045) < 0.0025))
+    c = np.where((orillo & ~filete)[..., None], por_px(avena, 1 + 0.05 * hilo)[...], c)
+    c = np.where((e < 0.008)[..., None], col("#2A2826"), c)       # orillo enrollado
+    partidas = L.ruido(s(), 0.2, 0.03, p=1.5, estira=6, angulo=0)
+    c = por_px(c, 1 + 0.03 * partidas + 0.03 * hilo)
+    junta = 1 - pulso(L.X / col_u, 0.0, 30) * 0.5
+    h = 0.0007 * sarga * junta + 0.0002 * hilo + 0.0006 * ss(0.012, 0.004, e)
+    rug = 0.93 - 0.04 * sarga + 0.02 * hilo
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.8, 1.0))
+
+
+def tex_algodon(L, s):
+    """Piso de baño de algodón mechado: canales de 4 cm (surco de 6 mm) rellenos de rizos de ≈ 3 mm en hileras
+    trabadas de 6 mm, cada rizo con tamaño, posición y tono propios; pelusa y fibra sueltas."""
+    r = s.rng
+    fila = L.h / int(round(L.h / 0.006))
+    canal = L.h / int(round(L.h / 0.04))
+    j = np.floor(L.Y / fila)
+    desfase = np.where(np.mod(j, 2) == 0, 0.0, 0.5)
+    paso_u = L.w / int(round(L.w / 0.0045))
+    ncol, nfil = int(round(L.w / paso_u)), int(round(L.h / fila))
+    gu = L.X / paso_u + desfase
+    k = (np.mod(np.floor(gu), ncol) + ncol * np.mod(j, nfil)).astype(np.int64)
+    n = ncol * nfil
+    ju, jv = f32(r.uniform(-0.06, 0.06, n))[k], f32(r.uniform(-0.06, 0.06, n))[k]    # radio + corrimiento ≤ ½:
+    ru, rv = f32(r.uniform(0.36, 0.44, n))[k], f32(r.uniform(0.38, 0.44, n))[k]    # el rizo no se corta en su celda
+    tono = f32(r.random(n))[k]
+    lu, lv = gu - np.floor(gu) - 0.5 - ju, L.Y / fila - j - 0.5 - jv
+    rizo = np.sqrt(np.clip(1 - (lu / ru) ** 2 - (lv / rv) ** 2, 0, 1))
+    ev = np.abs(np.mod(L.Y / canal, 1.0) - 0.5) * canal          # distancia al centro del canal
+    surco = ss(canal / 2 - 0.003, canal / 2 - 0.0005, ev)
+    fibra = L.ruido(s(), 0.0012, 0.0003, p=0.5)
+    pelusa = L.ruido(s(), 0.006, 0.001, p=0.9)
+    alto = np.clip((0.3 + 0.7 * rizo) * (1 - 0.8 * surco) * (0.8 + 0.2 * tono) + 0.06 * pelusa, 0, 1.2)
+    c = por_px(mezcla(col("#DCD5C8"), col("#E8E2D8"), tono), (0.86 + 0.16 * alto) * (1 + 0.035 * fibra))
+    c = ajustar_media(c, col("#E0DACE"))
+    h = 0.0032 * alto + 0.00005 * fibra                 # la fibra casi sólo en el color: en el normal no la
+                                                        # reproduce el JPEG (error de relectura > 6 %)
+    rug = 0.96 - 0.04 * np.clip(alto, 0, 1)
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.85, 1.0))
+
+
 # ------------------------------------------------------------------------ cuadros (0,50 × 0,70 m, no se repiten)
 OCRE, CARBON = col("#B8862B"), col("#2B2D2F")          # paleta de docs/deco-industrial.md
 LADRILLO_A, AVENA, CONCRETO_A = col("#8C4A36"), col("#D8CFC0"), col("#B3AFA8")
@@ -985,6 +1153,21 @@ CATALOGO = {
     "concreto_oscuro": ("Concreto pulido oscuro", (1.0, 1.0), 113, tex_concreto_oscuro,
                         "Concreto pulido gris oscuro (#545351) para cubiertas: nubes, áridos finos, poros y brillo "
                         "desparejo."),
+    # bloque 09 (alfombras): el kilim es la alfombra entera (UV 0-1, como los cuadros); las demás se repiten
+    "bereber": ("Lana bereber anudada", (1.25, 1.0), 121, tex_bereber,
+                "Pelo de lana cruda (#E1D8C8) en mechones de 7 mm con retícula de rombos de 0,42 × 0,50 m en lana "
+                "carbón a mano alzada, borde escalonado del nudo de 5 mm, rombitos sueltos y abrash en bandas "
+                "(alfombra del dormitorio principal)."),
+    "kilim": ("Kilim de tonos sobrios", (2.3, 1.6), 122, tex_kilim,
+              "Kilim tejido plano de 2,30 × 1,60 m (alfombra entera, UV 0-1): cabezales carbón, guarda con diente de "
+              "lobo avena sobre carbón, filetes ladrillo y campo avena con rombos escalonados carbón y ladrillo de ojo "
+              "ocre (segundo dormitorio)."),
+    "camino": ("Camino de lana en espiga", (0.6, 0.4), 123, tex_camino,
+               "Tejido plano en espiga de columnas de 1 cm, hilos carbón y topo, orillos avena con dos filetes carbón "
+               "en los bordes largos; 0,60 m de ancho y se repite cada 0,40 m a lo largo (camino del hall)."),
+    "algodon": ("Algodón mechado de baño", (0.24, 0.24), 124, tex_algodon,
+                "Rizos de algodón natural (#E0DACE) de 3 mm en hileras trabadas de 6 mm, en canales de 4 cm con surco "
+                "de 6 mm (pisos de baño y flecos)."),
     "arte_1": ("Cuadro: círculos y franjas", (0.5, 0.7), 201, arte_1,
                "Lámina abstracta: círculo ocre, franja y medio círculo carbón, líneas finas; papel crema con grano."),
     "arte_2": ("Cuadro: campos de color", (0.5, 0.7), 202, arte_2,
@@ -993,6 +1176,8 @@ CATALOGO = {
                "Lámina abstracta de líneas finas: curvas de nivel en carbón con una en ocre, sobre papel crema."),
 }
 PX_CUADRO = (1024, 1434)                              # 0,50 × 0,70 m a 2048 px/m
+PX_TEXTURA = {"kilim": (1024, 712)}                   # 2,30 × 1,60 m con píxeles cuadrados (2,25 mm)
+UNA_VEZ = ("kilim",)                                  # alfombras enteras (UV 0-1): la hoja las muestra sin mosaico
 
 
 # ======================================================================= archivos
@@ -1060,7 +1245,7 @@ def archivos(tid):
 def generar(tid, depurar=None):
     nombre, dims, semilla, fn, desc = CATALOGO[tid]
     t0 = time.time()
-    nx, ny = PX_CUADRO if tid.startswith("arte_") else (N, N)
+    nx, ny = PX_CUADRO if tid.startswith("arte_") else PX_TEXTURA.get(tid, (N, N))
     L = Lienzo(dims[0], dims[1], nx, ny)
     res = fn(L, Semillas(semilla))
     t_calc = time.time() - t0
@@ -1205,7 +1390,11 @@ def hoja_texturas():
             ancho = int(round(M * c.shape[1] / c.shape[0]))
             hoja[oy:oy + M, ox:ox + ancho] = reducir(c, ancho, M)
             continue
-        hoja[oy:oy + M, ox:ox + M] = np.tile(reducir(c, M // 2, M // 2), (2, 2, 1))
+        if tid in UNA_VEZ:                                  # alfombra entera, con su proporción
+            alto = int(round(M * c.shape[0] / c.shape[1]))
+            hoja[oy:oy + alto, ox:ox + M] = reducir(c, M, alto)
+        else:
+            hoja[oy:oy + M, ox:ox + M] = np.tile(reducir(c, M // 2, M // 2), (2, 2, 1))
         for k, (clave, dy) in enumerate((("normal", 0), ("rugosidad", T))):
             a = leer_imagen(os.path.join(carpeta, mp[clave]))
             hoja[oy + dy:oy + dy + T, ox + M + 8:ox + M + 8 + T] = reducir(a, T, T)
