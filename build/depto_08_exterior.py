@@ -869,10 +869,14 @@ def suelo(col):
 
 COPAS = []                               # (centro, radios) de cada copa, con el margen del jitter (para pruebas())
 JITTER_COPA = 0.1
+SEGUNDA_COPA = False                     # bloque 09: una sola copa por árbol (−80 triángulos cada uno, −1 680 en total)
+                                         # para hacer lugar a textiles y plantas bajo el tope de 200 000; ya lo
+                                         # proponía la bitácora del bloque 08 (dudas, 2)
 
 
 def arboles(col):
     m = Malla("Depto_Ext_Arboles", [M_PAL])
+    descarte = Malla("_copas_descartadas", [M_PAL])        # nunca se crea (ver SEGUNDA_COPA)
     rng = np.random.default_rng(SEMILLA + 5)
     copas = ("copa_1", "copa_2", "copa_3", "copa_4")
     COPAS.clear()
@@ -888,10 +892,14 @@ def arboles(col):
         a = 2 * math.pi * rng.random()
         c2 = (x + 0.45 * R * math.cos(a), y + 0.45 * R * math.sin(a), zc + 0.5 * R)
         r2 = (0.62 * R,) * 2 + (0.55 * R,)
-        esfera(m, c2, r2, 1, M_PAL, color, rng, JITTER_COPA)
         k = 1 + JITTER_COPA
-        COPAS.append(dict(eje=(x, y), R=R, elipsoides=[((x, y, zc), (k * R, k * R, k * 0.85 * R)),
-                                                       (c2, tuple(k * r for r in r2))]))
+        elipsoides = [((x, y, zc), (k * R, k * R, k * 0.85 * R))]
+        # sin la segunda copa se sortea igual (en una malla que se descarta): los demás árboles no cambian
+        esfera(m if SEGUNDA_COPA else descarte, c2, r2, 1, M_PAL, color, rng, JITTER_COPA)
+        if SEGUNDA_COPA:
+            elipsoides.append((c2, tuple(k * r for r in r2)))
+        COPAS.append(dict(eje=(x, y), R=R, elipsoides=elipsoides))
+    descarte.bm.free()
     return m.crear(col)
 
 
