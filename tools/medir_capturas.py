@@ -17,6 +17,9 @@ Criterios del acero (docs/noche-2026-09-26.md, 07c ronda 2):
 - residuo_12_60: medias de bloques de 12 px menos la media de sus 5 × 5 bloques vecinos (manchas de 12-60 px), σ.
   Criterio < 1,5 niveles.
 - rango_4cm: medias de bloques de ~4 cm sin la tendencia lineal (plano ajustado), (máx − mín) / media. Criterio < 3 %.
+  rango_4cm_cuadrica: lo mismo sin una cuádrica. En un render el reflejo del entorno también varía a esa escala (lo
+  hace en Blender, sin nube en la textura): el criterio sólo aísla la textura en una imagen de la textura misma
+  (tipo "textura": el mapa, sin luz) o con luz pareja.
 Sin dependencias fuera de Pillow.
 """
 import argparse
@@ -85,32 +88,42 @@ def residuo_12_60(Y):
     return (_sigma(res) if res else float("nan")), len(res)
 
 
-def rango_sin_tendencia(Y, lado):
+def _resolver(A, b):
+    """Gauss con pivoteo parcial (sistemas chicos, sin numpy)."""
+    n = len(b)
+    M = [fila[:] + [b[i]] for i, fila in enumerate(A)]
+    for c in range(n):
+        p = max(range(c, n), key=lambda r: abs(M[r][c]))
+        M[c], M[p] = M[p], M[c]
+        if abs(M[c][c]) < 1e-12:
+            return [0.0] * n
+        for r in range(c + 1, n):
+            f = M[r][c] / M[c][c]
+            for k in range(c, n + 1):
+                M[r][k] -= f * M[c][k]
+    x = [0.0] * n
+    for r in range(n - 1, -1, -1):
+        x[r] = (M[r][n] - sum(M[r][k] * x[k] for k in range(r + 1, n))) / M[r][r]
+    return x
+
+
+def rango_sin_tendencia(Y, lado, grado=1):
+    """Medias de bloques de `lado` px menos la superficie ajustada (plano si grado = 1, cuádrica si 2),
+    (máx − mín) / media."""
     B = bloques(Y, lado)
     pts = [(i, j, B[j][i]) for j in range(len(B)) for i in range(len(B[0]))]
     n = len(pts)
-    if n < 4:
+    base = (lambda i, j: [1.0, i, j]) if grado == 1 else (lambda i, j: [1.0, i, j, i * i, i * j, j * j])
+    if n < len(base(0, 0)) + 1:
         return float("nan"), n
-    # plano z = a + b i + c j por mínimos cuadrados (ecuaciones normales 3 × 3)
-    s = lambda f: sum(f(p) for p in pts)   # noqa: E731
-    M = [[n, s(lambda p: p[0]), s(lambda p: p[1])],
-         [s(lambda p: p[0]), s(lambda p: p[0] ** 2), s(lambda p: p[0] * p[1])],
-         [s(lambda p: p[1]), s(lambda p: p[0] * p[1]), s(lambda p: p[1] ** 2)]]
-    v = [s(lambda p: p[2]), s(lambda p: p[0] * p[2]), s(lambda p: p[1] * p[2])]
-
-    def det(A):
-        return (A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
-                + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]))
-    d = det(M)
-    coef = []
-    for k in range(3):
-        A = [fila[:] for fila in M]
-        for f in range(3):
-            A[f][k] = v[f]
-        coef.append(det(A) / d if d else 0.0)
-    res = [p[2] - (coef[0] + coef[1] * p[0] + coef[2] * p[1]) for p in pts]
-    media = sum(p[2] for p in pts) / n
-    return (max(res) - min(res)) / media, n
+    F = [base(p[0], p[1]) for p in pts]
+    m = len(F[0])
+    A = [[sum(f[a] * f[b] for f in F) for b in range(m)] for a in range(m)]
+    v = [sum(f[a] * p[2] for f, p in zip(F, pts)) for a in range(m)]
+    coef = _resolver(A, v)
+    res = [p[2] - sum(c * x for c, x in zip(coef, f)) for f, p in zip(F, pts)]
+    media_b = sum(p[2] for p in pts) / n
+    return (max(res) - min(res)) / media_b, n
 
 
 def media(im, reg):
@@ -132,10 +145,19 @@ def medir(e):
         Y = _matriz(_recorte(im, e["region"]))
         r, nr = residuo_12_60(Y)
         g, ng = rango_sin_tendencia(Y, e.get("bloque_4cm", 20))
+        g2, _ = rango_sin_tendencia(Y, e.get("bloque_4cm", 20), grado=2)
         out.update(region=e["region"], paso_alto=round(paso_alto(Y), 3), residuo_12_60=round(r, 3),
-                   rango_4cm=round(g, 4), bloques=[nr, ng], media=media(im, e["region"]))
+                   rango_4cm=round(g, 4), rango_4cm_cuadrica=round(g2, 4), bloques=[nr, ng],
+                   media=media(im, e["region"]))
         out["cumple"] = {"paso_alto<1,5": out["paso_alto"] < 1.5, "residuo_12_60<1,5": out["residuo_12_60"] < 1.5,
                          "rango_4cm<3%": out["rango_4cm"] < 0.03}
+    elif e["tipo"] == "textura":
+        Y = _matriz(_recorte(im, e.get("region", [0, 0, im.size[0], im.size[1]])))
+        g, ng = rango_sin_tendencia(Y, e["bloque_4cm"])
+        r, nr = residuo_12_60(Y)
+        out.update(rango_4cm=round(g, 4), residuo_12_60=round(r, 3), bloques=[nr, ng],
+                   media=round(sum(map(sum, Y)) / (len(Y) * len(Y[0])), 2))
+        out["cumple"] = {"rango_4cm<3%": out["rango_4cm"] < 0.03}
     elif e["tipo"] == "razon":
         a, b = media(im, e["num"]), media(im, e["den"])
         out.update(num=a, den=b, razon_luma=round(a["luma"] / b["luma"], 3),
