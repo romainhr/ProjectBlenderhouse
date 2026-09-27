@@ -347,13 +347,25 @@ de `build/depto_04_mobiliario.py`.
 | Camino | 0,60 × 1,50 × 0,010 m, de este a oeste entre el hall y el living, a 0,10 m del frente del nicho de lavadora; extremo este a x = 383 px | diseño; fuera del barrido de la hoja de entrada (radio de 1,03 m medido en el plano desde la bisagra) |
 | Pisos de baño | algodón de 0,65 × 0,45 × 0,012 m, esquinas de 4 cm, a 2 cm del frente de la tina y a 5 cm del tabique de la puerta | diseño; el WC queda a ≥ 5 cm (medido en el modelo) |
 | Holgura bajo las hojas abatibles interiores | 2 cm (antes 1 cm; la entrada sigue con 1 cm) | supuesto: la usual con alfombras, y la rendija de ventilación de los baños |
-| Barra de cortinas | eje a 2,26 m (16 cm sobre el dintel de 2,10, 14 cm bajo el cielo de 2,40) y a 7 cm del muro; 0,18 m más allá de cada jamba en los dormitorios; de muro a muro en el living | diseño; al norte del D1 no cabe más: el velador empieza a 0,19 m de la jamba |
-| Paños recogidos | lino natural, 0,30 m y 5 ondas por paño en los dormitorios, 0,26 m y 4 ondas en el living; hondura de 9 cm (15 % más abajo); dobladillo a 1,2 cm del piso | diseño |
-| Plantas | helecho colgado en el rincón del living junto al balcón, anturio en la esquina noroeste del balcón, haworthia en la cubierta de la cocina, calathea en la repisa del baño principal y otra en el velador oeste del segundo dormitorio (en lugar del jarrón) | modelos CC0 de Poly Haven (escaneos); ubicación, escala y maceta: diseño |
-| Macetas | gres blanco, negro o arena, de 0,12 a 0,26 m; la del living colgada con tres cordeles a 0,40 m | diseño |
+| Barra de cortinas | eje a 2,26 m (16 cm sobre el dintel de 2,10, 14 cm bajo el cielo de 2,40) y a 7 cm del muro; 0,18 m más allá de cada jamba en los dormitorios; de muro a muro en el living; anillas apoyadas en la barra y la tela a 2 mm bajo ellas | diseño; al norte del D1 no cabe más: el velador empieza a 0,19 m de la jamba |
+| Paños recogidos | lino natural, 0,30 m por paño en los dormitorios (6 ondas en el D1 y 7 en el D2, cuya ventana es 14 % más ancha) y 0,26 m con 4 ondas en el living; ancho de onda ±15 %, hondura de 9 cm ±10 % (15 % más abajo), abiertos 10 % y corridos 1-2 cm hacia un lado abajo; dobladillo a 1,2 cm del piso | diseño; cada paño de los dormitorios tiene tela para cerrar su mitad de la barra (1,13 m contra 1,09 en el D1 y 1,30 contra 1,22 en el D2, medido en el modelo) |
+| Sofá del living | 1,54 m de ancho (antes 1,80), con el extremo este donde estaba (x ≈ 236 px) | **medido en el plano** (corrección 09): el sofá dibujado va de x 161 a 242,5 px; el brief de la fase 4 decía 1,55 |
+| Alfombra del living | 2,00 × 1,40 m centrada en el sofá, termina 2 cm antes de su frente; el sofá apoya en el piso | diseño (corrección 09): el plano la dibuja de 2,24 × 2,05 m, entrando 0,37 m bajo el sofá; entera ocupaba el lugar de la planta |
+| Plantas | calathea en maceta de piso en el rincón del living junto al balcón, anturio en la esquina noroeste del balcón, haworthia en la cubierta de la cocina, calathea en la repisa del baño principal y otra en el velador oeste del segundo dormitorio (en lugar del jarrón) | modelos CC0 de Poly Haven (escaneos); ubicación, escala y maceta: diseño, salvo la del living |
+| Planta del living | maceta de Ø 0,30 × 0,42 m centrada en (145,5; 300,3) px, ≈ 0,66 m de alto con la planta | **medido en el plano**: el elemento de piso de 0,36 × 0,47 m dibujado junto al extremo oeste del sofá (x 136-155, y 288-312,5 px); maceta y planta, diseño |
+| Macetas | gres blanco, negro o arena, de 0,12 a 0,30 m | diseño |
 
 Inferido o no verificable: la cocina no tiene repisas abiertas desde la corrección 07c (el plano marca muebles altos),
-así que su planta va en la cubierta; en el rincón del living no cabe una maceta de piso (0,26 m entre el sofá y el
-vidrio), así que el helecho cuelga del cielo. Presupuesto: la escena queda en 199 357 triángulos (tope, 200 000)
-después de bajar la resolución de telas de las camas de 0,7 a 0,5 (−7 912) y dejar los árboles de la calle con una
-sola copa (−1 680).
+así que su planta va en la cubierta. Presupuesto: la escena quedó en 199 357 triángulos (tope, 200 000) después de
+bajar la resolución de telas de las camas de 0,7 a 0,5 (−7 912) y dejar los árboles de la calle con una sola copa
+(−1 680).
+
+**Corrección 09 (ronda 1, 2026-09-27).** Lo que la primera versión anotó como «no cabe» era medible: el plano dibuja
+un elemento de piso de 0,36 × 0,47 m junto al extremo oeste del sofá, y el sofá dibujado mide 1,54 m (x 161-242,5 px).
+El del modelo medía 1,80 y llegaba 0,38 m más al oeste; era una desviación del plano. Ahora el sofá tiene el ancho del
+plano (con su extremo este donde estaba, porque ahí van la lámpara de arco y la mesa lateral) y la planta va en una
+maceta de piso en ese elemento; el helecho colgado se quitó. Siguen siendo diseño, y se desvían del plano: el eje del
+televisor y del rack (el del muro de ladrillo, x 188,6 px; el plano centra living, mesa y sofá en x ≈ 201,8) y la
+alfombra del living (2,00 × 1,40 frente al sofá; el plano la dibuja de 2,24 × 2,05 entrando bajo el sofá). La
+plegable del nicho de lavadora pasa a 2 cm del piso, como las hojas abatibles, porque al abrirse barre 0,36 m sobre el
+camino. La escena queda en 199 848 triángulos.

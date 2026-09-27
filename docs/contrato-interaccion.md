@@ -291,7 +291,7 @@ como latón.
 ## 7. Textiles y plantas (bloque 09; sin campos nuevos, la versión sigue en 2.5)
 
 - Alfombras (`Depto_Mueble_*_Alfombra`, `_Flecos`, `Hall_Camino`, `*_PisoBano`), cortinas (`*_Cortinas_Tela` y
-  `_Barra`), hojas de las plantas (`*_Planta_Hojas`), su tierra y los cordeles de la maceta colgada traen
+  `_Barra`), hojas de las plantas (`*_Planta_Hojas`) y su tierra traen
   `colision: false` en los extras: no generan cajas en `depto_colisiones.json`. Las macetas sí.
 - Las hojas usan materiales `Depto_Mat_Planta*` con `alphaMode: "MASK"`, `alphaCutoff: 0.5` y `doubleSided: true`; su
   color es un PNG con alfa (las únicas imágenes PNG del modelo). GLTFLoader lo resuelve con `alphaTest`; lo que el visor

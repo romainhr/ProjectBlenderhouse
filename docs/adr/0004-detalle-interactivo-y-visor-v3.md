@@ -330,3 +330,34 @@ Decisiones:
     tope. El visor pesa 17,01 MB en escritorio (antes 13,64) y 12,15 MB en teléfono (antes 10,78). El entorno local de
     la cocina ve ahora las cortinas del ventanal y las plantas. Su escala cambia, y el visor la compensa por la
     referencia (sección 6 del contrato).
+
+## Adenda 09, corrección de la ronda 1 (2026-09-27)
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 09. **Revisor humano:** Romain Ange,
+  pendiente.
+
+33. **Sección de los paños recogidos.** La senoide con 6 columnas por onda dejaba mesetas en la cresta y el valle, y
+    con 8 columnas y una hondura mayor que el ancho de la onda (9 cm contra 4-5 cm) la cresta quedaba con un radio de
+    1 mm, un filo. Ahora cada onda tiene 8 puntos: la cresta y el valle son semicírculos de radio w/4 unidos por
+    flancos rectos, como una tela apilada. El ancho de cada onda varía ±15 % y la hondura ±10 %. En la mitad inferior,
+    cada límite entre ondas se corre 1-2 cm, sin que dos vecinos se separen más de 0,35 del ancho menor. El borde fijo
+    del paño no se mueve. Con la hondura acotada por el muro y el espejo, la tela para cerrar media barra se gana con
+    más ondas: 6 en el D1 y 7 en el D2. Se descartó una quinta hilera (+512 triángulos, sin presupuesto).
+34. **Mezcla con Translucent BSDF sólo en Blender.** `Depto_Mat_Lino` mezcla un 30 % de Translucent BSDF
+    (`translucido` en `build/deco_paleta.py`). El exportador glTF de 3.6 encuentra el Principled BSDF a través del
+    Mix Shader y no exporta la mezcla, y el visor no la usa. La prueba de la fase 5 admite esos dos nodos sólo en los
+    materiales con `translucido`. La textura `lino` es propia: tafetán de hilos de 1 mm, tono por hilo y flameado.
+35. **Nada periódico bajo 4 píxeles en las texturas de los textiles.** `periodo` rechaza períodos menores y
+    `control_frecuencia` mide la varianza sobre 1/4 de ciclo por píxel. Las pasadas del kilim a 2,0 px daban columnas
+    que alternaban con batido; ahora el relieve va por celda de pasada (1,25 × 0,9 cm). Las texturas de los textiles se
+    guardan en JPEG 4:4:4 con PIL, la misma dependencia que `web/tour_modelo.py`, porque el JPEG de Blender 3.6
+    submuestrea siempre el croma.
+36. **El sofá vuelve al plano.** Mide 1,54 m y deja libre el elemento de piso dibujado junto a su extremo oeste, donde
+    va la planta de piso. Su extremo este no se mueve (lámpara de arco y mesa lateral). El televisor sigue en el eje del
+    muro de ladrillo: centrarlo con el plano movía el conducto visto y los objetos del rack. La alfombra del living
+    termina frente al sofá, que apoya en el piso: antes entraba 0,6 m bajo él y la parte de atrás quedaba 8 mm en el
+    aire. Estas desviaciones del plano están anotadas en el brief.
+37. **Revisión de día como el visor.** Las vistas de día de `tools/render_09.py` van con las luces apagadas y calibran
+    su exposición con un muro o azulejo blanco en luz indirecta (190 sRGB, el gris del visor). Usan pre-renders de
+    320 px y 8 muestras. La exposición y la referencia quedan en `renders_detalle.json`, igual que el color medido del
+    camino y del algodón contra el promedio de su textura.
