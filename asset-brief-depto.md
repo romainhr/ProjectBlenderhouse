@@ -368,4 +368,4 @@ maceta de piso en ese elemento; el helecho colgado se quitó. Siguen siendo dise
 televisor y del rack (el del muro de ladrillo, x 188,6 px; el plano centra living, mesa y sofá en x ≈ 201,8) y la
 alfombra del living (2,00 × 1,40 frente al sofá; el plano la dibuja de 2,24 × 2,05 entrando bajo el sofá). La
 plegable del nicho de lavadora pasa a 2 cm del piso, como las hojas abatibles, porque al abrirse barre 0,36 m sobre el
-camino. La escena queda en 199 848 triángulos.
+camino. La escena queda en 199 892 triángulos.
