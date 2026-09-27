@@ -327,6 +327,6 @@ Decisiones:
     Así el recorrido pasa entre la maceta del balcón y la hoja abierta del ventanal, y la cámara no se traba en los
     paños del ventanal.
 32. **Consecuencias:** la escena queda en 199 357 triángulos, a 643 del tope. Lo próximo tendrá que ahorrar o subir el
-    tope. El visor pesa 16,99 MB en escritorio (antes 13,64) y 12,13 MB en teléfono (antes 10,78). El entorno local de
+    tope. El visor pesa 17,01 MB en escritorio (antes 13,64) y 12,15 MB en teléfono (antes 10,78). El entorno local de
     la cocina ve ahora las cortinas del ventanal y las plantas. Su escala cambia, y el visor la compensa por la
     referencia (sección 6 del contrato).
