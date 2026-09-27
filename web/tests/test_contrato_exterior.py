@@ -1,9 +1,10 @@
-"""Contrato de interacción 2.4, sección 4 (exterior, bloque 08 y su corrección) en lo que exporta la fase 6, sin Blender: lee
+"""Contrato de interacción 2.5, sección 4 (exterior, bloque 08 y su corrección) en lo que exporta la fase 6, sin Blender: lee
 exports/web/depto_colisiones.json y exports/web/depto_gltf.json.
 
     python3 -m unittest discover -s web/tests -p 'test_*.py'
 """
 import json
+import math
 import os
 import unittest
 
@@ -81,6 +82,39 @@ class ContratoExterior(unittest.TestCase):
         for m in self.mats:
             if m["name"] != "Depto_Ext_Mat_LuzSuelo":
                 self.assertFalse(m.get("extras", {}).get("exterior_aditivo"), m["name"])
+
+    def test_sol_por_momento(self):
+        """2.5: exterior.sol trae el sol de cada panorama (azimut ya girado y elevación) y el vector hacia él en glTF,
+        coherentes entre sí; el visor ya no depende de las elevaciones escritas en cielo.js."""
+        self.assertEqual(self.D.get("contrato"), "2.5")
+        sol = self.D["exterior"]["sol"]
+        self.assertEqual(set(sol), {"dia", "tarde", "noche"})
+        for m, s in sol.items():
+            a, e = math.radians(s["azimut_deg"]), math.radians(s["elevacion_deg"])
+            esperado = [math.cos(e) * math.cos(a), math.sin(e), -math.cos(e) * math.sin(a)]   # Blender -> glTF
+            self.assertEqual(len(s["hacia_gl"]), 3, m)
+            for v, w in zip(s["hacia_gl"], esperado):
+                self.assertAlmostEqual(v, w, places=3, msg=m)
+            self.assertTrue(0 < s["elevacion_deg"] < 90, m)
+        # de día el sol es el de la escena (la fase 08 gira los panoramas para eso): el de D.luces
+        luz = next(l for l in self.D["luces"] if l["tipo"] == "sol")
+        hacia = [-c for c in luz["direccion"]]
+        n = math.sqrt(sum(c * c for c in hacia))
+        az_escena = math.degrees(math.atan2(-hacia[2] / n, hacia[0] / n))
+        self.assertLess(abs((sol["dia"]["azimut_deg"] - az_escena + 180) % 360 - 180), 0.2)
+
+    def test_cielos_filmic(self):
+        """2.5: los cielos de día y de tarde van ya en pantalla (curva Filmic de los renders) y se dibujan con 1."""
+        pi = self.D["exterior"]["panoramas_intensidad"]
+        self.assertEqual(pi, {"dia": 1.0, "tarde": 1.0})
+
+    def test_vidrio_uniforme_de_las_barandas(self):
+        """2.5: el vidrio de las barandas refleja parejo (exterior_vidrio.uniforme, sin mapa de rugosidad)."""
+        m = next(m for m in self.mats if m["name"] == "Depto_Ext_Mat_VidrioBaranda")
+        v = m.get("extras", {}).get("exterior_vidrio")
+        self.assertIsInstance(v, dict)
+        self.assertIs(v.get("uniforme"), True)
+        self.assertTrue(0 < v["reflectividad"] <= 1)
 
     def test_escala_del_entorno_local(self):
         """Sección 6 (2.4): cada entorno trae su escala por variante; el visor normaliza la intensidad con ella."""

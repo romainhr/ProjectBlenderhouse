@@ -124,7 +124,7 @@ class ContratoLuces(unittest.TestCase):
 
     def test_version_del_contrato(self):
         self.assertEqual(self.D["version"], 2)            # versión mayor (compatibilidad)
-        self.assertEqual(self.D.get("contrato"), "2.4")   # versión completa del contrato (2.4: vidrio y luz del exterior)
+        self.assertEqual(self.D.get("contrato"), "2.5")   # versión completa del contrato (2.5: sol y cielos del exterior)
 
     def test_luz_de_la_nevera_la_prende_su_puerta(self):
         """Contrato 2.2: el grupo de la nevera no tiene interruptor; lo nombra `enciende` de la puerta, nace apagado y

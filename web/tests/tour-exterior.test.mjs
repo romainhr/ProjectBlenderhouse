@@ -1,16 +1,20 @@
-// Exterior del bloque 08 (web/src/tour/js/exterior.js y prepararEscena en carga.js; contrato 2.4, sección 4): el paisaje
+// Exterior del bloque 08 (web/src/tour/js/exterior.js y prepararEscena en carga.js; contrato 2.5, sección 4): el paisaje
 // va con un material sin luces, sombreado por vértice, emisión y bruma por momento, y en un grupo aparte de lo estático.
 // Corrección 08, ronda 1: sombreado acotado y por momento, curva Filmic, vidrio con reflejo, bruma por azimut y la
-// mancha de luz aditiva de las luminarias.
+// mancha de luz aditiva de las luminarias. Ronda 2 (contrato 2.5): bruma sin ACES, vidrio uniforme de las barandas,
+// factor del término hacia arriba de noche, sol e intensidad del fondo desde el modelo, vidrio de las ventanas del depto.
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { THREE } from "../src/tour/js/three.js";
 import {
   materialExterior, inyectar, sombrear, sombrearExterior, aplicarMomentoExterior, desplazamientoPx, esExterior,
   haciaSolDe, MARCA, prepararPanorama, SOMBREADO, factorSombreado, curvaFilmic, texturaHorizonte, horizonteMedio,
+  haciaSolMomento, intensidadFondo, opacidadVisor,
 } from "../src/tour/js/exterior.js";
 import { FILMIC } from "../src/tour/js/filmic.js";
-import { prepararEscena } from "../src/tour/js/carga.js";
+import { prepararEscena, materialVidrioVentana, VIDRIO_VENTANA, esVidrioDeVentana, desaturarPixeles, SATURACION_ENTORNO,
+} from "../src/tour/js/carga.js";
 import { MOMENTOS } from "../src/tour/js/cielo.js";
 
 function fuente(extras = { exterior: true, exterior_capa: "cerca" }) {
@@ -37,7 +41,10 @@ test("materialExterior: MeshBasicMaterial con el mapa, colores por vértice y lo
   vidrio.userData = { exterior: true };
   const v = materialExterior(vidrio);
   assert.equal(v.transparent, true);
-  assert.equal(v.opacity, 0.28);
+  // la mezcla del visor va en sRGB: el alfa sube para aclarar lo de atrás como la mezcla lineal de Blender
+  assert.ok(Math.abs(v.opacity - opacidadVisor(0.28)) < 1e-12 && v.opacity > 0.33 && v.opacity < 0.4, `${v.opacity}`);
+  assert.equal(opacidadVisor(1), 1);
+  assert.equal(opacidadVisor(0), 0);
   assert.equal(v.depthWrite, false);
   assert.equal(v.side, THREE.DoubleSide);
   assert.equal(v.userData.emisivoBase, null, "sin emisión: nada que sumar");
@@ -51,7 +58,9 @@ test("inyectar: suma la emisión con su mapa y la bruma antes de opaque_fragment
   assert.equal(inyectar(sh, m.userData.uniformes), true);
   const i = sh.fragmentShader.indexOf("outgoingLight += colorEmisivo * texture2D( mapaEmisivo, vMapUv ).rgb;");
   assert.ok(i > 0 && i < sh.fragmentShader.indexOf(MARCA));
-  assert.ok(sh.fragmentShader.includes("outgoingLight = mix( outgoingLight, acesFondoExt( neb ), neblina );"));
+  // la bruma va hacia el horizonte tal como se dibuja el fondo (three r160 no aplica tone mapping a un fondo sRGB)
+  assert.ok(sh.fragmentShader.includes("outgoingLight = mix( outgoingLight, neb, neblina );"));
+  assert.ok(!sh.fragmentShader.includes("acesFondoExt"));
   const curva = sh.fragmentShader.indexOf("outgoingLight = curvaFilmicExt( outgoingLight * exposicion );");
   assert.ok(curva > i, "la curva Filmic va después de la emisión");
   assert.equal(m.toneMapped, false, "sin el ACES del resto del visor");
@@ -175,11 +184,106 @@ test("aplicarMomentoExterior: la emisión sigue a exterior.emision del modelo y 
   for (const id of ["dia", "tarde", "noche"]) assert.ok(MOMENTOS[id].exterior, `MOMENTOS.${id}.exterior`);
 });
 
-test("noche: el cielo del fondo queda bajo, y las elevaciones del sol son las de los panoramas", () => {
+// El JSON que exporta la fase 6 (contrato 2.5): el respaldo de cielo.js tiene que coincidir con él.
+const COLISIONES = JSON.parse(readFileSync(new URL("../../exports/web/depto_colisiones.json", import.meta.url), "utf8"));
+
+test("noche: el cielo del fondo queda bajo, y el respaldo de las elevaciones es el sol exportado de cada panorama", () => {
   assert.ok(MOMENTOS.noche.fondoIntensidad <= 0.15, `${MOMENTOS.noche.fondoIntensidad}`);
-  assert.equal(MOMENTOS.dia.sol.elevacion, 48.0);
-  assert.equal(MOMENTOS.tarde.sol.elevacion, 12.1);
+  const sol = COLISIONES.exterior.sol;
+  for (const id of ["dia", "tarde", "noche"]) {
+    assert.ok(sol[id], `exterior.sol.${id}`);
+    assert.ok(Math.abs(MOMENTOS[id].sol.elevacion - sol[id].elevacion_deg) < 0.05,
+      `${id}: ${MOMENTOS[id].sol.elevacion} en cielo.js, ${sol[id].elevacion_deg} en el modelo`);
+  }
   assert.ok(MOMENTOS.tarde.exterior.cielo < MOMENTOS.dia.exterior.cielo);
+});
+
+test("haciaSolMomento: el sol de exterior.sol del modelo; sin él, el de la escena con la elevación de respaldo", () => {
+  const D = { ...COLISIONES };
+  for (const id of ["dia", "tarde", "noche"]) {
+    const v = haciaSolMomento(D, id, 0);
+    const s = D.exterior.sol[id];
+    assert.ok(Math.abs(Math.asin(v.y) * 180 / Math.PI - s.elevacion_deg) < 0.05, id);
+    // el azimut de Blender (desde +X hacia +Y) es atan2(−z, x) en glTF
+    assert.ok(Math.abs(Math.atan2(-v.z, v.x) * 180 / Math.PI - s.azimut_deg) < 0.05, id);
+    // sin hacia_gl, desde azimut y elevación
+    const sinVector = { exterior: { sol: { [id]: { azimut_deg: s.azimut_deg, elevacion_deg: s.elevacion_deg } } } };
+    assert.ok(haciaSolMomento(sinVector, id).distanceTo(v) < 1e-3, id);
+  }
+  const viejo = { luces: [{ tipo: "sol", direccion: [0.3, -0.57, 0.76] }] };
+  assert.ok(haciaSolMomento(viejo, "tarde", 12.1).distanceTo(haciaSolDe(viejo, 12.1)) < 1e-9);
+});
+
+test("intensidadFondo: la del panorama del modelo (los cielos Filmic, 1) o la del momento", () => {
+  assert.equal(intensidadFondo(COLISIONES, "dia", MOMENTOS.dia), 1);
+  assert.equal(intensidadFondo(COLISIONES, "tarde", MOMENTOS.tarde), 1);
+  assert.equal(intensidadFondo(COLISIONES, "noche", MOMENTOS.noche), MOMENTOS.noche.fondoIntensidad);
+  assert.equal(intensidadFondo({}, "dia", MOMENTOS.dia), MOMENTOS.dia.fondoIntensidad);
+});
+
+test("tarde: las siluetas a contraluz no quedan más claras que de día, y con poca bruma", () => {
+  const luma = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  const r = luma(MOMENTOS.tarde.exterior.lejos) / luma(MOMENTOS.dia.exterior.lejos);
+  assert.ok(r > 0.5 && r <= 1.0, `tarde / día ${r}`);                // antes, 2,3 (medido: 0,66)
+  assert.ok(MOMENTOS.tarde.exterior.neblina <= 0.25, `${MOMENTOS.tarde.exterior.neblina}`);
+});
+
+test("factorSombreado: de noche el término hacia arriba baja (arriba) sin tocar las fachadas", () => {
+  const sol = new THREE.Vector3(0, 1, 0);
+  const e = MOMENTOS.noche.exterior;
+  const f = { cielo: e.cielo, sol: e.sol, arriba: e.arriba };
+  assert.ok(e.arriba < 0.5, `${e.arriba}`);
+  const suelo = factorSombreado(0, 1, 0, sol, SOMBREADO, f), suelo1 = factorSombreado(0, 1, 0, sol, SOMBREADO,
+    { ...f, arriba: 1 });
+  assert.ok(suelo < 0.6 * suelo1, `${suelo} ${suelo1}`);
+  assert.ok(Math.abs(factorSombreado(0, 0, 1, sol, SOMBREADO, f) - factorSombreado(0, 0, 1, sol, SOMBREADO,
+    { ...f, arriba: 1 })) < 1e-12, "una fachada no cambia");
+});
+
+test("materialExterior: el vidrio uniforme (barandas) refleja parejo, sin máscara ni sombreado por vértice", () => {
+  const src = new THREE.MeshStandardMaterial({ name: "Depto_Ext_Mat_VidrioBaranda", transparent: true, opacity: 0.28 });
+  src.userData = { exterior: true, exterior_capa: "cerca", exterior_vidrio: { reflectividad: 0.25, uniforme: true } };
+  const m = materialExterior(src);
+  assert.equal(m.userData.vidrio, true);
+  assert.equal(m.userData.capa, "plano");
+  assert.equal(m.combine, THREE.AddOperation);
+  assert.equal(m.reflectivity, 0.25);
+  assert.equal(m.specularMap, null);
+  const sh = { fragmentShader: THREE.ShaderLib.basic.fragmentShader, vertexShader: THREE.ShaderLib.basic.vertexShader,
+    uniforms: {} };
+  assert.equal(inyectar(sh, m.userData.uniformes), true);
+  assert.ok(sh.fragmentShader.includes("envColor.xyz * intensidadReflejo"));
+  assert.ok(!sh.fragmentShader.includes("rugosidadMarco"), "sin máscara");
+  const pano = new THREE.Texture();
+  aplicarMomentoExterior([m], MOMENTOS.dia, "dia", {}, null, pano);
+  assert.equal(m.envMap, pano);
+  const geo = new THREE.PlaneGeometry(1, 1);
+  sombrear(geo, new THREE.Vector3(0, 1, 0), 0, m.userData.capa);
+  assert.equal(geo.getAttribute("color").getX(0), 1);
+});
+
+test("vidrio de las ventanas del depto: no suma luz difusa, deja pasar lo de atrás y sólo refleja", () => {
+  const src = new THREE.MeshStandardMaterial({ name: "Depto_Mat_Vidrio", color: new THREE.Color(0.6, 0.79, 0.89),
+    roughness: 0.02 });
+  const v = materialVidrioVentana(src);
+  assert.equal(v.color.getHex(), 0x000000);
+  assert.equal(v.side, THREE.FrontSide, "los paños son cajas: una sola cara por paño");
+  assert.equal(v.blending, THREE.CustomBlending);
+  assert.equal(v.blendSrc, THREE.OneFactor);
+  assert.equal(v.blendDst, THREE.OneMinusSrcAlphaFactor);
+  assert.ok(Math.abs(v.opacity - (1 - VIDRIO_VENTANA.transmision)) < 1e-9);
+  assert.ok(VIDRIO_VENTANA.transmision > 0.85 && VIDRIO_VENTANA.transmision < 0.97);
+  assert.equal(v.userData.vidrioVentana, true);
+  assert.equal(v.depthWrite, false);
+  // sólo ventanas y balcón: las botellas y las repisas de la nevera (el mismo material) no reflejan el cielo
+  const ventana = new THREE.Group(); ventana.name = "Depto_Ventana_Ventanal_Hoja";
+  const hoja = new THREE.Mesh(new THREE.BufferGeometry(), src); hoja.name = "Depto_Ventana_Ventanal_HojaVidrio_1";
+  ventana.add(hoja);
+  const botella = new THREE.Mesh(new THREE.BufferGeometry(), src); botella.name = "Depto_Cocina_NeveraPuertaAlimentos";
+  assert.equal(esVidrioDeVentana(hoja), true);
+  assert.equal(esVidrioDeVentana(botella), false);
+  const baranda = new THREE.Mesh(new THREE.BufferGeometry(), src); baranda.name = "Depto_Balcon_BarandaVidrio";
+  assert.equal(esVidrioDeVentana(baranda), true);
 });
 
 test("materialExterior: la mancha de luz es aditiva y sólo se ve cuando hay emisión", () => {
@@ -210,7 +314,7 @@ test("materialExterior: el vidrio refleja el panorama del momento con la máscar
     exterior_vidrio: { reflectividad: 0.3, rugosidad_vidrio: 0.12, rugosidad_marco: 0.7 } });
   src.roughnessMap = new THREE.Texture();
   const m = materialExterior(src);
-  assert.equal(m.combine, THREE.MixOperation);
+  assert.equal(m.combine, THREE.AddOperation, "el reflejo se suma, como el especular del Principled de Blender");
   assert.equal(m.reflectivity, 0.3);
   assert.equal(m.specularMap, src.roughnessMap);
   const pano = new THREE.Texture();
@@ -226,7 +330,7 @@ test("materialExterior: el vidrio refleja el panorama del momento con la máscar
     uniforms: {} };
   assert.equal(inyectar(sh, m.userData.uniformes), true);
   assert.ok(sh.fragmentShader.includes("rugosidadMarco - texture2D( specularMap, vSpecularMapUv ).g"));
-  assert.ok(sh.fragmentShader.includes("envColor.xyz * intensidadReflejo"));
+  assert.ok(sh.fragmentShader.includes("outgoingLight += envColor.xyz * intensidadReflejo * specularStrength * reflectivity;"));
   // sin mapa de rugosidad no hay máscara: queda opaco
   const opaco = materialExterior(fuente({ exterior: true, exterior_vidrio: { reflectividad: 0.3 } }));
   assert.equal(opaco.userData.vidrio, false);
@@ -297,4 +401,17 @@ test("prepararEscena: el exterior va a exteriorFusionado con su material barato,
     assert.ok(esExterior(m.material));
   }
   assert.equal(p.materialesExterior.length, 2);
+});
+
+test("entorno local de día: se desatura al cargarlo (el frente del freezer, neutro); el de las luces queda tal cual", () => {
+  assert.ok(SATURACION_ENTORNO.dia < 0.5);
+  assert.equal(SATURACION_ENTORNO.luces, 1);
+  const px = new Uint8ClampedArray([200, 100, 50, 255, 10, 20, 30, 255]);
+  desaturarPixeles(px, 0);
+  assert.equal(px[0], px[1]);
+  assert.equal(px[1], px[2]);
+  assert.equal(px[3], 255, "el alfa no se toca");
+  const igual = new Uint8ClampedArray([200, 100, 50, 255]);
+  desaturarPixeles(igual, 1);
+  assert.deepEqual([...igual], [200, 100, 50, 255]);
 });
