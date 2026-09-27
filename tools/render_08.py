@@ -11,8 +11,11 @@ arma el cielo con los HDR de Poly Haven que registra la fase 08 (scene["depto_ex
 de día 48,0°, de tarde 12,1°; corrección 08, ronda 1: antes quedaba en los 35° de la fase 5 con un cielo de atardecer)
 y el color y la fuerza relativa del visor (web/src/tour/js/cielo.js). La emisión del exterior (ventanas y luminarias)
 sigue scene["depto_exterior"]["emision"], y de tarde y de noche cada luminaria alumbra la calle con un foco (la mancha
-que el visor suma con la textura luz_suelo). No guarda el .blend. Escribe <out>/<vista>.png, <out>/renders.json =
-[{archivo, que_muestra}] y <out>/renders_detalle.json (cámara, momento, sol, exposición, muestras y resolución).
+que el visor suma con la textura luz_suelo). Corrección 08, ronda 2: las vistas interiores de tarde llevan las lámparas
+a +0,6 EV con la cámara a 0 EV (LAMPARAS_EV: el exterior por la ventana, con la exposición del balcón) y
+dormitorio_ventana_adaptada, la misma vista con la adaptación de cámara del objetivo de tono (ADAPTACION_TARDE). No
+guarda el .blend. Escribe <out>/<vista>.png, <out>/renders.json = [{archivo, que_muestra}] y
+<out>/renders_detalle.json (cámara, momento, sol, exposición, lámparas, balance, muestras y resolución).
 """
 import json
 import math
@@ -39,6 +42,20 @@ MOMENTOS = {
     "tarde": dict(fuerza=FUERZA_TARDE, saturacion=0.7, camara=CAMARA_TARDE, sol=(1.8 / 3.4, "#ffc58f"), luces="autor"),
     "noche": dict(fuerza=0.08, saturacion=1.0, camara=CAMARA_NOCHE, sol=None, luces="autor"),
 }
+# Adaptación de cámara de la vista dormitorio_ventana_adaptada (corrección 08, ronda 2, defecto 9): pendiente ASC-CDL
+# por canal en el compositor, antes de Filmic, normalizada a luminancia 1. Sin adaptación (la política de las demás
+# vistas desde la 07c, ronda 2: el visor no la aplica) la pared blanca bajo la luz de techo de 2700 K sale mostaza, R/B
+# lineal ≈ 5,7 en pantalla; el objetivo de tono único del sitio es R/B ≤ 2,5 (bitácora, duda 3). Calculada con la curva
+# Filmic medida (web/src/tour/js/filmic.js) desde el render sin adaptar: (188, 148, 84) -> (177, 145, 122), R/B ≈ 2,2.
+# Es la adaptación de un fotógrafo a la luz de las lámparas: el cielo por la ventana se enfría (la «hora azul»).
+ADAPTACION_TARDE = (0.772, 0.941, 2.258)
+# Vistas interiores de tarde (corrección 08, ronda 2): las lámparas del depto a +LAMPARAS_EV (su energía y la de sus
+# ampolletas por 2^0,6) con la cámara a 0 EV, en vez de la cámara a +0,6 EV con sólo el cielo compensado (ronda 1). Con
+# esa compensación el cielo quedaba como desde el balcón pero los edificios y las siluetas que se ven por la ventana
+# salían 0,6 EV más claros que en las vistas del balcón (el visor, igual desde adentro y desde afuera, quedaba a 0,6-0,8
+# de Blender en todo lo que se ve por el vidrio). Así el exterior por la ventana tiene la exposición del balcón y el
+# interior, lo mismo que antes (a la tarde lo alumbran las lámparas; la parte del cielo que entra queda a 0 EV).
+LAMPARAS_EV = 0.6
 # Focos de las luminarias (de tarde y de noche, por exterior.emision): potencia de diseño, calibrada contra la calzada de
 # balcon_noche (tools/medir_08.py); sin sombra (no gastan mapas de sombra: 24 luces del depto ya los usan).
 FOCO_W = 700.0
@@ -68,15 +85,24 @@ VISTAS = {
               "resplandor sobre el E2, que es más bajo que el ojo, sombras largas, las fachadas en sombra más oscuras "
               "que de día y un tercio de la emisión de las ventanas vecinas y de las luminarias ya encendida."),
     "dormitorio_ventana": dict(
-        cam=((2.70, 1.25, 1.45), (2.95, 10.0, 0.1), 16.0), momento="tarde", expo=0.6, cielo_por_expo=True,
+        cam=((2.70, 1.25, 1.45), (2.95, 10.0, 0.1), 16.0), momento="tarde", expo=0.0, lamparas_ev=LAMPARAS_EV,
         texto="Desde el dormitorio principal por su ventana (1,82 m, antepecho de 0,95), de tarde con la luz de techo "
               "encendida y el sol bajo del HDR ({elev}°) entrando de lado: la calle y el E3 de enfrente, el cruce a la "
-              "derecha."),
+              "derecha. Lámparas a +0,6 EV con la cámara a 0 EV: lo que se ve por la ventana tiene la exposición de "
+              "las vistas del balcón. Sin adaptación de cámara: la pared blanca sale mostaza (2700 K)."),
+    "dormitorio_ventana_adaptada": dict(
+        cam=((2.70, 1.25, 1.45), (2.95, 10.0, 0.1), 16.0), momento="tarde", expo=0.0, lamparas_ev=LAMPARAS_EV,
+        balance=ADAPTACION_TARDE,
+        texto="La misma vista del dormitorio con adaptación de cámara a la luz de las lámparas (pendiente {balance} en "
+              "el compositor, antes de Filmic): el objetivo de tono del interior de tarde, la pared blanca bajo la luz "
+              "de techo con R/B lineal ≤ 2,5. El visor no adapta: su interior se calibra en luminancia contra la vista "
+              "sin adaptar y en tono contra este objetivo; el cielo y la calle por la ventana se enfrían como en una "
+              "foto balanceada para interior."),
     "living_ventanal": dict(
-        cam=((0.05, -2.0, 1.50), (0.25, 10.0, -0.9), 16.0), momento="tarde", expo=0.6, cielo_por_expo=True,
+        cam=((0.05, -2.0, 1.50), (0.25, 10.0, -0.9), 16.0), momento="tarde", expo=0.0, lamparas_ev=LAMPARAS_EV,
         texto="Desde el living hacia el ventanal y el balcón, de tarde con las luces de techo y el sol bajo del HDR "
               "({elev}°): los tres paños del ventanal (la hoja móvil corrida), la baranda de vidrio y detrás la calle, "
-              "los vecinos y el cielo."),
+              "los vecinos y el cielo. Lámparas a +0,6 EV con la cámara a 0 EV, como la del dormitorio."),
     "living_sol_tarde": dict(
         cam=((0.3, 2.45, 1.55), (0.9, -3.2, 0.0), 16.0), momento="tarde", expo=0.6,
         texto="Control de la corrección 08: desde el ventanal hacia el interior del living, de tarde con las luces de "
@@ -181,6 +207,20 @@ def emision(momento, ext):
             m.node_tree.nodes.get("Principled BSDF").inputs["Emission Strength"].default_value = k * m["emision_noche"]
 
 
+def escalar_lamparas(k, base):
+    """Energía de las luces del depto (Depto_Luz_*, puntuales y focos) y fuerza de la emisión de sus ampolletas
+    (_Bombilla_<grupo>, render_07b.fijar_luces) por k, desde los valores `base` (se devuelven con k = 1)."""
+    for o in bpy.data.objects:
+        if o.type == "LIGHT" and o.name.startswith("Depto_Luz_") and o.data.type in ("POINT", "SPOT"):
+            base.setdefault(o.name, o.data.energy)
+            o.data.energy = base[o.name] * k
+    for m in bpy.data.materials:
+        if m.name.startswith("_Bombilla_") and m.name != "_Bombilla_apagada":
+            b = m.node_tree.nodes.get("Principled BSDF")
+            base.setdefault(m.name, b.inputs["Emission Strength"].default_value)
+            b.inputs["Emission Strength"].default_value = base[m.name] * k
+
+
 def camara(nombre, pos, mira, lente):
     cd = bpy.data.cameras.new(nombre)
     cd.lens = lente
@@ -198,9 +238,16 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     scene = bpy.context.scene
     ext = json.loads(scene["depto_exterior"])
+    # la fase 6 hornea los cielos del visor con la fuerza del cielo de cámara que registra la fase 08: tiene que ser la
+    # de estos renders (corrección 08, ronda 2)
+    for m, M in MOMENTOS.items():
+        if abs(M["fuerza"] * M["camara"] - ext.get("cielo_camara", {}).get(m, -1.0)) > 1e-6:
+            raise SystemExit(f"ERROR: cielo de cámara de {m}: {M['fuerza'] * M['camara']} aquí y "
+                             f"{ext.get('cielo_camara', {}).get(m)} en la fase 08 (CIELO_CAMARA).")
     R.config(scene, a)
     R.vidrio_revision()
-    R.compositor(scene).slope = (1.0, 1.0, 1.0)            # sin adaptación cromática (el visor no la tiene)
+    balance = R.compositor(scene)
+    balance.slope = (1.0, 1.0, 1.0)                         # sin adaptación cromática (el visor no la tiene)
     grupos = json.loads(scene.get("depto_grupos_luz", "[]"))
     R.GRUPOS.update({g["id"]: g for g in grupos})
     autor = tuple(g["id"] for g in grupos if g.get("encendido"))
@@ -210,6 +257,7 @@ def main():
     sol.data.shadow_cascade_max_distance = 150.0          # el exterior visto llega a ~60 m; más cerca, sombras más finas
     mundos = {m: mundo(m, ext) for m in MOMENTOS}
     luminarias = focos(ext)
+    base_lamparas = {}
     if a.sin_gi:
         # sin horneado: sin la caché del maestro (o de otra vista), que guarda la luz de otro mundo
         if bpy.ops.scene.light_cache_free.poll():         # falla el poll si no hay caché
@@ -227,6 +275,8 @@ def main():
         M = MOMENTOS[v["momento"]]
         luces = autor if M["luces"] == "autor" else tuple(M["luces"])
         R.fijar_luces(luces)
+        k_lamp = 2.0 ** v.get("lamparas_ev", 0.0)
+        escalar_lamparas(k_lamp, base_lamparas)
         scene.world = mundos[v["momento"]]
         # el cielo que ve la cámara, compensado en las vistas interiores por su exposición (+0,6 EV quemaba la ventana)
         k_cielo = 2.0 ** -v["expo"] if v.get("cielo_por_expo") else 1.0
@@ -241,9 +291,10 @@ def main():
         fijar_focos(luminarias, ext["emision"][v["momento"]])
         bpy.context.view_layer.update()
         if not a.sin_gi:
-            R.hornear(scene, (v["momento"], ",".join(luces)))
+            R.hornear(scene, (v["momento"], ",".join(luces), round(k_lamp, 3)))
         scene.view_settings.exposure = v["expo"]
         scene.view_settings.look = "Medium Contrast" if v["momento"] == "noche" else "None"
+        balance.slope = v.get("balance") or (1.0, 1.0, 1.0)
         cam = camara(f"_cam_{vista}", *v["cam"])
         scene.camera = cam
         ruta = os.path.join(a.out, f"{vista}.png")
@@ -251,6 +302,7 @@ def main():
         bpy.ops.render.render(write_still=True)
         texto = v["texto"].replace("{rot}", f"{ext['rotacion_deg']:.1f}".replace(".", ","))
         texto = texto.replace("{elev}", f"{ext['fuentes'][v['momento']]['sol_elevacion_deg']:.1f}".replace(".", ","))
+        texto = texto.replace("{balance}", "(" + "; ".join(f"{x:.2f}".replace(".", ",") for x in v.get("balance", ())) + ")")
         hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto,
                        "momento": v["momento"], "cielo": ext["fuentes"][v["momento"]]["id"],
                        "rotacion_deg": ext["rotacion_deg"], "emision_exterior": ext["emision"][v["momento"]],
@@ -258,11 +310,14 @@ def main():
                                                         "lente_mm": v["cam"][2]},
                        "sol": {"azimut_deg": sol_dir[0], "elevacion_deg": sol_dir[1]} if sol_dir else None,
                        "cielo_camara": round(M["fuerza"] * M["camara"] * k_cielo, 4),
+                       "lamparas_ev": v.get("lamparas_ev", 0.0),
                        "focos_w": FOCO_W * ext["emision"][v["momento"]],
                        "motor": "EEVEE", "muestras": a.samples, "exposicion": v["expo"],
                        "look": scene.view_settings.look, "luz_rebotada": not a.sin_gi,
+                       "balance": list(v["balance"]) if v.get("balance") else None,
                        "resolucion": [scene.render.resolution_x, scene.render.resolution_y]})
         print("RENDER", ruta, flush=True)
+    escalar_lamparas(1.0, base_lamparas)
     sol.rotation_euler = giro_sol                          # no guarda el .blend, pero deja el sol como estaba
     sol.data.energy = fuerza_sol
     orden = list(VISTAS)

@@ -321,6 +321,7 @@ def mundo_dia(scene):
 
 
 HORNEADO = {"clave": None}
+GI_INFLUENCIA = 0.10                     # m: menor que el muro perimetral más delgado (0,20 m, entrada; plano medido)
 
 
 def cajas_recintos():
@@ -351,8 +352,18 @@ def sondas(scene):
     pd = bpy.data.lightprobes.new("_GI_Depto", "GRID")
     ob = bpy.data.objects.new("_GI_Depto", pd)
     scene.collection.objects.link(ob)
-    ob.location = (0.0, 0.0, P.ALTURA_PISO_CIELO / 2)
-    ob.scale = (4.6, 3.1, P.ALTURA_PISO_CIELO / 2 - 0.02)
+    # Corrección 08, ronda 2: la caja termina en la cara interior de los muros perimetrales (antes, 4,6 × 3,1 m de
+    # semieje, contenía las caras exteriores de la fachada, en Y = 3,005, y de los muros norte y sur, en X = ±4,49, y les
+    # horneaba la luz del interior: la franja del depto salía ≈ 40 % más oscura que el resto del edificio en
+    # afuera_control, con el borde difuso de la caída). Con una distancia de influencia de 0,10 m, menor que el muro más
+    # delgado (0,20 m, el de la entrada), ninguna cara exterior queda al alcance del volumen.
+    (x0, y0), (x1, y1) = P.a_blender(0, P.Y["S_I"]), P.a_blender(0, P.Y["N_I"])
+    (_, ya), (_, yb) = P.a_blender(P.X["E_I"], 0), P.a_blender(P.X["W_I"], 0)
+    xa, xb = sorted((x0, x1))
+    ya, yb = sorted((ya, yb))
+    ob.location = ((xa + xb) / 2, (ya + yb) / 2, P.ALTURA_PISO_CIELO / 2)
+    ob.scale = ((xb - xa) / 2, (yb - ya) / 2, P.ALTURA_PISO_CIELO / 2 - 0.02)
+    pd.influence_distance = GI_INFLUENCIA
     pd.grid_resolution_x, pd.grid_resolution_y, pd.grid_resolution_z = 18, 12, 6
     m = 0.10 / P.M_POR_PX                                # 0,10 m más allá de cada muro: la caja los contiene
     for rid, (x0, x1, y0, y1) in cajas_recintos().items():
