@@ -18,10 +18,10 @@
   "autores": "no vienen en el glTF descargado (ver la página de cada modelo)",
   "usos_bloque_09": {
     "nota": "dónde va cada variante en el depto; la importa, decima y ubica build/depto_04_mobiliario.py (PLANTAS) con build/deco_plantas.py",
-    "fern_02": "variante c, colgada en el rincón del living junto al balcón (escala 0,6)",
+    "fern_02": "sin uso desde la corrección 09 (ronda 1): colgado sobre el brazo del sofá no se leía como helecho colgante (es erguido) y el rincón del living tiene ahora una maceta de piso",
     "anthurium_botany_01": "variante c, maceta de piso en la esquina noroeste del balcón (escala 0,85)",
-    "potted_plant_04": "el modelo entero con su maceta, en la cubierta de la cocina (escala 1)",
-    "calathea_orbifolia_01": "variante e en la repisa del baño principal (escala 0,78) y variante c en el velador oeste del segundo dormitorio (escala 0,8)"
+    "potted_plant_04": "sólo el nodo plant (desde la corrección 09, ronda 1), decimado por separado, en una maceta modelada de gres blanco de 24 lados, en la cubierta de la cocina (escala 1)",
+    "calathea_orbifolia_01": "variante a en maceta de piso en el rincón del living junto al balcón (escala 0,64; corrección 09, ronda 1), variante e en la repisa del baño principal (escala 0,78) y variante c en el velador oeste del segundo dormitorio (escala 0,8)"
   },
   "derivadas": {
     "generador": "build/deco_plantas.py --derivar",

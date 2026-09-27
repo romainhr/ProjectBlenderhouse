@@ -12,12 +12,14 @@ Poly Haven entregó el color en JPEG, sin canal alfa, aunque el material pide MA
   hojas y tallos quedan bajo 0,60; se intersecta con la cobertura de las UV (los tallos están fuera de ese pico);
 - anthurium_botany_01: el fondo del ARM es un relleno estirado sin valor propio; la silueta la da la geometría (hojas
   modeladas) y el alfa es la cobertura de las UV del atlas dilatada 2 px: recorta sólo el relleno;
-- potted_plant_04 (haworthia en su maceta): opaca, como su material original (hojas carnosas modeladas).
+- potted_plant_04 (haworthia): opaca, como su material original (hojas carnosas modeladas). Corrección 09 (ronda 1):
+  se usa sólo su nodo `plant`, en una maceta modelada de 24 lados; la maceta del escaneo, decimada junto con la planta
+  (colapso, que no respeta las costuras UV), quedaba facetada y con la textura estirada.
 Además: rugosidad en gris (el canal G del ARM) para el visor, y el normal original tal cual.
 
 Piezas (contrato de docs/deco-industrial.md: metros, apoyo en z = 0, frente hacia −Y): `planta` devuelve la malla de
-una variante del modelo con su base (el origen del nodo glTF) en el origen; `maceta` y `maceta_colgante`, la maceta
-con su tierra; `en_maceta` junta las dos. Los materiales Depto_Mat_Planta* llevan alfa CLIP (umbral 0,5) y dos caras
+una variante del modelo con su base (el origen del nodo glTF) en el origen; `maceta`, la maceta con su tierra;
+`en_maceta` junta las dos (la maceta colgada del helecho del living se quitó en la corrección 09). Los materiales Depto_Mat_Planta* llevan alfa CLIP (umbral 0,5) y dos caras
 (glTF: alphaMode MASK, doubleSided); la fase 5 les pone las texturas (build/deco_paleta.py, fuente "modelos").
 """
 import argparse
@@ -29,7 +31,7 @@ import sys
 import bmesh
 import bpy
 import numpy as np
-from mathutils import Matrix, Vector
+from mathutils import Matrix
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(RAIZ, "build"))
@@ -52,7 +54,6 @@ G.MATERIALES.setdefault("Depto_Mat_PlantaHelecho", ((0.25, 0.36, 0.14), 0.70, 0.
 G.MATERIALES.setdefault("Depto_Mat_PlantaHaworthia", ((0.30, 0.38, 0.22), 0.60, 0.0, 1.0))
 TIERRA = "Depto_Mat_Tierra"
 G.MATERIALES.setdefault(TIERRA, ((0.16, 0.12, 0.09), 0.95, 0.0, 1.0))    # sustrato húmedo (diseño)
-CORDEL = "Depto_Mat_CableTela"                                              # cordeles de la maceta colgante
 # Cómo se recupera el alfa de cada atlas (ver el docstring). arm_g: (umbral, transición) sobre el canal G del ARM.
 ALFA = {
     "fern_02": dict(metodo="arm_g", umbral=0.955, transicion=0.015, cobertura=False),
@@ -205,36 +206,13 @@ def maceta(col, prefijo, diametro, alto, material, conicidad=0.82, seg=16):
     return [pot, tierra], zt - 0.003, r_in
 
 
-def maceta_colgante(col, prefijo, diametro, alto, material, largo, cielo_z, seg=16):
-    """Maceta colgada del cielo: la maceta (base en z = 0), tres cordeles desde el labio hasta una argolla a `largo`
-    sobre el borde, un cordel hasta el gancho y el florón en el cielo (a cielo_z sobre la base). -> (objs, z tierra,
-    radio interior)."""
-    objs, zt, r_in = maceta(col, prefijo, diametro, alto, material, seg=seg)
-    bm = bmesh.new()
-    r1 = diametro / 2
-    z_arg = alto + largo
-    for k in range(3):
-        a = 2 * math.pi * k / 3 + math.pi / 6
-        B.tubo(bm, [(0.98 * r1 * math.cos(a), 0.98 * r1 * math.sin(a), alto - 0.012), (0.0, 0.0, z_arg)], 0.0016,
-               seg=4)
-    B.tubo(bm, [(0.0, 0.0, z_arg), (0.0, 0.0, cielo_z - 0.012)], 0.0018, seg=4)
-    objs.append(B.objeto(col, f"{prefijo}_Cordeles", bm, CORDEL, angulo_suave=60))
-    bm = bmesh.new()
-    B.torno(bm, [(0.0, z_arg - 0.009), (0.008, z_arg - 0.008), (0.009, z_arg), (0.008, z_arg + 0.008),
-                 (0.0, z_arg + 0.009)], seg=8)                                           # argolla (nudo)
-    B.cilindro(bm, 0.0, 0.0, cielo_z - 0.012, cielo_z - 0.0005, 0.022, seg=12)            # florón con gancho
-    objs.append(B.objeto(col, f"{prefijo}_Floron", bm, "Depto_Mat_MetalNegroMate", angulo_suave=40))
-    for o in objs[-2:]:
-        o["colision"] = False
-    return objs, zt, r_in
-
-
-def en_maceta(col, prefijo, modelo, nodos, tope, pot, escala=1.0, giro=0.0, hundir=0.004):
-    """Planta dentro de su maceta: `pot` = (objs, z tierra, radio interior) de maceta o maceta_colgante. La base del
-    nodo glTF queda `hundir` bajo la tierra (los tallos arrancan dentro). -> lista de objetos."""
+def en_maceta(col, prefijo, modelo, nodos, tope, pot, escala=1.0, giro=0.0, hundir=0.004, base=0.0):
+    """Planta dentro de su maceta: `pot` = (objs, z tierra, radio interior) de `maceta`. La base de
+    la planta queda `hundir` bajo la tierra (los tallos arrancan dentro); `base`: altura (m, en el escaneo) donde
+    arranca la planta sobre el origen de su nodo (0 salvo en los escaneos que traían su maceta). -> lista de objetos."""
     objs, zt, _ = pot
     hojas = planta(col, prefijo, modelo, nodos, tope, escala, giro)
-    hojas.data.transform(Matrix.Translation((0.0, 0.0, zt - hundir)))
+    hojas.data.transform(Matrix.Translation((0.0, 0.0, zt - hundir - base * escala)))
     return objs + [hojas]
 
 
