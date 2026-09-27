@@ -169,3 +169,23 @@ test("actualizarEntornos: la variante y la intensidad del entorno local siguen a
   assert.equal(mat.envMap, luces);
   assert.equal(mat.envMapIntensity, 0.75);
 });
+
+test("actualizarEntornos: la intensidad se corrige por la escala de normalización del entorno (contrato, sección 6)", async () => {
+  const { actualizarEntornos, factorEscalaEntorno } = await import("../src/tour/js/carga.js");
+  const { ESCALA_ENTORNO_CALIBRADA } = await import("../src/tour/js/cielo.js");
+  const dia = new THREE.Texture(), luces = new THREE.Texture();
+  const mat = new THREE.MeshStandardMaterial({ name: "Depto_Mat_NeveraAcero" });
+  // el render del entorno con el exterior del bloque 08: la escala subió de 19,62 a 30,88 de día (entorno más oscuro)
+  mat.userData = { entornoLocal: "cocina", variantesEntorno: { dia, luces }, grupoEntorno: "cocina_techo",
+    escalaEntorno: { luces: 8.7078, dia: 30.8781 } };
+  const grupos = new Map([["cocina_techo", { encendido: false }]]);
+  actualizarEntornos([mat], grupos, { luces: 0.75, dia: 2.0 }, ESCALA_ENTORNO_CALIBRADA);
+  assert.ok(Math.abs(mat.envMapIntensity - 2.0 * 19.6217 / 30.8781) < 1e-9, `${mat.envMapIntensity}`);   // ≈ 1,27
+  grupos.get("cocina_techo").encendido = true;
+  actualizarEntornos([mat], grupos, { luces: 0.75, dia: 2.0 }, ESCALA_ENTORNO_CALIBRADA);
+  assert.ok(Math.abs(mat.envMapIntensity - 0.75 * 7.8009 / 8.7078) < 1e-9);                            // ≈ 0,67
+  // con la escala de la calibración, o sin escala en el modelo, la intensidad es la del momento
+  assert.equal(factorEscalaEntorno(ESCALA_ENTORNO_CALIBRADA, ESCALA_ENTORNO_CALIBRADA, "dia"), 1);
+  assert.equal(factorEscalaEntorno(null, ESCALA_ENTORNO_CALIBRADA, "dia"), 1);
+  assert.equal(factorEscalaEntorno({ dia: 20 }, null, "dia"), 1);
+});

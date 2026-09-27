@@ -118,14 +118,24 @@ export function varianteEntorno(variantes, lucesEncendidas) {
 
 // Pone en cada material con entorno local la variante y la intensidad que tocan (`intensidades` = { luces, dia } del
 // momento, cielo.js): se llama en cada cuadro, porque la luz de la cocina puede cambiar con un interruptor, el panel o
-// el momento. `gruposLuz`: Map id -> { encendido }. Devuelve true si cambió algo (hay que redibujar).
-export function actualizarEntornos(materiales, gruposLuz, intensidades) {
+// el momento. `gruposLuz`: Map id -> { encendido }. `referencia` ({ luces, dia }, opcional): la escala de normalización
+// del entorno con que se calibraron las intensidades; la intensidad se multiplica por referencia / entornos[].escala de
+// esa variante (contrato, sección 6), para que un render nuevo del entorno no cambie el brillo del reflejo.
+// Devuelve true si cambió algo (hay que redibujar).
+export function factorEscalaEntorno(escala, referencia, variante) {
+  const e = escala && escala[variante], r = referencia && referencia[variante];
+  return typeof e === "number" && typeof r === "number" && e > 0 ? r / e : 1;
+}
+
+export function actualizarEntornos(materiales, gruposLuz, intensidades, referencia = null) {
   let cambio = false;
   for (const mat of materiales) {
     const g = mat.userData.grupoEntorno ? gruposLuz.get(mat.userData.grupoEntorno) : null;
     const on = g ? Boolean(g.encendido) : true;
     const tex = varianteEntorno(mat.userData.variantesEntorno, on);
-    const inten = typeof intensidades === "number" ? intensidades : (intensidades || {})[on ? "luces" : "dia"] ?? 1;
+    const variante = on ? "luces" : "dia";
+    const base = typeof intensidades === "number" ? intensidades : (intensidades || {})[variante] ?? 1;
+    const inten = base * factorEscalaEntorno(mat.userData.escalaEntorno, referencia, variante);
     if (tex && mat.envMap !== tex) { mat.envMap = tex; mat.needsUpdate = true; cambio = true; }
     if (mat.envMapIntensity !== inten) { mat.envMapIntensity = inten; cambio = true; }
   }
@@ -179,7 +189,8 @@ function aplicarEntornos(raiz, entornos, texturas) {
       if (!clones.has(k)) {
         const clon = o.material.clone();
         clon.envMap = tex;
-        clon.userData = { ...clon.userData, entornoLocal: e.id, variantesEntorno: variantes, grupoEntorno: e.grupo };
+        clon.userData = { ...clon.userData, entornoLocal: e.id, variantesEntorno: variantes, grupoEntorno: e.grupo,
+          escalaEntorno: e.escala || null };
         if (e.centro) {
           clon.onBeforeCompile = (sh) => { proyeccionCaja(sh, e); };
           clon.customProgramCacheKey = () => `entorno_${e.id}`;
@@ -193,8 +204,9 @@ function aplicarEntornos(raiz, entornos, texturas) {
   return clones.size;
 }
 
-// Exterior (bloque 08, contrato 2.3, sección 4): las mallas con extras.exterior (en el material o en el nodo) pasan a
-// un material sin luces (exterior.js), con su sombreado por vértice calculado en espacio de mundo, y se fusionan por
+// Exterior (bloque 08, contrato 2.4, sección 4): las mallas con extras.exterior (en el material o en el nodo) pasan a
+// un material sin luces (exterior.js), con su sombreado por vértice calculado en espacio de mundo (aquí con el sol de la
+// escena; aplicarMomento lo rehace con el del momento, sombrearExterior), y se fusionan por
 // material en un grupo aparte, `exteriorFusionado`: no entra en el raycast del piso (tocar la calle por la ventana no
 // manda a caminar hacia afuera) y se puede ocultar entero. Devuelve { grupo, materiales }.
 export function prepararExterior(raiz, D, excluidos) {

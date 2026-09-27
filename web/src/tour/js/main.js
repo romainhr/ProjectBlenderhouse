@@ -6,8 +6,8 @@ import * as carga from "./carga.js";
 import * as colision from "./colision.js";
 import { crearControles } from "./controles.js";
 import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo, MOTIVO_CAMINO } from "./interaccion.js";
-import { MOMENTOS, MOMENTO_POR_DEFECTO, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
-import { aplicarMomentoExterior } from "./exterior.js";
+import { MOMENTOS, MOMENTO_POR_DEFECTO, ESCALA_ENTORNO_CALIBRADA, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
+import { aplicarMomentoExterior, sombrearExterior, haciaSolDe } from "./exterior.js";
 import { RoomEnvironment } from "../../vendor/three/jsm/environments/RoomEnvironment.js";
 import { NOMBRES_RECINTO, estadoGruposParaMomento, gruposDelPanel } from "./luces.js";
 import { prepararMinimapa, dibujarMinimapa, recintoTocado } from "./minimapa.js";
@@ -84,17 +84,27 @@ function aplicarMomento(id, estadoInteraccion) {
   });
   ambiente.intensity = m.ambiente;
   renderer.toneMappingExposure = m.exposicion;
-  if (sol) { sol.color.set(m.sol.color); sol.intensity = m.sol.intensidad; }
-  // exterior (bloque 08): tinte, bruma de las siluetas con el horizonte del panorama y emisión de las ventanas vecinas
+  // el sol del panorama del momento (corrección 08, ronda 1): su elevación con el azimut del sol de la escena, para la
+  // luz del depto y para el sombreado por vértice del exterior
+  const haciaSol = haciaSolDe(D, m.sol.elevacion);
+  if (sol) { sol.color.set(m.sol.color); sol.intensity = m.sol.intensidad; sol.position.copy(haciaSol).multiplyScalar(20); }
+  // exterior (bloque 08): sombreado con el sol y el cielo del momento, tinte, bruma de las siluetas con el horizonte
+  // del panorama, reflejo del cielo en el vidrio y emisión de las ventanas vecinas y de las luminarias
   const pano = panoramas[id];
-  aplicarMomentoExterior(materialesExterior, m, id, (D && D.exterior) || {}, pano && pano.userData.horizonte);
+  const ext = (D && D.exterior) || {};
+  if (grupoExterior) {
+    const e = m.exterior || {};
+    sombrearExterior(grupoExterior, haciaSol, typeof ext.suelo_y === "number" ? ext.suelo_y : 0, undefined,
+      { cielo: e.cielo ?? 1, sol: e.sol ?? 1 });
+  }
+  aplicarMomentoExterior(materialesExterior, m, id, ext, pano && pano.userData.horizonte, pano || null);
   if (estadoInteraccion) {
     // cada grupo vuelve al estado de autor para este momento (grupos_luz[].encendido): el día apaga todo; la tarde y
     // la noche prenden sólo los que nacen encendidos (techos), no los veladores, apliques ni la lámpara de pie
     const estados = estadoGruposParaMomento(estadoInteraccion.gruposLuz.values(), m.lucesEncendidas);
     for (const [id2, encendido] of estados) fijarGrupo(estadoInteraccion, id2, encendido);
     ui.refrescarGruposLuzUI(estadoInteraccion.gruposLuz);
-    carga.actualizarEntornos(materialesEntorno, estadoInteraccion.gruposLuz, m.entornoLocal);
+    carga.actualizarEntornos(materialesEntorno, estadoInteraccion.gruposLuz, m.entornoLocal, ESCALA_ENTORNO_CALIBRADA);
   }
   sucio = true;
 }
@@ -103,6 +113,7 @@ function aplicarMomento(id, estadoInteraccion) {
 let D = null, estado = null, controles = null, M = null;
 let materialesEntorno = [];   // materiales con entorno local (carga.js): su variante sigue a la luz de la cocina
 let materialesExterior = [];  // materiales del paisaje (exterior.js): tinte y emisión por momento
+let grupoExterior = null;     // Depto_Exterior (carga.js, prepararExterior): su sombreado sigue al sol del momento
 let sucio = true;
 
 async function iniciar() {
@@ -144,7 +155,7 @@ async function iniciar() {
     if (o.isMesh && o.material.userData && o.material.userData.entornoLocal && !materialesEntorno.includes(o.material)) materialesEntorno.push(o.material);
   });
   scene.add(estado.estaticoFusionado);
-  if (preparado.exteriorFusionado) scene.add(preparado.exteriorFusionado);
+  if (preparado.exteriorFusionado) { scene.add(preparado.exteriorFusionado); grupoExterior = preparado.exteriorFusionado; }
   materialesExterior = preparado.materialesExterior || [];
   for (const nodo of estado.sueltos) scene.attach(nodo);
   for (const luz of estado.lucesTHREE) {
@@ -307,7 +318,8 @@ function pasoCuadro(dt) {
   }
 
   // la variante del entorno local sigue a la luz de la cocina (interruptor, panel o momento)
-  if (estado && carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal)) sucio = true;
+  if (estado && carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal,
+    ESCALA_ENTORNO_CALIBRADA)) sucio = true;
   if (sucio || actividad) {
     const t0 = performance.now();
     renderer.render(scene, camera);
@@ -344,7 +356,8 @@ if (debug) {
       }
     }
     for (let i = 0; i < 80; i++) pasoMundo(estado, 0.05, lejos);     // animaciones y fundidos terminados
-    carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal);
+    carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal,
+      ESCALA_ENTORNO_CALIBRADA);
     ui.refrescarGruposLuzUI(estado.gruposLuz);
     renderer.setPixelRatio(1);
     renderer.setSize(op.ancho || 1280, op.alto || 800, false);
