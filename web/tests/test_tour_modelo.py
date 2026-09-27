@@ -73,5 +73,44 @@ class Cielos(unittest.TestCase):
         self.assertEqual(tour_modelo.panoramas({}), set())
 
 
+class Alfa(unittest.TestCase):
+    """Bloque 09: el color de las hojas es un PNG con alfa (alphaMode MASK); el .webp de escritorio, el PNG del
+    teléfono y su .webp lo conservan. Las texturas sin alfa siguen en RGB."""
+
+    def test_png_con_alfa_conserva_el_alfa(self):
+        with tempfile.TemporaryDirectory() as d:
+            web, col = export_minimo(d)
+            hoja = Image.new("RGBA", (1024, 1024), (40, 90, 30, 0))
+            hoja.paste((40, 90, 30, 255), (256, 256, 768, 768))
+            hoja.save(os.path.join(web, "tex", "fern_02_diff_alfa_1k.png"))
+            with open(os.path.join(web, "depto_gltf.json")) as fh:
+                gltf = json.load(fh)
+            gltf["images"].append({"uri": "tex/fern_02_diff_alfa_1k.png", "mimeType": "image/png"})
+            gltf["textures"].append({"source": 1})
+            gltf["materials"].append({"name": "Depto_Mat_PlantaHelecho", "alphaMode": "MASK", "alphaCutoff": 0.5,
+                                      "pbrMetallicRoughness": {"baseColorTexture": {"index": 1}}})
+            with open(os.path.join(web, "depto_gltf.json"), "w") as fh:
+                json.dump(gltf, fh)
+            destino = os.path.join(d, "modelo")
+            tour_modelo.construir(web, col, destino)
+            for ruta in (os.path.join(destino, "tex", "fern_02_diff_alfa_1k.webp"),
+                         os.path.join(destino, "tex_movil", "fern_02_diff_alfa_1k.png"),
+                         os.path.join(destino, "tex_movil", "fern_02_diff_alfa_1k.webp")):
+                im = Image.open(ruta)
+                self.assertEqual(im.mode, "RGBA", ruta)
+                a = im.getchannel("A")
+                w, h = im.size
+                self.assertLess(a.getpixel((2, 2)), 10, ruta)                 # fuera de la hoja: transparente
+                self.assertGreater(a.getpixel((w // 2, h // 2)), 245, ruta)   # hoja: opaca
+            self.assertEqual(Image.open(os.path.join(destino, "tex", "fachada_A.webp")).mode, "RGB")
+            self.assertEqual(Image.open(os.path.join(destino, "tex_movil", "fern_02_diff_alfa_1k.png")).size,
+                             (512, 512))
+
+    def test_modo(self):
+        self.assertEqual(tour_modelo._modo(Image.new("RGBA", (4, 4), (1, 2, 3, 255))), "RGB")   # alfa entero: RGB
+        self.assertEqual(tour_modelo._modo(Image.new("RGBA", (4, 4), (1, 2, 3, 0))), "RGBA")
+        self.assertEqual(tour_modelo._modo(Image.new("RGB", (4, 4))), "RGB")
+
+
 if __name__ == "__main__":
     unittest.main()

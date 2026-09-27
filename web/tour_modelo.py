@@ -4,7 +4,8 @@ con GLTFLoader normal:
 
 - depto.gltf   el mismo JSON de exports/web/depto_gltf.json, con buffers[0].uri apuntando a "depto.bin".
 - depto.bin    la geometría de depto_bin.b64.txt, decodificada de base64 a binario.
-- tex/         copia de exports/web/tex/ (1024 px, la calidad de escritorio) MÁS un .webp por cada .jpg.
+- tex/         copia de exports/web/tex/ (1024 px, la calidad de escritorio) MÁS un .webp por cada .jpg (y por cada
+  .png: las hojas de las plantas del bloque 09, que conservan su canal alfa en el .webp y en tex_movil/).
 - tex_movil/   las mismas texturas a 512 px (lo que hacía web/build.py hasta ahora para el teléfono) MÁS
   su .webp.
 - depto_movil.gltf   igual a depto.gltf, pero con las imágenes apuntando a tex_movil/ en vez de tex/.
@@ -66,6 +67,17 @@ SUPERFICIES_GRANDES = ("piso_roble", "microcemento", "concreto_encofrado", "losa
 
 def _es_grande(nombre):
     return any(clave in nombre for clave in SUPERFICIES_GRANDES)
+
+
+def _modo(im):
+    """"RGBA" si la imagen trae canal alfa en uso (bloque 09: las hojas de las plantas, PNG con alphaMode MASK en el
+    glTF), "RGB" si no. El .webp y la copia del teléfono conservan ese alfa; sin él, las hojas se verían como
+    tarjetas del color del relleno del atlas."""
+    if im.mode in ("RGBA", "LA") or (im.mode == "P" and "transparency" in im.info):
+        alfa = im.convert("RGBA").getchannel("A")
+        if alfa.getextrema()[0] < 255:
+            return "RGBA"
+    return "RGB"
 
 # Los mapas de rugosidad son de muy baja frecuencia (casi un solo tono con algo de ruido): medido sobre
 # las 16 texturas _rough del depto, el .webp de escritorio a 1024 px (calidad 80) pesa 933.0 KB en total;
@@ -248,12 +260,13 @@ def construir(origen_web=ORIGEN_WEB, origen_colisiones=ORIGEN_COLISIONES, destin
 
         # .webp de escritorio: mismo tamaño que el JPG, salvo rugosidad (ver RUGOSIDAD_ESCRITORIO_WEBP).
         im_esc = Image.open(ruta)
+        modo = _modo(im_esc)
         if tipo == "rough" and not _es_grande(nombre) and max(im_esc.size) > RUGOSIDAD_ESCRITORIO_WEBP:
             im_esc = im_esc.resize(
                 (RUGOSIDAD_ESCRITORIO_WEBP, round(im_esc.height * RUGOSIDAD_ESCRITORIO_WEBP / im_esc.width)),
                 Image.LANCZOS,
             )
-        im_esc.convert("RGB").save(os.path.join(tex_dst, nombre_webp), "WEBP", quality=CALIDAD_WEBP[tipo], method=6)
+        im_esc.convert(modo).save(os.path.join(tex_dst, nombre_webp), "WEBP", quality=CALIDAD_WEBP[tipo], method=6)
         peso_tex_webp += os.path.getsize(os.path.join(tex_dst, nombre_webp))
 
         # móvil: el JPG a 512 px (como ya hacía) y su .webp a partir de la misma imagen ya reescalada.
@@ -262,10 +275,10 @@ def construir(origen_web=ORIGEN_WEB, origen_colisiones=ORIGEN_COLISIONES, destin
         if max(im.size) > lado_movil:
             im = im.resize((lado_movil, round(im.height * lado_movil / im.width)), Image.LANCZOS)
         destino_img = os.path.join(tex_movil_dst, nombre)
-        im.convert("RGB").save(destino_img, quality=80, optimize=True)
+        im.convert(modo).save(destino_img, quality=80, optimize=True)    # un .png con alfa sigue siendo RGBA
         peso_tex_movil += os.path.getsize(destino_img)
 
-        im.convert("RGB").save(os.path.join(tex_movil_dst, nombre_webp), "WEBP", quality=CALIDAD_WEBP[tipo], method=6)
+        im.convert(modo).save(os.path.join(tex_movil_dst, nombre_webp), "WEBP", quality=CALIDAD_WEBP[tipo], method=6)
         peso_tex_movil_webp += os.path.getsize(os.path.join(tex_movil_dst, nombre_webp))
 
     shutil.copyfile(origen_colisiones, os.path.join(destino, "depto_colisiones.json"))
