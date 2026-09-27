@@ -204,35 +204,35 @@
   },
   {
    "uri": "tex/bereber_nor_gl_1k.jpg",
-   "bytes": 689818
+   "bytes": 792008
   },
   {
    "uri": "tex/bereber_diff_1k.jpg",
-   "bytes": 381526
+   "bytes": 273404
   },
   {
    "uri": "tex/bereber_rough_1k.jpg",
-   "bytes": 65938
+   "bytes": 70734
   },
   {
    "uri": "tex/algodon_nor_gl_1k.jpg",
-   "bytes": 522225
+   "bytes": 775173
   },
   {
    "uri": "tex/algodon_rough_1k.jpg",
-   "bytes": 35636
+   "bytes": 35863
   },
   {
    "uri": "tex/kilim_nor_gl_1k.jpg",
-   "bytes": 124939
+   "bytes": 575324
   },
   {
    "uri": "tex/kilim_diff_1k.jpg",
-   "bytes": 284517
+   "bytes": 233797
   },
   {
    "uri": "tex/kilim_rough_1k.jpg",
-   "bytes": 72832
+   "bytes": 44471
   },
   {
    "uri": "tex/calathea_orbifolia_01_nor_gl_1k.jpg",
@@ -252,31 +252,31 @@
   },
   {
    "uri": "tex/camino_nor_gl_1k.jpg",
-   "bytes": 449092
+   "bytes": 435449
   },
   {
    "uri": "tex/camino_diff_1k.jpg",
-   "bytes": 300902
+   "bytes": 312736
   },
   {
    "uri": "tex/camino_rough_1k.jpg",
-   "bytes": 89978
+   "bytes": 70104
   },
   {
    "uri": "tex/algodon_diff_1k.jpg",
-   "bytes": 282257
+   "bytes": 292946
   },
   {
-   "uri": "tex/fern_02_nor_gl_1k.jpg",
-   "bytes": 367222
+   "uri": "tex/lino_nor_gl_1k.jpg",
+   "bytes": 467474
   },
   {
-   "uri": "tex/fern_02_diff_alfa_1k.png",
-   "bytes": 1098067
+   "uri": "tex/lino_diff_1k.jpg",
+   "bytes": 162336
   },
   {
-   "uri": "tex/fern_02_rough_1k.jpg",
-   "bytes": 64304
+   "uri": "tex/lino_rough_1k.jpg",
+   "bytes": 27971
   },
   {
    "uri": "tex/anthurium_botany_01_nor_gl_1k.jpg",
@@ -391,5 +391,5 @@
    "bytes": 21501
   }
  ],
- "total_bytes": 32335037
+ "total_bytes": 32190281
 }

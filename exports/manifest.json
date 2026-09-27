@@ -1,18 +1,18 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 29998796,
-    "md5": "adc95b4d60bf540bc2a28092e0b288be",
+    "bytes": 29826500,
+    "md5": "7b806334bae37571f607c5c65780863b",
     "web": {
       "carpeta": "web",
       "archivos": 101,
-      "bytes": 32335037,
+      "bytes": 32190281,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 58552,
-      "estaticos": 857,
+      "bytes": 58594,
+      "estaticos": 858,
       "moviles": 39,
       "luces": 24,
       "grupos_luz": 16,
@@ -23,11 +23,11 @@
     "sellos": {
       "01": "a15736e3997b",
       "02": "c2f134da46b8",
-      "03": "36ad45238e7c",
-      "04": "7a3888cb37cf",
-      "05": "3624889e2689",
-      "08": "3e1e566360ce",
-      "06": "5f51fe506e7c"
+      "03": "32a875a5c76e",
+      "04": "1a556264929a",
+      "05": "828f447e1038",
+      "08": "6da5c6cdf37e",
+      "06": "9ad482b08be0"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -49,7 +49,7 @@
       ]
     },
     "mallas": 453,
-    "triangulos": 199357,
+    "triangulos": 199848,
     "materiales": [
       "Depto_Ext_Mat_Calle",
       "Depto_Ext_Mat_FachadaA",
@@ -132,7 +132,6 @@
       "Depto_Mat_PlantaAnturio",
       "Depto_Mat_PlantaCalathea",
       "Depto_Mat_PlantaHaworthia",
-      "Depto_Mat_PlantaHelecho",
       "Depto_Mat_PlasticoEsmerilado",
       "Depto_Mat_PuertaEntrada",
       "Depto_Mat_PuertaMadera",
@@ -271,22 +270,13 @@
         "licencia": "CC0",
         "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
         "variantes": [
+          "calathea_orbifolia_01_a",
           "calathea_orbifolia_01_c",
           "calathea_orbifolia_01_e"
         ],
         "piezas": [
           "B1_Planta",
-          "D2_Planta"
-        ]
-      },
-      "fern_02": {
-        "pagina": "https://polyhaven.com/a/fern_02",
-        "licencia": "CC0",
-        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
-        "variantes": [
-          "fern_02_c"
-        ],
-        "piezas": [
+          "D2_Planta",
           "Living_Planta"
         ]
       },
@@ -295,7 +285,7 @@
         "licencia": "CC0",
         "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
         "variantes": [
-          "potted_plant_04_pot,potted_plant_04_dirt,potted_plant_04_ground,potted_plant_04_plant"
+          "potted_plant_04_plant"
         ],
         "piezas": [
           "Cocina_Planta"
@@ -347,7 +337,7 @@
       },
       "aperturas": {
         "moviles": 39,
-        "estaticos": 2325,
+        "estaticos": 2315,
         "pares_abiertos": 167,
         "max_mm": 0.0,
         "giros": {
