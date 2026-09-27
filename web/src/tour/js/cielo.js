@@ -9,7 +9,7 @@ export const MOMENTOS = {
   // publicada), no medidos. entornoLocal (corrección 07c, ronda 2): intensidad del entorno local de la cocina
   // (contrato 2.2, sección 6) en su acero, por variante: `luces` (con la luz de la cocina encendida; no depende del
   // momento, las lámparas son las mismas) y `dia` (apagada; sigue a la luz del día de cada momento). Medido contra
-  // Blender desde las mismas cámaras (docs/noche-2026-09-26.md, 21:xx): con luces 0,75 la razón visera/azulejo da 0,53
+  // Blender desde las mismas cámaras (docs/noche-2026-09-26.md, entrada de las 21:21): con luces 0,75 la razón visera/azulejo da 0,53
   // (Blender 0,49) y nevera/azulejo 0,69 (0,87); de día 2,0 da freezer/forro 0,82 (0,98).
   dia: {
     etiqueta: "Día", cielo: { arriba: "#7fadd8", abajo: "#eaf3fa" },
