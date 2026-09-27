@@ -3,11 +3,12 @@
 // CLAUDE.md § Método de trabajo.
 import { THREE } from "./three.js";
 import * as carga from "./carga.js";
+import { VIDRIO_VENTANA } from "./carga.js";
 import * as colision from "./colision.js";
 import { crearControles } from "./controles.js";
 import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo, MOTIVO_CAMINO } from "./interaccion.js";
 import { MOMENTOS, MOMENTO_POR_DEFECTO, ESCALA_ENTORNO_CALIBRADA, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
-import { aplicarMomentoExterior, sombrearExterior, haciaSolDe } from "./exterior.js";
+import { aplicarMomentoExterior, sombrearExterior, haciaSolMomento, intensidadFondo } from "./exterior.js";
 import { RoomEnvironment } from "../../vendor/three/jsm/environments/RoomEnvironment.js";
 import { NOMBRES_RECINTO, estadoGruposParaMomento, gruposDelPanel } from "./luces.js";
 import { prepararMinimapa, dibujarMinimapa, recintoTocado } from "./minimapa.js";
@@ -66,8 +67,11 @@ window.addEventListener("resize", ajustarTamano);
 let sol = null;
 let momentoActual = MOMENTO_POR_DEFECTO;
 function aplicarMomento(id, estadoInteraccion) {
-  const m = MOMENTOS[id];
+  const m0 = MOMENTOS[id];
   momentoActual = id;
+  // la intensidad del fondo: la del panorama del modelo (contrato 2.5, los cielos Filmic van con 1) o la del momento;
+  // sin panorama, el degradado con la del momento
+  const m = panoramas[id] ? { ...m0, fondoIntensidad: intensidadFondo(D, id, m0) } : m0;
   scene.background = panoramas[id] || generarCieloCanvas(m.cielo);
   scene.backgroundIntensity = m.fondoIntensidad;
   scene.traverse((o) => {
@@ -79,14 +83,22 @@ function aplicarMomento(id, estadoInteraccion) {
       // todo metal y hacía del acero cepillado (rugosidad 0,25-0,35) un espejo del estudio; queda sólo bajo 0,25. Un
       // material con mapa de rugosidad trae roughness = 1 (el factor de glTF): queda en 1 también.
       if (mat.userData && mat.userData.entornoLocal) continue;          // actualizarEntornos, en cada cuadro
+      if (mat.userData && mat.userData.vidrioVentana) {
+        // el vidrio de las ventanas (carga.js, corrección 08, ronda 2): refleja el panorama del momento
+        const env = panoramas[id] || null;
+        if (mat.envMap !== env) { mat.envMap = env; mat.needsUpdate = true; }
+        mat.envMapIntensity = VIDRIO_VENTANA.reflejo * m.fondoIntensidad;
+        continue;
+      }
       mat.envMapIntensity = m.entorno * (mat.metalness > 0.5 && mat.roughness < 0.25 ? 1.8 : 1);
     }
   });
   ambiente.intensity = m.ambiente;
   renderer.toneMappingExposure = m.exposicion;
-  // el sol del panorama del momento (corrección 08, ronda 1): su elevación con el azimut del sol de la escena, para la
-  // luz del depto y para el sombreado por vértice del exterior
-  const haciaSol = haciaSolDe(D, m.sol.elevacion);
+  // el sol del panorama del momento, para la luz del depto y para el sombreado por vértice del exterior: el de
+  // exterior.sol del modelo (contrato 2.5; corrección 08, ronda 2: azimut y elevación medidos en cada HDR, los mismos de
+  // los renders de revisión) o, si falta, el azimut del sol de la escena con MOMENTOS[id].sol.elevacion
+  const haciaSol = haciaSolMomento(D, id, m.sol.elevacion);
   if (sol) { sol.color.set(m.sol.color); sol.intensity = m.sol.intensidad; sol.position.copy(haciaSol).multiplyScalar(20); }
   // exterior (bloque 08): sombreado con el sol y el cielo del momento, tinte, bruma de las siluetas con el horizonte
   // del panorama, reflejo del cielo en el vidrio y emisión de las ventanas vecinas y de las luminarias
@@ -95,7 +107,7 @@ function aplicarMomento(id, estadoInteraccion) {
   if (grupoExterior) {
     const e = m.exterior || {};
     sombrearExterior(grupoExterior, haciaSol, typeof ext.suelo_y === "number" ? ext.suelo_y : 0, undefined,
-      { cielo: e.cielo ?? 1, sol: e.sol ?? 1 });
+      { cielo: e.cielo ?? 1, sol: e.sol ?? 1, arriba: e.arriba ?? 1 });
   }
   aplicarMomentoExterior(materialesExterior, m, id, ext, pano && pano.userData.horizonte, pano || null);
   if (estadoInteraccion) {

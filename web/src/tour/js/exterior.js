@@ -1,4 +1,4 @@
-// Exterior del bloque 08 (docs/contrato-interaccion.md, sección 4, versión 2.4): el paisaje que se ve por las ventanas y
+// Exterior del bloque 08 (docs/contrato-interaccion.md, sección 4, versión 2.5): el paisaje que se ve por las ventanas y
 // el balcón (fachada propia, calle, vecinos, árboles, siluetas lejanas) se dibuja como fondo barato.
 // - Cada material con extras.exterior = true pasa a un MeshBasicMaterial: no recibe las luces puntuales ni el sol ni el
 //   mapa de entorno general. El volumen lo da un sombreado por vértice (sombrear) con el cielo, el rebote del suelo y el
@@ -13,17 +13,27 @@
 //   del momento donde su mapa de rugosidad dice vidrio, y la mancha de luz de las luminarias (extras.exterior_aditivo)
 //   se suma con mezcla aditiva sólo cuando hay emisión (tarde y noche).
 // - Los panoramas se giran rotacion_deg en un canvas: three r160 no tiene scene.backgroundRotation.
+// - Corrección 08, ronda 2: el reflejo del vidrio se suma al difuso (AddOperation), como el especular del Principled de
+//   Blender, en vez de mezclarse. three r160 no aplica tone mapping a un fondo sRGB (WebGLBackground: toneMapped = false si la
+//   textura es sRGB), así que la bruma de las siluetas va hacia el horizonte del panorama tal como se dibuja, su color
+//   lineal por la intensidad del fondo, sin el ACES que se le aplicaba; el vidrio con exterior_vidrio.uniforme (las
+//   barandas) refleja el panorama parejo, sin máscara y sin sombreado por vértice (capa "plano", k = 1); el sol de cada
+//   momento sale de exterior.sol del modelo (haciaSolMomento); y de noche el término hacia arriba del sombreado lleva
+//   su propio factor (MOMENTOS[].exterior.arriba), que baja el suelo entre luminarias sin tocar las fachadas.
 import { THREE } from "./three.js";
 import { FILMIC } from "./filmic.js";
 
-// Sombreado por vértice: k = f_cielo · (ambiente + cielo · max(0, n.y) + (rebote − ambiente) · max(0, −n.y))
+// Sombreado por vértice: k = f_cielo · (ambiente + f_arriba · cielo · max(0, n.y) + (rebote − ambiente) · max(0, −n.y))
 // + f_sol · sol · max(0, n·s), por el oscurecimiento de 0,88 a 1 de los primeros 6 m sobre la calle en lo que no mira
 // hacia arriba, acotado a [kMin · f_cielo, kMax]. `ambiente`: una cara vertical en sombra (ve medio cielo y medio suelo);
 // `cielo`: lo que suma mirar hacia arriba; `rebote`: una cara que mira hacia abajo, que sólo ve el suelo (en Blender el
 // fondo de las losas de balcón queda a ≈ 0,55 de la fachada en sombra). Corrección 08, ronda 1: antes era
 // ambiente + cielo · n.y, que valía −0,6 mirando hacia abajo, y ACES devolvía claro lo negativo (losas color crema y
 // copas negras por debajo); y 2,2 hacia arriba al sol (coronaciones naranjas). f_cielo y f_sol son del momento
-// (MOMENTOS[].exterior.cielo y .sol en cielo.js) y `s`, el sol de su panorama. Las tarjetas lejanas llevan un valor fijo.
+// (MOMENTOS[].exterior.cielo y .sol en cielo.js) y `s`, el sol de su panorama. f_arriba (MOMENTOS[].exterior.arriba,
+// 1 si falta; corrección 08, ronda 2): de noche el cielo casi no alumbra el suelo en Blender y, con el 1,3 del término
+// hacia arriba, la vereda entre dos luminarias quedaba a 2,2 veces la de Blender (contraste luz / entre 4,0 contra
+// 9,7). Las tarjetas lejanas llevan un valor fijo (su tinte es el del momento) y el vidrio uniforme, 1.
 // Cotas [0,25; 2,0]: la revisión pedía [0,3; 1,6], pero en Blender la calzada al sol queda a ≈ 11 veces el fondo de las
 // losas de balcón y ese intervalo sólo deja 5,3 (con 1,6 la calzada salía a 0,78 de Blender; con 0,3, las losas a
 // 1,33). k no pasa de 2 y, con la curva Filmic, lo claro ya no se desborda como con ACES.
@@ -32,6 +42,14 @@ export const SOMBREADO = { ambiente: 0.44, cielo: 1.3, rebote: 0.25, sol: 1.0, k
 // Intensidad de la mancha de luz de las luminarias (extras.exterior_aditivo): con emisión 1 (noche), la textura tal cual,
 // que ya es el incremento de pantalla medido en Blender.
 export const LUZ_SUELO = 1.0;
+// Transparencia (corrección 08, ronda 2): three.js mezcla lo transparente sobre el lienzo ya codificado en sRGB y
+// Blender, en lineal; con el mismo alfa, un vidrio claro aclara mucho menos lo oscuro de atrás (la ventana del E3 detrás
+// de la baranda de alfa 0,28: 81 en el visor contra 99 en Blender, sRGB). El visor usa α' = 1 − (1 − α)^MEZCLA_SRGB:
+// con 1,35, 0,28 pasa a 0,36 (ventana 0,88 y muro 1,15 de Blender detrás del vidrio, tools/medir_08.py).
+export const MEZCLA_SRGB = 1.35;
+export function opacidadVisor(alfa) {
+  return alfa >= 1 ? 1 : 1 - (1 - Math.max(0, alfa)) ** MEZCLA_SRGB;
+}
 export const MARCA = "#include <opaque_fragment>";
 
 export function esExterior(material, objeto) {
@@ -79,19 +97,11 @@ vec3 curvaFilmicExt( vec3 x ) {
   return vec3( texture2D( curvaTono, vec2( u.r, v ) ).r, texture2D( curvaTono, vec2( u.g, v ) ).r,
     texture2D( curvaTono, vec2( u.b, v ) ).r );
 }
-vec3 acesFondoExt( vec3 color ) {
-  const mat3 entrada = mat3( vec3( 0.59719, 0.07600, 0.02840 ), vec3( 0.35458, 0.90834, 0.13383 ),
-    vec3( 0.04823, 0.01566, 0.83777 ) );
-  const mat3 salida = mat3( vec3( 1.60475, -0.10208, -0.00327 ), vec3( -0.53108, 1.10813, -0.07276 ),
-    vec3( -0.07367, -0.00605, 1.07602 ) );
-  color = entrada * ( color * exposicionFondo / 0.6 );
-  color = ( color * ( color + 0.0245786 ) - 0.000090537 ) / ( color * ( 0.983729 * color + 0.4329510 ) + 0.238081 );
-  return clamp( salida * color, 0.0, 1.0 );
-}
 `;
 
 // Agrega al shader de MeshBasicMaterial la emisión (con mapa si el material lo trae), la curva de tono Filmic, la bruma
-// (con el horizonte del panorama por azimut si hay textura) y, en el vidrio, la máscara del reflejo y su intensidad.
+// (con el horizonte del panorama por azimut si hay textura) y, en el vidrio, la intensidad del reflejo y, si trae mapa
+// de rugosidad, su máscara.
 // `u`: los uniformes del material (se actualizan por momento sin recompilar). Devuelve false si el shader no trae la
 // marca esperada (otra versión de three): el material queda como MeshBasicMaterial, sin emisión.
 export function inyectar(shader, u, THREE_ = THREE) {
@@ -99,14 +109,16 @@ export function inyectar(shader, u, THREE_ = THREE) {
   Object.assign(shader.uniforms, u);
   const conMapa = Boolean(u.mapaEmisivo);
   const horizonte = Boolean(u.horizonteTex);
-  const vidrio = Boolean(u.rugosidadVidrio);
+  const vidrio = Boolean(u.intensidadReflejo);
+  const mascara = vidrio && Boolean(u.rugosidadVidrio);
   let decl = "uniform vec3 colorEmisivo;\nuniform vec3 colorNeblina;\nuniform float neblina;\nuniform float saturacion;\n"
-    + "uniform float exposicion;\nuniform float exposicionFondo;\nuniform sampler2D curvaTono;\nuniform float filaCurva;\n"
+    + "uniform float exposicion;\nuniform sampler2D curvaTono;\nuniform float filaCurva;\n"
     + (conMapa ? "uniform sampler2D mapaEmisivo;\n" : "")
     + (horizonte ? "uniform sampler2D horizonteTex;\nuniform float intensidadHorizonte;\nvarying vec3 vPosMundoExt;\n" : "")
-    + (vidrio ? "uniform float rugosidadVidrio;\nuniform float rugosidadMarco;\nuniform float intensidadReflejo;\n" : "");
+    + (mascara ? "uniform float rugosidadVidrio;\nuniform float rugosidadMarco;\n" : "")
+    + (vidrio ? "uniform float intensidadReflejo;\n" : "");
   let frag = shader.fragmentShader;
-  if (vidrio) {
+  if (mascara) {
     // máscara del reflejo: el canal G del mapa de rugosidad (metallicRoughnessTexture de glTF), 1 en el vidrio y 0 en
     // el marco; el cielo reflejado con la intensidad del fondo del momento
     frag = frag.replace("#include <specularmap_fragment>", `float specularStrength = 1.0;
@@ -114,20 +126,25 @@ export function inyectar(shader, u, THREE_ = THREE) {
   specularStrength = clamp( ( rugosidadMarco - texture2D( specularMap, vSpecularMapUv ).g )
     / max( rugosidadMarco - rugosidadVidrio, 1e-3 ), 0.0, 1.0 );
 #endif`);
+  }
+  if (vidrio) {
     frag = frag.replace("#include <envmap_fragment>", THREE_.ShaderChunk.envmap_fragment.replace(
       "outgoingLight = mix( outgoingLight, envColor.xyz, specularStrength * reflectivity );",
-      "outgoingLight = mix( outgoingLight, envColor.xyz * intensidadReflejo, specularStrength * reflectivity );"));
+      "outgoingLight = mix( outgoingLight, envColor.xyz * intensidadReflejo, specularStrength * reflectivity );").replace(
+      "outgoingLight += envColor.xyz * specularStrength * reflectivity;",
+      "outgoingLight += envColor.xyz * intensidadReflejo * specularStrength * reflectivity;"));
   }
   const bruma = horizonte
     ? "vec3 dirH = normalize( vPosMundoExt - cameraPosition );\n"
       + "vec3 neb = texture2D( horizonteTex, vec2( atan( dirH.z, dirH.x ) * RECIPROCAL_PI2 + 0.5, 0.5 ) ).rgb * intensidadHorizonte;\n"
     : "vec3 neb = colorNeblina;\n";
   // saturación antes de la emisión (las ventanas encendidas conservan su color), la curva de tono y la bruma al final,
-  // hacia el horizonte como lo dibuja el fondo (ACES de three.js con la intensidad del fondo)
+  // hacia el horizonte como lo dibuja el fondo: su color lineal por la intensidad del fondo, sin curva (three.js no
+  // aplica tone mapping a un fondo sRGB)
   const suma = "outgoingLight = mix( vec3( dot( outgoingLight, vec3( 0.2126, 0.7152, 0.0722 ) ) ), outgoingLight, saturacion );\n"
     + (conMapa ? "outgoingLight += colorEmisivo * texture2D( mapaEmisivo, vMapUv ).rgb;\n" : "outgoingLight += colorEmisivo;\n")
     + "outgoingLight = curvaFilmicExt( outgoingLight * exposicion );\n" + bruma
-    + "outgoingLight = mix( outgoingLight, acesFondoExt( neb ), neblina );\n";
+    + "outgoingLight = mix( outgoingLight, neb, neblina );\n";
   shader.fragmentShader = decl + GLSL_TONO + frag.replace(MARCA, suma + MARCA);
   if (horizonte) {
     shader.vertexShader = "varying vec3 vPosMundoExt;\n" + shader.vertexShader.replace("#include <project_vertex>",
@@ -154,11 +171,16 @@ export function materialExterior(src) {
       emisivoBase: emisivo || new THREE.Color(1, 1, 1), uniformes: null };
     return m;
   }
-  const vidrio = ud0.exterior_vidrio && typeof ud0.exterior_vidrio === "object" && src.roughnessMap
-    ? ud0.exterior_vidrio : null;
+  // vidrio (extras.exterior_vidrio): con mapa de rugosidad (la máscara del reflejo) o, con uniforme = true (las barandas;
+  // corrección 08, ronda 2), todo el paño refleja parejo y no lleva sombreado por vértice (capa "plano")
+  const ev = ud0.exterior_vidrio && typeof ud0.exterior_vidrio === "object" ? ud0.exterior_vidrio : null;
+  const uniforme = Boolean(ev && ev.uniforme);
+  const vidrio = ev && (src.roughnessMap || uniforme) ? ev : null;
+  const capaFinal = uniforme ? "plano" : capa;
   const m = new THREE.MeshBasicMaterial({
     name: src.name, map: src.map || null, color: src.color ? src.color.clone() : new THREE.Color(1, 1, 1),
-    vertexColors: true, transparent: Boolean(src.transparent), opacity: src.opacity ?? 1, side: src.side,
+    vertexColors: true, transparent: Boolean(src.transparent),
+    opacity: src.transparent ? opacidadVisor(src.opacity ?? 1) : src.opacity ?? 1, side: src.side,
     depthWrite: src.depthWrite !== false, alphaTest: src.alphaTest || 0, toneMapped: false,
   });
   const u = {
@@ -167,7 +189,6 @@ export function materialExterior(src) {
     neblina: { value: 0 },
     saturacion: { value: 1 },
     exposicion: { value: 1 },
-    exposicionFondo: { value: 1 },
     curvaTono: { value: texturaCurva() },
     filaCurva: { value: 0 },
   };
@@ -177,36 +198,41 @@ export function materialExterior(src) {
     u.intensidadHorizonte = { value: 1 };
   }
   if (vidrio) {
-    m.specularMap = src.roughnessMap;
-    m.combine = THREE.MixOperation;
+    // el reflejo se suma (corrección 08, ronda 2; antes se mezclaba): el Principled de Blender suma el especular al
+    // difuso, y con la mezcla lo claro detrás del vidrio (cortinas, persianas) se apagaba hacia el cielo reflejado
+    m.combine = THREE.AddOperation;
     m.reflectivity = vidrio.reflectividad ?? 0.3;
-    u.rugosidadVidrio = { value: vidrio.rugosidad_vidrio ?? 0.12 };
-    u.rugosidadMarco = { value: vidrio.rugosidad_marco ?? 0.7 };
     u.intensidadReflejo = { value: 1 };
+    if (!uniforme) {
+      m.specularMap = src.roughnessMap;
+      u.rugosidadVidrio = { value: vidrio.rugosidad_vidrio ?? 0.12 };
+      u.rugosidadMarco = { value: vidrio.rugosidad_marco ?? 0.7 };
+    }
   }
   // extras.tinte (lineal): el factor de color de las siluetas, que el exportador de Blender 3.6 no pasa a
   // baseColorFactor cuando va en un nodo MixRGB
   const tinte = ud0.tinte;
   if (Array.isArray(tinte) && tinte.length >= 3) m.color.multiply(new THREE.Color(tinte[0], tinte[1], tinte[2]));
-  m.userData = { ...ud0, exterior: true, capa, vidrio: Boolean(vidrio), colorBase: m.color.clone(), emisivoBase: emisivo,
-    uniformes: u };
+  m.userData = { ...ud0, exterior: true, capa: capaFinal, vidrio: Boolean(vidrio), colorBase: m.color.clone(),
+    emisivoBase: emisivo, uniformes: u };
   m.onBeforeCompile = (sh) => { inyectar(sh, u); };
-  const clave = `exterior_${u.mapaEmisivo ? "mapa" : "plano"}_${capa}_${vidrio ? "vidrio" : "opaco"}`;
+  const clave = `exterior_${u.mapaEmisivo ? "mapa" : "plano"}_${capaFinal}_${vidrio ? (uniforme ? "reflejo" : "vidrio") : "opaco"}`;
   m.customProgramCacheKey = () => clave;
   return m;
 }
 
-// k de una normal (nx, ny, nz) con el sol `s` (unitario) y los factores del momento `f` = { cielo, sol }, sin el
-// oscurecimiento junto a la calle ni las cotas.
+// k de una normal (nx, ny, nz) con el sol `s` (unitario) y los factores del momento `f` = { cielo, sol, arriba }, sin
+// el oscurecimiento junto a la calle ni las cotas.
 export function factorSombreado(nx, ny, nz, s, p = SOMBREADO, f = {}) {
-  const fc = f.cielo ?? 1, fs = f.sol ?? 1;
+  const fc = f.cielo ?? 1, fs = f.sol ?? 1, fa = f.arriba ?? 1;
   const d = Math.max(0, nx * s.x + ny * s.y + nz * s.z);
-  return fc * (p.ambiente + p.cielo * Math.max(0, ny) + (p.rebote - p.ambiente) * Math.max(0, -ny)) + fs * p.sol * d;
+  return fc * (p.ambiente + fa * p.cielo * Math.max(0, ny) + (p.rebote - p.ambiente) * Math.max(0, -ny))
+    + fs * p.sol * d;
 }
 
 // Color por vértice (atributo `color`) de una geometría ya en espacio de mundo. haciaSol: vector unitario hacia el sol
-// (glTF); sueloY: la calle (exterior.suelo_y); capa: "cerca", "lejos" o "aditivo" (la mancha de luz: 1); f: factores del
-// momento. Reusa el atributo si ya existe (se recalcula en cada cambio de momento).
+// (glTF); sueloY: la calle (exterior.suelo_y); capa: "cerca", "lejos", "aditivo" (la mancha de luz: 1) o "plano" (el
+// vidrio uniforme: 1); f: factores del momento. Reusa el atributo si ya existe (se recalcula en cada cambio de momento).
 export function sombrear(geo, haciaSol, sueloY = 0, capa = "cerca", p = SOMBREADO, f = {}) {
   const n = geo.getAttribute("normal");
   const pos = geo.getAttribute("position");
@@ -218,7 +244,7 @@ export function sombrear(geo, haciaSol, sueloY = 0, capa = "cerca", p = SOMBREAD
   const c = attr.array;
   const fc = f.cielo ?? 1;
   for (let i = 0; i < pos.count; i++) {
-    let k = capa === "aditivo" ? 1 : p.lejos;
+    let k = capa === "aditivo" || capa === "plano" ? 1 : p.lejos;
     if (capa === "cerca" && n) {
       const nx = n.getX(i), ny = n.getY(i), nz = n.getZ(i);
       k = factorSombreado(nx, ny, nz, haciaSol, p, f);
@@ -261,6 +287,29 @@ export function haciaSolDe(D, elevacionDeg = null) {
   return v;
 }
 
+// Hacia el sol del momento `id` (glTF, unitario): exterior.sol[id] del modelo (contrato 2.5: el sol medido en su
+// panorama, con el azimut ya girado; hacia_gl, o azimut_deg y elevacion_deg en la convención de Blender) o, si el
+// modelo no lo trae, el azimut del sol de la escena con `elevacionRespaldo` (MOMENTOS[id].sol.elevacion).
+export function haciaSolMomento(D, id, elevacionRespaldo = null) {
+  const s = D && D.exterior && D.exterior.sol && D.exterior.sol[id];
+  if (s && Array.isArray(s.hacia_gl) && s.hacia_gl.length === 3) {
+    return new THREE.Vector3(...s.hacia_gl).normalize();
+  }
+  if (s && typeof s.azimut_deg === "number" && typeof s.elevacion_deg === "number") {
+    const a = (s.azimut_deg * Math.PI) / 180, e = (s.elevacion_deg * Math.PI) / 180;
+    // Blender (cos e cos a, cos e sin a, sin e) -> glTF (x, z, −y)
+    return new THREE.Vector3(Math.cos(e) * Math.cos(a), Math.sin(e), -Math.cos(e) * Math.sin(a)).normalize();
+  }
+  return haciaSolDe(D, elevacionRespaldo);
+}
+
+// Intensidad con que se dibuja el panorama del momento: exterior.panoramas_intensidad[id] del modelo (contrato 2.5: los
+// cielos ya en pantalla con la curva Filmic de los renders van con 1) o, si falta, la del momento (cielo.js).
+export function intensidadFondo(D, id, momento) {
+  const pi = D && D.exterior && D.exterior.panoramas_intensidad;
+  return pi && typeof pi[id] === "number" ? pi[id] : momento.fondoIntensidad ?? 1;
+}
+
 // Tinte, bruma, emisión, curva, exposición y reflejo del momento. `momento`: MOMENTOS[id] de cielo.js; `id`: su clave;
 // `exterior`: D.exterior (su `emision` manda sobre la del momento); `horizonte`: color lineal medio del horizonte del
 // panorama; `panorama`: la textura del panorama del momento (su userData.horizonteTex, el horizonte por azimut, y el
@@ -291,7 +340,6 @@ export function aplicarMomentoExterior(materiales, momento, id, exterior = {}, h
     u.neblina.value = lejos ? e.neblina ?? 0 : 0;
     u.saturacion.value = e.saturacion ?? 1;
     u.exposicion.value = 2 ** (e.exposicion ?? 0);
-    u.exposicionFondo.value = (momento.exposicion ?? 1) * fondo;
     u.filaCurva.value = e.curva === "contraste_medio" ? 1 : 0;
     if (u.horizonteTex) {
       u.horizonteTex.value = texH;
