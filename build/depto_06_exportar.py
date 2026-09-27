@@ -3,13 +3,15 @@
 Uso (o todo el pipeline con build/depto_run.sh 06):
     blender -b build/depto.blend --python-exit-code 1 --python build/depto_06_exportar.py
 
-Exige el maestro con el sello vigente de la fase 5 y no lo modifica (sólo lee y exporta). Escribe:
+Exige el maestro con el sello vigente de la fase 08 (exterior, que va después de la 5) y no lo modifica (sólo lee y
+exporta; la emisión del exterior sube a su valor de noche sólo mientras exporta). Escribe:
     exports/depto.glb                 mallas visibles (sin Depto_Ref_*, Depto_Col_*, cámaras ni luces), imágenes
                                       JPEG (en automático el GLB pesaba 17,5 MB; límite de la página: 15 MB),
                                       propiedades extra (puertas, corredera) para el visor
     exports/web/                      lo que se publica con el visor (las páginas de claude.ai no sirven .glb ni
                                       .bin): depto_gltf.json (el glTF), depto_bin.b64.txt (geometría en base64),
-                                      tex/*.jpg (las imágenes tal cual) y depto_web.json (índice con tamaños). El
+                                      tex/*.jpg (las imágenes tal cual, más los cielos tex/cielo_<momento>.jpg de
+                                      Poly Haven que usa el visor de fondo) y depto_web.json (índice con tamaños). El
                                       visor arma el GLB en memoria; aquí se arma igual (armar_glb) y se reimporta.
     exports/depto_colisiones.json     cajas 2D en el plano XZ de glTF (Y arriba) para una cámara cilíndrica:
                                       estáticas, y móviles en el marco local de su nodo (hojas y corredera)
@@ -54,9 +56,11 @@ MANIFIESTO = os.path.join(EXPORTS, "manifest.json")
 TEX_MANIFIESTO = os.path.join(RAIZ, "assets", "texturas", "polyhaven", "manifest.json")
 RADIO = 0.20                          # compuerta 0 / ADR 0002: radio de la cámara del tour con el mobiliario
 OJO = 1.60                            # altura de los ojos (la de las cámaras de revisión)
-CONTRATO = "2.2"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
+CONTRATO = "2.3"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
                                       # sigue siendo la mayor (2), por compatibilidad del visor. 2.2 (corrección 07c,
-                                      # ronda 2): enciende / movil (luz de la nevera), alcance_m y entornos[]
+                                      # ronda 2): enciende / movil (luz de la nevera), alcance_m y entornos[]. 2.3
+                                      # (bloque 08): exterior con panoramas por momento, rotacion_deg, suelo_y y emision,
+                                      # y materiales Depto_Ext_Mat_* con exterior = true en sus extras
 INICIO, MIRAR = "Hall", (190, 250)    # crítico de recorrido, fase 3: hall con 0,45 m de holgura, hacia el living
 DETRAS_DE_PUERTA = {"Dorm1", "Dorm2", "Bano1", "Bano2", "Paso_D1", "Paso_D2", "Balcon"}
 
@@ -68,6 +72,11 @@ def gl(v):
 
 def r4(x):
     return round(float(x), 4)
+
+
+def es_exterior(o):
+    """Objetos de la fase 08 (Depto_Exterior): paisaje sin colisión que el visor dibuja como fondo."""
+    return bool(o.get("exterior"))
 
 
 def exportables(root):
@@ -426,7 +435,10 @@ def prueba_aperturas(root):
     bpy.context.view_layer.update()
     moviles = [o for o in exportables(root) if o.parent is None and ("puerta" in o or "recorrido_m" in o)]
     propios = set(moviles) | {h for o in moviles for h in descendientes(o)}
-    estaticos = [(o, c) for o in exportables(root) if o not in propios for c in _cajas(o, o.matrix_world)]
+    # el exterior (fase 08) queda fuera: está a más de 1 m de cualquier móvil y la fase 08 ya prueba que no entra en el
+    # volumen del depto, del balcón ni del palier
+    estaticos = [(o, c) for o in exportables(root) if o not in propios and not es_exterior(o)
+                 for c in _cajas(o, o.matrix_world)]
     ref = {o.name: (False if o.get("clase") in CLASES_MUEBLE else bool(o.get("abierta"))) for o in moviles}
     por_nombre = {o.name: o for o in moviles}
     cache = {}
@@ -695,6 +707,49 @@ def _render_entorno(scene, archivo):
     return escala
 
 
+# ---------------------------------------------------------------------------
+# Exterior (bloque 08; contrato 2.3, sección 4). La fase 08 deja la emisión del paisaje (ventanas vecinas, luminarias)
+# en 0 en el maestro, para los renders de día, y en cada material su valor de noche (emision_noche): se exporta con ése
+# y el visor lo escala por momento (exterior.emision). Los cielos JPG de Poly Haven van junto a las texturas.
+# ---------------------------------------------------------------------------
+class emision_exterior:
+    """Sube la emisión de los materiales del exterior a su valor de noche mientras dura el bloque y la devuelve."""
+
+    def __enter__(self):
+        self.previo = {}
+        for m in bpy.data.materials:
+            if m.get("exterior") and "emision_noche" in m:
+                b = m.node_tree.nodes.get("Principled BSDF")
+                self.previo[m.name] = b.inputs["Emission Strength"].default_value
+                b.inputs["Emission Strength"].default_value = float(m["emision_noche"])
+        return self
+
+    def __exit__(self, *exc):
+        for n, v in self.previo.items():
+            bpy.data.materials[n].node_tree.nodes.get("Principled BSDF").inputs["Emission Strength"].default_value = v
+        return False
+
+
+def exterior(scene):
+    """Registro `exterior` del contrato 2.3 y copia de los cielos a exports/web/tex/ (el visor los lee desde modelo/)."""
+    ext = json.loads(scene.get("depto_exterior", "{}"))
+    if not ext:
+        raise SystemExit("ERROR: el maestro no trae scene['depto_exterior'] (fase 08).")
+    for momento, ruta in ext["panoramas"].items():
+        origen = os.path.join(RAIZ, ext["fuentes"][momento]["jpg"])
+        destino = os.path.join(WEB, ruta)
+        os.makedirs(os.path.dirname(destino), exist_ok=True)
+        shutil.copyfile(origen, destino)
+    reg = {k: ext[k] for k in ("panoramas", "rotacion_deg", "suelo_y", "emision")}
+    reg["cielos"] = {k: f["id"] for k, f in ext["fuentes"].items()}
+    reg["nota"] = ("panoramas equirectangulares de Poly Haven (CC0), girados rotacion_deg alrededor de +Y (antihorario "
+                   "visto desde arriba); materiales con extras.exterior = true: fondo sin luces; emision: fuerza de la "
+                   "emisión del exterior por momento (la del glTF es la de noche)")
+    print("CHECK exterior:", reg["panoramas"], "rotación", reg["rotacion_deg"], "suelo", reg["suelo_y"],
+          {k: f"{os.path.getsize(os.path.join(WEB, v)) / 1e3:.0f} kB" for k, v in reg["panoramas"].items()})
+    return reg
+
+
 def exportar(objs):
     for o in bpy.context.view_layer.objects:
         o.select_set(False)
@@ -766,7 +821,7 @@ def md5(ruta):
 
 def main():
     scene = bpy.context.scene
-    SE.exigir(scene, "05", bpy.data.filepath)
+    SE.exigir(scene, "08", bpy.data.filepath)
     root = bpy.data.collections["Depto"]
     bpy.context.view_layer.update()
     objs = exportables(root)
@@ -795,7 +850,10 @@ def main():
         print("FALLA", f)
     if fallos:
         raise SystemExit(f"ERROR: {len(fallos)} pruebas de la fase 6 fallan; no se exporta.")
-    indice = exportar(objs)
+    with emision_exterior():
+        indice = exportar(objs)
+    ext = exterior(scene)
+    datos["exterior"] = ext
     tam = os.path.getsize(GLB)
     grandes = [f"{a}: {os.path.getsize(os.path.join(WEB, a)) / 1e6:.2f} MB" for a in
                ["depto_gltf.json", "depto_bin.b64.txt"] + [i["uri"] for i in indice["imagenes"]]
@@ -811,13 +869,19 @@ def main():
         json.dump(datos, fh, ensure_ascii=False, separators=(",", ":"))
     shutil.copy(COLISIONES, os.path.join(WEB, "depto_colisiones.json"))
 
-    pts = [o.matrix_world @ v.co for o in objs for v in o.data.vertices]
+    ext_objs = [o for o in objs if es_exterior(o)]
+    dep_objs = [o for o in objs if not es_exterior(o)]
+    pts = [o.matrix_world @ v.co for o in dep_objs for v in o.data.vertices]      # el depto, sin el paisaje
     lo = [min(p[k] for p in pts) for k in range(3)]
     hi = [max(p[k] for p in pts) for k in range(3)]
-    tris = 0
+    tris, tris_ext = 0, 0
     for o in objs:
         o.data.calc_loop_triangles()
         tris += len(o.data.loop_triangles)
+        tris_ext += len(o.data.loop_triangles) if es_exterior(o) else 0
+    pts_ext = [o.matrix_world @ v.co for o in ext_objs for v in o.data.vertices]
+    lo_e = [min(p[k] for p in pts_ext) for k in range(3)] if pts_ext else [0.0] * 3
+    hi_e = [max(p[k] for p in pts_ext) for k in range(3)] if pts_ext else [0.0] * 3
     mats = sorted({m.name for o in objs for m in o.data.materials if m})
     with open(TEX_MANIFIESTO) as fh:
         tex = json.load(fh)
@@ -834,18 +898,24 @@ def main():
                        "luces": len(datos["luces"]), "grupos_luz": len(datos["grupos_luz"]),
                        "interruptores": len(datos["interruptores"])},
         "fecha": datetime.date.today().isoformat(), "fase": "06",
-        "sellos": {**{f: scene.get(SE.clave(f)) for f in ("01", "02", "03", "04", "05")}, "06": SE.sello("06")},
+        "sellos": {**{f: scene.get(SE.clave(f)) for f in ("01", "02", "03", "04", "05", "08")}, "06": SE.sello("06")},
         "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
         "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
         "dimensiones_m": {"x": r4(hi[0] - lo[0]), "y": r4(hi[1] - lo[1]), "z": r4(hi[2] - lo[2])},
         "bbox_blender_m": {"min": [r4(v) for v in lo], "max": [r4(v) for v in hi]},
         "mallas": len(objs), "triangulos": tris, "materiales": mats,
+        "dimensiones_nota": "dimensiones_m y bbox_blender_m son del depto, sin el exterior (objetos Depto_Ext_*)",
+        "exterior": {"mallas": len(ext_objs), "triangulos": tris_ext,
+                     "dimensiones_m": {"x": r4(hi_e[0] - lo_e[0]), "y": r4(hi_e[1] - lo_e[1]), "z": r4(hi_e[2] - lo_e[2])},
+                     "cielos": ext["cielos"], "rotacion_deg": ext["rotacion_deg"],
+                     "fuente": "build/depto_08_exterior.py (diseño e inferido; cielos de Poly Haven, CC0)"},
         "escala": {"m_por_px_plano": P.M_POR_PX, "incertidumbre": "±5 % (inferida de elementos estándar; sin cota real)"},
         "exportacion": {"formato": "GLB", "imagenes": "JPEG", "extras": True, "camaras": False, "luces": False,
                         "blender": bpy.app.version_string},
         "texturas": {tid: {"nombre": t["nombre"], "autores": t["autores"], "pagina": t["pagina"], "licencia": "CC0"}
                      for tid, t in tex["texturas"].items()},
-        "texturas_propias": {"granito_gris_512": "generada por build/depto_05_materiales.py"},
+        "texturas_propias": {"granito_gris_512": "generada por build/depto_05_materiales.py",
+                             "exterior": "assets/texturas/exterior/*.jpg, generadas por build/ext_texturas.py (fase 08)"},
         "prueba_recorrido": informe,
         "fuente": "ref/plano/plano_depto.png (plano del usuario); medidas en asset-brief-depto.md",
     }
