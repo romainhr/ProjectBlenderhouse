@@ -305,7 +305,9 @@ def main():
         camara(f"Depto_Cam_{suf}", pos, obj, z[0] if z else (OJO, OJO), LENTE_MM, col_cam)
     pos, obj, z, lente = MAQUETA
     # El cielo del palier es de la fase 3: si aún no existe, render_interior sólo avisa.
-    camara("Depto_Cam_Maqueta", pos, obj, (z, 0.0), lente, col_cam, ocultar="Depto_Cielo,Depto_Palier_Cielo")
+    # bloque 08: también el exterior (el techo del edificio y los pisos de arriba tapan la maqueta desde lo alto)
+    camara("Depto_Cam_Maqueta", pos, obj, (z, 0.0), lente, col_cam,
+           ocultar="Depto_Cielo,Depto_Palier_Cielo,Depto_Exterior")
 
     # ------------------------------------------------------------------ pruebas
     mundo = []

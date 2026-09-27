@@ -7,6 +7,8 @@ sello(N) = sha1(sello(N-1) + archivos de la fase N)[:12], recalculado siempre de
   fase 3 lo deja sin sello de fase 3, y la fase 4 aborta hasta que se reconstruya la 3.
 - Las fases 2 en adelante sólo escriben el maestro que abrieron: si se abrió otra ruta (p.ej. la copia que
   muestra tools/watch_blend.py), abortan antes de tocar nada.
+- El orden de la cadena es ORDEN, no el numérico: la fase 08 (exterior, bloque 08) va entre la 05 y la exportación
+  (06), que exige su sello.
 Prueba: build/depto_medicion/test_sellos.py (la ejecuta build/depto_run.sh).
 """
 import hashlib
@@ -23,8 +25,10 @@ FASES = {
     "04": ("depto_04_mobiliario.py", "depto_color.py", "deco_living.py", "deco_dormitorio.py", "deco_cocina_bano.py",
            "deco_objetos.py", "deco_comedor.py", "deco_hall.py"),
     "05": ("depto_05_materiales.py", "deco_paleta.py", "deco_texturas.py", "../assets/texturas/propias/manifest.json"),
+    "08": ("depto_08_exterior.py", "ext_texturas.py", "../assets/hdri/manifest.json"),
     "06": ("depto_06_exportar.py",),   # no sella el maestro: el sello va en exports/manifest.json
 }
+ORDEN = ("01", "02", "03", "04", "05", "08", "06")   # orden de la cadena (y del pipeline)
 
 
 def clave(fase):
@@ -40,7 +44,7 @@ def sello(fase, leer=_leer):
     if fase not in FASES:
         raise KeyError(f"fase desconocida: {fase}")
     previo = ""
-    for f in sorted(FASES):
+    for f in ORDEN:
         h = hashlib.sha1(previo.encode())
         for nombre in FASES[f]:
             h.update(leer(nombre))
@@ -62,8 +66,8 @@ def exigir(escena, fase_previa, ruta_abierta, leer=_leer):
 
 def sellar(escena, fase, leer=_leer):
     """Sella la fase y borra los sellos de las posteriores. Devuelve el sello."""
-    for f in FASES:
-        if f > fase and clave(f) in escena:
+    for f in ORDEN[ORDEN.index(fase) + 1:]:
+        if clave(f) in escena:
             del escena[clave(f)]
     escena[clave(fase)] = sello(fase, leer)
     return escena[clave(fase)]
