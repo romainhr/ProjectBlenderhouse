@@ -177,19 +177,27 @@ como latón.
 
 ```json
 "entornos": [
-  {"id": "cocina", "imagen": "tex/entorno_cocina.jpg", "centro": [0.288, 1.3, 1.660],
-   "caja": [-0.921, 1.878, 0.395, 2.766], "materiales": ["Depto_Mat_NeveraAcero", "Depto_Mat_Acero", "Depto_Mat_AceroInox"],
-   "escala": 7.8, "muestras": 48, "luces": "grupos que nacen encendidos (tarde)"}
+  {"id": "cocina", "imagen": "tex/entorno_cocina.jpg",
+   "imagenes": {"luces": "tex/entorno_cocina.jpg", "dia": "tex/entorno_cocina_dia.jpg"},
+   "centro": [0.288, 1.3, 1.660], "caja": [-0.921, 1.878, 0.395, 2.766], "alto": [0.0, 2.4],
+   "materiales": ["Depto_Mat_NeveraAcero", "Depto_Mat_Acero", "Depto_Mat_AceroInox"], "grupo": "cocina_techo",
+   "escala": {"luces": 7.8, "dia": 19.6}, "muestras": 48, "luces": "luces: grupos que nacen encendidos; dia: sólo el sol y el cielo"}
 ]
 ```
 
-- `imagen`: equirectangular de 512 × 256 (JPEG sRGB, junto a las texturas del modelo), renderizado en Cycles (CPU, 48
-  muestras con eliminación de ruido) desde `centro` (glTF) con las luces de los grupos que nacen encendidos; el
-  centro de la imagen mira hacia +X de glTF y la derecha hacia +Z, la convención de `EquirectangularReflectionMapping`.
-  `escala` es el factor que llevó el percentil 97 de la luminancia a 0,9 antes de codificar (informativo).
-- `caja` [xmin, xmax, zmin, zmax] (glTF) y `materiales`: el visor clona esos materiales en las mallas cuyo centro cae
-  dentro de la caja (también las móviles, como la puerta de la nevera) y les pone como `envMap` el mapa prefiltrado
-  (PMREM) de la imagen; su intensidad es la `entornoLocal` del momento del día (`web/src/tour/js/cielo.js`). Las
-  demás mallas siguen con el entorno general.
+- `imagenes`: equirectangulares de 512 × 256 (JPEG sRGB, junto a las texturas del modelo), renderizados en Cycles
+  (CPU, 48 muestras con eliminación de ruido) desde `centro` (glTF): `luces`, con los grupos que nacen encendidos, y
+  `dia`, sólo con el sol y el cielo (sin luces ni emisivos). El visor usa `luces` mientras el grupo `grupo` (la luz del
+  recinto) está encendido y `dia` si está apagado. `imagen` repite la de las luces
+  para un visor que sólo lea una. El centro de la imagen mira hacia +X de glTF y la derecha hacia +Z, la convención de
+  `EquirectangularReflectionMapping`. `escala` es el factor que llevó el percentil 97 de la luminancia a 0,9 antes de
+  codificar (informativo).
+- `caja` [xmin, xmax, zmin, zmax] (glTF), `alto` [ymin, ymax] y `materiales`: el visor clona esos materiales en las
+  mallas cuyo centro cae dentro de la caja (también las móviles, como la puerta de la nevera) y les pone como `envMap`
+  el mapa prefiltrado (PMREM) de la variante que toca; su intensidad es la de `entornoLocal` del momento del día para
+  esa variante (`web/src/tour/js/cielo.js`, calibrada contra Blender desde las mismas cámaras; `actualizarEntornos` en
+  `carga.js`, en cada cuadro). El reflejo se proyecta en la caja (paralaje, como las sondas de caja de Eevee): sin
+  eso, la visera de la campana, que mira hacia la cubierta y los muebles bajos, reflejaba el piso claro que se ve desde
+  el centro. Las demás mallas siguen con el entorno general.
 - Lo produce `entorno_cocina()` en `build/depto_06_exportar.py`; lo usan `cargarEntornos` y `prepararEscena` en
   `web/src/tour/js/carga.js`.
