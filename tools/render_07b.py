@@ -501,6 +501,9 @@ def _dist_nevera():
 # marcas del texto de una vista que se completan con una medida del render, con las piezas ya en su estado (07c: las
 # usa también tools/render_07c.py)
 MARCAS = {"{dist_nevera}": _dist_nevera}
+# Ganchos opcionales de otros scripts de revisión (tools/render_09.py): "antes"(scene, cam, vista, v, a) y
+# "despues"(scene, cam, vista, v, a, ruta) devuelven campos que se suman a la entrada de renders.json.
+GANCHOS = {}
 
 
 def grupos_de_moviles(estado, moviles):
@@ -599,12 +602,17 @@ def main():
         for o in ocultar:
             o.hide_render = True
         scene.camera = cam
+        extra = {}
+        if GANCHOS.get("antes"):                   # p. ej. tools/render_09.py: exposición calibrada por vista
+            extra.update(GANCHOS["antes"](scene, cam, vista, v, a) or {})
         ruta = os.path.join(a.out, f"{vista}.png")
         scene.render.filepath = ruta
         bpy.ops.render.render(write_still=True)
+        if GANCHOS.get("despues"):                 # p. ej. colores medidos en el render
+            extra.update(GANCHOS["despues"](scene, cam, vista, v, a, ruta) or {})
         for o in ocultar:
             o.hide_render = False
-        hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto,
+        hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto, **extra,
                        "balance_blancos": list(pend) if pend else None,
                        "mundo": v["mundo"], "luces": "todas" if v["luces"] == TODOS else list(luces_v),
                        "filtro_luz": v.get("filtro_luz"),
