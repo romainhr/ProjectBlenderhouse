@@ -603,27 +603,58 @@ def pruebas(datos):
 # como envMap de ENTORNO["materiales"] en las mallas dentro de ENTORNO["caja"].
 # ---------------------------------------------------------------------------
 ENTORNO = dict(
-    id="cocina", archivo="tex/entorno_cocina.jpg", resolucion=(512, 256), muestras=48,
+    id="cocina", archivo="tex/entorno_cocina.jpg", archivo_dia="tex/entorno_cocina_dia.jpg", resolucion=(512, 256),
+    muestras=48,
     centro=(360.0, 235.0), z=1.30,          # diseño: px del plano y m; centro de la cocina, a media altura entre la
                                             # cubierta y los altos (el tramo de la nevera y la visera)
     caja=(P.X["T3_E"], P.X["E_FORRO"], P.Y["T5_S"], P.Y["COC_N"]),   # recinto Cocina del plano (px): mallas de los
                                             # materiales de abajo cuyo centro cae aquí
     materiales=("Depto_Mat_NeveraAcero", "Depto_Mat_Acero", "Depto_Mat_AceroInox"),
+    grupo="cocina_techo",                   # la luz del recinto: encendida, el visor usa la variante «luces»; apagada, «dia»
     percentil=0.97, blanco=0.90,            # escala: el 97 % de los píxeles queda bajo 0,90 lineal (el resto, las
                                             # ampolletas y la ventana, se recorta en el JPEG de 8 bits)
 )
 
 
 def entorno_cocina(scene, grupos):
-    """Renderiza ENTORNO en exports/web/<archivo> y devuelve su registro del contrato (sección 6). No guarda el .blend:
-    la fase 6 no modifica el maestro."""
-    import numpy as np
+    """Renderiza ENTORNO en dos variantes, «luces» (los grupos que nacen encendidos: tarde y noche del visor) y «dia»
+    (sólo el sol y el cielo), en exports/web/, y devuelve su registro del contrato (sección 6). Con una sola variante,
+    la de las luces, de día el acero reflejaba una cocina alumbrada a 2700-3000 K y la visera se veía de latón junto al
+    azulejo neutro. No guarda el .blend: la fase 6 no modifica el maestro."""
     E_ = ENTORNO
     apagados = {g["id"] for g in grupos if not g.get("encendido")}
     previo = {o.name: o.hide_render for o in bpy.data.objects if o.type == "LIGHT"}
-    for o in bpy.data.objects:
-        if o.type == "LIGHT" and o.get("grupo") in apagados:
-            o.hide_render = True
+    escalas = {}
+    # de día también se apaga el emisivo de las ampolletas: en Cycles una malla emisiva alumbra (la luz lineal bajo los
+    # altos seguía encendida en la variante del día)
+    bsdf = bpy.data.materials["Depto_Mat_Bombilla"].node_tree.nodes.get("Principled BSDF")
+    emision = bsdf.inputs["Emission Strength"].default_value
+    for variante, archivo in (("luces", E_["archivo"]), ("dia", E_["archivo_dia"])):
+        for o in bpy.data.objects:
+            if o.type == "LIGHT" and o.name.startswith("Depto_Luz_") and o.data.type != "SUN":
+                o.hide_render = previo[o.name] or variante == "dia" or o.get("grupo") in apagados
+        bsdf.inputs["Emission Strength"].default_value = 0.0 if variante == "dia" else emision
+        escalas[variante] = _render_entorno(scene, archivo)
+    bsdf.inputs["Emission Strength"].default_value = emision
+    for n, h in previo.items():
+        bpy.data.objects[n].hide_render = h
+    x0, x1, y0, y1 = E_["caja"]
+    a, b = P.a_blender(x0, y0), P.a_blender(x1, y1)
+    reg = {"id": E_["id"], "imagen": E_["archivo"], "imagenes": {"luces": E_["archivo"], "dia": E_["archivo_dia"]},
+           "centro": [r4(c) for c in gl(Vector((*P.a_blender(*E_["centro"]), E_["z"])))],
+           "caja": [r4(min(a[0], b[0])), r4(max(a[0], b[0])), r4(min(-a[1], -b[1])), r4(max(-a[1], -b[1]))],
+           "alto": [0.0, r4(P.ALTURA_PISO_CIELO)],     # y de glTF: piso y cielo (proyección en caja del visor)
+           "materiales": list(E_["materiales"]), "grupo": E_["grupo"], "escala": {k: r4(v) for k, v in escalas.items()},
+           "muestras": E_["muestras"], "luces": "luces: grupos que nacen encendidos; dia: sólo el sol y el cielo"}
+    print("CHECK entorno local:", reg, {k: f"{os.path.getsize(os.path.join(WEB, v)) / 1e3:.0f} kB"
+                                        for k, v in reg["imagenes"].items()})
+    return reg
+
+
+def _render_entorno(scene, archivo):
+    """Un equirectangular de ENTORNO en Cycles hacia exports/web/<archivo>; devuelve la escala aplicada."""
+    import numpy as np
+    E_ = ENTORNO
     cd = bpy.data.cameras.new("_Entorno")
     cd.type = "PANO"
     cd.cycles.panorama_type = "EQUIRECTANGULAR"          # Blender 3.6: en los ajustes de Cycles de la cámara
@@ -657,20 +688,11 @@ def entorno_cocina(scene, grupos):
     r.image_settings.file_format = "JPEG"
     r.image_settings.quality = 92
     r.image_settings.color_mode = "RGB"
-    ruta = os.path.join(WEB, E_["archivo"])
+    ruta = os.path.join(WEB, archivo)
     im.save_render(ruta, scene=scene)
-    for n, h in previo.items():
-        bpy.data.objects[n].hide_render = h
+    bpy.data.images.remove(im)
     bpy.data.objects.remove(cam)
-    x0, x1, y0, y1 = E_["caja"]
-    a, b = P.a_blender(x0, y0), P.a_blender(x1, y1)
-    reg = {"id": E_["id"], "imagen": E_["archivo"], "centro": [r4(c) for c in gl(Vector((*P.a_blender(*E_["centro"]),
-                                                                                         E_["z"])))],
-           "caja": [r4(min(a[0], b[0])), r4(max(a[0], b[0])), r4(min(-a[1], -b[1])), r4(max(-a[1], -b[1]))],
-           "materiales": list(E_["materiales"]), "escala": r4(escala), "muestras": E_["muestras"],
-           "luces": "grupos que nacen encendidos (tarde)"}
-    print("CHECK entorno local:", reg, f"{os.path.getsize(ruta) / 1e3:.0f} kB")
-    return reg
+    return escala
 
 
 def exportar(objs):
