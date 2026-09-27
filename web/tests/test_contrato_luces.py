@@ -150,7 +150,10 @@ class ContratoLuces(unittest.TestCase):
         self.assertEqual([e["id"] for e in ents], ["cocina"])
         mats = {m["name"] for m in _leer("depto_gltf.json").get("materials", [])}
         for e in ents:
-            self.assertTrue(os.path.exists(os.path.join(WEB, e["imagen"])), e["imagen"])
+            for archivo in [e["imagen"], *e.get("imagenes", {}).values()]:
+                self.assertTrue(os.path.exists(os.path.join(WEB, archivo)), archivo)
+            self.assertEqual(set(e.get("imagenes", {})), {"luces", "dia"})
+            self.assertEqual(len(e["alto"]), 2)
             x0, x1, z0, z1 = e["caja"]
             self.assertTrue(x0 < x1 and z0 < z1, e)
             self.assertTrue(x0 <= e["centro"][0] <= x1 and z0 <= e["centro"][2] <= z1, e)

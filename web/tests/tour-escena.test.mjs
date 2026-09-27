@@ -129,3 +129,43 @@ test("prepararEscena: un entorno local (contrato 2.2, sección 6) va sólo a sus
   assert.equal(p.estaticoFusionado.children.filter((m) => m.material.envMap === null).length >= 2, true);
   assert.equal(acero.envMap, null);              // el material original no se toca
 });
+
+test("proyeccionCaja: el reflejo del entorno local se corta contra la caja del recinto (paralaje)", async () => {
+  const { proyeccionCaja, MARCA_REFLEJO } = await import("../src/tour/js/carga.js");
+  const sh = { uniforms: {}, vertexShader: THREE.ShaderLib.physical.vertexShader,
+    fragmentShader: THREE.ShaderLib.physical.fragmentShader };
+  const e = { caja: [0, 2, 0, 3], alto: [0, 2.4], centro: [1, 1.3, 1.5] };
+  assert.equal(proyeccionCaja(sh, e), true);
+  assert.ok(sh.vertexShader.includes("vPosMundo = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;"));
+  assert.ok(!sh.fragmentShader.includes("#include <envmap_physical_pars_fragment>"));
+  assert.ok(sh.fragmentShader.includes(MARCA_REFLEJO + "\n reflectVec = proyectarCaja( reflectVec );"));
+  assert.deepEqual(sh.uniforms.uCajaMax.value.toArray(), [2, 2.4, 3]);
+  assert.deepEqual(sh.uniforms.uCentroEntorno.value.toArray(), [1, 1.3, 1.5]);
+});
+
+test("varianteEntorno: de día la variante del día, con luces la de las luces; una textura sola vale para todo", async () => {
+  const { varianteEntorno } = await import("../src/tour/js/carga.js");
+  const dia = new THREE.Texture(), luces = new THREE.Texture();
+  assert.equal(varianteEntorno({ dia, luces }, false), dia);
+  assert.equal(varianteEntorno({ dia, luces }, true), luces);
+  assert.equal(varianteEntorno({ luces }, false), luces);
+  assert.equal(varianteEntorno(dia, true), dia);
+  assert.equal(varianteEntorno(undefined, true), null);
+});
+
+test("actualizarEntornos: la variante y la intensidad del entorno local siguen a la luz de la cocina", async () => {
+  const { actualizarEntornos } = await import("../src/tour/js/carga.js");
+  const dia = new THREE.Texture(), luces = new THREE.Texture();
+  const mat = new THREE.MeshStandardMaterial({ name: "Depto_Mat_NeveraAcero" });
+  mat.userData = { entornoLocal: "cocina", variantesEntorno: { dia, luces }, grupoEntorno: "cocina_techo" };
+  const grupos = new Map([["cocina_techo", { encendido: false }]]);
+  const inten = { luces: 0.75, dia: 2.0 };
+  assert.equal(actualizarEntornos([mat], grupos, inten), true);
+  assert.equal(mat.envMap, dia);
+  assert.equal(mat.envMapIntensity, 2.0);
+  assert.equal(actualizarEntornos([mat], grupos, inten), false);      // sin cambios, no pide redibujar
+  grupos.get("cocina_techo").encendido = true;
+  assert.equal(actualizarEntornos([mat], grupos, inten), true);
+  assert.equal(mat.envMap, luces);
+  assert.equal(mat.envMapIntensity, 0.75);
+});

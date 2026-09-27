@@ -81,31 +81,88 @@ export function enEntorno(e, material, x, z) {
   return Boolean(material) && e.materiales.includes(material.name) && x >= x0 && x <= x1 && z >= z0 && z <= z1;
 }
 
-// Carga cada imagen de D.entornos como mapa prefiltrado (PMREM). -> Map id -> textura; los que fallen quedan fuera
-// (esas mallas siguen con el entorno general).
+// Carga cada imagen de D.entornos como mapa prefiltrado (PMREM): las variantes de `imagenes` («luces», con los grupos
+// que nacen encendidos, y «dia», sólo el sol y el cielo) o, en un JSON anterior, la única `imagen`. -> Map id ->
+// { luces, dia } (texturas); los que fallen quedan fuera (esas mallas siguen con el entorno general).
 export async function cargarEntornos(renderer, D, rutaBase = RUTA_MODELO) {
   const out = new Map();
   if (!D.entornos || !D.entornos.length) return out;
   const pm = new THREE.PMREMGenerator(renderer);
   const cargador = new THREE.TextureLoader();
   for (const e of D.entornos) {
-    try {
-      const tex = await cargador.loadAsync(rutaBase + e.imagen);
-      tex.mapping = THREE.EquirectangularReflectionMapping;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      out.set(e.id, pm.fromEquirectangular(tex).texture);
-      tex.dispose();
-    } catch (err) {
-      console.warn("[tour] entorno local no disponible", e.imagen, err);
+    const variantes = {};
+    for (const [nombre, archivo] of Object.entries(e.imagenes || { luces: e.imagen })) {
+      try {
+        const tex = await cargador.loadAsync(rutaBase + archivo);
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        variantes[nombre] = pm.fromEquirectangular(tex).texture;
+        tex.dispose();
+      } catch (err) {
+        console.warn("[tour] entorno local no disponible", archivo, err);
+      }
     }
+    if (Object.keys(variantes).length) out.set(e.id, variantes);
   }
   pm.dispose();
   return out;
 }
 
+// La variante del entorno local según la luz de su recinto (el grupo `e.grupo`, cocina_techo): encendida, la de las
+// luces; apagada, la del día; si falta, la otra. `variantes`: { luces, dia } o una textura sola.
+export function varianteEntorno(variantes, lucesEncendidas) {
+  if (!variantes || variantes.isTexture) return variantes || null;
+  return (lucesEncendidas ? variantes.luces || variantes.dia : variantes.dia || variantes.luces) || null;
+}
+
+// Pone en cada material con entorno local la variante y la intensidad que tocan (`intensidades` = { luces, dia } del
+// momento, cielo.js): se llama en cada cuadro, porque la luz de la cocina puede cambiar con un interruptor, el panel o
+// el momento. `gruposLuz`: Map id -> { encendido }. Devuelve true si cambió algo (hay que redibujar).
+export function actualizarEntornos(materiales, gruposLuz, intensidades) {
+  let cambio = false;
+  for (const mat of materiales) {
+    const g = mat.userData.grupoEntorno ? gruposLuz.get(mat.userData.grupoEntorno) : null;
+    const on = g ? Boolean(g.encendido) : true;
+    const tex = varianteEntorno(mat.userData.variantesEntorno, on);
+    const inten = typeof intensidades === "number" ? intensidades : (intensidades || {})[on ? "luces" : "dia"] ?? 1;
+    if (tex && mat.envMap !== tex) { mat.envMap = tex; mat.needsUpdate = true; cambio = true; }
+    if (mat.envMapIntensity !== inten) { mat.envMapIntensity = inten; cambio = true; }
+  }
+  return cambio;
+}
+
+// Proyección en caja (parallax) del entorno local: un equirectangular visto desde un solo punto no tiene paralaje, y la
+// visera de la campana, que mira hacia la cubierta y los muebles bajos oscuros, reflejaba el piso claro que se ve desde
+// el centro de la cocina (se leía como latón). El reflejo se corta contra la caja del recinto (e.caja en XZ y e.alto en
+// Y) y se mira desde e.centro, como las sondas de caja de Eevee en los renders de revisión. Modifica los shaders de
+// MeshStandardMaterial (three r160) en onBeforeCompile; si no encuentra los trozos que espera, deja el shader como está.
+export const MARCA_REFLEJO = "reflectVec = inverseTransformDirection( reflectVec, viewMatrix );";
+export function proyeccionCaja(shader, e, THREE_ = THREE) {
+  const [x0, x1, z0, z1] = e.caja;
+  const [y0, y1] = e.alto || [0, 2.4];
+  const chunk = THREE_.ShaderChunk.envmap_physical_pars_fragment;
+  if (!chunk.includes(MARCA_REFLEJO) || !shader.vertexShader.includes("#include <project_vertex>")) return false;
+  shader.uniforms.uCajaMin = { value: new THREE_.Vector3(x0, y0, z0) };
+  shader.uniforms.uCajaMax = { value: new THREE_.Vector3(x1, y1, z1) };
+  shader.uniforms.uCentroEntorno = { value: new THREE_.Vector3(...e.centro) };
+  shader.vertexShader = "varying vec3 vPosMundo;\n" + shader.vertexShader.replace("#include <project_vertex>",
+    "#include <project_vertex>\nvPosMundo = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;");
+  const proyectar = `
+    uniform vec3 uCajaMin; uniform vec3 uCajaMax; uniform vec3 uCentroEntorno; varying vec3 vPosMundo;
+    vec3 proyectarCaja( vec3 R ) {
+      vec3 Rs = R + vec3( 1e-5 );
+      vec3 t = max( ( uCajaMax - vPosMundo ) / Rs, ( uCajaMin - vPosMundo ) / Rs );
+      float d = min( min( t.x, t.y ), t.z );
+      return normalize( vPosMundo + R * max( d, 0.0 ) - uCentroEntorno );
+    }\n`;
+  const nuevo = proyectar + chunk.replace(MARCA_REFLEJO, MARCA_REFLEJO + "\n reflectVec = proyectarCaja( reflectVec );");
+  shader.fragmentShader = shader.fragmentShader.replace("#include <envmap_physical_pars_fragment>", nuevo);
+  return true;
+}
+
 // Un clon del material por entorno (no por malla: la fusión de abajo los sigue juntando) con envMap = el del entorno y
-// userData.entornoLocal = su id (aplicarMomento le da su propia intensidad). Va antes de registrar los móviles: la
-// puerta de la nevera también lo usa.
+// userData.entornoLocal = su id (aplicarMomento le da su propia intensidad) y la proyección en caja. Va antes de
+// registrar los móviles: la puerta de la nevera también lo usa.
 function aplicarEntornos(raiz, entornos, texturas) {
   const clones = new Map();
   const caja = new THREE.Box3();
@@ -114,13 +171,18 @@ function aplicarEntornos(raiz, entornos, texturas) {
     if (!o.isMesh || Array.isArray(o.material)) return;
     caja.setFromObject(o).getCenter(c);
     for (const e of entornos) {
-      const tex = texturas.get(e.id);
+      const variantes = texturas.get(e.id);
+      const tex = varianteEntorno(variantes, true);
       if (!tex || !enEntorno(e, o.material, c.x, c.z)) continue;
       const k = `${e.id}|${o.material.uuid}`;
       if (!clones.has(k)) {
         const clon = o.material.clone();
         clon.envMap = tex;
-        clon.userData = { ...clon.userData, entornoLocal: e.id };
+        clon.userData = { ...clon.userData, entornoLocal: e.id, variantesEntorno: variantes, grupoEntorno: e.grupo };
+        if (e.centro) {
+          clon.onBeforeCompile = (sh) => { proyeccionCaja(sh, e); };
+          clon.customProgramCacheKey = () => `entorno_${e.id}`;
+        }
         clones.set(k, clon);
       }
       o.material = clones.get(k);

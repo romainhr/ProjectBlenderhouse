@@ -75,8 +75,8 @@ function aplicarMomento(id, estadoInteraccion) {
       // espejos reflejan más y el resto recibe un relleno suave. Corrección 07c (ronda 2): el refuerzo de 1,8 era para
       // todo metal y hacía del acero cepillado (rugosidad 0,25-0,35) un espejo del estudio; queda sólo bajo 0,25. Un
       // material con mapa de rugosidad trae roughness = 1 (el factor de glTF): queda en 1 también.
-      if (mat.userData && mat.userData.entornoLocal) mat.envMapIntensity = m.entornoLocal;
-      else mat.envMapIntensity = m.entorno * (mat.metalness > 0.5 && mat.roughness < 0.25 ? 1.8 : 1);
+      if (mat.userData && mat.userData.entornoLocal) continue;          // actualizarEntornos, en cada cuadro
+      mat.envMapIntensity = m.entorno * (mat.metalness > 0.5 && mat.roughness < 0.25 ? 1.8 : 1);
     }
   });
   ambiente.intensity = m.ambiente;
@@ -88,12 +88,14 @@ function aplicarMomento(id, estadoInteraccion) {
     const estados = estadoGruposParaMomento(estadoInteraccion.gruposLuz.values(), m.lucesEncendidas);
     for (const [id2, encendido] of estados) fijarGrupo(estadoInteraccion, id2, encendido);
     ui.refrescarGruposLuzUI(estadoInteraccion.gruposLuz);
+    carga.actualizarEntornos(materialesEntorno, estadoInteraccion.gruposLuz, m.entornoLocal);
   }
   sucio = true;
 }
 
 // ---------------------------------------------------------------------------------------------- carga
 let D = null, estado = null, controles = null, M = null;
+let materialesEntorno = [];   // materiales con entorno local (carga.js): su variante sigue a la luz de la cocina
 let sucio = true;
 
 async function iniciar() {
@@ -130,6 +132,10 @@ async function iniciar() {
   const entornos = await carga.cargarEntornos(renderer, D);
   const preparado = carga.prepararEscena(gltf.scene, D, { entornos });
   estado = crearInteraccion(preparado);
+  preparado.estaticoFusionado.traverse((o) => { if (o.isMesh && o.material.userData.entornoLocal) materialesEntorno.push(o.material); });
+  for (const n of preparado.sueltos) n.traverse((o) => {
+    if (o.isMesh && o.material.userData && o.material.userData.entornoLocal && !materialesEntorno.includes(o.material)) materialesEntorno.push(o.material);
+  });
   scene.add(estado.estaticoFusionado);
   for (const nodo of estado.sueltos) scene.attach(nodo);
   for (const luz of estado.lucesTHREE) {
@@ -291,6 +297,8 @@ function pasoCuadro(dt) {
       || estado.interruptores.some((r) => r._faseTecla !== undefined && r._faseTecla < 150);
   }
 
+  // la variante del entorno local sigue a la luz de la cocina (interruptor, panel o momento)
+  if (estado && carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal)) sucio = true;
   if (sucio || actividad) {
     const t0 = performance.now();
     renderer.render(scene, camera);
@@ -327,6 +335,7 @@ if (debug) {
       }
     }
     for (let i = 0; i < 80; i++) pasoMundo(estado, 0.05, lejos);     // animaciones y fundidos terminados
+    carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal);
     ui.refrescarGruposLuzUI(estado.gruposLuz);
     renderer.setPixelRatio(1);
     renderer.setSize(op.ancho || 1280, op.alto || 800, false);

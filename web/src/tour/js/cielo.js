@@ -7,20 +7,23 @@ export const MOMENTOS = {
   // entorno: intensidad del mapa de entorno (RoomEnvironment) en los materiales: sin él el PBR queda plano y
   // oscuro; con demasiado, lavado (0,42 en la tarde era demasiado). Ajustados a ojo contra review/depto_06_t2 (la v2
   // publicada), no medidos. entornoLocal (corrección 07c, ronda 2): intensidad del entorno local de la cocina
-  // (contrato 2.2, sección 6) en su acero, calibrada contra Blender (docs/noche-2026-09-26.md).
+  // (contrato 2.2, sección 6) en su acero, por variante: `luces` (con la luz de la cocina encendida; no depende del
+  // momento, las lámparas son las mismas) y `dia` (apagada; sigue a la luz del día de cada momento). Medido contra
+  // Blender desde las mismas cámaras (docs/noche-2026-09-26.md, 21:xx): con luces 0,75 la razón visera/azulejo da 0,53
+  // (Blender 0,49) y nevera/azulejo 0,69 (0,87); de día 2,0 da freezer/forro 0,82 (0,98).
   dia: {
     etiqueta: "Día", cielo: { arriba: "#7fadd8", abajo: "#eaf3fa" },
-    sol: { color: 0xfff7ec, intensidad: 3.4 }, ambiente: 0.45, entorno: 0.35, entornoLocal: 0.5, exposicion: 1.0, fondoIntensidad: 1,
+    sol: { color: 0xfff7ec, intensidad: 3.4 }, ambiente: 0.45, entorno: 0.35, entornoLocal: { luces: 0.75, dia: 2.0 }, exposicion: 1.0, fondoIntensidad: 1,
     lucesEncendidas: false,
   },
   tarde: {
     etiqueta: "Tarde", cielo: { arriba: "#9aa9c9", abajo: "#f3cfa4" },
-    sol: { color: 0xffc58f, intensidad: 1.8 }, ambiente: 0.32, entorno: 0.22, entornoLocal: 0.5, exposicion: 0.95, fondoIntensidad: 0.95,
+    sol: { color: 0xffc58f, intensidad: 1.8 }, ambiente: 0.32, entorno: 0.22, entornoLocal: { luces: 0.75, dia: 1.1 }, exposicion: 0.95, fondoIntensidad: 0.95,
     lucesEncendidas: true,
   },
   noche: {
     etiqueta: "Noche", cielo: { arriba: "#0d1524", abajo: "#232c3e" },
-    sol: { color: 0x9db4d8, intensidad: 0.04 }, ambiente: 0.06, entorno: 0.07, entornoLocal: 0.35, exposicion: 0.95, fondoIntensidad: 0.35,
+    sol: { color: 0x9db4d8, intensidad: 0.04 }, ambiente: 0.06, entorno: 0.07, entornoLocal: { luces: 0.75, dia: 0.06 }, exposicion: 0.95, fondoIntensidad: 0.35,
     lucesEncendidas: true,
   },
 };
