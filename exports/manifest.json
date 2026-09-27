@@ -1,18 +1,18 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 19499408,
-    "md5": "7da95d25a18df86d7fd317c9c96d46ae",
+    "bytes": 29998796,
+    "md5": "adc95b4d60bf540bc2a28092e0b288be",
     "web": {
       "carpeta": "web",
-      "archivos": 77,
-      "bytes": 21781355,
+      "archivos": 101,
+      "bytes": 32335037,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 58481,
-      "estaticos": 854,
+      "bytes": 58552,
+      "estaticos": 857,
       "moviles": 39,
       "luces": 24,
       "grupos_luz": 16,
@@ -21,13 +21,13 @@
     "fecha": "2026-09-27",
     "fase": "06",
     "sellos": {
-      "01": "d3b356e8f5e7",
-      "02": "3ab10b085d98",
-      "03": "74e021610338",
-      "04": "d5b483e888f1",
-      "05": "b3a17b914d66",
-      "08": "1d5c02f74f26",
-      "06": "85e762bb4639"
+      "01": "a15736e3997b",
+      "02": "c2f134da46b8",
+      "03": "36ad45238e7c",
+      "04": "7a3888cb37cf",
+      "05": "3624889e2689",
+      "08": "3e1e566360ce",
+      "06": "5f51fe506e7c"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -48,8 +48,8 @@
         2.55
       ]
     },
-    "mallas": 428,
-    "triangulos": 198234,
+    "mallas": 453,
+    "triangulos": 199357,
     "materiales": [
       "Depto_Ext_Mat_Calle",
       "Depto_Ext_Mat_FachadaA",
@@ -70,6 +70,9 @@
       "Depto_Mat_AceroNegro",
       "Depto_Mat_AceroPintado",
       "Depto_Mat_Alfombra",
+      "Depto_Mat_AlfombraBereber",
+      "Depto_Mat_AlfombraCamino",
+      "Depto_Mat_AlfombraKilim",
       "Depto_Mat_Alimento",
       "Depto_Mat_Arte1",
       "Depto_Mat_Arte2",
@@ -88,6 +91,7 @@
       "Depto_Mat_Cuero",
       "Depto_Mat_Electro",
       "Depto_Mat_Espejo",
+      "Depto_Mat_Fleco",
       "Depto_Mat_FrenteCloset",
       "Depto_Mat_FrenteCocina",
       "Depto_Mat_GresArena",
@@ -101,6 +105,7 @@
       "Depto_Mat_Libro3",
       "Depto_Mat_Libro4",
       "Depto_Mat_Libro5",
+      "Depto_Mat_Lino",
       "Depto_Mat_MaderaMueble",
       "Depto_Mat_Manilla",
       "Depto_Mat_Manta",
@@ -121,8 +126,13 @@
       "Depto_Mat_Papel",
       "Depto_Mat_Pasamanos",
       "Depto_Mat_PisoBalcon",
+      "Depto_Mat_PisoBanoAlgodon",
       "Depto_Mat_PisoCeramico",
       "Depto_Mat_PisoMadera",
+      "Depto_Mat_PlantaAnturio",
+      "Depto_Mat_PlantaCalathea",
+      "Depto_Mat_PlantaHaworthia",
+      "Depto_Mat_PlantaHelecho",
       "Depto_Mat_PlasticoEsmerilado",
       "Depto_Mat_PuertaEntrada",
       "Depto_Mat_PuertaMadera",
@@ -130,6 +140,7 @@
       "Depto_Mat_Tela",
       "Depto_Mat_TelaGruesa",
       "Depto_Mat_Textil",
+      "Depto_Mat_Tierra",
       "Depto_Mat_Toalla",
       "Depto_Mat_Vidrio",
       "Depto_Mat_VidrioBombilla",
@@ -142,7 +153,7 @@
     "dimensiones_nota": "dimensiones_m y bbox_blender_m son del depto, sin el exterior (objetos Depto_Ext_*)",
     "exterior": {
       "mallas": 17,
-      "triangulos": 9756,
+      "triangulos": 8076,
       "dimensiones_m": {
         "x": 1800.0,
         "y": 1800.0,
@@ -162,7 +173,7 @@
     },
     "exportacion": {
       "formato": "GLB",
-      "imagenes": "JPEG",
+      "imagenes": "JPEG (PNG con alfa sólo en las hojas de las plantas)",
       "extras": true,
       "camaras": false,
       "luces": false,
@@ -240,7 +251,56 @@
     },
     "texturas_propias": {
       "granito_gris_512": "generada por build/depto_05_materiales.py",
-      "exterior": "assets/texturas/exterior/*.jpg, generadas por build/ext_texturas.py (fase 08)"
+      "exterior": "assets/texturas/exterior/*.jpg, generadas por build/ext_texturas.py (fase 08)",
+      "alfombras": "bereber, kilim, camino y algodon en assets/texturas/propias/, generadas por build/deco_texturas.py (bloque 09)"
+    },
+    "modelos": {
+      "anthurium_botany_01": {
+        "pagina": "https://polyhaven.com/a/anthurium_botany_01",
+        "licencia": "CC0",
+        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+        "variantes": [
+          "anthurium_botany_01_c"
+        ],
+        "piezas": [
+          "Balcon_Planta"
+        ]
+      },
+      "calathea_orbifolia_01": {
+        "pagina": "https://polyhaven.com/a/calathea_orbifolia_01",
+        "licencia": "CC0",
+        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+        "variantes": [
+          "calathea_orbifolia_01_c",
+          "calathea_orbifolia_01_e"
+        ],
+        "piezas": [
+          "B1_Planta",
+          "D2_Planta"
+        ]
+      },
+      "fern_02": {
+        "pagina": "https://polyhaven.com/a/fern_02",
+        "licencia": "CC0",
+        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+        "variantes": [
+          "fern_02_c"
+        ],
+        "piezas": [
+          "Living_Planta"
+        ]
+      },
+      "potted_plant_04": {
+        "pagina": "https://polyhaven.com/a/potted_plant_04",
+        "licencia": "CC0",
+        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+        "variantes": [
+          "potted_plant_04_pot,potted_plant_04_dirt,potted_plant_04_ground,potted_plant_04_plant"
+        ],
+        "piezas": [
+          "Cocina_Planta"
+        ]
+      }
     },
     "prueba_recorrido": {
       "tal_cual": {
@@ -287,7 +347,7 @@
       },
       "aperturas": {
         "moviles": 39,
-        "estaticos": 1883,
+        "estaticos": 2325,
         "pares_abiertos": 167,
         "max_mm": 0.0,
         "giros": {

@@ -203,8 +203,104 @@
    "bytes": 210236
   },
   {
+   "uri": "tex/bereber_nor_gl_1k.jpg",
+   "bytes": 689818
+  },
+  {
+   "uri": "tex/bereber_diff_1k.jpg",
+   "bytes": 381526
+  },
+  {
+   "uri": "tex/bereber_rough_1k.jpg",
+   "bytes": 65938
+  },
+  {
+   "uri": "tex/algodon_nor_gl_1k.jpg",
+   "bytes": 522225
+  },
+  {
+   "uri": "tex/algodon_rough_1k.jpg",
+   "bytes": 35636
+  },
+  {
+   "uri": "tex/kilim_nor_gl_1k.jpg",
+   "bytes": 124939
+  },
+  {
+   "uri": "tex/kilim_diff_1k.jpg",
+   "bytes": 284517
+  },
+  {
+   "uri": "tex/kilim_rough_1k.jpg",
+   "bytes": 72832
+  },
+  {
+   "uri": "tex/calathea_orbifolia_01_nor_gl_1k.jpg",
+   "bytes": 581558
+  },
+  {
+   "uri": "tex/calathea_orbifolia_01_diff_alfa_1k.png",
+   "bytes": 1363263
+  },
+  {
+   "uri": "tex/calathea_orbifolia_01_rough_1k.jpg",
+   "bytes": 62104
+  },
+  {
    "uri": "tex/arte_3_diff_1k.jpg",
    "bytes": 460509
+  },
+  {
+   "uri": "tex/camino_nor_gl_1k.jpg",
+   "bytes": 449092
+  },
+  {
+   "uri": "tex/camino_diff_1k.jpg",
+   "bytes": 300902
+  },
+  {
+   "uri": "tex/camino_rough_1k.jpg",
+   "bytes": 89978
+  },
+  {
+   "uri": "tex/algodon_diff_1k.jpg",
+   "bytes": 282257
+  },
+  {
+   "uri": "tex/fern_02_nor_gl_1k.jpg",
+   "bytes": 367222
+  },
+  {
+   "uri": "tex/fern_02_diff_alfa_1k.png",
+   "bytes": 1098067
+  },
+  {
+   "uri": "tex/fern_02_rough_1k.jpg",
+   "bytes": 64304
+  },
+  {
+   "uri": "tex/anthurium_botany_01_nor_gl_1k.jpg",
+   "bytes": 494107
+  },
+  {
+   "uri": "tex/anthurium_botany_01_diff_alfa_1k.png",
+   "bytes": 1424410
+  },
+  {
+   "uri": "tex/anthurium_botany_01_rough_1k.jpg",
+   "bytes": 74125
+  },
+  {
+   "uri": "tex/potted_plant_04_nor_gl_1k.jpg",
+   "bytes": 817786
+  },
+  {
+   "uri": "tex/potted_plant_04_diff_1k.jpg",
+   "bytes": 577545
+  },
+  {
+   "uri": "tex/potted_plant_04_rough_1k.jpg",
+   "bytes": 75430
   },
   {
    "uri": "tex/fachada_propia.jpg",
@@ -295,5 +391,5 @@
    "bytes": 21501
   }
  ],
- "total_bytes": 21781355
+ "total_bytes": 32335037
 }
