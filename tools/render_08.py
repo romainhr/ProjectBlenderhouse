@@ -7,10 +7,12 @@ Uso:
 
 Usa la maquinaria de tools/render_07b.py (luces por grupo, horneado de luz rebotada por recinto, vidrio de revisión) y
 arma el cielo con los HDR de Poly Haven que registra la fase 08 (scene["depto_exterior"]): el mismo giro que el visor
-(rotacion_deg), el sol de la fase 5 con el color y la fuerza relativa de cada momento del visor
-(web/src/tour/js/cielo.js) y la emisión del exterior (ventanas y luminarias) según scene["depto_exterior"]["emision"].
-No guarda el .blend. Escribe <out>/<vista>.png, <out>/renders.json = [{archivo, que_muestra}] y
-<out>/renders_detalle.json (cámara, momento, exposición, muestras y resolución).
+(rotacion_deg). El sol de la fase 5 toma por momento la dirección del sol medido en su HDR (azimut + giro y elevación:
+de día 48,0°, de tarde 12,1°; corrección 08, ronda 1: antes quedaba en los 35° de la fase 5 con un cielo de atardecer)
+y el color y la fuerza relativa del visor (web/src/tour/js/cielo.js). La emisión del exterior (ventanas y luminarias)
+sigue scene["depto_exterior"]["emision"], y de tarde y de noche cada luminaria alumbra la calle con un foco (la mancha
+que el visor suma con la textura luz_suelo). No guarda el .blend. Escribe <out>/<vista>.png, <out>/renders.json =
+[{archivo, que_muestra}] y <out>/renders_detalle.json (cámara, momento, sol, exposición, muestras y resolución).
 """
 import json
 import math
@@ -25,14 +27,21 @@ from mathutils import Vector  # noqa: E402
 
 bpy = R.bpy
 # Momentos: cielo (id de scene["depto_exterior"]["fuentes"]), fuerza de la luz del cielo y su saturación, fuerza del
-# cielo que ve la cámara, sol (fracción de la fuerza del sol de la fase 5 y color sRGB, los del visor: 3,4 / 1,8 / 0,04)
-# y grupos de luz encendidos: los que nacen encendidos de tarde y de noche, como en el visor; de día ninguno.
+# cielo que ve la cámara (relativa a la de la luz), sol (fracción de la fuerza del sol de la fase 5 y color sRGB, los
+# del visor: 3,4 / 1,8 / 0,04; su dirección es la del sol del HDR) y grupos de luz encendidos: los que nacen encendidos
+# de tarde y de noche, como en el visor; de día ninguno. Corrección 08, ronda 1 (medido en review/08_exterior,
+# tools/medir_08.py): la tarde con la luz del cielo a FUERZA_TARDE, para que el hormigón del E3 en sombra quede a
+# 0,4-0,6 del de día, y el cielo de la cámara a CAMARA_TARDE, sin quemar el horizonte; el de la noche a CAMARA_NOCHE,
+# para que el cielo quede bajo 0,3 de una ventana encendida.
+FUERZA_TARDE, CAMARA_TARDE, CAMARA_NOCHE = 0.4, 0.8, 0.55
 MOMENTOS = {
     "dia": dict(fuerza=1.6, saturacion=0.35, camara=1.0, sol=(1.0, "#fff7ec"), luces=()),
-    "tarde": dict(fuerza=1.0, saturacion=0.7, camara=0.8, sol=(1.8 / 3.4, "#ffc58f"), luces="autor"),
-    "noche": dict(fuerza=0.08, saturacion=1.0, camara=1.0, sol=None, luces="autor"),     # el cielo de la cámara, como
-    # la luz (antes, 0,30: el cielo quedaba 6 veces más oscuro que el del visor)
+    "tarde": dict(fuerza=FUERZA_TARDE, saturacion=0.7, camara=CAMARA_TARDE, sol=(1.8 / 3.4, "#ffc58f"), luces="autor"),
+    "noche": dict(fuerza=0.08, saturacion=1.0, camara=CAMARA_NOCHE, sol=None, luces="autor"),
 }
+# Focos de las luminarias (de tarde y de noche, por exterior.emision): potencia de diseño, calibrada contra la calzada de
+# balcon_noche (tools/medir_08.py); sin sombra (no gastan mapas de sombra: 24 luces del depto ya los usan).
+FOCO_W = 700.0
 LENTE_ANCHA = 14.0
 # vista: cámara ((x, y, z), (x, y, z) mirado, lente mm) en m de Blender, momento, exposición y texto
 BALCON = ((-0.6, 3.85, 1.60), (1.5, 13.6, -2.1), LENTE_ANCHA)          # hacia el cruce (derecha)
@@ -40,35 +49,45 @@ BALCON_SOL = ((0.4, 3.85, 1.60), (-2.2, 13.6, -1.3), LENTE_ANCHA)       # hacia 
 VISTAS = {
     "balcon_dia": dict(
         cam=BALCON, momento="dia", expo=0.0,
-        texto="Desde el balcón, de día (cielo kloofendal_48d_partly_cloudy_puresky girado {rot}°, sol de la fase 5): "
-              "calle con veredas de baldosa, soleras y línea central; enfrente el E2 de ladrillo (4 pisos, bajo la "
-              "vista) y el E3 de hormigón (11 pisos, con balcones corridos); a la derecha el cruce con pasos de cebra y "
-              "el E4 de muro cortina; árboles de calle estilizados y siluetas lejanas en tarjetas. El piso del depto "
-              "está a 12,5 m de la calzada (supuesto)."),
+        texto="Desde el balcón, de día (cielo kloofendal_48d_partly_cloudy_puresky girado {rot}°, sol del HDR a "
+              "{elev}° de elevación): calle con veredas de baldosa, soleras, faja de estacionamiento junto a la vereda "
+              "del edificio y dos pistas de 3 m con línea central; enfrente el E2 de ladrillo (4 pisos, bajo la vista) "
+              "y el E3 de hormigón (11 pisos, con un balcón corrido por piso tipo); a la derecha el cruce con pasos de "
+              "cebra y el E4 de muro cortina, que refleja el cielo; árboles de calle estilizados y siluetas lejanas en "
+              "tarjetas. El piso del depto está a 12,5 m de la calzada (supuesto)."),
+    "afuera_control": dict(
+        cam=((-7.0, 31.0, 13.0), (-5.0, 3.0, -4.5), 20.0), momento="dia", expo=0.0,
+        texto="Vista de control desde afuera, de día (no se ve desde el depto): el edificio propio de 8 pisos con el "
+              "depto en el 5.º (extremo norte), los balcones apilados sobre los ejes del plano, el antejardín con "
+              "sendero, murete y arbustos, la calle con su faja de estacionamiento y el cruce, los árboles, las "
+              "luminarias y los vecinos E5 a E7 del mismo lado."),
     "balcon_tarde": dict(
         cam=BALCON_SOL, momento="tarde", expo=0.0,
-        texto="Desde el balcón hacia la izquierda, de tarde (cielo qwantani_dusk_2_puresky con el mismo giro, sol "
-              "cálido a 0,53 de la fuerza del día, como el visor): el resplandor queda sobre el E2, que es más bajo que el ojo, y un tercio "
-              "de la emisión de las ventanas vecinas y de las luminarias ya encendida."),
+        texto="Desde el balcón hacia la izquierda, de tarde (cielo qwantani_dusk_2_puresky con el mismo giro y el "
+              "sol del HDR, bajo, a {elev}° de elevación, cálido y a 0,53 de la fuerza del día, como el visor): el "
+              "resplandor sobre el E2, que es más bajo que el ojo, sombras largas, las fachadas en sombra más oscuras "
+              "que de día y un tercio de la emisión de las ventanas vecinas y de las luminarias ya encendida."),
     "dormitorio_ventana": dict(
-        cam=((2.70, 1.25, 1.45), (2.95, 10.0, 0.1), 16.0), momento="tarde", expo=0.6,
+        cam=((2.70, 1.25, 1.45), (2.95, 10.0, 0.1), 16.0), momento="tarde", expo=0.6, cielo_por_expo=True,
         texto="Desde el dormitorio principal por su ventana (1,82 m, antepecho de 0,95), de tarde con la luz de techo "
-              "encendida: la calle y el E3 de enfrente, el cruce a la derecha."),
+              "encendida y el sol bajo del HDR ({elev}°) entrando de lado: la calle y el E3 de enfrente, el cruce a la "
+              "derecha."),
     "living_ventanal": dict(
-        cam=((0.05, -2.0, 1.50), (0.25, 10.0, -0.9), 16.0), momento="tarde", expo=0.6,
-        texto="Desde el living hacia el ventanal y el balcón, de tarde con las luces de techo: los tres paños del "
-              "ventanal (la hoja móvil corrida), la baranda de vidrio y detrás la calle, los vecinos y el cielo."),
+        cam=((0.05, -2.0, 1.50), (0.25, 10.0, -0.9), 16.0), momento="tarde", expo=0.6, cielo_por_expo=True,
+        texto="Desde el living hacia el ventanal y el balcón, de tarde con las luces de techo y el sol bajo del HDR "
+              "({elev}°): los tres paños del ventanal (la hoja móvil corrida), la baranda de vidrio y detrás la calle, "
+              "los vecinos y el cielo."),
+    "living_sol_tarde": dict(
+        cam=((0.3, 2.45, 1.55), (0.9, -3.2, 0.0), 16.0), momento="tarde", expo=0.6,
+        texto="Control de la corrección 08: desde el ventanal hacia el interior del living, de tarde. El sol bajo del "
+              "HDR ({elev}°) entra por el ventanal y la hoja corrida y dibuja en el piso una mancha larga que se corre "
+              "hacia la izquierda de la imagen (+X) a medida que se aleja de la fachada; los vecinos no lo tapan."),
     "balcon_noche": dict(
         cam=BALCON, momento="noche", expo=0.4,
         texto="Desde el balcón, de noche (kloppenheim_02_puresky casi apagado): las ventanas vecinas encendidas "
               "(≈ 35 % de los pisos tipo, 2700-4000 K y alguna pantalla fría), los locales de las plantas bajas, las "
-              "luminarias de la calle y las ventanas de las siluetas lejanas."),
-    "afuera_control": dict(
-        cam=((-7.0, 31.0, 13.0), (-5.0, 3.0, -4.5), 20.0), momento="dia", expo=0.0, sin_gi=True,
-        texto="Vista de control desde afuera (no se ve desde el depto): el edificio propio de 8 pisos con el depto en "
-              "el 5.º (extremo norte), los balcones apilados sobre los ejes del plano, el antejardín con sendero, "
-              "murete y arbustos, la calle con su cruce, los árboles, los autos estacionados, las luminarias y los "
-              "vecinos E5 a E7 del mismo lado."),
+              "luminarias con el refractor encendido y su mancha de luz en la calle y la vereda (un foco por "
+              "luminaria), y las ventanas de las siluetas lejanas."),
 }
 
 
@@ -100,6 +119,9 @@ def mundo(momento, ext):
     w = R._mundo_hdri(f"_Ext_{momento}", os.path.join(R.RAIZ, f["hdr"]), M["fuerza"], M["saturacion"],
                       M["fuerza"] * M["camara"])
     nt = w.node_tree
+    for n in nt.nodes:                    # el fondo que ve la cámara (el que no pasa por la saturación)
+        if n.type == "BACKGROUND" and not any(l.from_node.type == "MIX_RGB" for l in n.inputs["Color"].links):
+            n.name = "Cielo_Camara"
     env = next(n for n in nt.nodes if n.type == "TEX_ENVIRONMENT")
     tc = nt.nodes.new("ShaderNodeTexCoord")
     mp = nt.nodes.new("ShaderNodeMapping")
@@ -108,6 +130,46 @@ def mundo(momento, ext):
     nt.links.new(tc.outputs["Generated"], mp.inputs["Vector"])
     nt.links.new(mp.outputs["Vector"], env.inputs["Vector"])
     return w
+
+
+def orientar_sol(sol, momento, ext):
+    """Depto_Luz_Sol hacia el sol medido en el HDR del momento: azimut (desde +X de Blender) + rotacion_deg y elevación.
+    Devuelve (azimut, elevación) en grados."""
+    f = ext["fuentes"][momento]
+    az = f["sol_azimut_deg"] + ext["rotacion_deg"]
+    el = f["sol_elevacion_deg"]
+    a, e = math.radians(az), math.radians(el)
+    hacia = Vector((math.cos(e) * math.cos(a), math.cos(e) * math.sin(a), math.sin(e)))
+    sol.rotation_euler = (-hacia).to_track_quat("-Z", "Y").to_euler()      # la luz apunta por su −Z
+    return round(az, 1), round(el, 1)
+
+
+def focos(ext):
+    """Un foco por luminaria, mirando hacia abajo, con el perfil de la mancha que suma el visor (ext_texturas.LUZ_SUELO).
+    Nacen ocultos; fijar_focos() los prende por momento."""
+    L = ext["luminarias"]
+    col = srgb(L["color"])
+    out = []
+    for i, (x, y, z) in enumerate(L["posiciones"]):
+        ld = bpy.data.lights.new(f"_Ext_Foco_{i}", "SPOT")
+        ld.color = col
+        ld.spot_size = math.radians(2 * L["medio_angulo_deg"])
+        ld.spot_blend = L["borde"]
+        ld.shadow_soft_size = 0.15
+        ld.use_shadow = False
+        ob = bpy.data.objects.new(f"_Ext_Foco_{i}", ld)
+        ob.location = (x, y, z - 0.01)
+        ob.rotation_euler = (0.0, 0.0, 0.0)                                   # un foco apunta por su −Z: hacia abajo
+        ob.hide_render = True
+        bpy.context.scene.collection.objects.link(ob)
+        out.append(ob)
+    return out
+
+
+def fijar_focos(obs, k):
+    for ob in obs:
+        ob.hide_render = k <= 0
+        ob.data.energy = FOCO_W * k
 
 
 def emision(momento, ext):
@@ -142,8 +204,14 @@ def main():
     autor = tuple(g["id"] for g in grupos if g.get("encendido"))
     sol = bpy.data.objects.get("Depto_Luz_Sol")
     fuerza_sol = sol.data.energy
+    giro_sol = sol.rotation_euler.copy()
     sol.data.shadow_cascade_max_distance = 150.0          # el exterior visto llega a ~60 m; más cerca, sombras más finas
     mundos = {m: mundo(m, ext) for m in MOMENTOS}
+    luminarias = focos(ext)
+    if a.sin_gi:
+        # sin horneado: sin la caché del maestro (o de otra vista), que guarda la luz de otro mundo
+        if bpy.ops.scene.light_cache_free.poll():         # falla el poll si no hay caché
+            bpy.ops.scene.light_cache_free()
     solo = [s.strip() for s in a.solo.split(",") if s.strip()]
     hechos = []
     ruta_det = os.path.join(a.out, "renders_detalle.json")
@@ -158,13 +226,19 @@ def main():
         luces = autor if M["luces"] == "autor" else tuple(M["luces"])
         R.fijar_luces(luces)
         scene.world = mundos[v["momento"]]
+        # el cielo que ve la cámara, compensado en las vistas interiores por su exposición (+0,6 EV quemaba la ventana)
+        k_cielo = 2.0 ** -v["expo"] if v.get("cielo_por_expo") else 1.0
+        scene.world.node_tree.nodes["Cielo_Camara"].inputs["Strength"].default_value = M["fuerza"] * M["camara"] * k_cielo
         sol.hide_render = M["sol"] is None
+        sol_dir = None
         if M["sol"]:
             sol.data.energy = fuerza_sol * M["sol"][0]
             sol.data.color = srgb(M["sol"][1])
+            sol_dir = orientar_sol(sol, v["momento"], ext)
         emision(v["momento"], ext)
+        fijar_focos(luminarias, ext["emision"][v["momento"]])
         bpy.context.view_layer.update()
-        if not (a.sin_gi or v.get("sin_gi")):
+        if not a.sin_gi:
             R.hornear(scene, (v["momento"], ",".join(luces)))
         scene.view_settings.exposure = v["expo"]
         scene.view_settings.look = "Medium Contrast" if v["momento"] == "noche" else "None"
@@ -174,15 +248,21 @@ def main():
         scene.render.filepath = ruta
         bpy.ops.render.render(write_still=True)
         texto = v["texto"].replace("{rot}", f"{ext['rotacion_deg']:.1f}".replace(".", ","))
+        texto = texto.replace("{elev}", f"{ext['fuentes'][v['momento']]['sol_elevacion_deg']:.1f}".replace(".", ","))
         hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto,
                        "momento": v["momento"], "cielo": ext["fuentes"][v["momento"]]["id"],
                        "rotacion_deg": ext["rotacion_deg"], "emision_exterior": ext["emision"][v["momento"]],
                        "luces": list(luces), "camara": {"pos": list(v["cam"][0]), "mira": list(v["cam"][1]),
                                                         "lente_mm": v["cam"][2]},
+                       "sol": {"azimut_deg": sol_dir[0], "elevacion_deg": sol_dir[1]} if sol_dir else None,
+                       "cielo_camara": round(M["fuerza"] * M["camara"] * k_cielo, 4),
+                       "focos_w": FOCO_W * ext["emision"][v["momento"]],
                        "motor": "EEVEE", "muestras": a.samples, "exposicion": v["expo"],
-                       "look": scene.view_settings.look, "luz_rebotada": not (a.sin_gi or v.get("sin_gi")),
+                       "look": scene.view_settings.look, "luz_rebotada": not a.sin_gi,
                        "resolucion": [scene.render.resolution_x, scene.render.resolution_y]})
         print("RENDER", ruta, flush=True)
+    sol.rotation_euler = giro_sol                          # no guarda el .blend, pero deja el sol como estaba
+    sol.data.energy = fuerza_sol
     orden = list(VISTAS)
     todos = sorted(previos + hechos, key=lambda r: orden.index(r["vista"]))
     with open(ruta_det, "w") as fh:
