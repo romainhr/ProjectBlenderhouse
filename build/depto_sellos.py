@@ -7,6 +7,8 @@ sello(N) = sha1(sello(N-1) + archivos de la fase N)[:12], recalculado siempre de
   fase 3 lo deja sin sello de fase 3, y la fase 4 aborta hasta que se reconstruya la 3.
 - Las fases 2 en adelante sólo escriben el maestro que abrieron: si se abrió otra ruta (p.ej. la copia que
   muestra tools/watch_blend.py), abortan antes de tocar nada.
+- El orden de la cadena es ORDEN, no el numérico: la fase 08 (exterior, bloque 08) va entre la 05 y la exportación
+  (06), que exige su sello.
 Prueba: build/depto_medicion/test_sellos.py (la ejecuta build/depto_run.sh).
 """
 import hashlib
@@ -21,10 +23,20 @@ FASES = {
     "02": ("depto_02_blockout.py", "depto_geom.py"),
     "03": ("depto_03_formas.py", "deco_base.py", "deco_interiores.py"),
     "04": ("depto_04_mobiliario.py", "depto_color.py", "deco_living.py", "deco_dormitorio.py", "deco_cocina_bano.py",
-           "deco_objetos.py", "deco_comedor.py", "deco_hall.py"),
+           "deco_objetos.py", "deco_comedor.py", "deco_hall.py",
+           # bloque 09: textiles y plantas, los escaneos de Poly Haven que se importan y su manifiesto (con el origen de
+           # las texturas derivadas)
+           "deco_textiles.py", "deco_plantas.py", "../assets/modelos/polyhaven/manifest.json",
+           *(f"../assets/modelos/polyhaven/{m}/{a}" for m in ("anthurium_botany_01", "calathea_orbifolia_01",
+                                                               "fern_02", "potted_plant_04")
+             for a in (f"{m}_1k.gltf", f"{m}.bin"))),
     "05": ("depto_05_materiales.py", "deco_paleta.py", "deco_texturas.py", "../assets/texturas/propias/manifest.json"),
-    "06": ("depto_06_exportar.py",),   # no sella el maestro: el sello va en exports/manifest.json
+    "08": ("depto_08_exterior.py", "ext_texturas.py", "../assets/hdri/manifest.json"),
+    # no sella el maestro: el sello va en exports/manifest.json. render_07b.py (corrección 08, ronda 2): el mundo con
+    # que se renderiza el entorno local de la cocina es el de los renders de revisión de día
+    "06": ("depto_06_exportar.py", "../tools/render_07b.py"),
 }
+ORDEN = ("01", "02", "03", "04", "05", "08", "06")   # orden de la cadena (y del pipeline)
 
 
 def clave(fase):
@@ -40,7 +52,7 @@ def sello(fase, leer=_leer):
     if fase not in FASES:
         raise KeyError(f"fase desconocida: {fase}")
     previo = ""
-    for f in sorted(FASES):
+    for f in ORDEN:
         h = hashlib.sha1(previo.encode())
         for nombre in FASES[f]:
             h.update(leer(nombre))
@@ -62,8 +74,8 @@ def exigir(escena, fase_previa, ruta_abierta, leer=_leer):
 
 def sellar(escena, fase, leer=_leer):
     """Sella la fase y borra los sellos de las posteriores. Devuelve el sello."""
-    for f in FASES:
-        if f > fase and clave(f) in escena:
+    for f in ORDEN[ORDEN.index(fase) + 1:]:
+        if clave(f) in escena:
             del escena[clave(f)]
     escena[clave(fase)] = sello(fase, leer)
     return escena[clave(fase)]

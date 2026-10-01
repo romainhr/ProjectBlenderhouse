@@ -1,0 +1,334 @@
+"""Renders de revisión del bloque 08 (exterior y paisaje): la vista desde el balcón de día, de tarde y de noche, desde el
+dormitorio principal por la ventana, desde el living hacia el ventanal y una vista de control desde afuera.
+
+Uso:
+    blender -b build/depto.blend --python tools/render_08.py -- --out review/08_exterior \
+        [--solo balcon_dia,balcon_tarde] [--samples 64] [--size 1280x800] [--sin-gi]
+
+Usa la maquinaria de tools/render_07b.py (luces por grupo, horneado de luz rebotada por recinto, vidrio de revisión) y
+arma el cielo con los HDR de Poly Haven que registra la fase 08 (scene["depto_exterior"]): el mismo giro que el visor
+(rotacion_deg). El sol de la fase 5 toma por momento la dirección del sol medido en su HDR (azimut + giro y elevación:
+de día 48,0°, de tarde 12,1°; corrección 08, ronda 1: antes quedaba en los 35° de la fase 5 con un cielo de atardecer)
+y el color y la fuerza relativa del visor (web/src/tour/js/cielo.js). La emisión del exterior (ventanas y luminarias)
+sigue scene["depto_exterior"]["emision"], y de tarde y de noche cada luminaria alumbra la calle con un foco (la mancha
+que el visor suma con la textura luz_suelo). Corrección 08, ronda 2: las vistas interiores de tarde llevan las lámparas
+a +0,6 EV con la cámara a 0 EV (LAMPARAS_EV: el exterior por la ventana, con la exposición del balcón) y
+dormitorio_ventana_adaptada, la misma vista con la adaptación de cámara del objetivo de tono (ADAPTACION_TARDE). No
+guarda el .blend. Escribe <out>/<vista>.png, <out>/renders.json = [{archivo, que_muestra}] y
+<out>/renders_detalle.json (cámara, momento, sol, exposición, lámparas, balance, muestras y resolución).
+"""
+import json
+import math
+import os
+import sys
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(RAIZ, "tools"))
+import render_07b as R  # noqa: E402
+from mathutils import Vector  # noqa: E402
+
+
+bpy = R.bpy
+# Momentos: cielo (id de scene["depto_exterior"]["fuentes"]), fuerza de la luz del cielo y su saturación, fuerza del
+# cielo que ve la cámara (relativa a la de la luz), sol (fracción de la fuerza del sol de la fase 5 y color sRGB, los
+# del visor: 3,4 / 1,8 / 0,04; su dirección es la del sol del HDR) y grupos de luz encendidos: los que nacen encendidos
+# de tarde y de noche, como en el visor; de día ninguno. Corrección 08, ronda 1 (medido en review/08_exterior,
+# tools/medir_08.py): la tarde con la luz del cielo a FUERZA_TARDE, para que el hormigón del E3 en sombra quede a
+# 0,4-0,6 del de día, y el cielo de la cámara a CAMARA_TARDE, sin quemar el horizonte; el de la noche a CAMARA_NOCHE,
+# para que el cielo quede bajo 0,3 de una ventana encendida.
+FUERZA_TARDE, CAMARA_TARDE, CAMARA_NOCHE = 0.4, 0.8, 0.55
+MOMENTOS = {
+    "dia": dict(fuerza=1.6, saturacion=0.35, camara=1.0, sol=(1.0, "#fff7ec"), luces=()),
+    "tarde": dict(fuerza=FUERZA_TARDE, saturacion=0.7, camara=CAMARA_TARDE, sol=(1.8 / 3.4, "#ffc58f"), luces="autor"),
+    "noche": dict(fuerza=0.08, saturacion=1.0, camara=CAMARA_NOCHE, sol=None, luces="autor"),
+}
+# Adaptación de cámara de la vista dormitorio_ventana_adaptada (corrección 08, ronda 2, defecto 9): pendiente ASC-CDL
+# por canal en el compositor, antes de Filmic, normalizada a luminancia 1. Sin adaptación (la política de las demás
+# vistas desde la 07c, ronda 2: el visor no la aplica) la pared blanca bajo la luz de techo de 2700 K sale mostaza, R/B
+# lineal ≈ 5,7 en pantalla; el objetivo de tono único del sitio es R/B ≤ 2,5 (bitácora, duda 3). Calculada con la curva
+# Filmic medida (web/src/tour/js/filmic.js) desde el render sin adaptar: (188, 148, 84) -> (177, 145, 122), R/B ≈ 2,2.
+# Es la adaptación de un fotógrafo a la luz de las lámparas: el cielo por la ventana se enfría (la «hora azul»).
+ADAPTACION_TARDE = (0.772, 0.941, 2.258)
+# Vistas interiores de tarde (corrección 08, ronda 2): las lámparas del depto a +LAMPARAS_EV (su energía y la de sus
+# ampolletas por 2^0,6) con la cámara a 0 EV, en vez de la cámara a +0,6 EV con sólo el cielo compensado (ronda 1). Con
+# esa compensación el cielo quedaba como desde el balcón pero los edificios y las siluetas que se ven por la ventana
+# salían 0,6 EV más claros que en las vistas del balcón (el visor, igual desde adentro y desde afuera, quedaba a 0,6-0,8
+# de Blender en todo lo que se ve por el vidrio). Así el exterior por la ventana tiene la exposición del balcón y el
+# interior, lo mismo que antes (a la tarde lo alumbran las lámparas; la parte del cielo que entra queda a 0 EV).
+LAMPARAS_EV = 0.6
+# Focos de las luminarias (de tarde y de noche, por exterior.emision): potencia de diseño, calibrada contra la calzada de
+# balcon_noche (tools/medir_08.py); sin sombra (no gastan mapas de sombra: 24 luces del depto ya los usan).
+FOCO_W = 700.0
+LENTE_ANCHA = 14.0
+# vista: cámara ((x, y, z), (x, y, z) mirado, lente mm) en m de Blender, momento, exposición y texto
+BALCON = ((-0.6, 3.85, 1.60), (1.5, 13.6, -2.1), LENTE_ANCHA)          # hacia el cruce (derecha)
+BALCON_SOL = ((0.4, 3.85, 1.60), (-2.2, 13.6, -1.3), LENTE_ANCHA)       # hacia el sol de la tarde (izquierda)
+VISTAS = {
+    "balcon_dia": dict(
+        cam=BALCON, momento="dia", expo=0.0,
+        texto="Desde el balcón, de día (cielo kloofendal_48d_partly_cloudy_puresky girado {rot}°, sol del HDR a "
+              "{elev}° de elevación): calle con veredas de baldosa, soleras, faja de estacionamiento junto a la vereda "
+              "del edificio y dos pistas de 3 m con línea central; enfrente el E2 de ladrillo (4 pisos, bajo la vista) "
+              "y el E3 de hormigón (11 pisos, con un balcón corrido por piso tipo); a la derecha el cruce con pasos de "
+              "cebra y el E4 de muro cortina, que refleja el cielo; árboles de calle estilizados y siluetas lejanas en "
+              "tarjetas. El piso del depto está a 12,5 m de la calzada (supuesto)."),
+    "afuera_control": dict(
+        cam=((-7.0, 31.0, 13.0), (-5.0, 3.0, -4.5), 20.0), momento="dia", expo=0.0,
+        texto="Vista de control desde afuera, de día (no se ve desde el depto): el edificio propio de 8 pisos con el "
+              "depto en el 5.º (extremo norte), los balcones apilados sobre los ejes del plano, el antejardín con "
+              "sendero, murete y arbustos, la calle con su faja de estacionamiento y el cruce, los árboles, las "
+              "luminarias y los vecinos E5 a E7 del mismo lado."),
+    "balcon_tarde": dict(
+        cam=BALCON_SOL, momento="tarde", expo=0.0,
+        texto="Desde el balcón hacia la izquierda, de tarde (cielo qwantani_dusk_2_puresky con el mismo giro y el "
+              "sol del HDR, bajo, a {elev}° de elevación, cálido y a 0,53 de la fuerza del día, como el visor): el "
+              "resplandor sobre el E2, que es más bajo que el ojo, sombras largas, las fachadas en sombra más oscuras "
+              "que de día y un tercio de la emisión de las ventanas vecinas y de las luminarias ya encendida."),
+    "dormitorio_ventana": dict(
+        cam=((2.70, 1.25, 1.45), (2.95, 10.0, 0.1), 16.0), momento="tarde", expo=0.0, lamparas_ev=LAMPARAS_EV,
+        texto="Desde el dormitorio principal por su ventana (1,82 m, antepecho de 0,95), de tarde con la luz de techo "
+              "encendida y el sol bajo del HDR ({elev}°) entrando de lado: la calle y el E3 de enfrente, el cruce a la "
+              "derecha. Lámparas a +0,6 EV con la cámara a 0 EV: lo que se ve por la ventana tiene la exposición de "
+              "las vistas del balcón. Sin adaptación de cámara: la pared blanca sale mostaza (2700 K)."),
+    "dormitorio_ventana_adaptada": dict(
+        cam=((2.70, 1.25, 1.45), (2.95, 10.0, 0.1), 16.0), momento="tarde", expo=0.0, lamparas_ev=LAMPARAS_EV,
+        balance=ADAPTACION_TARDE,
+        texto="La misma vista del dormitorio con adaptación de cámara a la luz de las lámparas (pendiente {balance} en "
+              "el compositor, antes de Filmic): el objetivo de tono del interior de tarde, la pared blanca bajo la luz "
+              "de techo con R/B lineal ≤ 2,5. El visor no adapta: su interior se calibra en luminancia contra la vista "
+              "sin adaptar y en tono contra este objetivo; el cielo y la calle por la ventana se enfrían como en una "
+              "foto balanceada para interior."),
+    "living_ventanal": dict(
+        cam=((0.05, -2.0, 1.50), (0.25, 10.0, -0.9), 16.0), momento="tarde", expo=0.0, lamparas_ev=LAMPARAS_EV,
+        texto="Desde el living hacia el ventanal y el balcón, de tarde con las luces de techo y el sol bajo del HDR "
+              "({elev}°): los tres paños del ventanal (la hoja móvil corrida), la baranda de vidrio y detrás la calle, "
+              "los vecinos y el cielo. Lámparas a +0,6 EV con la cámara a 0 EV, como la del dormitorio."),
+    "living_sol_tarde": dict(
+        cam=((0.3, 2.45, 1.55), (0.9, -3.2, 0.0), 16.0), momento="tarde", expo=0.6,
+        texto="Control de la corrección 08: desde el ventanal hacia el interior del living, de tarde con las luces de "
+              "techo. El sol bajo del HDR ({elev}°) entra por el ventanal (los vecinos no lo tapan) y llega al piso "
+              "hasta ≈ 4,7 m de la fachada, corrido hacia +X (la izquierda de la imagen). Es una mancha tenue: con el "
+              "sol tan bajo el piso recibe poco, y el piso al sol queda ≈ 36 % más claro que el resto del piso visible "
+              "(rayos hacia el sol desde una grilla del piso)."),
+    "balcon_noche": dict(
+        cam=BALCON, momento="noche", expo=0.4,
+        texto="Desde el balcón, de noche (kloppenheim_02_puresky casi apagado): las ventanas vecinas encendidas "
+              "(≈ 35 % de los pisos tipo, 2700-4000 K y alguna pantalla fría), los locales de las plantas bajas, las "
+              "luminarias con el refractor encendido y su mancha de luz en la calle y la vereda (un foco por "
+              "luminaria), y las ventanas de las siluetas lejanas."),
+}
+
+
+def parse_args():
+    argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument("--out", required=True)
+    p.add_argument("--solo", default="")
+    p.add_argument("--samples", type=int, default=64)
+    p.add_argument("--size", default="1280x800")
+    p.add_argument("--sin-gi", action="store_true")
+    return p.parse_args(argv)
+
+
+def srgb(hexa):
+    return tuple(R_srgb(int(hexa[i:i + 2], 16) / 255) for i in (1, 3, 5))
+
+
+def R_srgb(c):
+    return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+
+def mundo(momento, ext):
+    """Mundo con el HDR del momento girado rotacion_deg (Mapping: la dirección de consulta gira −θ en Z, así el cielo
+    gira +θ, como el visor en web/src/tour/js/cielo.js)."""
+    M = MOMENTOS[momento]
+    f = ext["fuentes"][momento]
+    w = R._mundo_hdri(f"_Ext_{momento}", os.path.join(R.RAIZ, f["hdr"]), M["fuerza"], M["saturacion"],
+                      M["fuerza"] * M["camara"])
+    nt = w.node_tree
+    for n in nt.nodes:                    # el fondo que ve la cámara (el que no pasa por la saturación)
+        if n.type == "BACKGROUND" and not any(l.from_node.type == "MIX_RGB" for l in n.inputs["Color"].links):
+            n.name = "Cielo_Camara"
+    env = next(n for n in nt.nodes if n.type == "TEX_ENVIRONMENT")
+    tc = nt.nodes.new("ShaderNodeTexCoord")
+    mp = nt.nodes.new("ShaderNodeMapping")
+    mp.vector_type = "POINT"
+    mp.inputs["Rotation"].default_value = (0.0, 0.0, -math.radians(ext["rotacion_deg"]))
+    nt.links.new(tc.outputs["Generated"], mp.inputs["Vector"])
+    nt.links.new(mp.outputs["Vector"], env.inputs["Vector"])
+    return w
+
+
+def orientar_sol(sol, momento, ext):
+    """Depto_Luz_Sol hacia el sol medido en el HDR del momento: azimut (desde +X de Blender) + rotacion_deg y elevación.
+    Devuelve (azimut, elevación) en grados."""
+    f = ext["fuentes"][momento]
+    az = f["sol_azimut_deg"] + ext["rotacion_deg"]
+    el = f["sol_elevacion_deg"]
+    a, e = math.radians(az), math.radians(el)
+    hacia = Vector((math.cos(e) * math.cos(a), math.cos(e) * math.sin(a), math.sin(e)))
+    sol.rotation_euler = (-hacia).to_track_quat("-Z", "Y").to_euler()      # la luz apunta por su −Z
+    return round(az, 1), round(el, 1)
+
+
+def focos(ext):
+    """Un foco por luminaria, mirando hacia abajo, con el perfil de la mancha que suma el visor (ext_texturas.LUZ_SUELO).
+    Nacen ocultos; fijar_focos() los prende por momento."""
+    L = ext["luminarias"]
+    col = srgb(L["color"])
+    out = []
+    for i, (x, y, z) in enumerate(L["posiciones"]):
+        ld = bpy.data.lights.new(f"_Ext_Foco_{i}", "SPOT")
+        ld.color = col
+        ld.spot_size = math.radians(2 * L["medio_angulo_deg"])
+        ld.spot_blend = L["borde"]
+        ld.shadow_soft_size = 0.15
+        ld.use_shadow = False
+        ob = bpy.data.objects.new(f"_Ext_Foco_{i}", ld)
+        ob.location = (x, y, z - 0.01)
+        ob.rotation_euler = (0.0, 0.0, 0.0)                                   # un foco apunta por su −Z: hacia abajo
+        ob.hide_render = True
+        bpy.context.scene.collection.objects.link(ob)
+        out.append(ob)
+    return out
+
+
+def fijar_focos(obs, k):
+    for ob in obs:
+        ob.hide_render = k <= 0
+        ob.data.energy = FOCO_W * k
+
+
+def emision(momento, ext):
+    k = ext["emision"][momento]
+    for m in bpy.data.materials:
+        if m.get("exterior") and "emision_noche" in m:
+            m.node_tree.nodes.get("Principled BSDF").inputs["Emission Strength"].default_value = k * m["emision_noche"]
+
+
+def escalar_lamparas(k, base):
+    """Energía de las luces del depto (Depto_Luz_*, puntuales y focos) y fuerza de la emisión de sus ampolletas
+    (_Bombilla_<grupo>, render_07b.fijar_luces) por k, desde los valores `base` (se devuelven con k = 1)."""
+    for o in bpy.data.objects:
+        if o.type == "LIGHT" and o.name.startswith("Depto_Luz_") and o.data.type in ("POINT", "SPOT"):
+            base.setdefault(o.name, o.data.energy)
+            o.data.energy = base[o.name] * k
+    for m in bpy.data.materials:
+        if m.name.startswith("_Bombilla_") and m.name != "_Bombilla_apagada":
+            b = m.node_tree.nodes.get("Principled BSDF")
+            base.setdefault(m.name, b.inputs["Emission Strength"].default_value)
+            b.inputs["Emission Strength"].default_value = base[m.name] * k
+
+
+def camara(nombre, pos, mira, lente):
+    cd = bpy.data.cameras.new(nombre)
+    cd.lens = lente
+    cd.clip_start = 0.05
+    cd.clip_end = 2500.0                  # las siluetas lejanas están a 170-340 m y el suelo lejano llega a 900 m
+    cam = bpy.data.objects.new(nombre, cd)
+    bpy.context.scene.collection.objects.link(cam)
+    cam.location = pos
+    cam.rotation_euler = (Vector(mira) - Vector(pos)).normalized().to_track_quat("-Z", "Y").to_euler()
+    return cam
+
+
+def main():
+    a = parse_args()
+    os.makedirs(a.out, exist_ok=True)
+    scene = bpy.context.scene
+    ext = json.loads(scene["depto_exterior"])
+    # la fase 6 hornea los cielos del visor con la fuerza del cielo de cámara que registra la fase 08: tiene que ser la
+    # de estos renders (corrección 08, ronda 2)
+    for m, M in MOMENTOS.items():
+        if abs(M["fuerza"] * M["camara"] - ext.get("cielo_camara", {}).get(m, -1.0)) > 1e-6:
+            raise SystemExit(f"ERROR: cielo de cámara de {m}: {M['fuerza'] * M['camara']} aquí y "
+                             f"{ext.get('cielo_camara', {}).get(m)} en la fase 08 (CIELO_CAMARA).")
+    R.config(scene, a)
+    R.vidrio_revision()
+    balance = R.compositor(scene)
+    balance.slope = (1.0, 1.0, 1.0)                         # sin adaptación cromática (el visor no la tiene)
+    grupos = json.loads(scene.get("depto_grupos_luz", "[]"))
+    R.GRUPOS.update({g["id"]: g for g in grupos})
+    autor = tuple(g["id"] for g in grupos if g.get("encendido"))
+    sol = bpy.data.objects.get("Depto_Luz_Sol")
+    fuerza_sol = sol.data.energy
+    giro_sol = sol.rotation_euler.copy()
+    sol.data.shadow_cascade_max_distance = 150.0          # el exterior visto llega a ~60 m; más cerca, sombras más finas
+    mundos = {m: mundo(m, ext) for m in MOMENTOS}
+    luminarias = focos(ext)
+    base_lamparas = {}
+    if a.sin_gi:
+        # sin horneado: sin la caché del maestro (o de otra vista), que guarda la luz de otro mundo
+        if bpy.ops.scene.light_cache_free.poll():         # falla el poll si no hay caché
+            bpy.ops.scene.light_cache_free()
+    solo = [s.strip() for s in a.solo.split(",") if s.strip()]
+    hechos = []
+    ruta_det = os.path.join(a.out, "renders_detalle.json")
+    previos = []
+    if solo and os.path.exists(ruta_det):
+        with open(ruta_det) as fh:
+            previos = [r for r in json.load(fh) if r["vista"] not in solo and r["vista"] in VISTAS]
+    for vista, v in VISTAS.items():
+        if solo and vista not in solo:
+            continue
+        M = MOMENTOS[v["momento"]]
+        luces = autor if M["luces"] == "autor" else tuple(M["luces"])
+        R.fijar_luces(luces)
+        k_lamp = 2.0 ** v.get("lamparas_ev", 0.0)
+        escalar_lamparas(k_lamp, base_lamparas)
+        scene.world = mundos[v["momento"]]
+        # el cielo que ve la cámara, compensado en las vistas interiores por su exposición (+0,6 EV quemaba la ventana)
+        k_cielo = 2.0 ** -v["expo"] if v.get("cielo_por_expo") else 1.0
+        scene.world.node_tree.nodes["Cielo_Camara"].inputs["Strength"].default_value = M["fuerza"] * M["camara"] * k_cielo
+        sol.hide_render = M["sol"] is None
+        sol_dir = None
+        if M["sol"]:
+            sol.data.energy = fuerza_sol * M["sol"][0]
+            sol.data.color = srgb(M["sol"][1])
+            sol_dir = orientar_sol(sol, v["momento"], ext)
+        emision(v["momento"], ext)
+        fijar_focos(luminarias, ext["emision"][v["momento"]])
+        bpy.context.view_layer.update()
+        if not a.sin_gi:
+            R.hornear(scene, (v["momento"], ",".join(luces), round(k_lamp, 3)))
+        scene.view_settings.exposure = v["expo"]
+        scene.view_settings.look = "Medium Contrast" if v["momento"] == "noche" else "None"
+        balance.slope = v.get("balance") or (1.0, 1.0, 1.0)
+        cam = camara(f"_cam_{vista}", *v["cam"])
+        scene.camera = cam
+        ruta = os.path.join(a.out, f"{vista}.png")
+        scene.render.filepath = ruta
+        bpy.ops.render.render(write_still=True)
+        texto = v["texto"].replace("{rot}", f"{ext['rotacion_deg']:.1f}".replace(".", ","))
+        texto = texto.replace("{elev}", f"{ext['fuentes'][v['momento']]['sol_elevacion_deg']:.1f}".replace(".", ","))
+        texto = texto.replace("{balance}", "(" + "; ".join(f"{x:.2f}".replace(".", ",") for x in v.get("balance", ())) + ")")
+        hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto,
+                       "momento": v["momento"], "cielo": ext["fuentes"][v["momento"]]["id"],
+                       "rotacion_deg": ext["rotacion_deg"], "emision_exterior": ext["emision"][v["momento"]],
+                       "luces": list(luces), "camara": {"pos": list(v["cam"][0]), "mira": list(v["cam"][1]),
+                                                        "lente_mm": v["cam"][2]},
+                       "sol": {"azimut_deg": sol_dir[0], "elevacion_deg": sol_dir[1]} if sol_dir else None,
+                       "cielo_camara": round(M["fuerza"] * M["camara"] * k_cielo, 4),
+                       "lamparas_ev": v.get("lamparas_ev", 0.0),
+                       "focos_w": FOCO_W * ext["emision"][v["momento"]],
+                       "motor": "EEVEE", "muestras": a.samples, "exposicion": v["expo"],
+                       "look": scene.view_settings.look, "luz_rebotada": not a.sin_gi,
+                       "balance": list(v["balance"]) if v.get("balance") else None,
+                       "resolucion": [scene.render.resolution_x, scene.render.resolution_y]})
+        print("RENDER", ruta, flush=True)
+    escalar_lamparas(1.0, base_lamparas)
+    sol.rotation_euler = giro_sol                          # no guarda el .blend, pero deja el sol como estaba
+    sol.data.energy = fuerza_sol
+    orden = list(VISTAS)
+    todos = sorted(previos + hechos, key=lambda r: orden.index(r["vista"]))
+    with open(ruta_det, "w") as fh:
+        json.dump(todos, fh, ensure_ascii=False, indent=2)
+    with open(os.path.join(a.out, "renders.json"), "w") as fh:
+        json.dump([{"archivo": r["archivo"], "que_muestra": r["que_muestra"]} for r in todos], fh, ensure_ascii=False,
+                  indent=2)
+    print("RENDERS_08_DONE", len(hechos))
+
+
+if __name__ == "__main__":
+    main()

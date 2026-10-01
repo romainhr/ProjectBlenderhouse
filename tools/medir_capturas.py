@@ -5,7 +5,7 @@ Uso:
 
 La especificación es una lista de mediciones:
     {"nombre": "...", "imagen": "review/07c_plano/cocina_cajones_cerrados.png",
-     "tipo": "acero" | "razon" | "media",
+     "tipo": "acero" | "razon" | "media",          # media con "croma_max": |B − R| en sRGB, máximo
      "region": [x0, y0, x1, y1],                    # acero y media: la región medida (px de la imagen)
      "bloque_4cm": 20,                              # acero: lado en px de un bloque de ~4 cm a esa distancia
      "num": [x0, y0, x1, y1], "den": [x0, y0, x1, y1]}   # razon: dos regiones
@@ -164,6 +164,9 @@ def medir(e):
                    razon_Y=round(a["Y_lineal"] / b["Y_lineal"], 3))
     else:
         out.update(region=e["region"], **media(im, e["region"]))
+        if "croma_max" in e:                # corrección 08, ronda 2: el acero neutro, |B − R| en sRGB
+            out["croma_B_menos_R"] = round(out["srgb"][2] - out["srgb"][0], 1)
+            out["cumple"] = {f"|B−R|≤{e['croma_max']}": abs(out["croma_B_menos_R"]) <= e["croma_max"]}
     return out
 
 

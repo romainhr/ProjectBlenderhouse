@@ -1,32 +1,33 @@
 {
   "depto": {
     "archivo": "depto.glb",
-    "bytes": 16843680,
-    "md5": "9da1044ac890e16683c3ebf53aa4614b",
+    "bytes": 29827824,
+    "md5": "7e74dc935a8d111f32aac2eed0c7192e",
     "web": {
       "carpeta": "web",
-      "archivos": 55,
-      "bytes": 18862223,
+      "archivos": 101,
+      "bytes": 32192042,
       "formato": "glTF separado: depto_gltf.json + depto_bin.b64.txt + tex/*.jpg (índice depto_web.json)"
     },
     "colisiones": {
       "archivo": "depto_colisiones.json",
-      "bytes": 57276,
-      "estaticos": 854,
+      "bytes": 58594,
+      "estaticos": 858,
       "moviles": 39,
       "luces": 24,
       "grupos_luz": 16,
       "interruptores": 29
     },
-    "fecha": "2026-09-26",
+    "fecha": "2026-09-27",
     "fase": "06",
     "sellos": {
-      "01": "de20a5bc79fb",
-      "02": "18dc6d29c5b1",
-      "03": "a010728158c8",
-      "04": "b1848392b38c",
-      "05": "012a8c9fa544",
-      "06": "b01ea1fbd6f9"
+      "01": "a15736e3997b",
+      "02": "c2f134da46b8",
+      "03": "32a875a5c76e",
+      "04": "5fbb1bb1857b",
+      "05": "fd7c50a9a605",
+      "08": "7ad23afeb352",
+      "06": "32a0f771e0a1"
     },
     "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
     "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
@@ -47,14 +48,31 @@
         2.55
       ]
     },
-    "mallas": 411,
-    "triangulos": 188478,
+    "mallas": 453,
+    "triangulos": 199892,
     "materiales": [
+      "Depto_Ext_Mat_Calle",
+      "Depto_Ext_Mat_FachadaA",
+      "Depto_Ext_Mat_FachadaB",
+      "Depto_Ext_Mat_FachadaB_balcon",
+      "Depto_Ext_Mat_FachadaC",
+      "Depto_Ext_Mat_FachadaD",
+      "Depto_Ext_Mat_FachadaPropia",
+      "Depto_Ext_Mat_Lejanos1",
+      "Depto_Ext_Mat_Lejanos2",
+      "Depto_Ext_Mat_LuzSuelo",
+      "Depto_Ext_Mat_Paleta",
+      "Depto_Ext_Mat_Terreno",
+      "Depto_Ext_Mat_VentanasPropias",
+      "Depto_Ext_Mat_VidrioBaranda",
       "Depto_Mat_Acero",
       "Depto_Mat_AceroInox",
       "Depto_Mat_AceroNegro",
       "Depto_Mat_AceroPintado",
       "Depto_Mat_Alfombra",
+      "Depto_Mat_AlfombraBereber",
+      "Depto_Mat_AlfombraCamino",
+      "Depto_Mat_AlfombraKilim",
       "Depto_Mat_Alimento",
       "Depto_Mat_Arte1",
       "Depto_Mat_Arte2",
@@ -73,6 +91,7 @@
       "Depto_Mat_Cuero",
       "Depto_Mat_Electro",
       "Depto_Mat_Espejo",
+      "Depto_Mat_Fleco",
       "Depto_Mat_FrenteCloset",
       "Depto_Mat_FrenteCocina",
       "Depto_Mat_GresArena",
@@ -86,6 +105,7 @@
       "Depto_Mat_Libro3",
       "Depto_Mat_Libro4",
       "Depto_Mat_Libro5",
+      "Depto_Mat_Lino",
       "Depto_Mat_MaderaMueble",
       "Depto_Mat_Manilla",
       "Depto_Mat_Manta",
@@ -106,8 +126,12 @@
       "Depto_Mat_Papel",
       "Depto_Mat_Pasamanos",
       "Depto_Mat_PisoBalcon",
+      "Depto_Mat_PisoBanoAlgodon",
       "Depto_Mat_PisoCeramico",
       "Depto_Mat_PisoMadera",
+      "Depto_Mat_PlantaAnturio",
+      "Depto_Mat_PlantaCalathea",
+      "Depto_Mat_PlantaHaworthia",
       "Depto_Mat_PlasticoEsmerilado",
       "Depto_Mat_PuertaEntrada",
       "Depto_Mat_PuertaMadera",
@@ -115,6 +139,7 @@
       "Depto_Mat_Tela",
       "Depto_Mat_TelaGruesa",
       "Depto_Mat_Textil",
+      "Depto_Mat_Tierra",
       "Depto_Mat_Toalla",
       "Depto_Mat_Vidrio",
       "Depto_Mat_VidrioBombilla",
@@ -124,13 +149,30 @@
       "Depto_Mat_Yeso",
       "Depto_Mat_Zocalo"
     ],
+    "dimensiones_nota": "dimensiones_m y bbox_blender_m son del depto, sin el exterior (objetos Depto_Ext_*)",
+    "exterior": {
+      "mallas": 17,
+      "triangulos": 8076,
+      "dimensiones_m": {
+        "x": 1800.0,
+        "y": 1800.0,
+        "z": 55.3394
+      },
+      "cielos": {
+        "dia": "kloofendal_48d_partly_cloudy_puresky",
+        "tarde": "qwantani_dusk_2_puresky",
+        "noche": "kloppenheim_02_puresky"
+      },
+      "rotacion_deg": 149.3,
+      "fuente": "build/depto_08_exterior.py (diseño e inferido; cielos de Poly Haven, CC0)"
+    },
     "escala": {
       "m_por_px_plano": 0.019,
       "incertidumbre": "±5 % (inferida de elementos estándar; sin cota real)"
     },
     "exportacion": {
       "formato": "GLB",
-      "imagenes": "JPEG",
+      "imagenes": "JPEG (PNG con alfa sólo en las hojas de las plantas)",
       "extras": true,
       "camaras": false,
       "luces": false,
@@ -207,7 +249,48 @@
       }
     },
     "texturas_propias": {
-      "granito_gris_512": "generada por build/depto_05_materiales.py"
+      "granito_gris_512": "generada por build/depto_05_materiales.py",
+      "exterior": "assets/texturas/exterior/*.jpg, generadas por build/ext_texturas.py (fase 08)",
+      "alfombras": "bereber, kilim, camino y algodon en assets/texturas/propias/, generadas por build/deco_texturas.py (bloque 09)"
+    },
+    "modelos": {
+      "anthurium_botany_01": {
+        "pagina": "https://polyhaven.com/a/anthurium_botany_01",
+        "licencia": "CC0",
+        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+        "variantes": [
+          "anthurium_botany_01_c"
+        ],
+        "piezas": [
+          "Balcon_Planta"
+        ]
+      },
+      "calathea_orbifolia_01": {
+        "pagina": "https://polyhaven.com/a/calathea_orbifolia_01",
+        "licencia": "CC0",
+        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+        "variantes": [
+          "calathea_orbifolia_01_a",
+          "calathea_orbifolia_01_c",
+          "calathea_orbifolia_01_e"
+        ],
+        "piezas": [
+          "B1_Planta",
+          "D2_Planta",
+          "Living_Planta"
+        ]
+      },
+      "potted_plant_04": {
+        "pagina": "https://polyhaven.com/a/potted_plant_04",
+        "licencia": "CC0",
+        "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
+        "variantes": [
+          "potted_plant_04_plant"
+        ],
+        "piezas": [
+          "Cocina_Planta"
+        ]
+      }
     },
     "prueba_recorrido": {
       "tal_cual": {
@@ -254,7 +337,7 @@
       },
       "aperturas": {
         "moviles": 39,
-        "estaticos": 1883,
+        "estaticos": 2315,
         "pares_abiertos": 167,
         "max_mm": 0.0,
         "giros": {

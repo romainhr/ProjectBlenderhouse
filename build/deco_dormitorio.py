@@ -359,8 +359,10 @@ def _cabecero(bm, alto, m=CABECERO["muestras_canal"]):
     bm.faces.new(list(reversed(lazos[-1])))
 
 
-def _estructura(bm):
-    """Plataforma de acero: riel perimetral a inglete, tres travesaños, seis patas, tablero y pies del cabecero."""
+def _estructura(bm, bajada_cabecera=0.0):
+    """Plataforma de acero: riel perimetral a inglete, tres travesaños, seis patas, tablero y pies del cabecero.
+    bajada_cabecera (bloque 09): las patas de la cabecera y los pies del cabecero bajan esa distancia bajo la base
+    (z < 0), para llegar al piso cuando la cama se apoya en una alfombra que no alcanza hasta el muro."""
     ax = COLCHON[0] / 2 + VUELO_PLATAFORMA[0]
     y0 = Y_COLCHON_CABECERA - COLCHON[1] - VUELO_PLATAFORMA[1]
     y1 = Y_COLCHON_CABECERA
@@ -373,24 +375,27 @@ def _estructura(bm):
     wt, ht = TRAVESANO
     for yc in PATAS_Y:
         _caja(bm, -ai, ai, yc - wt / 2, yc + wt / 2, z0, z0 + ht, 0.003, 1)
+        zp = -bajada_cabecera if yc == max(PATAS_Y) else 0.0
         for sx in (-1, 1):
-            _caja(bm, sx * PATA_X - lp / 2, sx * PATA_X + lp / 2, yc - lp / 2, yc + lp / 2, 0.0, hp, 0.003, 1)
+            _caja(bm, sx * PATA_X - lp / 2, sx * PATA_X + lp / 2, yc - lp / 2, yc + lp / 2, zp, hp, 0.003, 1)
     B.caja(bm, -ai, ai, y0 + e, y1 - e, z1 - 0.015, z1 - 0.0005)    # tablero de apoyo del colchón (oculto)
     C = CABECERO
     fx, fy = C["pies"]
     ym = (C["frente"] + C["espalda"]) / 2 + 0.005
     for sx in (-1, 1):
-        _caja(bm, sx * C["pies_x"] - fx / 2, sx * C["pies_x"] + fx / 2, ym - fy / 2, ym + fy / 2, 0.0, C["z0"] - 0.0005, 0.003, 1)
+        _caja(bm, sx * C["pies_x"] - fx / 2, sx * C["pies_x"] + fx / 2, ym - fy / 2, ym + fy / 2, -bajada_cabecera,
+              C["z0"] - 0.0005, 0.003, 1)
 
 
 # ---------------------------------------------------------------- cama
 def cama(col, prefijo, tapiz="Depto_Mat_Lana", cojines=None, manta="Depto_Mat_Manta", edredon="Depto_Mat_Cobertor",
-         sabanas="Depto_Mat_Textil", alto_cabecero=ALTO_CABECERO, semilla=7, resolucion=1.0):
+         sabanas="Depto_Mat_Textil", alto_cabecero=ALTO_CABECERO, semilla=7, resolucion=1.0, bajada_cabecera=0.0):
     """Cama king sobre plataforma de acero negro, cabecero tapizado con capitoné de canales (material `tapiz`:
     Depto_Mat_Lana o Depto_Mat_Cuero) y ropa de cama completa. Cabecero hacia +Y, pies hacia −Y; al final la huella
     completa (con la caída de la ropa de cama) se centra en el origen.
     resolucion: densidad de la malla de telas, cabecero, almohadas y cojines (1 = la de la especificación; 0,7
-    deja la cama en ≈ 60 % de los triángulos con los mismos cantos y pliegues, sólo con cuerdas más largas)."""
+    deja la cama en ≈ 60 % de los triángulos con los mismos cantos y pliegues, sólo con cuerdas más largas).
+    bajada_cabecera: ver _estructura (cama sobre una alfombra que empieza después de las patas de la cabecera)."""
     for m in (tapiz, manta, edredon, sabanas) + ((cojines,) if cojines else ()):
         assert m in G.MATERIALES, f"material desconocido: {m}"
     if cojines is None:                                  # contraste con el cabecero
@@ -403,7 +408,7 @@ def cama(col, prefijo, tapiz="Depto_Mat_Lana", cojines=None, manta="Depto_Mat_Ma
     partes = []                                           # (parte, bmesh, material, ángulo de suavizado)
 
     bm = bmesh.new()
-    _estructura(bm)
+    _estructura(bm, bajada_cabecera)
     partes.append(("Estructura", bm, "Depto_Mat_AceroNegro", 35))
     bm = bmesh.new()
     _cabecero(bm, alto_cabecero, max(4, round(CABECERO["muestras_canal"] * resolucion)))

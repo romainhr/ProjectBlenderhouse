@@ -3,10 +3,12 @@
 // CLAUDE.md § Método de trabajo.
 import { THREE } from "./three.js";
 import * as carga from "./carga.js";
+import { VIDRIO_VENTANA } from "./carga.js";
 import * as colision from "./colision.js";
 import { crearControles } from "./controles.js";
 import { crearInteraccion, apuntar, puntoEnElSuelo, resaltar, quitarResaltado, etiquetaAccion, activar, fijarGrupo, pasoMundo, MOTIVO_CAMINO } from "./interaccion.js";
-import { MOMENTOS, MOMENTO_POR_DEFECTO, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
+import { MOMENTOS, MOMENTO_POR_DEFECTO, ESCALA_ENTORNO_CALIBRADA, generarCieloCanvas, cargarPanoramas } from "./cielo.js";
+import { aplicarMomentoExterior, sombrearExterior, haciaSolMomento, intensidadFondo } from "./exterior.js";
 import { RoomEnvironment } from "../../vendor/three/jsm/environments/RoomEnvironment.js";
 import { estadoGruposParaMomento, gruposDelPanel } from "./luces.js";
 import { prepararMinimapa, dibujarMinimapa, recintoTocado } from "./minimapa.js";
@@ -44,7 +46,9 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 const calidad = crearCalidad(renderer, tactil, () => { sucio = true; });
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 500); // 72°: el mismo de la v2 y de los renders
+// 72°: el mismo de la v2 y de los renders. Lejos a 2 000 m (bloque 08): el suelo del exterior llega a 900 m y las
+// siluetas a 340; la precisión de profundidad la fija el plano cercano, no el lejano.
+const camera = new THREE.PerspectiveCamera(72, 1, 0.05, 2000);
 camera.rotation.order = "YXZ";
 
 // Suelo del hemisferio neutro (corrección 07c, ronda 2): con 0x746a5c (marrón) teñía de cálido todo lo que mira hacia
@@ -79,8 +83,11 @@ window.addEventListener("resize", ajustarTamano);
 let sol = null;
 let momentoActual = MOMENTO_POR_DEFECTO;
 function aplicarMomento(id, estadoInteraccion) {
-  const m = MOMENTOS[id];
+  const m0 = MOMENTOS[id];
   momentoActual = id;
+  // la intensidad del fondo: la del panorama del modelo (contrato 2.5, los cielos Filmic van con 1) o la del momento;
+  // sin panorama, el degradado con la del momento
+  const m = panoramas[id] ? { ...m0, fondoIntensidad: intensidadFondo(D, id, m0) } : m0;
   scene.background = panoramas[id] || generarCieloCanvas(m.cielo);
   scene.backgroundIntensity = m.fondoIntensidad;
   scene.traverse((o) => {
@@ -92,19 +99,40 @@ function aplicarMomento(id, estadoInteraccion) {
       // todo metal y hacía del acero cepillado (rugosidad 0,25-0,35) un espejo del estudio; queda sólo bajo 0,25. Un
       // material con mapa de rugosidad trae roughness = 1 (el factor de glTF): queda en 1 también.
       if (mat.userData && mat.userData.entornoLocal) continue;          // actualizarEntornos, en cada cuadro
+      if (mat.userData && mat.userData.vidrioVentana) {
+        // el vidrio de las ventanas (carga.js, corrección 08, ronda 2): refleja el panorama del momento
+        const env = panoramas[id] || null;
+        if (mat.envMap !== env) { mat.envMap = env; mat.needsUpdate = true; }
+        mat.envMapIntensity = VIDRIO_VENTANA.reflejo * m.fondoIntensidad;
+        continue;
+      }
       mat.envMapIntensity = m.entorno * (mat.metalness > 0.5 && mat.roughness < 0.25 ? 1.8 : 1);
     }
   });
   ambiente.intensity = m.ambiente;
   renderer.toneMappingExposure = m.exposicion;
-  if (sol) { sol.color.set(m.sol.color); sol.intensity = m.sol.intensidad; }
+  // el sol del panorama del momento, para la luz del depto y para el sombreado por vértice del exterior: el de
+  // exterior.sol del modelo (contrato 2.5; corrección 08, ronda 2: azimut y elevación medidos en cada HDR, los mismos de
+  // los renders de revisión) o, si falta, el azimut del sol de la escena con MOMENTOS[id].sol.elevacion
+  const haciaSol = haciaSolMomento(D, id, m.sol.elevacion);
+  if (sol) { sol.color.set(m.sol.color); sol.intensity = m.sol.intensidad; sol.position.copy(haciaSol).multiplyScalar(20); }
+  // exterior (bloque 08): sombreado con el sol y el cielo del momento, tinte, bruma de las siluetas con el horizonte
+  // del panorama, reflejo del cielo en el vidrio y emisión de las ventanas vecinas y de las luminarias
+  const pano = panoramas[id];
+  const ext = (D && D.exterior) || {};
+  if (grupoExterior) {
+    const e = m.exterior || {};
+    sombrearExterior(grupoExterior, haciaSol, typeof ext.suelo_y === "number" ? ext.suelo_y : 0, undefined,
+      { cielo: e.cielo ?? 1, sol: e.sol ?? 1, arriba: e.arriba ?? 1 });
+  }
+  aplicarMomentoExterior(materialesExterior, m, id, ext, pano && pano.userData.horizonte, pano || null);
   if (estadoInteraccion) {
     // cada grupo vuelve al estado de autor para este momento (grupos_luz[].encendido): el día apaga todo; la tarde y
     // la noche prenden sólo los que nacen encendidos (techos), no los veladores, apliques ni la lámpara de pie
     const estados = estadoGruposParaMomento(estadoInteraccion.gruposLuz.values(), m.lucesEncendidas);
     for (const [id2, encendido] of estados) fijarGrupo(estadoInteraccion, id2, encendido);
     ui.refrescarGruposLuzUI(estadoInteraccion.gruposLuz);
-    carga.actualizarEntornos(materialesEntorno, estadoInteraccion.gruposLuz, m.entornoLocal);
+    carga.actualizarEntornos(materialesEntorno, estadoInteraccion.gruposLuz, m.entornoLocal, ESCALA_ENTORNO_CALIBRADA);
   }
   sucio = true;
 }
@@ -112,6 +140,8 @@ function aplicarMomento(id, estadoInteraccion) {
 // ---------------------------------------------------------------------------------------------- carga
 let D = null, estado = null, controles = null, M = null;
 let materialesEntorno = [];   // materiales con entorno local (carga.js): su variante sigue a la luz de la cocina
+let materialesExterior = [];  // materiales del paisaje (exterior.js): tinte y emisión por momento
+let grupoExterior = null;     // Depto_Exterior (carga.js, prepararExterior): su sombreado sigue al sol del momento
 let sucio = true;
 
 async function iniciar() {
@@ -155,6 +185,8 @@ async function iniciar() {
     if (o.isMesh && o.material.userData && o.material.userData.entornoLocal && !materialesEntorno.includes(o.material)) materialesEntorno.push(o.material);
   });
   scene.add(estado.estaticoFusionado);
+  if (preparado.exteriorFusionado) { scene.add(preparado.exteriorFusionado); grupoExterior = preparado.exteriorFusionado; }
+  materialesExterior = preparado.materialesExterior || [];
   for (const nodo of estado.sueltos) scene.attach(nodo);
   for (const luz of estado.lucesTHREE) {
     scene.add(luz);
@@ -316,7 +348,8 @@ function pasoCuadro(dt) {
   }
 
   // la variante del entorno local sigue a la luz de la cocina (interruptor, panel o momento)
-  if (estado && carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal)) sucio = true;
+  if (estado && carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal,
+    ESCALA_ENTORNO_CALIBRADA)) sucio = true;
   if (sucio || actividad) {
     const t0 = performance.now();
     renderer.render(scene, camera);
@@ -353,7 +386,8 @@ if (debug) {
       }
     }
     for (let i = 0; i < 80; i++) pasoMundo(estado, 0.05, lejos);     // animaciones y fundidos terminados
-    carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal);
+    carga.actualizarEntornos(materialesEntorno, estado.gruposLuz, MOMENTOS[momentoActual].entornoLocal,
+      ESCALA_ENTORNO_CALIBRADA);
     ui.refrescarGruposLuzUI(estado.gruposLuz);
     renderer.setPixelRatio(1);
     renderer.setSize(op.ancho || 1280, op.alto || 800, false);

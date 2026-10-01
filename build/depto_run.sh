@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Pipeline del activo Depto: reconstruye el maestro desde cero y regenera toda la evidencia de revisión.
 # Uso: bash build/depto_run.sh [NN] [vK]
-#   NN = última fase a construir (por defecto 06); vK = sufijo opcional de la carpeta de revisión
+#   NN = última fase a construir (por defecto 06; la exportación siempre lleva antes la fase 08, el exterior, que la
+#   cadena de sellos pone entre la 05 y la 06: 08 da lo mismo que 06); vK = sufijo opcional de la carpeta de revisión
 #   (review/depto_NN_vK), para no pisar la evidencia de una compuerta ya presentada.
 # Se detiene en el primer error: cada paso devuelve código distinto de 0 si falla una prueba.
 set -euo pipefail
@@ -20,13 +21,16 @@ fase 02_blockout 1
 [[ "$HASTA" > "03" ]] && fase 04_mobiliario 1
 [[ "$HASTA" > "04" ]] && fase 05_materiales 1
 if [[ "$HASTA" > "05" ]]; then
+    fase 08_exterior 1
     fase 06_exportar 1
     echo "== Reimportación del GLB en una escena vacía"
     $BL --python tools/validar_glb.py -- --glb exports/depto.glb --manifiesto exports/manifest.json --activo depto \
-        --out "$REV" --ocultar Depto_Cielo,Depto_Palier_Cielo 2>&1 | filtro; test "${PIPESTATUS[0]}" -eq 0
+        --out "$REV" --ocultar Depto_Cielo,Depto_Palier_Cielo,Depto_Ext_ --excluir-dims Depto_Ext_ 2>&1 | filtro
+    test "${PIPESTATUS[0]}" -eq 0
     echo "== El GLB que arma el visor con los archivos web (exports/web) también coincide"
     $BL --python tools/validar_glb.py -- --glb exports/depto_web_armado.glb --manifiesto exports/manifest.json \
-        --activo depto --out "$REV/web" --ocultar Depto_Cielo,Depto_Palier_Cielo 2>&1 | filtro; test "${PIPESTATUS[0]}" -eq 0
+        --activo depto --out "$REV/web" --ocultar Depto_Cielo,Depto_Palier_Cielo,Depto_Ext_ --excluir-dims Depto_Ext_ \
+        2>&1 | filtro; test "${PIPESTATUS[0]}" -eq 0
 fi
 # Desde la fase 5 (materiales y luz) las vistas se revisan en Eevee; la planta de comparación sigue en Workbench.
 MOTOR=$([[ "$HASTA" > "04" ]] && echo EEVEE || echo WORKBENCH)
@@ -48,5 +52,6 @@ if [[ "$HASTA" > "02" ]]; then
 fi
 echo "== Revisión estándar (render_review)"
 $BL build/depto.blend --python tools/render_review.py -- --out "$REV/ortho" --target Depto \
-    --hide Depto_Cielo,Depto_Palier --frente +Y 2>&1 | filtro; test "${PIPESTATUS[0]}" -eq 0
+    --hide Depto_Cielo,Depto_Palier$([[ "$HASTA" > "05" ]] && echo ,Depto_Exterior) --frente +Y 2>&1 | filtro
+test "${PIPESTATUS[0]}" -eq 0
 echo "PIPELINE_OK hasta la fase $HASTA ($REV)"

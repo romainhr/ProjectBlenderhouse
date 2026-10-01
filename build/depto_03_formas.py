@@ -51,7 +51,11 @@ HOJA_ALTO = 2.00             # supuesto: hoja comercial (brief: dintel 2,05 = ho
 HOJA_ESP = 0.04              # supuesto: hoja interior
 HOJA_ESP_ENTRADA = 0.05      # supuesto: hoja de acceso
 HOJA_ENTRADA = 1.00          # brief (decisión 1): hoja de 1,00 en la luz dibujada de 1,07 (el arco mide 1,03)
-LUZ_PISO = 0.01              # supuesto: holgura bajo la hoja
+LUZ_PISO = 0.01              # supuesto: holgura bajo la hoja (entrada y clósets)
+LUZ_PISO_ABATIBLE = 0.02     # diseño (bloque 09): 2 cm bajo las hojas abatibles interiores (dormitorios y baños) y la
+                             # plegable del nicho de lavadora (corrección 09), la
+                             # holgura usual para que pasen sobre alfombras y pisos de baño de hasta 1,5 cm; en los
+                             # baños es además la rendija de ventilación. La entrada sigue con LUZ_PISO (burlete).
 MARCO_ANCHO = 0.025          # medido: jamba = (luz 0,76 − hoja 0,71) / 2 en las puertas interiores
 MARCO_SOBRESALE = 0.01       # supuesto: el marco sobresale 1 cm de cada cara del muro
 MANILLA_Z = 1.00             # supuesto: altura estándar
@@ -317,6 +321,9 @@ TAPA_CELESTE = ("Depto_Mat_Alimento", "Depto_Mat_RopaCeleste")
 LAVADORA = (0.60, 0.60, 0.85)          # supuesto: carga frontal estándar
 LAVADORA_HOLGURA = 0.03                # supuesto: separación al fondo del nicho
 LV_FRENTE_ESP = 0.02                   # supuesto
+LV_PLEGABLE_AVANCE = 0.36              # diseño (corrección 09): la plegable de dos hojas de 0,355 m avanza ≈ 0,36 m
+                                       # frente al vano al abrirse (la fase 4 no deja alfombras bajo ese barrido sin 3 mm
+                                       # libres hasta su canto)
 LV_DINTEL_ESP = 0.072                  # supuesto: como un tabique (0,072 entre centros de línea, medido)
 
 # ---------------------------------------------------------------------------
@@ -599,7 +606,7 @@ def puertas(col):
         ulibre = b - ma if bisagra == "a" else a + ma
         piv = mundo(eje, ub, cara)
         h = Pieza(f"Depto_Puerta_{pid}_Hoja", "Depto_Mat_PuertaEntrada" if es_ent else "Depto_Mat_PuertaMadera")
-        h.caja(*uw(eje, a + ma, b - ma, w0, w1), LUZ_PISO, HOJA_ALTO)
+        h.caja(*uw(eje, a + ma, b - ma, w0, w1), LUZ_PISO if es_ent else LUZ_PISO_ABATIBLE, HOJA_ALTO)
         man = Pieza(f"Depto_Puerta_{pid}_Manillas", "Depto_Mat_Manilla")
         u_eje = ulibre - du * px(MANILLA["eje_desde_canto"])
         hacia_bisagra = (mundo(eje, u_eje - du, w0) - mundo(eje, u_eje, w0)).normalized()
@@ -1692,7 +1699,9 @@ def nicho_lavadora(col):
     frente = Pieza("Depto_LV_Frente", "Depto_Mat_FrenteCloset")
     mid = (x0 + x1) / 2
     for u0, u1 in ((x0 + px(JUNTA), mid - px(JUNTA) / 2), (mid + px(JUNTA) / 2, x1 - px(JUNTA))):
-        frente.caja(u0, u1, Y["LV_F"], Y["LV_F"] + e, LUZ_PISO, P.DINTEL_PUERTAS)   # puerta plegable cerrada
+        # puerta plegable cerrada. Corrección 09 (ronda 1): canto a 2 cm del piso, como las hojas abatibles interiores
+        # (con 1 cm rozaba el camino del hall, de 1 cm, al abrirse)
+        frente.caja(u0, u1, Y["LV_F"], Y["LV_F"] + e, LUZ_PISO_ABATIBLE, P.DINTEL_PUERTAS)
     frente.caja(x0, x1, Y["LV_F"], Y["LV_F"] + px(LV_DINTEL_ESP), P.DINTEL_PUERTAS, H)   # dintel
     frente.crear(col)
     w, d, h = LAVADORA

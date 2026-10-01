@@ -3,13 +3,17 @@
 Uso (o todo el pipeline con build/depto_run.sh 06):
     blender -b build/depto.blend --python-exit-code 1 --python build/depto_06_exportar.py
 
-Exige el maestro con el sello vigente de la fase 5 y no lo modifica (sólo lee y exporta). Escribe:
+Exige el maestro con el sello vigente de la fase 08 (exterior, que va después de la 5) y no lo modifica (sólo lee y
+exporta; la emisión del exterior sube a su valor de noche sólo mientras exporta). Escribe:
     exports/depto.glb                 mallas visibles (sin Depto_Ref_*, Depto_Col_*, cámaras ni luces), imágenes
                                       JPEG (en automático el GLB pesaba 17,5 MB; límite de la página: 15 MB),
                                       propiedades extra (puertas, corredera) para el visor
     exports/web/                      lo que se publica con el visor (las páginas de claude.ai no sirven .glb ni
                                       .bin): depto_gltf.json (el glTF), depto_bin.b64.txt (geometría en base64),
-                                      tex/*.jpg (las imágenes tal cual) y depto_web.json (índice con tamaños). El
+                                      tex/*.jpg (las imágenes tal cual, más los cielos tex/cielo_<momento>.jpg que
+                                      usa el visor de fondo: el de día y el de la tarde, el HDR de Poly Haven con la
+                                      curva Filmic de los renders de revisión; el de noche, el JPG de Poly Haven) y
+                                      depto_web.json (índice con tamaños). El
                                       visor arma el GLB en memoria; aquí se arma igual (armar_glb) y se reimporta.
     exports/depto_colisiones.json     cajas 2D en el plano XZ de glTF (Y arriba) para una cámara cilíndrica:
                                       estáticas, y móviles en el marco local de su nodo (hojas y corredera)
@@ -32,6 +36,7 @@ import shutil
 import sys
 
 import bpy
+import numpy as np
 from mathutils import Matrix, Vector
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,11 +57,18 @@ LIMITE_TOTAL = 60 * 1024 * 1024
 LIMITE_ARCHIVOS = 240
 MANIFIESTO = os.path.join(EXPORTS, "manifest.json")
 TEX_MANIFIESTO = os.path.join(RAIZ, "assets", "texturas", "polyhaven", "manifest.json")
+MOD_MANIFIESTO = os.path.join(RAIZ, "assets", "modelos", "polyhaven", "manifest.json")   # bloque 09: plantas
 RADIO = 0.20                          # compuerta 0 / ADR 0002: radio de la cámara del tour con el mobiliario
 OJO = 1.60                            # altura de los ojos (la de las cámaras de revisión)
-CONTRATO = "2.2"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
+CONTRATO = "2.5"                      # versión del contrato de interacción (docs/contrato-interaccion.md); "version"
                                       # sigue siendo la mayor (2), por compatibilidad del visor. 2.2 (corrección 07c,
-                                      # ronda 2): enciende / movil (luz de la nevera), alcance_m y entornos[]
+                                      # ronda 2): enciende / movil (luz de la nevera), alcance_m y entornos[]. 2.3
+                                      # (bloque 08): exterior con panoramas por momento, rotacion_deg, suelo_y y emision,
+                                      # y materiales Depto_Ext_Mat_* con exterior = true en sus extras. 2.4 (corrección
+                                      # 08, ronda 1): extras exterior_vidrio y exterior_aditivo, y la escala del entorno
+                                      # local, que el visor usa para normalizar su intensidad. 2.5 (corrección 08, ronda
+                                      # 2): exterior.sol (azimut y elevación del sol de cada panorama), cielos con la
+                                      # curva Filmic (exterior.panoramas_intensidad) y exterior_vidrio uniforme
 INICIO, MIRAR = "Hall", (190, 250)    # crítico de recorrido, fase 3: hall con 0,45 m de holgura, hacia el living
 DETRAS_DE_PUERTA = {"Dorm1", "Dorm2", "Bano1", "Bano2", "Paso_D1", "Paso_D2", "Balcon"}
 
@@ -68,6 +80,11 @@ def gl(v):
 
 def r4(x):
     return round(float(x), 4)
+
+
+def es_exterior(o):
+    """Objetos de la fase 08 (Depto_Exterior): paisaje sin colisión que el visor dibuja como fondo."""
+    return bool(o.get("exterior"))
 
 
 def exportables(root):
@@ -426,7 +443,10 @@ def prueba_aperturas(root):
     bpy.context.view_layer.update()
     moviles = [o for o in exportables(root) if o.parent is None and ("puerta" in o or "recorrido_m" in o)]
     propios = set(moviles) | {h for o in moviles for h in descendientes(o)}
-    estaticos = [(o, c) for o in exportables(root) if o not in propios for c in _cajas(o, o.matrix_world)]
+    # el exterior (fase 08) queda fuera: está a más de 1 m de cualquier móvil y la fase 08 ya prueba que no entra en el
+    # volumen del depto, del balcón ni del palier
+    estaticos = [(o, c) for o in exportables(root) if o not in propios and not es_exterior(o)
+                 for c in _cajas(o, o.matrix_world)]
     ref = {o.name: (False if o.get("clase") in CLASES_MUEBLE else bool(o.get("abierta"))) for o in moviles}
     por_nombre = {o.name: o for o in moviles}
     cache = {}
@@ -616,12 +636,25 @@ ENTORNO = dict(
 )
 
 
+def mundo_entorno(scene):
+    """El mundo con que se renderiza el entorno local (corrección 08, ronda 2): el mismo que alumbra los renders de
+    revisión de día (tools/render_07b.py, _mundo_hdri con DIA: el HDR de día de Poly Haven desaturado a 0,35, fuerza
+    1,6, suelo neutro bajo el horizonte), sin la rama de la cámara: los reflejos de Eevee (las sondas) ven esa rama. Con
+    el cielo Nishita del maestro, saturado, el entorno «dia» veía un cielo azul por la ventana y el frente del freezer
+    salía azulado en el visor (B − R = +22 en sRGB, contra −5 en Blender)."""
+    sys.path.insert(0, os.path.join(RAIZ, "tools"))
+    import render_07b as R7  # noqa: E402  (sin efectos al importarlo: main() sólo corre como script)
+    return R7._mundo_hdri("_Entorno_Mundo", R7.HDRI_DIA, R7.DIA["fuerza"], R7.DIA["saturacion"])
+
+
 def entorno_cocina(scene, grupos):
     """Renderiza ENTORNO en dos variantes, «luces» (los grupos que nacen encendidos: tarde y noche del visor) y «dia»
     (sólo el sol y el cielo), en exports/web/, y devuelve su registro del contrato (sección 6). Con una sola variante,
     la de las luces, de día el acero reflejaba una cocina alumbrada a 2700-3000 K y la visera se veía de latón junto al
-    azulejo neutro. No guarda el .blend: la fase 6 no modifica el maestro."""
+    azulejo neutro. Las dos, con mundo_entorno(). No guarda el .blend: la fase 6 no modifica el maestro."""
     E_ = ENTORNO
+    mundo_previo = scene.world
+    scene.world = mundo_entorno(scene)
     apagados = {g["id"] for g in grupos if not g.get("encendido")}
     previo = {o.name: o.hide_render for o in bpy.data.objects if o.type == "LIGHT"}
     escalas = {}
@@ -638,6 +671,7 @@ def entorno_cocina(scene, grupos):
     bsdf.inputs["Emission Strength"].default_value = emision
     for n, h in previo.items():
         bpy.data.objects[n].hide_render = h
+    scene.world = mundo_previo
     x0, x1, y0, y1 = E_["caja"]
     a, b = P.a_blender(x0, y0), P.a_blender(x1, y1)
     reg = {"id": E_["id"], "imagen": E_["archivo"], "imagenes": {"luces": E_["archivo"], "dia": E_["archivo_dia"]},
@@ -645,7 +679,8 @@ def entorno_cocina(scene, grupos):
            "caja": [r4(min(a[0], b[0])), r4(max(a[0], b[0])), r4(min(-a[1], -b[1])), r4(max(-a[1], -b[1]))],
            "alto": [0.0, r4(P.ALTURA_PISO_CIELO)],     # y de glTF: piso y cielo (proyección en caja del visor)
            "materiales": list(E_["materiales"]), "grupo": E_["grupo"], "escala": {k: r4(v) for k, v in escalas.items()},
-           "muestras": E_["muestras"], "luces": "luces: grupos que nacen encendidos; dia: sólo el sol y el cielo"}
+           "muestras": E_["muestras"], "luces": "luces: grupos que nacen encendidos; dia: sólo el sol y el cielo",
+           "mundo": "HDR de día de Poly Haven desaturado a 0,35, fuerza 1,6 (el de los renders de revisión de día)"}
     print("CHECK entorno local:", reg, {k: f"{os.path.getsize(os.path.join(WEB, v)) / 1e3:.0f} kB"
                                         for k, v in reg["imagenes"].items()})
     return reg
@@ -693,6 +728,150 @@ def _render_entorno(scene, archivo):
     bpy.data.images.remove(im)
     bpy.data.objects.remove(cam)
     return escala
+
+
+# ---------------------------------------------------------------------------
+# Exterior (bloque 08; contrato 2.4, sección 4). La fase 08 deja la emisión del paisaje (ventanas vecinas, luminarias)
+# en 0 en el maestro, para los renders de día, y en cada material su valor de noche (emision_noche): se exporta con ése
+# y el visor lo escala por momento (exterior.emision). Los cielos JPG de Poly Haven van junto a las texturas.
+# ---------------------------------------------------------------------------
+class emision_exterior:
+    """Sube la emisión de los materiales del exterior a su valor de noche mientras dura el bloque y la devuelve."""
+
+    def __enter__(self):
+        self.previo = {}
+        for m in bpy.data.materials:
+            if m.get("exterior") and "emision_noche" in m:
+                b = m.node_tree.nodes.get("Principled BSDF")
+                self.previo[m.name] = b.inputs["Emission Strength"].default_value
+                b.inputs["Emission Strength"].default_value = float(m["emision_noche"])
+        return self
+
+    def __exit__(self, *exc):
+        for n, v in self.previo.items():
+            bpy.data.materials[n].node_tree.nodes.get("Principled BSDF").inputs["Emission Strength"].default_value = v
+        return False
+
+
+# Cielos del visor (corrección 08, ronda 2; contrato 2.5, sección 4). El visor dibujaba de fondo el JPG de Poly Haven,
+# que viene con su propio tono (más azul de día, R/B 0,84 contra 0,94 en Blender, y más rosado de tarde: horizonte
+# [1,12; 0,98; 0,87] de Blender por canal), mientras que el paisaje estaba calibrado contra la curva Filmic de los
+# renders. Aquí, de día y de tarde, el cielo es el que ve la cámara de tools/render_08.py: el HDR por la fuerza del cielo
+# de cámara del momento (scene["depto_exterior"]["cielo_camara"]) con la vista Filmic, sin look, de Blender, guardado en
+# pantalla (sRGB): el visor lo dibuja tal cual, con intensidad 1 (exterior.panoramas_intensidad), sin otra curva
+# (three.js no aplica tone mapping a un fondo sRGB). El HDR es de 1k: el detalle de las nubes sale del JPG de 2048 de
+# Poly Haven, multiplicado por la razón Filmic / JPG suavizada (GANANCIA_RADIO px del HDR, diseño), así el tono es el de
+# Blender y la nitidez la del JPG. La noche sigue con el JPG de Poly Haven y la intensidad de fondo del visor: su cielo
+# ya coincide con Blender (1,04) y en pantalla es tan oscuro que en un JPEG de 8 bits quedaría en escalones.
+CIELOS_FILMIC = ("dia", "tarde")
+GANANCIA_RADIO = 6
+CIELO_CALIDAD = 92
+
+
+def _lin(a):
+    return np.where(a <= 0.04045, a / 12.92, ((a + 0.055) / 1.055) ** 2.4).astype(np.float32)
+
+
+def _pixeles(im):
+    a = np.empty(len(im.pixels), np.float32)
+    im.pixels.foreach_get(a)
+    return a.reshape(im.size[1], im.size[0], 4)[..., :3]
+
+
+def _suavizar(a, r):
+    """Promedio móvil separable de (2r + 1) px, dos pasadas (casi gaussiano); se repite en x (el panorama da la
+    vuelta) y se recorta en y."""
+    for _ in range(2):
+        a = sum(np.roll(a, k, axis=1) for k in range(-r, r + 1)) / (2 * r + 1)
+        p = np.concatenate([a[:1].repeat(r, 0), a, a[-1:].repeat(r, 0)], axis=0)
+        a = sum(p[k:k + a.shape[0]] for k in range(2 * r + 1)) / (2 * r + 1)
+    return a
+
+
+def cielo_filmic(scene, fuente, fuerza, destino):
+    """tex/cielo_<momento>.jpg de pantalla: Filmic(HDR × fuerza) con el detalle del JPG de 2048. Devuelve la razón
+    media (en lineal) entre el resultado reducido a 1k y el Filmic del HDR (≈ 1: el tono es el de Blender)."""
+    vs, r = scene.view_settings, scene.render
+    antes = (vs.view_transform, vs.look, vs.exposure, vs.gamma, r.dither_intensity, r.image_settings.file_format,
+             r.image_settings.color_mode, r.image_settings.color_depth, r.image_settings.quality)
+    r.dither_intensity = 0.0
+    tmp = os.path.join(bpy.app.tempdir or "/tmp", "_cielo_filmic.png")
+    hdr = bpy.data.images.load(os.path.join(RAIZ, fuente["hdr"]))
+    vs.view_transform, vs.look, vs.exposure, vs.gamma = "Filmic", "None", math.log2(fuerza), 1.0
+    r.image_settings.file_format, r.image_settings.color_mode, r.image_settings.color_depth = "PNG", "RGB", "8"
+    hdr.save_render(tmp, scene=scene)
+    im = bpy.data.images.load(tmp)
+    F = _lin(_pixeles(im))                                     # pantalla lineal, 1k
+    bpy.data.images.remove(im)
+    bpy.data.images.remove(hdr)
+    jpg = bpy.data.images.load(os.path.join(RAIZ, fuente["jpg"]))
+    J2 = _lin(_pixeles(jpg))                                   # 2048 × 1024, pantalla lineal
+    bpy.data.images.remove(jpg)
+    h, w = F.shape[:2]
+    if J2.shape[:2] != (2 * h, 2 * w):
+        raise SystemExit(f"ERROR: {fuente['jpg']} no mide el doble del HDR ({J2.shape[:2]} contra {(h, w)}).")
+    J1 = J2.reshape(h, 2, w, 2, 3).mean(axis=(1, 3))
+    g = np.clip(_suavizar((F + 2e-3) / (J1 + 2e-3), GANANCIA_RADIO), 0.2, 5.0)
+    G2 = _suavizar(np.repeat(np.repeat(g, 2, axis=0), 2, axis=1), 1)
+    out = np.clip(J2 * G2, 0.0, 1.0)
+    razon = float((out.reshape(h, 2, w, 2, 3).mean(axis=(1, 3)) + 1e-3).mean() / (F + 1e-3).mean())
+    im = bpy.data.images.new("_cielo_filmic", 2 * w, 2 * h, float_buffer=True)
+    im.pixels.foreach_set(np.concatenate([out, np.ones((2 * h, 2 * w, 1), np.float32)], axis=2).ravel())
+    vs.view_transform, vs.look, vs.exposure = "Standard", "None", 0.0
+    r.image_settings.file_format, r.image_settings.color_mode, r.image_settings.quality = "JPEG", "RGB", CIELO_CALIDAD
+    os.makedirs(os.path.dirname(destino), exist_ok=True)
+    im.save_render(destino, scene=scene)
+    bpy.data.images.remove(im)
+    (vs.view_transform, vs.look, vs.exposure, vs.gamma, r.dither_intensity, r.image_settings.file_format,
+     r.image_settings.color_mode, r.image_settings.color_depth, r.image_settings.quality) = antes
+    return razon
+
+
+def sol_por_momento(ext):
+    """exterior.sol (contrato 2.5): el sol (la luna de noche) medido en cada HDR por la fase 08, con el azimut ya girado
+    rotacion_deg como lo usan tools/render_08.py (orientar_sol) y el visor. azimut_deg en la convención de Blender (desde
+    +X hacia +Y, antihorario visto desde arriba); hacia_gl, el vector unitario hacia el sol en ejes de glTF."""
+    out = {}
+    for m, f in ext["fuentes"].items():
+        az = f["sol_azimut_deg"] + ext["rotacion_deg"]
+        el = f["sol_elevacion_deg"]
+        a, e = math.radians(az), math.radians(el)
+        out[m] = {"azimut_deg": r4(az), "elevacion_deg": r4(el),
+                  "hacia_gl": [r4(v) for v in gl(Vector((math.cos(e) * math.cos(a), math.cos(e) * math.sin(a),
+                                                         math.sin(e))))]}
+    return out
+
+
+def exterior(scene):
+    """Registro `exterior` del contrato 2.5 y los cielos en exports/web/tex/ (el visor los lee desde modelo/)."""
+    ext = json.loads(scene.get("depto_exterior", "{}"))
+    if not ext:
+        raise SystemExit("ERROR: el maestro no trae scene['depto_exterior'] (fase 08).")
+    intensidad, razones = {}, {}
+    for momento, ruta in ext["panoramas"].items():
+        destino = os.path.join(WEB, ruta)
+        os.makedirs(os.path.dirname(destino), exist_ok=True)
+        if momento in CIELOS_FILMIC:
+            razones[momento] = round(cielo_filmic(scene, ext["fuentes"][momento], ext["cielo_camara"][momento],
+                                                  destino), 3)
+            intensidad[momento] = 1.0
+        else:
+            shutil.copyfile(os.path.join(RAIZ, ext["fuentes"][momento]["jpg"]), destino)
+    reg = {k: ext[k] for k in ("panoramas", "rotacion_deg", "suelo_y", "emision")}
+    reg["panoramas_intensidad"] = intensidad
+    reg["sol"] = sol_por_momento(ext)
+    reg["cielos"] = {k: f["id"] for k, f in ext["fuentes"].items()}
+    reg["nota"] = ("panoramas equirectangulares de Poly Haven (CC0), girados rotacion_deg alrededor de +Y (antihorario "
+                   "visto desde arriba); los de panoramas_intensidad, ya en pantalla con la curva Filmic de los renders "
+                   "de revisión (el visor los dibuja con esa intensidad, sin otra curva); sol: el de cada panorama, con "
+                   "el azimut girado; materiales con extras.exterior = true: fondo sin luces; emision: fuerza de la "
+                   "emisión del exterior por momento (la del glTF es la de noche)")
+    if any(abs(v - 1.0) > 0.03 for v in razones.values()):
+        raise SystemExit(f"ERROR: los cielos Filmic se alejan del tono de Blender: {razones}")
+    print("CHECK exterior:", reg["panoramas"], "rotación", reg["rotacion_deg"], "suelo", reg["suelo_y"],
+          "cielos Filmic (resultado / Filmic del HDR)", razones, "sol", reg["sol"],
+          {k: f"{os.path.getsize(os.path.join(WEB, v)) / 1e3:.0f} kB" for k, v in reg["panoramas"].items()})
+    return reg
 
 
 def exportar(objs):
@@ -757,6 +936,20 @@ def armar_glb(carpeta):
             + struct.pack("<II", len(binario), 0x004E4942) + bytes(binario))
 
 
+def modelos_usados(objs):
+    """Créditos de los modelos de Poly Haven que van en el GLB (bloque 09): variantes y piezas que los usan."""
+    with open(MOD_MANIFIESTO) as fh:
+        man = json.load(fh)
+    usos = {}
+    for o in objs:
+        if o.get("planta"):
+            u = usos.setdefault(o["planta"], {"variantes": set(), "piezas": set()})
+            u["variantes"].add(o.get("variante", ""))
+            u["piezas"].add(o.get("pieza", o.name))
+    return {m: {"pagina": man.get("paginas", {}).get(m), "licencia": "CC0", "fuente": man["fuente"],
+                "variantes": sorted(u["variantes"]), "piezas": sorted(u["piezas"])} for m, u in sorted(usos.items())}
+
+
 def md5(ruta):
     h = hashlib.md5()
     with open(ruta, "rb") as fh:
@@ -766,7 +959,7 @@ def md5(ruta):
 
 def main():
     scene = bpy.context.scene
-    SE.exigir(scene, "05", bpy.data.filepath)
+    SE.exigir(scene, "08", bpy.data.filepath)
     root = bpy.data.collections["Depto"]
     bpy.context.view_layer.update()
     objs = exportables(root)
@@ -795,7 +988,10 @@ def main():
         print("FALLA", f)
     if fallos:
         raise SystemExit(f"ERROR: {len(fallos)} pruebas de la fase 6 fallan; no se exporta.")
-    indice = exportar(objs)
+    with emision_exterior():
+        indice = exportar(objs)
+    ext = exterior(scene)
+    datos["exterior"] = ext
     tam = os.path.getsize(GLB)
     grandes = [f"{a}: {os.path.getsize(os.path.join(WEB, a)) / 1e6:.2f} MB" for a in
                ["depto_gltf.json", "depto_bin.b64.txt"] + [i["uri"] for i in indice["imagenes"]]
@@ -811,13 +1007,19 @@ def main():
         json.dump(datos, fh, ensure_ascii=False, separators=(",", ":"))
     shutil.copy(COLISIONES, os.path.join(WEB, "depto_colisiones.json"))
 
-    pts = [o.matrix_world @ v.co for o in objs for v in o.data.vertices]
+    ext_objs = [o for o in objs if es_exterior(o)]
+    dep_objs = [o for o in objs if not es_exterior(o)]
+    pts = [o.matrix_world @ v.co for o in dep_objs for v in o.data.vertices]      # el depto, sin el paisaje
     lo = [min(p[k] for p in pts) for k in range(3)]
     hi = [max(p[k] for p in pts) for k in range(3)]
-    tris = 0
+    tris, tris_ext = 0, 0
     for o in objs:
         o.data.calc_loop_triangles()
         tris += len(o.data.loop_triangles)
+        tris_ext += len(o.data.loop_triangles) if es_exterior(o) else 0
+    pts_ext = [o.matrix_world @ v.co for o in ext_objs for v in o.data.vertices]
+    lo_e = [min(p[k] for p in pts_ext) for k in range(3)] if pts_ext else [0.0] * 3
+    hi_e = [max(p[k] for p in pts_ext) for k in range(3)] if pts_ext else [0.0] * 3
     mats = sorted({m.name for o in objs for m in o.data.materials if m})
     with open(TEX_MANIFIESTO) as fh:
         tex = json.load(fh)
@@ -834,18 +1036,28 @@ def main():
                        "luces": len(datos["luces"]), "grupos_luz": len(datos["grupos_luz"]),
                        "interruptores": len(datos["interruptores"])},
         "fecha": datetime.date.today().isoformat(), "fase": "06",
-        "sellos": {**{f: scene.get(SE.clave(f)) for f in ("01", "02", "03", "04", "05")}, "06": SE.sello("06")},
+        "sellos": {**{f: scene.get(SE.clave(f)) for f in ("01", "02", "03", "04", "05", "08")}, "06": SE.sello("06")},
         "origen": "piso terminado interior (Z=0), centro del rectángulo exterior sin balcón",
         "ejes": "Blender +Y (fachada del balcón) = glTF -Z; Blender Z = glTF Y",
         "dimensiones_m": {"x": r4(hi[0] - lo[0]), "y": r4(hi[1] - lo[1]), "z": r4(hi[2] - lo[2])},
         "bbox_blender_m": {"min": [r4(v) for v in lo], "max": [r4(v) for v in hi]},
         "mallas": len(objs), "triangulos": tris, "materiales": mats,
+        "dimensiones_nota": "dimensiones_m y bbox_blender_m son del depto, sin el exterior (objetos Depto_Ext_*)",
+        "exterior": {"mallas": len(ext_objs), "triangulos": tris_ext,
+                     "dimensiones_m": {"x": r4(hi_e[0] - lo_e[0]), "y": r4(hi_e[1] - lo_e[1]), "z": r4(hi_e[2] - lo_e[2])},
+                     "cielos": ext["cielos"], "rotacion_deg": ext["rotacion_deg"],
+                     "fuente": "build/depto_08_exterior.py (diseño e inferido; cielos de Poly Haven, CC0)"},
         "escala": {"m_por_px_plano": P.M_POR_PX, "incertidumbre": "±5 % (inferida de elementos estándar; sin cota real)"},
-        "exportacion": {"formato": "GLB", "imagenes": "JPEG", "extras": True, "camaras": False, "luces": False,
+        "exportacion": {"formato": "GLB", "imagenes": "JPEG (PNG con alfa sólo en las hojas de las plantas)",
+                        "extras": True, "camaras": False, "luces": False,
                         "blender": bpy.app.version_string},
         "texturas": {tid: {"nombre": t["nombre"], "autores": t["autores"], "pagina": t["pagina"], "licencia": "CC0"}
                      for tid, t in tex["texturas"].items()},
-        "texturas_propias": {"granito_gris_512": "generada por build/depto_05_materiales.py"},
+        "texturas_propias": {"granito_gris_512": "generada por build/depto_05_materiales.py",
+                             "exterior": "assets/texturas/exterior/*.jpg, generadas por build/ext_texturas.py (fase 08)",
+                             "alfombras": "bereber, kilim, camino y algodon en assets/texturas/propias/, generadas por "
+                                          "build/deco_texturas.py (bloque 09)"},
+        "modelos": modelos_usados(objs),
         "prueba_recorrido": informe,
         "fuente": "ref/plano/plano_depto.png (plano del usuario); medidas en asset-brief-depto.md",
     }

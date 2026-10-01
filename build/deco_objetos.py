@@ -508,27 +508,30 @@ def _perilla(bm, centro, desde):
 
 
 def aplique_brazo(col, prefijo, brazo1=0.28, brazo2=0.26, angulo1=50.0, angulo2=-30.0, inclinacion=25.0,
-                  diametro=0.16, forma="G45"):
+                  diametro=0.16, forma="G45", giro=0.0):
     """Aplique mural de brazo articulado negro (estilo taller): placa rectangular atornillada al muro (cara de
     atrás en y = 0), dos brazos de tubo de Ø 17 mm con articulaciones de discos y perillas, y pantalla domo de
     Ø `diametro` inclinada hacia −Y con ampolleta (G45 por defecto: la ST64 y la G95 sobresalen de una
     pantalla de 0,16 y pasan el tope). Centrado en X, apoyado en z = 0 (el punto más bajo es el borde de la
     pantalla); la altura del centro de la placa queda en la propiedad `placa_centro_z` del objeto Metal.
-    ≤ 2 000 triángulos."""
+    giro (grados, corrección 09): el brazo gira en la primera articulación alrededor de Z (positivo: de −Y hacia
+    +X); placa y espiga no giran. ≤ 2 000 triángulos."""
     metal, pant = _Malla(), _Malla()
     vid, fil, cas = _Malla(), _Malla(), _Malla()
     with metal.parte(NEGRO, suave=True) as bm:
         B.caja_redondeada(bm, -0.032, 0.032, -0.012, 0.0, -0.055, 0.055, 0.004, segmentos=2)
+    j1 = Vector((0.0, -0.060, 0.0))
+    d1 = Vector((0.0, -math.cos(math.radians(angulo1)), math.sin(math.radians(angulo1))))
+    j2 = j1 + d1 * brazo1
+    d2 = Vector((0.0, -math.cos(math.radians(angulo2)), math.sin(math.radians(angulo2))))
+    j3 = j2 + d2 * brazo2
+    Mg = Matrix.Translation(j1) @ Matrix.Rotation(math.radians(giro), 4, "Z") @ Matrix.Translation(-j1)
     with metal.parte(NEGRO) as bm:
         for z in (-0.038, 0.038):                                            # tornillos de cabeza redonda
             _torno_eje(bm, [(0.0, 0.0), (0.0042, 0.0), (0.0036, 0.0012), (0.0, 0.0018)], (0, -0.0118, z),
                        (0, -1, 0), 6)
-        j1 = Vector((0.0, -0.060, 0.0))
-        d1 = Vector((0.0, -math.cos(math.radians(angulo1)), math.sin(math.radians(angulo1))))
-        j2 = j1 + d1 * brazo1
-        d2 = Vector((0.0, -math.cos(math.radians(angulo2)), math.sin(math.radians(angulo2))))
-        j3 = j2 + d2 * brazo2
         B.tubo(bm, [(0.0, -0.011, 0.0), (0.0, j1.y + 0.006, 0.0)], 0.0095, seg=8)    # espiga de la placa
+    with metal.parte(NEGRO, Mg) as bm:
         B.tubo(bm, [j1, j2], 0.0085, seg=8)
         B.tubo(bm, [j2, j3], 0.0085, seg=8)
         _articulacion(bm, j1, 0.019, 0.031, ranuras=1, seg=13)
@@ -538,7 +541,7 @@ def aplique_brazo(col, prefijo, brazo1=0.28, brazo2=0.26, angulo1=50.0, angulo2=
         _perilla(bm, j2, 0.0155)
     # pantalla: su tope del cuello en el origen local, colgando de la articulación j3 e inclinada hacia −Y
     z_j = 0.012 + 0.016
-    Msh = Matrix.Translation(j3) @ Matrix.Rotation(math.radians(-inclinacion), 4, "X") @ \
+    Msh = Mg @ Matrix.Translation(j3) @ Matrix.Rotation(math.radians(-inclinacion), 4, "X") @ \
         Matrix.Translation((0.0, 0.0, -z_j))
     with metal.parte(NEGRO, Msh) as bm:
         B.tubo(bm, [(0.0, 0.0, -0.002), (0.0, 0.0, z_j)], 0.0065, seg=8)           # vástago de la pantalla

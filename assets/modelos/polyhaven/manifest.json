@@ -2,6 +2,77 @@
   "fuente": "Poly Haven (https://polyhaven.com/models), licencia CC0",
   "descargado": "2026-09-26",
   "formato": "glTF 1k (texturas 1024 px)",
-  "modelos": ["potted_plant_04", "anthurium_botany_01", "fern_02", "calathea_orbifolia_01"],
-  "uso": "plantas de interior; CLAUDE.md pide no modelar orgánicos con bpy"
+  "modelos": [
+    "potted_plant_04",
+    "anthurium_botany_01",
+    "fern_02",
+    "calathea_orbifolia_01"
+  ],
+  "uso": "plantas de interior; CLAUDE.md pide no modelar orgánicos con bpy",
+  "paginas": {
+    "potted_plant_04": "https://polyhaven.com/a/potted_plant_04",
+    "anthurium_botany_01": "https://polyhaven.com/a/anthurium_botany_01",
+    "fern_02": "https://polyhaven.com/a/fern_02",
+    "calathea_orbifolia_01": "https://polyhaven.com/a/calathea_orbifolia_01"
+  },
+  "autores": "no vienen en el glTF descargado (ver la página de cada modelo)",
+  "usos_bloque_09": {
+    "nota": "dónde va cada variante en el depto; la importa, decima y ubica build/depto_04_mobiliario.py (PLANTAS) con build/deco_plantas.py",
+    "fern_02": "sin uso desde la corrección 09 (ronda 1): colgado sobre el brazo del sofá no se leía como helecho colgante (es erguido) y el rincón del living tiene ahora una maceta de piso",
+    "anthurium_botany_01": "variante c, maceta de piso en la esquina noroeste del balcón (escala 0,85)",
+    "potted_plant_04": "sólo el nodo plant (desde la corrección 09, ronda 1), decimado por separado, en una maceta modelada de gres blanco de 24 lados, en la cubierta de la cocina (escala 1)",
+    "calathea_orbifolia_01": "variante a en maceta de piso en el rincón del living junto al balcón (escala 0,64; corrección 09, ronda 1), variante e en la repisa del baño principal (escala 0,78) y variante c en el velador oeste del segundo dormitorio (escala 0,8)"
+  },
+  "derivadas": {
+    "generador": "build/deco_plantas.py --derivar",
+    "nota": "color con alfa (MASK) recuperado del ARM o de la cobertura de las UV, rugosidad en gris del canal G del ARM; el normal es el original. Ver el docstring del script.",
+    "anthurium_botany_01": {
+      "color": "anthurium_botany_01/derivadas/anthurium_botany_01_diff_alfa_1k.png",
+      "normal": "anthurium_botany_01/textures/anthurium_botany_01_nor_gl_1k.jpg",
+      "rugosidad": "anthurium_botany_01/derivadas/anthurium_botany_01_rough_1k.jpg",
+      "alfa": {
+        "metodo": "cobertura",
+        "fraccion_opaca": 0.4322
+      },
+      "error_jpg_rugosidad": 0.0036,
+      "error_png_color": 0.0
+    },
+    "calathea_orbifolia_01": {
+      "color": "calathea_orbifolia_01/derivadas/calathea_orbifolia_01_diff_alfa_1k.png",
+      "normal": "calathea_orbifolia_01/textures/calathea_orbifolia_01_nor_gl_1k.jpg",
+      "rugosidad": "calathea_orbifolia_01/derivadas/calathea_orbifolia_01_rough_1k.jpg",
+      "alfa": {
+        "metodo": "arm_g",
+        "umbral": 0.615,
+        "transicion": 0.015,
+        "cobertura": true,
+        "fraccion_opaca": 0.5566
+      },
+      "error_jpg_rugosidad": 0.0026,
+      "pico_fondo_g": 0.68,
+      "error_png_color": 0.0
+    },
+    "fern_02": {
+      "color": "fern_02/derivadas/fern_02_diff_alfa_1k.png",
+      "normal": "fern_02/textures/fern_02_nor_gl_1k.jpg",
+      "rugosidad": "fern_02/derivadas/fern_02_rough_1k.jpg",
+      "alfa": {
+        "metodo": "arm_g",
+        "umbral": 0.955,
+        "transicion": 0.015,
+        "cobertura": false,
+        "fraccion_opaca": 0.1733
+      },
+      "error_jpg_rugosidad": 0.0015,
+      "pico_fondo_g": 0.992,
+      "error_png_color": 0.0
+    },
+    "potted_plant_04": {
+      "color": "potted_plant_04/textures/potted_plant_04_diff_1k.jpg",
+      "normal": "potted_plant_04/textures/potted_plant_04_nor_gl_1k.jpg",
+      "rugosidad": "potted_plant_04/derivadas/potted_plant_04_rough_1k.jpg",
+      "alfa": null,
+      "error_jpg_rugosidad": 0.0028
+    }
+  }
 }

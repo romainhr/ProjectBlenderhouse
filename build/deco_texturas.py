@@ -27,7 +27,9 @@ Método (numpy dentro de Blender, sin PIL ni red, semillas fijas):
   compara con lo calculado. El error medio queda en 0,2-1 % en color y rugosidad; en los normales con cantos vivos
   (ladrillo, azulejo) llega a 2-3 % porque el JPEG de Blender submuestrea el croma (4:2:0, no configurable en 3.6,
   ni con calidad 100): por eso la altura se suaviza medio píxel antes del normal. Un error > 6 % detiene el script
-  (espacio de color u orientación equivocados).
+  (espacio de color u orientación equivocados). Los textiles del bloque 09 (CROMA_COMPLETO) salen en JPEG 4:4:4 por
+  PIL (ver guardar_jpg).
+- Corrección 09 (ronda 1): los textiles no llevan nada periódico de menos de 4 px (`periodo`, `control_frecuencia`).
 """
 import argparse
 import json
@@ -855,6 +857,301 @@ def tex_concreto_oscuro(L, s):
     return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.18, 0.85))
 
 
+# ------------------------------------------------------------------------ textiles del bloque 09 (alfombras y lino)
+# Corrección 09 (ronda 1): nada periódico más fino que 4 píxeles. Un patrón de 2 px (las pasadas de 4,5 mm del kilim a
+# 2,25 mm/px) no se representa: sale como columnas que alternan con un batido a lo ancho y, reducido por el mipmap o en
+# el visor, como moiré. `periodo` ajusta un período para que divida exacto el lienzo y lo rechaza si queda bajo
+# PERIODO_MIN_PX; `control_frecuencia` mide qué parte de la varianza de un campo cae sobre 1/4 de ciclo por píxel.
+PERIODO_MIN_PX = 4.0
+LIMITE_ALTA_FRECUENCIA = 0.05
+
+
+def periodo(L, p_m, eje="u", nombre="patrón"):
+    """Período (m) más cercano a p_m que divide exacto el lienzo a lo largo de `eje` ("u" = X, "v" = Y). Detiene el
+    script si queda bajo PERIODO_MIN_PX píxeles."""
+    largo, px = (L.w, L.px) if eje == "u" else (L.h, L.py)
+    p = largo / max(1, int(round(largo / p_m)))
+    assert p / px >= PERIODO_MIN_PX - 1e-6, (f"{nombre}: período de {p * 1000:.2f} mm = {p / px:.2f} px en {eje} "
+                                             f"(mínimo {PERIODO_MIN_PX:g} px)")
+    return p
+
+
+def control_frecuencia(L, campo, nombre, limite=LIMITE_ALTA_FRECUENCIA):
+    """Fracción de la varianza de `campo` en frecuencias sobre 1/4 de ciclo por píxel en U o en V (rasgos periódicos de
+    menos de 4 px). Detiene el script si pasa `limite`. -> fracción."""
+    F = np.abs(np.fft.fft2(campo - campo.mean())) ** 2
+    fu = np.abs(np.fft.fftfreq(L.nx))[None, :]
+    fv = np.abs(np.fft.fftfreq(L.ny))[:, None]
+    alta = (fu > 0.25) | (fv > 0.25)
+    frac = float(F[np.broadcast_to(alta, F.shape)].sum() / max(F.sum(), 1e-30))
+    assert frac <= limite, f"{nombre}: {100 * frac:.1f} % de la varianza sobre 1/4 de ciclo por píxel"
+    return frac
+
+
+def centros_voronoi(L, semilla, celda, jitter):
+    """Posición (m, Y hacia arriba) del punto de cada celda de L.voronoi(semilla, celda, jitter) y el píxel que lo
+    contiene (fila, columna): sirve para evaluar un campo una vez por celda (mechón)."""
+    ncx, ncy, jx, jy = L.grilla_puntos(semilla, celda, jitter)
+    k = np.arange(ncx * ncy)
+    cx = ((k % ncx) + jx) * (L.w / ncx)
+    cy = ((k // ncx) + jy) * (L.h / ncy)
+    col_ = np.clip(np.floor(cx / L.px).astype(np.int64), 0, L.nx - 1)
+    fila = np.clip(np.floor((L.h - cy) / L.py).astype(np.int64), 0, L.ny - 1)
+    return f32(cx), f32(cy), fila, col_
+
+
+def cuantizar(L, paso_u, paso_v):
+    """Coordenadas (m) llevadas al centro de su celda de pasada (paso_u × paso_v, ajustados para dividir exacto el
+    lienzo y de 4 px o más): lo que se dibuja con ellas sale escalonado como en un tejido plano, sin romper la
+    periodicidad. -> (xq, yq, índice de columna, índice de fila, coordenadas locales 0-1 en la celda)."""
+    pu, pv = periodo(L, paso_u, "u", "celda de pasada"), periodo(L, paso_v, "v", "celda de pasada")
+    iu, iv = np.floor(L.X / pu), np.floor(L.Y / pv)
+    return ((iu + 0.5) * pu, (iv + 0.5) * pv, iu.astype(np.int64), iv.astype(np.int64),
+            f32(L.X / pu - iu), f32(L.Y / pv - iv))
+
+
+def tex_bereber(L, s):
+    """Alfombra bereber anudada a mano (tipo Beni Ourain): pelo largo de lana cruda peinado en una dirección, retícula
+    de rombos de 0,42 × 0,50 m en lana carbón a mano alzada (trazo de 1,8 a 3,2 cm), rombitos sueltos en algunas celdas
+    y variación de tono por partida de lana (abrash) en bandas.
+
+    Corrección 09 (ronda 1): el carbón se decide por mechón (celdas de Voronoi de 7 mm evaluadas en su punto, no por
+    píxel ni en una grilla cuadrada de nudos), la máscara se desenfoca 2,5 mm y el pelo es ruido estirado en la
+    dirección del peinado con el surco entre mechones suave y con peso 0,3: antes el borde de las líneas tenía dientes
+    de 1-2 px en retícula (nudo cuadrado de 5 mm con coordenadas mezcladas) y el campo se leía como piedrecillas."""
+    r = s.rng
+    celda, jit = 0.007, 0.95
+    sem_v = s()
+    v = L.voronoi(sem_v, celda, jit)
+    cx, cy, fila_c, col_c = centros_voronoi(L, sem_v, celda, jit)
+    peinado_ang = float(r.uniform(0, 180))
+    # pelo: mechones de lana peinados (ruido estirado 6:1), fibras y un surco suave entre mechones
+    mechas = L.ruido(s(), 0.006, 0.0009, p=0.8, estira=6, angulo=peinado_ang)
+    fibras = L.ruido(s(), 0.0022, 0.0005, p=0.5, estira=4, angulo=peinado_ang)
+    alto = L.desenfocar(f32(r.uniform(0.75, 1.0, v.n))[v.id], 0.002)
+    surco = L.desenfocar(ss(0.0, 0.0015, v.f2 - v.f1), 0.0006)
+    pelo = np.clip(alto * (0.7 + 0.3 * surco) + 0.10 * mechas + 0.05 * fibras, 0, 1.25)
+    # retícula (3 × 2 rombos por repetición): líneas U + V ∈ Z y U − V ∈ Z desplazadas a mano alzada (periódico),
+    # evaluadas en el punto de cada mechón
+    A_, B_ = 3, 2
+    wx = 0.011 * L.ruido(s(), 0.14, 0.02, p=1.6)
+    wy = 0.011 * L.ruido(s(), 0.14, 0.02, p=1.6)
+    media = 0.0125 + 0.0028 * L.ruido(s(), 0.09, 0.015, p=1.3)   # medio ancho del trazo: 0,9 a 1,6 cm
+    U = (cx + wx[fila_c, col_c]) / L.w * A_
+    V = (cy + wy[fila_c, col_c]) / L.h * B_
+    k = math.hypot(A_ / L.w, B_ / L.h)                   # |∇(U ± V)| en 1/m
+    p_, q_ = U + V, U - V
+    d = np.minimum(np.abs(p_ - np.round(p_)), np.abs(q_ - np.round(q_))) / k
+    linea = d < media[fila_c, col_c]
+    # rombitos sueltos: centro de cada rombo en (U, V) ∈ {(i + ½, j), (i, j + ½)}; uno de cada tres lleva uno
+    cu, cv = (np.floor(p_) + np.floor(q_) + 1) / 2, (np.floor(p_) - np.floor(q_)) / 2
+    idx = (np.mod(np.round(2 * cu), 2 * A_) * (2 * B_) + np.mod(np.round(2 * cv), 2 * B_)).astype(np.int64)
+    lleva = (r.random(4 * A_ * B_) < 0.34)[idx]
+    du, dv = (cx / L.w * A_ - cu) * L.w / A_, (cy / L.h * B_ - cv) * L.h / B_     # sin el trazo a mano alzada
+    rd = np.abs(du) / 0.030 + np.abs(dv) / 0.036
+    rombito = lleva & (rd < 1.0) & ((rd > 0.42) | (np.abs(du) + np.abs(dv) < 0.006))   # rombo hueco con punto
+    por_mechon = (linea | rombito).astype(np.float32)[v.id]
+    carbon = ss(0.2, 0.8, L.desenfocar(por_mechon, 0.0025))
+    frac = control_frecuencia(L, carbon, "bereber: máscara carbón")
+    # tono: partidas de lana en bandas (a lo largo de la trama) y mechas claras y oscuras a lo largo del peinado
+    abrash = L.ruido(s(), 0.35, 0.06, p=1.6, estira=5, angulo=0)
+    tono = np.clip(0.5 + 0.28 * L.ruido(s(), 0.012, 0.002, p=0.9, estira=5, angulo=peinado_ang), 0, 1)
+    crudo = por_px(mezcla(col("#E4DBCA"), col("#EEE7DA"), tono), (1 + 0.025 * abrash) * (0.82 + 0.20 * pelo))
+    oscuro = por_px(mezcla(col("#2B2825"), col("#3C3732"), tono), 0.86 + 0.18 * pelo)
+    c = mezcla(crudo, oscuro, carbon)
+    c = ajustar_media(c, col("#E1D8C8"), mascara=1 - carbon)
+    h = 0.0045 * pelo - 0.0006 * carbon
+    rug = 0.97 - 0.05 * np.clip(pelo, 0, 1) + 0.02 * fibras
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.86, 1.0),
+                controles={"carbon_alta_frecuencia": round(frac, 4), "celda_mechon_mm": 7.0,
+                           "desenfoque_mascara_mm": 2.5})
+
+
+def tex_kilim(L, s):
+    """Kilim tejido plano en tonos sobrios (2,30 × 1,60 m, una sola vez sobre la alfombra, UV 0-1): cabezales de trama
+    carbón en los extremos de la urdimbre (U), guarda con diente de lobo avena sobre carbón entre filetes de avena y
+    ladrillo, y campo avena con rombos escalonados carbón y ladrillo de centro ocre. Todo cuantizado a la celda de
+    pasada del tejido (1,25 × 0,9 cm, 5,6 × 4,0 px): los contornos salen escalonados.
+
+    Corrección 09 (ronda 1): el relieve y el tono van por celda de pasada (un domo sen² por celda con su coordenada
+    local, ±3 % de tono por celda y ±2,5 % por hilera de trama) y hay «lazy lines» diagonales, donde el tejedor armó
+    dos zonas por separado. Se quitó el coseno de las pasadas de 4,5 mm (2,0 px, en el límite de Nyquist: columnas de
+    1 px que alternaban con batido) y la fibra de 4 mm; la celda en V pasa de 8 a 9 mm para tener 4 px."""
+    r = s.rng
+    xq, yq, iu, iv, lu, lv = cuantizar(L, 0.0125, 0.009)
+    W, H_ = L.w, L.h
+    carbon, avena, ladrillo = col("#2E2C2A"), col("#D6CCB9"), col("#8C4B38")
+    ocre, gris = col("#AE873F"), col("#8E867A")
+    cab = 0.035                                          # cabezal de trama en cada extremo de la urdimbre
+    eu = np.minimum(xq - cab, W - cab - xq)              # distancia a los cabezales (a lo largo de la urdimbre)
+    ev = np.minimum(yq, H_ - yq)                         # distancia a los orillos
+    e = np.minimum(eu, ev)
+    c = np.broadcast_to(avena, (L.ny, L.nx, 3)).copy()
+    # guarda: filete carbón, avena, banda de 7 cm (diente de lobo), avena, filete ladrillo
+    t = np.where(eu < ev, yq, xq)                        # coordenada a lo largo de la guarda
+    nn = np.clip((e - 0.03) / 0.07, 0, 1)
+    tri = np.abs(np.mod(t / 0.08, 1.0) - 0.5) * 2         # onda triangular de 8 cm
+    diente = np.abs(nn - (0.18 + 0.64 * tri)) < 0.2
+    banda = (e >= 0.03) & (e < 0.10)
+    c = np.where(((e < 0.015) | (banda & ~diente))[..., None], carbon, c)
+    c = np.where((banda & diente & (np.abs(nn - 0.5) < 0.12) & (tri < 0.2))[..., None], ladrillo, c)
+    c = np.where(((e >= 0.115) & (e < 0.13))[..., None], ladrillo, c)
+    # campo (dentro de la guarda): grilla de 5 × 3 rombos escalonados de 0,31 × 0,37 m, contorno carbón, relleno
+    # ladrillo y ojo ocre; crucecitas grises en las esquinas interiores de la grilla
+    campo = e >= 0.13
+    cu0, cu1, cv0, cv1 = cab + 0.13, W - cab - 0.13, 0.13, H_ - 0.13
+    celu, celv = (cu1 - cu0) / 5, (cv1 - cv0) / 3
+    fu, fv = (xq - cu0) / celu, (yq - cv0) / celv
+    du = (fu - np.floor(fu) - 0.5) * celu
+    dv = (fv - np.floor(fv) - 0.5) * celv
+    rom = np.abs(du) / 0.155 + np.abs(dv) / 0.185
+    c = np.where((campo & (rom < 1.0) & (rom >= 0.80))[..., None], carbon, c)
+    c = np.where((campo & (rom < 0.64) & (rom >= 0.30))[..., None], ladrillo, c)
+    c = np.where((campo & (rom < 0.15))[..., None], ocre, c)
+    ku, kv = np.round(fu), np.round(fv)
+    a_, b_ = np.abs(fu - ku) * celu, np.abs(fv - kv) * celv
+    interior = (ku > 0) & (ku < 5) & (kv > 0) & (kv < 3)
+    cruz = interior & (((a_ < 0.032) & (b_ < 0.009)) | ((a_ < 0.0095) & (b_ < 0.03)))
+    c = np.where(cruz[..., None], gris, c)
+    # cabezales: trama carbón lisa con una pasada avena
+    cabezal = (xq < cab) | (xq > W - cab)
+    c = np.where(cabezal[..., None], carbon, c)
+    c = np.where((cabezal & (np.abs(np.minimum(xq, W - xq) - 0.018) < 0.005))[..., None], avena, c)
+    # tejido por celda de pasada: domo sen² (máximo en el centro, surco en el borde de la celda), tono por celda y por
+    # hilera de trama (la trama corre a lo largo de V: una hilera es una columna de celdas, índice iu)
+    nu, nv = int(iu.max()) + 1, int(iv.max()) + 1
+    t_celda = f32(r.uniform(-0.03, 0.03, nu * nv))[iu * nv + iv]
+    t_hilera = f32(r.uniform(-0.025, 0.025, nu))[iu]
+    domo = (np.sin(math.pi * lu) ** 2) * (np.sin(math.pi * lv) ** 2)
+    frac = control_frecuencia(L, domo, "kilim: relieve de las pasadas")
+    # lazy lines: diagonales de 10 a 35 cm a ±35-55°, surco fino y un leve cambio de tono de un lado
+    lazy, lado_l = L.vacio(), L.vacio()
+    for _ in range(22):
+        x0, y0 = r.uniform(0.2, W - 0.2), r.uniform(0.15, H_ - 0.15)
+        ang = math.radians(r.choice((-1, 1)) * r.uniform(35, 55))
+        lg = r.uniform(0.10, 0.35)
+        p1 = (x0 + lg * math.cos(ang), y0 + lg * math.sin(ang))
+        L.segmento(lazy, (x0, y0), p1, 0.0022, 1.0, puntas=False)
+        L.segmento(lado_l, (x0 + 0.02 * math.sin(ang), y0 - 0.02 * math.cos(ang)),
+                   (p1[0] + 0.02 * math.sin(ang), p1[1] - 0.02 * math.cos(ang)), 0.02, 1.0, puntas=False)
+    partidas = L.ruido(s(), 0.18, 0.03, p=1.5, estira=8, angulo=90)
+    ondula = L.ruido(s(), 0.25, 0.05, p=1.6)
+    c = por_px(c, (1 + t_celda + t_hilera + 0.03 * partidas + 0.015 * lado_l) * (0.96 + 0.04 * domo) *
+               (1 - 0.06 * lazy))
+    h = 0.0060 * domo - 0.0012 * lazy + 0.0006 * ondula
+    rug = 0.93 - 0.05 * domo + 0.02 * partidas
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.8, 0.98),
+                controles={"relieve_alta_frecuencia": round(frac, 4), "celda_pasada_px": [
+                    round(W / nu / L.px, 2), round(H_ / nv / L.py, 2)]})
+
+
+def tex_camino(L, s):
+    """Camino de lana tejido plano en espiga (0,60 m de ancho a lo largo de U; se repite cada 0,40 m en V, a lo largo
+    del camino): columnas de 3,75 cm con la sarga de 1 cm en direcciones alternadas, hilos carbón y topo, un tono propio
+    por columna según su dirección y orillos avena con dos filetes carbón en los dos bordes largos (en U = 0 y U = 0,60,
+    que se tocan en la repetición).
+
+    Corrección 09 (ronda 1): con columnas de 1 cm y sarga de 4 mm el dibujo quedaba bajo el píxel a la distancia del
+    recorrido (2-3 px por centímetro) y el mipmap lo promediaba en un gris liso: ahora 3,75 cm y 1 cm, más contraste
+    (#2B2927 contra #7A7166), ±5,5 % de tono por columna para que el chevrón sobreviva al mipmap y relieve de 1,2 mm."""
+    col_u = periodo(L, 0.0375, "u", "camino: columna")    # 16 columnas en 0,60 m
+    paso = periodo(L, 0.010, "v", "camino: sarga")          # 40 pasos en 0,40 m
+    ic = np.floor(L.X / col_u)
+    lado = np.where(np.mod(ic, 2) == 0, 1.0, -1.0)
+    fase = (L.Y + lado * (L.X - ic * col_u)) / paso
+    sarga = 0.5 + 0.5 * np.cos(2 * math.pi * fase)
+    hilo = L.ruido(s(), 0.004, 0.0012, p=0.6, estira=6, angulo=90)
+    e = np.minimum(L.X, L.w - L.X)
+    carbon, topo, avena = col("#2B2927"), col("#7A7166"), col("#CFC5B2")
+    c = mezcla(carbon, topo, np.clip(sarga + 0.12 * hilo, 0, 1))
+    c = por_px(c, 1 + 0.055 * lado)
+    orillo = (e >= 0.016) & (e < 0.056)
+    filete = orillo & ((np.abs(e - 0.027) < 0.0025) | (np.abs(e - 0.045) < 0.0025))
+    c = np.where((orillo & ~filete)[..., None], por_px(avena, 1 + 0.05 * hilo)[...], c)
+    c = np.where((e < 0.008)[..., None], col("#2A2826"), c)       # orillo enrollado
+    partidas = L.ruido(s(), 0.2, 0.03, p=1.5, estira=6, angulo=0)
+    c = por_px(c, 1 + 0.03 * partidas + 0.03 * hilo)
+    junta = 1 - pulso(L.X / col_u, 0.0, 60) * 0.6
+    frac = control_frecuencia(L, sarga * junta, "camino: espiga")
+    h = 0.0012 * sarga * junta + 0.0002 * hilo + 0.0006 * ss(0.012, 0.004, e)
+    rug = 0.93 - 0.04 * sarga + 0.02 * hilo
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.8, 1.0),
+                controles={"espiga_alta_frecuencia": round(frac, 4),
+                           "columna_mm": round(1000 * col_u, 2), "sarga_mm": round(1000 * paso, 2)})
+
+
+def tex_lino(L, s):
+    """Lino natural lavado para las cortinas (#D6CFC0 de promedio, 0,50 m de repetición): tafetán de hilos de 1 mm
+    (el cruce se repite cada 2 mm, 4 px), ±3,5 % de tono por hilo de urdimbre y de trama, y flameado: tramos más
+    gruesos de 1 a 8 cm en algunos hilos de la trama (a lo largo de U), más altos y de otro tono. La urdimbre corre a
+    lo largo de V (el alto del paño) y la trama a lo largo de U (el ancho de tela). Corrección 09 (ronda 1): antes las
+    cortinas usaban sólo el relieve de rough_linen (0,27 m de repetición, 0,26 mm/px) con el color base plano, y a 1-3 m
+    el relieve se promediaba y la tela quedaba lisa."""
+    r = s.rng
+    hilo = periodo(L, 0.002, "u", "lino: cruce del tafetán") / 2    # 1 mm por hilo (el cruce, 2 hilos)
+    nh_u, nh_v = int(round(L.w / hilo)), int(round(L.h / hilo))
+    iu = np.floor(L.X / hilo).astype(np.int64) % nh_u               # hilo de urdimbre (columna)
+    iv = np.floor(L.Y / hilo).astype(np.int64) % nh_v               # hilo de trama (fila)
+    cruce = np.cos(math.pi * L.X / hilo) * np.cos(math.pi * L.Y / hilo)   # > 0: urdimbre arriba; período 2 mm
+    frac = control_frecuencia(L, cruce, "lino: tafetán")
+    t_urd = f32(r.uniform(-0.035, 0.035, nh_u))[iu]
+    t_tra = f32(r.uniform(-0.035, 0.035, nh_v))[iv]
+    # flameado: por hilo de trama, tramos de 1 a 8 cm con los extremos afinados (una hebra más gruesa)
+    flameado = np.zeros((nh_v, L.nx), np.float32)
+    tono_fl = np.zeros((nh_v, L.nx), np.float32)
+    for j in range(nh_v):
+        for _ in range(int(r.poisson(0.9))):
+            x0, lg = r.uniform(0, L.w), r.uniform(0.01, 0.08)
+            dx = np.mod(L.x - x0, L.w)                                # con vuelta de borde
+            perfil = r.uniform(0.6, 1.0) * ss(0.0, 0.25 * lg, dx) * ss(lg, 0.75 * lg, dx) * (dx < lg)
+            gana = perfil > flameado[j]
+            tono_fl[j] = np.where(gana, r.choice((-1.0, 1.0)) * r.uniform(0.05, 0.08), tono_fl[j])
+            flameado[j] = np.maximum(flameado[j], perfil)
+    fl = f32(flameado[iv, np.arange(L.nx)[None, :]])
+    tfl = f32(tono_fl[iv, np.arange(L.nx)[None, :]])
+    manchas = L.ruido(s(), 0.12, 0.02, p=1.4)
+    arriba = ss(-0.15, 0.15, cruce)                                   # 1: se ve la urdimbre; 0: la trama
+    tono = arriba * t_urd + (1 - arriba) * t_tra + tfl * fl * (1 - 0.4 * arriba)   # la hebra gruesa tapa la urdimbre
+    c = por_px(col("#D6CFC0"), 1 + tono + 0.008 * manchas)
+    c = np.stack([L.desenfocar(c[..., k], 0.25 * L.px) for k in range(3)], -1)   # hilos de 2 px sin aliasing
+    c = ajustar_media(c, col("#D6CFC0"))
+    h = 0.00022 * cruce + 0.00045 * fl * (1 - arriba) + 0.00008 * manchas
+    rug = 0.90 - 0.03 * fl + 0.02 * manchas
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.8, 0.97),
+                controles={"tafetan_alta_frecuencia": round(frac, 4), "hilo_mm": round(1000 * hilo, 3)})
+
+
+def tex_algodon(L, s):
+    """Piso de baño de algodón mechado: canales de 4 cm (surco de 6 mm) rellenos de rizos de ≈ 3 mm en hileras
+    trabadas de 6 mm, cada rizo con tamaño, posición y tono propios; pelusa y fibra sueltas."""
+    r = s.rng
+    fila = L.h / int(round(L.h / 0.006))
+    canal = L.h / int(round(L.h / 0.04))
+    j = np.floor(L.Y / fila)
+    desfase = np.where(np.mod(j, 2) == 0, 0.0, 0.5)
+    paso_u = L.w / int(round(L.w / 0.0045))
+    ncol, nfil = int(round(L.w / paso_u)), int(round(L.h / fila))
+    gu = L.X / paso_u + desfase
+    k = (np.mod(np.floor(gu), ncol) + ncol * np.mod(j, nfil)).astype(np.int64)
+    n = ncol * nfil
+    ju, jv = f32(r.uniform(-0.06, 0.06, n))[k], f32(r.uniform(-0.06, 0.06, n))[k]    # radio + corrimiento ≤ ½:
+    ru, rv = f32(r.uniform(0.36, 0.44, n))[k], f32(r.uniform(0.38, 0.44, n))[k]    # el rizo no se corta en su celda
+    tono = f32(r.random(n))[k]
+    lu, lv = gu - np.floor(gu) - 0.5 - ju, L.Y / fila - j - 0.5 - jv
+    rizo = np.sqrt(np.clip(1 - (lu / ru) ** 2 - (lv / rv) ** 2, 0, 1))
+    ev = np.abs(np.mod(L.Y / canal, 1.0) - 0.5) * canal          # distancia al centro del canal
+    surco = ss(canal / 2 - 0.003, canal / 2 - 0.0005, ev)
+    fibra = L.ruido(s(), 0.0012, 0.0003, p=0.5)
+    pelusa = L.ruido(s(), 0.006, 0.001, p=0.9)
+    alto = np.clip((0.3 + 0.7 * rizo) * (1 - 0.8 * surco) * (0.8 + 0.2 * tono) + 0.06 * pelusa, 0, 1.2)
+    c = por_px(mezcla(col("#DCD5C8"), col("#E8E2D8"), tono), (0.86 + 0.16 * alto) * (1 + 0.035 * fibra))
+    c = ajustar_media(c, col("#E0DACE"))
+    h = 0.0032 * alto + 0.00005 * fibra                 # la fibra casi sólo en el color: en el normal no la
+                                                        # reproduce el JPEG (error de relectura > 6 %)
+    rug = 0.96 - 0.04 * np.clip(alto, 0, 1)
+    return dict(color=c, altura=h, rugosidad=np.clip(rug, 0.85, 1.0))
+
+
 # ------------------------------------------------------------------------ cuadros (0,50 × 0,70 m, no se repiten)
 OCRE, CARBON = col("#B8862B"), col("#2B2D2F")          # paleta de docs/deco-industrial.md
 LADRILLO_A, AVENA, CONCRETO_A = col("#8C4A36"), col("#D8CFC0"), col("#B3AFA8")
@@ -985,6 +1282,26 @@ CATALOGO = {
     "concreto_oscuro": ("Concreto pulido oscuro", (1.0, 1.0), 113, tex_concreto_oscuro,
                         "Concreto pulido gris oscuro (#545351) para cubiertas: nubes, áridos finos, poros y brillo "
                         "desparejo."),
+    # bloque 09 (alfombras): el kilim es la alfombra entera (UV 0-1, como los cuadros); las demás se repiten
+    "bereber": ("Lana bereber anudada", (1.25, 1.0), 121, tex_bereber,
+                "Pelo largo de lana cruda (#E1D8C8) peinado en una dirección, con retícula de rombos de 0,42 × 0,50 m "
+                "en lana carbón a mano alzada decidida por mechón de 7 mm (borde suave, sin grilla de nudos), rombitos "
+                "sueltos y abrash en bandas (alfombra del dormitorio principal)."),
+    "kilim": ("Kilim de tonos sobrios", (2.3, 1.6), 122, tex_kilim,
+              "Kilim tejido plano de 2,30 × 1,60 m (alfombra entera, UV 0-1): cabezales carbón, guarda con diente de "
+              "lobo avena sobre carbón, filetes ladrillo y campo avena con rombos escalonados carbón y ladrillo de ojo "
+              "ocre; relieve y tono por celda de pasada de 1,25 × 0,9 cm y lazy lines diagonales (segundo "
+              "dormitorio)."),
+    "camino": ("Camino de lana en espiga", (0.6, 0.4), 123, tex_camino,
+               "Tejido plano en espiga de columnas de 3,75 cm con sarga de 1 cm, hilos carbón y topo con un tono por "
+               "columna, orillos avena con dos filetes carbón en los bordes largos; 0,60 m de ancho y se repite cada "
+               "0,40 m a lo largo (camino del hall)."),
+    "algodon": ("Algodón mechado de baño", (0.24, 0.24), 124, tex_algodon,
+                "Rizos de algodón natural (#E0DACE) de 3 mm en hileras trabadas de 6 mm, en canales de 4 cm con surco "
+                "de 6 mm (pisos de baño y flecos)."),
+    "lino": ("Lino natural lavado", (0.5, 0.5), 125, tex_lino,
+             "Tafetán de lino natural (#D6CFC0) de hilos de 1 mm con ±3,5 % de tono por hilo y flameado de 1 a 8 cm "
+             "en la trama (cortinas de los dormitorios y del ventanal)."),
     "arte_1": ("Cuadro: círculos y franjas", (0.5, 0.7), 201, arte_1,
                "Lámina abstracta: círculo ocre, franja y medio círculo carbón, líneas finas; papel crema con grano."),
     "arte_2": ("Cuadro: campos de color", (0.5, 0.7), 202, arte_2,
@@ -993,26 +1310,63 @@ CATALOGO = {
                "Lámina abstracta de líneas finas: curvas de nivel en carbón con una en ocre, sobre papel crema."),
 }
 PX_CUADRO = (1024, 1434)                              # 0,50 × 0,70 m a 2048 px/m
+PX_TEXTURA = {"kilim": (1024, 712)}                   # 2,30 × 1,60 m con píxeles cuadrados (2,25 mm)
+UNA_VEZ = ("kilim",)                                  # alfombras enteras (UV 0-1): la hoja las muestra sin mosaico
 
 
 # ======================================================================= archivos
-def guardar_jpg(arr, ruta, calidad=CALIDAD_JPG):
+# Corrección 09 (ronda 1): las texturas de los textiles del bloque 09 se guardan en JPEG 4:4:4 (sin submuestreo de
+# croma). El JPEG de Blender 3.6 submuestrea siempre (4:2:0) y en los bordes de color del kilim y del bereber y en los
+# normales dejaba escalones de 2 px. Blender guarda un PNG temporal y el Python del sistema (PIL, la misma dependencia
+# de web/tour_modelo.py y de tools/compare_plan.py) lo pasa a JPEG con subsampling=0. Sin PIL queda el JPEG de Blender
+# y el manifiesto lo dice (submuestreo_croma).
+CROMA_COMPLETO = ("bereber", "kilim", "camino", "algodon", "lino")
+_PIL_JPEG = ("import sys; from PIL import Image; "
+             "Image.open(sys.argv[1]).convert('RGB').save(sys.argv[2], quality=int(sys.argv[3]), subsampling=0, "
+             "optimize=True)")
+
+
+def _jpeg_444(png, ruta, calidad):
+    """PNG -> JPEG 4:4:4 con el Python del sistema. -> True si pudo."""
+    import subprocess
+    try:
+        subprocess.run(["python3", "-c", _PIL_JPEG, png, ruta, str(calidad)], check=True, capture_output=True,
+                       timeout=120)
+        return True
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def guardar_jpg(arr, ruta, calidad=CALIDAD_JPG, croma_completo=False):
     """Guarda (ny, nx) o (ny, nx, 3) en 0-1 como JPEG sin gestión de color y lo relee para verificarlo.
-    Devuelve el error medio absoluto de la relectura."""
+    croma_completo: JPEG 4:4:4 (ver CROMA_COMPLETO). Devuelve el error medio absoluto de la relectura."""
     ny, nx = arr.shape[:2]
     rgba = np.ones((ny, nx, 4), np.float32)
     rgba[..., :3] = np.clip(arr if arr.ndim == 3 else arr[..., None], 0, 1)
     im = bpy.data.images.new("_textura", nx, ny, alpha=False, float_buffer=False)
     im.pixels.foreach_set(rgba[::-1].ravel())         # Blender: fila 0 = abajo
-    im.filepath_raw = ruta
-    im.file_format = "JPEG"
-    im.save(filepath=ruta, quality=calidad)
+    hecho = False
+    if croma_completo:
+        tmp = ruta + ".tmp.png"
+        im.filepath_raw = tmp
+        im.file_format = "PNG"
+        im.save()
+        hecho = _jpeg_444(tmp, ruta, calidad)
+        os.remove(tmp)
+    if not hecho:
+        im.filepath_raw = ruta
+        im.file_format = "JPEG"
+        im.save(filepath=ruta, quality=calidad)
+    GUARDADO["croma_444"] = hecho
     bpy.data.images.remove(im)
     with open(ruta, "rb") as fh:
         assert fh.read(3) == b"\xff\xd8\xff", f"{ruta} no quedó en JPEG"
     err = float(np.abs(leer_imagen(ruta) - rgba[..., :3]).mean())
     assert err < 0.06, f"{ruta}: la relectura difiere {err:.4f}"   # > 6 %: color o orientación mal
     return err
+
+
+GUARDADO = {"croma_444": False}
 
 
 def leer_imagen(ruta):
@@ -1060,7 +1414,7 @@ def archivos(tid):
 def generar(tid, depurar=None):
     nombre, dims, semilla, fn, desc = CATALOGO[tid]
     t0 = time.time()
-    nx, ny = PX_CUADRO if tid.startswith("arte_") else (N, N)
+    nx, ny = PX_CUADRO if tid.startswith("arte_") else PX_TEXTURA.get(tid, (N, N))
     L = Lienzo(dims[0], dims[1], nx, ny)
     res = fn(L, Semillas(semilla))
     t_calc = time.time() - t0
@@ -1068,14 +1422,21 @@ def generar(tid, depurar=None):
     os.makedirs(carpeta, exist_ok=True)
     stats = {"px": [nx, ny], "dimensiones_m": list(dims), "mm_por_px": round(1000 * L.px, 3)}
     color = np.clip(res["color"], 0, 1)
-    stats["error_jpg"] = {"color": round(guardar_jpg(color, os.path.join(carpeta, mapas["color"])), 4)}
+    c444 = tid in CROMA_COMPLETO
+    stats["error_jpg"] = {"color": round(guardar_jpg(color, os.path.join(carpeta, mapas["color"]), croma_completo=c444),
+                                         4)}
+    stats["submuestreo_croma"] = "4:4:4" if GUARDADO["croma_444"] else "4:2:0"
+    if res.get("controles"):
+        stats["controles"] = res["controles"]
     stats["color_medio_srgb"] = [int(round(v * 255)) for v in color.reshape(-1, 3).mean(0)]
     salida = {"color": color}
     if "normal" in mapas:
         nor = L.normal(L.desenfocar(res["altura"].astype(np.float32), 0.5 * max(L.px, L.py)))
         rug = np.clip(res["rugosidad"], 0, 1).astype(np.float32)
-        stats["error_jpg"]["normal"] = round(guardar_jpg(nor, os.path.join(carpeta, mapas["normal"])), 4)
-        stats["error_jpg"]["rugosidad"] = round(guardar_jpg(rug, os.path.join(carpeta, mapas["rugosidad"])), 4)
+        stats["error_jpg"]["normal"] = round(guardar_jpg(nor, os.path.join(carpeta, mapas["normal"]),
+                                                         croma_completo=c444), 4)
+        stats["error_jpg"]["rugosidad"] = round(guardar_jpg(rug, os.path.join(carpeta, mapas["rugosidad"]),
+                                                            croma_completo=c444), 4)
         h = res["altura"]
         stats["altura_mm"] = [round(1000 * float(h.min()), 3), round(1000 * float(h.max()), 3)]
         stats["rugosidad"] = [round(float(rug.min()), 3), round(float(rug.mean()), 3), round(float(rug.max()), 3)]
@@ -1205,7 +1566,11 @@ def hoja_texturas():
             ancho = int(round(M * c.shape[1] / c.shape[0]))
             hoja[oy:oy + M, ox:ox + ancho] = reducir(c, ancho, M)
             continue
-        hoja[oy:oy + M, ox:ox + M] = np.tile(reducir(c, M // 2, M // 2), (2, 2, 1))
+        if tid in UNA_VEZ:                                  # alfombra entera, con su proporción
+            alto = int(round(M * c.shape[0] / c.shape[1]))
+            hoja[oy:oy + alto, ox:ox + M] = reducir(c, M, alto)
+        else:
+            hoja[oy:oy + M, ox:ox + M] = np.tile(reducir(c, M // 2, M // 2), (2, 2, 1))
         for k, (clave, dy) in enumerate((("normal", 0), ("rugosidad", T))):
             a = leer_imagen(os.path.join(carpeta, mp[clave]))
             hoja[oy + dy:oy + dy + T, ox + M + 8:ox + M + 8 + T] = reducir(a, T, T)
