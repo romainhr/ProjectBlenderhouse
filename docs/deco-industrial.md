@@ -17,7 +17,7 @@ las pocas piezas de acento (dos cuadros, libros, cerámica de gres).
 | Rol | Color (sRGB) | Dónde |
 |---|---|---|
 | Concreto claro | #9C9890 | piso de living, cocina y hall (microcemento) |
-| Concreto de cielo | #B3AFA8 | cielo de concreto visto de encofrado |
+| Concreto de cielo | #ADADAA (hasta la corrección 07c, ronda 2: #B3AFA8) | cielo de concreto visto de encofrado; tono por tabla y veta impresa de contraste bajo (se leía como terciado de pino) |
 | Blanco cálido | #ECEAE4 | muros |
 | Ladrillo | #8C4A36 (con variación) | pared del televisor |
 | Acero pavonado | #232426 | patas, marcos de muebles, luminarias, marcos de ventanas y puertas |
@@ -44,7 +44,8 @@ las pocas piezas de acento (dos cuadros, libros, cerámica de gres).
 - Sin booleanos (lentos y frágiles en headless). Subdivisión sólo con `deco_base.aplicar_subdivision` y a nivel ≤ 2.
 - Presupuesto: la escena entera debe quedar bajo 200 000 triángulos (`depto_geom.TOPE_TRIANGULOS`, ADR 0004, decisión 4;
   antes 150 000). Cada pieza trae su tope abajo.
-- No se modelan orgánicos detallados (plantas, personas): regla de CLAUDE.md.
+- No se modelan orgánicos detallados (plantas, personas): regla de CLAUDE.md. Las plantas del bloque 09 son escaneos CC0
+  de Poly Haven importados y decimados (`build/deco_plantas.py`); sólo las macetas van por bmesh.
 - Revisión: `blender -b --python-exit-code 1 --python tools/preview_pieza.py -- --modulo <módulo> --funcion <pieza>
   --out review/deco/piezas [--args '{...}'] [--texturas]` renderiza dos vistas (3/4 y lateral) en Eevee y escribe
   las medidas y los triángulos en un JSON. Mirar el render, corregir y volver a renderizar: calidad de catálogo.
@@ -69,7 +70,11 @@ Generador: `build/deco_texturas.py` (numpy dentro de Blender). Salida en `assets
 | `acero_pavonado` | 0,6 m | acero negro-azulado, manchas de pavonado, rayas de cepillado |
 | `cuero` | 0,4 m | cuero coñac con poro, arrugas suaves y desgaste más claro |
 | `lana` | 0,25 m | tejido grueso tipo bouclé color avena |
-| `yute` | 0,5 m | tejido plano de yute natural (alfombras) |
+| `yute` | 0,5 m | tejido plano de yute natural (alfombra del living, felpudo) |
+| `bereber` | 1,25 × 1,0 m | lana cruda anudada con retícula de rombos carbón a mano alzada (bloque 09) |
+| `kilim` | 2,30 × 1,60 | kilim de tonos sobrios, la alfombra entera (UV 0-1; bloque 09) |
+| `camino` | 0,60 × 0,40 m | espiga de lana carbón y topo con orillos avena (bloque 09) |
+| `algodon` | 0,24 m | algodón mechado de pisos de baño, en canales (bloque 09) |
 | `concreto_oscuro` | 1,0 m | concreto pulido gris oscuro para cubiertas |
 | `arte_1`, `arte_2`, `arte_3` | 0,50 × 0,70 | cuadros abstractos minimalistas en la paleta (no se repiten) |
 
@@ -163,16 +168,30 @@ que habían quedado sin lugar. Mismas convenciones que arriba.
 - **Hall**: banca y perchero (0,66 y 0,60 de ancho) en el muro oeste (tabique del nicho de lavadora, 0,71 de
   largo); riel de focos en el cielo en lugar del colgante de domo, que quedaba sobre la cámara del hall y la
   encandilaba; felpudo **afuera**, en el palier, porque la hoja de entrada barre el piso del hall.
-- **Cocina**: barra de utensilios bajo la repisa izquierda del tramo norte (eje a 1,30).
+- **Cocina**: barra de utensilios bajo el mueble alto izquierdo del tramo norte (eje a 1,30). Corrección 07c: el
+  tramo norte vuelve a tener muebles altos, como marca el plano, y ya no lleva `repisa_abierta` ni `set_repisa` (quedan
+  en el catálogo; ADR 0004, adenda 07c).
 - **Baños**: toallero de 0,40 en el frente de cada vanitorio, bajo el lavabo (eje a 0,62). Los baños no tienen un
   muro libre de 0,50 para la escalera de toallas: `escalera_toallas` queda sólo en la vitrina.
-- **Dormitorio 2**: apliques de brazo sobre los dos veladores (en vez de la lámpara de mesa) y un jarrón.
+- **Dormitorio 2**: apliques de brazo sobre los dos veladores (en vez de la lámpara de mesa); desde el bloque 09, una
+  calathea en maceta en el velador oeste en lugar del jarrón.
 - **Conductos vistos**: del colgante del living por el cielo hasta el muro de ladrillo, bajando a una caja a
-  1,10; y entre los dos colgantes de la cocina, con caja de derivación al medio.
+  1,10. El de la cocina, entre sus dos colgantes, salió con ellos en la corrección 07c (ronda 1).
+- **Luz de la cocina** (corrección 07c, ronda 1): riel de tres focos en el cielo (x 340, y 212 px, a 0,80 m de las
+  hojas altas), casi verticales (5-10°) hacia el borde de la cubierta y el piso frente a los muebles base, y luz
+  lineal de trabajo bajo los muebles altos (perfil negro de 16 × 8 mm con difusor, en tres tramos: N1, N2-N3 y el
+  tramo este), todo en el grupo `cocina_techo`. Los colgantes de jaula de la v2 colgaban a la altura de los altos y a
+  0,56 m de sus hojas, y las lavaban.
 - **Sin comedor interior**: el espacio libre entre living, cocina y hall es circulación (el plano no dibuja
   comedor). Una mesa de 0,80 con dos sillas dejaba 0,6 a 0,7 m frente a la cocina o cortaba el paso del hall al
   living. La mesa y la silla de comedor quedan en la vitrina; el comedor para dos es el del balcón.
-- **Camas**: `resolucion=0.7` (13 100 triángulos en vez de 20 000, sin diferencia visible) para dejar presupuesto.
+- **Camas**: `resolucion=0.5` desde el bloque 09 (9 164 triángulos; 13 120 con 0,7 y 20 000 con 1) para dejar
+  presupuesto a los textiles y las plantas; se apoyan en su alfombra y las patas de la cabecera bajan al piso.
+- **Bloque 09** (`build/deco_textiles.py`, `build/deco_plantas.py`; constantes en la sección «Bloque 09» de la fase 4):
+  bereber bajo la cama del principal, kilim en el segundo, camino entre el hall y el living, pisos de baño frente a
+  las tinas, cortinas de lino recogidas en las ventanas de los dormitorios y paños laterales en el ventanal, y cinco
+  plantas (rincón del living junto al balcón, balcón, cubierta de la cocina, repisa del baño principal y velador del
+  segundo dormitorio). Detalle y medidas en el brief (sección «Bloque 09»).
 
 ### Instancias
 Después de ubicar todo, la fase 4 compara la huella de cada malla (vértices, caras, aristas, suavizado, UV y

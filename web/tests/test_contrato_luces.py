@@ -1,4 +1,4 @@
-"""Contrato de interacción v2.1 (docs/contrato-interaccion.md, secciones 1 a 3) en lo que exporta la fase 6, sin
+"""Contrato de interacción v2.2 (docs/contrato-interaccion.md, secciones 1 a 3 y 6) en lo que exporta la fase 6, sin
 Blender: sólo lee exports/web/depto_colisiones.json y exports/web/depto_gltf.json.
 
     python3 -m unittest discover -s web/tests -p 'test_*.py'
@@ -41,10 +41,11 @@ class ContratoLuces(unittest.TestCase):
         self.assertGreaterEqual(len(self.grupos), 14)
         etiquetas = self.D["recintos_etiquetas"]
         for g in self.D["grupos_luz"]:
-            self.assertEqual(set(g) - {"kelvin"}, {"id", "etiqueta", "recinto", "encendido"}, g)
+            self.assertEqual(set(g) - {"kelvin", "movil"}, {"id", "etiqueta", "recinto", "encendido"}, g)
             self.assertEqual(g["id"], g["id"].lower())
             self.assertTrue(g["etiqueta"].startswith(etiquetas[g["recinto"]] + " · "), g)
-            self.assertIn(g.get("kelvin"), (2700, 3000), g)
+            # 2700 K en general, 3000 K en cocina y baños; 5000 K sólo la luz interior de la nevera (contrato 2.2)
+            self.assertIn(g.get("kelvin"), (5000,) if g.get("movil") else (2700, 3000), g)
 
     def test_encendido_de_autor(self):
         for gid in APAGADOS:
@@ -62,7 +63,8 @@ class ContratoLuces(unittest.TestCase):
             esperado = DC.kelvin_a_lineal(self.grupos[luz["grupo"]]["kelvin"])
             for a, b in zip(luz["color"], esperado):
                 self.assertAlmostEqual(a, b, places=3, msg=luz["nombre"])
-            self.assertLess(luz["color"][2], 0.2, "el color debe ser lineal, no sRGB codificado")
+            if self.grupos[luz["grupo"]]["kelvin"] <= 3000:
+                self.assertLess(luz["color"][2], 0.2, "el color debe ser lineal, no sRGB codificado")
 
     def test_kelvin_a_lineal(self):
         k27, k30 = DC.kelvin_a_lineal(2700), DC.kelvin_a_lineal(3000)
@@ -122,7 +124,55 @@ class ContratoLuces(unittest.TestCase):
 
     def test_version_del_contrato(self):
         self.assertEqual(self.D["version"], 2)            # versión mayor (compatibilidad)
-        self.assertEqual(self.D.get("contrato"), "2.1")   # versión completa del contrato de interacción
+        self.assertEqual(self.D.get("contrato"), "2.5")   # versión completa del contrato (2.5: sol y cielos del exterior)
+
+    def test_luz_de_la_nevera_la_prende_su_puerta(self):
+        """Contrato 2.2: el grupo de la nevera no tiene interruptor; lo nombra `enciende` de la puerta, nace apagado y
+        su luz trae un alcance corto (el visor no calcula sombras)."""
+        por_nodo = {m["nodo"]: m for m in self.D["moviles"]}
+        de_movil = [g for g in self.D["grupos_luz"] if "movil" in g]
+        self.assertEqual([g["id"] for g in de_movil], ["cocina_nevera"])
+        g = de_movil[0]
+        self.assertIs(g["encendido"], False)
+        self.assertIn(g["id"], por_nodo[g["movil"]].get("enciende", []))
+        self.assertFalse(any(g["id"] in i["grupos"] for i in self.D["interruptores"]))
+        luces = [x for x in self.D["luces"] if x.get("grupo") == g["id"]]
+        self.assertEqual(len(luces), 1)
+        self.assertTrue(3.0 <= luces[0]["potencia_w"] <= 5.0, luces[0])
+        self.assertTrue(0 < luces[0]["alcance_m"] <= 1.5, luces[0])
+        for m in self.D["moviles"]:
+            for gid in m.get("enciende", []):
+                self.assertIn(gid, self.grupos, m["nodo"])
+
+    def test_entornos_locales(self):
+        """Contrato 2.2, sección 6: cada entorno trae su imagen publicada junto al modelo, su caja y sus materiales."""
+        ents = self.D.get("entornos", [])
+        self.assertEqual([e["id"] for e in ents], ["cocina"])
+        mats = {m["name"] for m in _leer("depto_gltf.json").get("materials", [])}
+        for e in ents:
+            for archivo in [e["imagen"], *e.get("imagenes", {}).values()]:
+                self.assertTrue(os.path.exists(os.path.join(WEB, archivo)), archivo)
+            self.assertEqual(set(e.get("imagenes", {})), {"luces", "dia"})
+            self.assertEqual(len(e["alto"]), 2)
+            x0, x1, z0, z1 = e["caja"]
+            self.assertTrue(x0 < x1 and z0 < z1, e)
+            self.assertTrue(x0 <= e["centro"][0] <= x1 and z0 <= e["centro"][2] <= z1, e)
+            self.assertIn("Depto_Mat_NeveraAcero", e["materiales"])
+            self.assertTrue(set(e["materiales"]) <= mats | {"Depto_Mat_AceroInox"}, e["materiales"])
+
+    def test_bisagras_de_la_torre(self):
+        """Corrección 07c, ronda 2: la torre tiene dos hojas por nivel (símbolo «<» del plano), con las bisagras en los
+        extremos norte y sur; PuertaLavaplatos1 bloquea los cajones del módulo 3 (se cruzaban al girar)."""
+        por_nodo = {m["nodo"]: m for m in self.D["moviles"]}
+        torre = sorted(n for n in por_nodo if n.startswith("Depto_Mueble_Cocina_PuertaTorre"))
+        self.assertEqual(torre, [f"Depto_Mueble_Cocina_PuertaTorre{n}{l}" for n in ("Alta", "Baja") for l in "NS"])
+        for n in ("Baja", "Alta"):
+            # y del plano -> x de glTF: las bisagras quedan en los extremos (TORRE_Y menos media junta de 3 mm)
+            xn = por_nodo[f"Depto_Mueble_Cocina_PuertaTorre{n}N"]["posicion"][0]
+            xs = por_nodo[f"Depto_Mueble_Cocina_PuertaTorre{n}S"]["posicion"][0]
+            self.assertAlmostEqual(abs(xs - xn), (258.4 - 227.8) * 0.019 - 0.003, places=3)
+        l1 = por_nodo["Depto_Mueble_Cocina_PuertaLavaplatos1"]
+        self.assertEqual(sorted(l1.get("bloquea", [])), ["Depto_Mueble_Cocina_Cajon3Inf", "Depto_Mueble_Cocina_Cajon3Sup"])
 
     def test_nombres_recinto_del_visor(self):
         """El respaldo NOMBRES_RECINTO de luces.js dice lo mismo que recintos_etiquetas (una sola fuente de verdad:

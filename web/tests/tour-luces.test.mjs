@@ -113,3 +113,18 @@ test("textoInterruptor: la pista nombra el grupo; la placa doble une las dos eti
   assert.equal(textoInterruptor(["living_techo", "balcon"], g, true), "Apagar Living · techo y Balcón · colgante del comedor");
   assert.equal(textoInterruptor(["no_existe"], g, false), "Encender la luz");
 });
+
+test("contrato 2.2: los grupos de un móvil no cambian con el momento ni salen en el panel", async () => {
+  const { gruposDeMovil, gruposDelPanel } = await import("../src/tour/js/luces.js");
+  const grupos = new Map([
+    ["cocina_techo", { id: "cocina_techo", encendido: true }],
+    ["cocina_nevera", { id: "cocina_nevera", encendido: false, movil: "Depto_Mueble_Nevera_Puerta" }],
+  ]);
+  const tarde = estadoGruposParaMomento(grupos.values(), true);
+  assert.equal(tarde.get("cocina_techo"), true);
+  assert.equal(tarde.has("cocina_nevera"), false);
+  assert.deepEqual(gruposDelPanel(grupos).map((g) => g.id), ["cocina_techo"]);
+  assert.deepEqual(gruposDeMovil({ enciende: ["cocina_nevera"] }, 1), [["cocina_nevera", true]]);
+  assert.deepEqual(gruposDeMovil({ enciende: ["cocina_nevera"] }, 0), [["cocina_nevera", false]]);
+  assert.deepEqual(gruposDeMovil({}, 1), []);
+});

@@ -98,18 +98,18 @@
       ]
     },
     "acero_cepillado": {
-      "nombre": "Acero cepillado (electrodomésticos)",
+      "nombre": "Acero inoxidable cepillado (electrodomésticos)",
       "dimensiones_m": [
-        0.6,
-        0.6
+        0.3,
+        0.3
       ],
       "mapas": {
         "color": "acero_cepillado_diff_1k.jpg",
         "normal": "acero_cepillado_nor_gl_1k.jpg",
         "rugosidad": "acero_cepillado_rough_1k.jpg"
       },
-      "descripcion": "Acero inoxidable gris cálido claro (#C2BFB7) con vetas finas cepilladas verticales (a lo largo de V), motas suaves y manchas tenues de dedos.",
-      "semilla": 114,
+      "descripcion": "Acero inoxidable gris frío claro (#C3C7CB) con vetas rectas muy finas y parejas a lo largo de V, contraste bajo y rugosidad de 0,25 a 0,35 que sigue a las vetas.",
+      "semilla": 119,
       "licencia": "propia: generada por build/deco_texturas.py",
       "resolucion_px": [
         1024,
@@ -262,6 +262,101 @@
       },
       "descripcion": "Concreto pulido gris oscuro (#545351) para cubiertas: nubes, áridos finos, poros y brillo desparejo.",
       "semilla": 113,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "bereber": {
+      "nombre": "Lana bereber anudada",
+      "dimensiones_m": [
+        1.25,
+        1.0
+      ],
+      "mapas": {
+        "color": "bereber_diff_1k.jpg",
+        "normal": "bereber_nor_gl_1k.jpg",
+        "rugosidad": "bereber_rough_1k.jpg"
+      },
+      "descripcion": "Pelo largo de lana cruda (#E1D8C8) peinado en una dirección, con retícula de rombos de 0,42 × 0,50 m en lana carbón a mano alzada decidida por mechón de 7 mm (borde suave, sin grilla de nudos), rombitos sueltos y abrash en bandas (alfombra del dormitorio principal).",
+      "semilla": 121,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "kilim": {
+      "nombre": "Kilim de tonos sobrios",
+      "dimensiones_m": [
+        2.3,
+        1.6
+      ],
+      "mapas": {
+        "color": "kilim_diff_1k.jpg",
+        "normal": "kilim_nor_gl_1k.jpg",
+        "rugosidad": "kilim_rough_1k.jpg"
+      },
+      "descripcion": "Kilim tejido plano de 2,30 × 1,60 m (alfombra entera, UV 0-1): cabezales carbón, guarda con diente de lobo avena sobre carbón, filetes ladrillo y campo avena con rombos escalonados carbón y ladrillo de ojo ocre; relieve y tono por celda de pasada de 1,25 × 0,9 cm y lazy lines diagonales (segundo dormitorio).",
+      "semilla": 122,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        712
+      ]
+    },
+    "camino": {
+      "nombre": "Camino de lana en espiga",
+      "dimensiones_m": [
+        0.6,
+        0.4
+      ],
+      "mapas": {
+        "color": "camino_diff_1k.jpg",
+        "normal": "camino_nor_gl_1k.jpg",
+        "rugosidad": "camino_rough_1k.jpg"
+      },
+      "descripcion": "Tejido plano en espiga de columnas de 3,75 cm con sarga de 1 cm, hilos carbón y topo con un tono por columna, orillos avena con dos filetes carbón en los bordes largos; 0,60 m de ancho y se repite cada 0,40 m a lo largo (camino del hall).",
+      "semilla": 123,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "algodon": {
+      "nombre": "Algodón mechado de baño",
+      "dimensiones_m": [
+        0.24,
+        0.24
+      ],
+      "mapas": {
+        "color": "algodon_diff_1k.jpg",
+        "normal": "algodon_nor_gl_1k.jpg",
+        "rugosidad": "algodon_rough_1k.jpg"
+      },
+      "descripcion": "Rizos de algodón natural (#E0DACE) de 3 mm en hileras trabadas de 6 mm, en canales de 4 cm con surco de 6 mm (pisos de baño y flecos).",
+      "semilla": 124,
+      "licencia": "propia: generada por build/deco_texturas.py",
+      "resolucion_px": [
+        1024,
+        1024
+      ]
+    },
+    "lino": {
+      "nombre": "Lino natural lavado",
+      "dimensiones_m": [
+        0.5,
+        0.5
+      ],
+      "mapas": {
+        "color": "lino_diff_1k.jpg",
+        "normal": "lino_nor_gl_1k.jpg",
+        "rugosidad": "lino_rough_1k.jpg"
+      },
+      "descripcion": "Tafetán de lino natural (#D6CFC0) de hilos de 1 mm con ±3,5 % de tono por hilo y flameado de 1 a 8 cm en la trama (cortinas de los dormitorios y del ventanal).",
+      "semilla": 125,
       "licencia": "propia: generada por build/deco_texturas.py",
       "resolucion_px": [
         1024,

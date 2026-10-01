@@ -1,5 +1,6 @@
 """Contenido de clósets y nevera (fase "07 detalle interactivo", parte 07b): ropa colgada en perchas, ropa
-doblada, zapatos, cajas de guardado, maleta y alimentos. Lo usa build/depto_03_formas.py (closets() y nevera()).
+doblada, zapatos, cajas de guardado, maleta y alimentos, y (corrección 07c) la vajilla de los muebles altos de la
+cocina. Lo usa build/depto_03_formas.py (closets(), nevera() y altos_cocina()).
 
 Todo se arma con bmesh en un marco local métrico (u, v, z) que `Marco` lleva al mundo de Blender: u a lo largo
 del mueble (la barra de colgar, el ancho de la nevera), v del fondo hacia el frente y z hacia arriba. Así las
@@ -755,3 +756,61 @@ def zanahoria(m, p0, p1, r, mat, mat_hojas):
         bm.faces.new(anillos[-1])
     with m.parte(mat_hojas, suave=True) as bm:
         cilindro_eje(bm, p0, p0 - (p1 - p0).normalized() * 0.03, r * 0.35, seg=6)
+
+
+# ================================================================ vajilla (corrección 07c: muebles altos de la cocina)
+# Piezas de torno en un marco local (u, v, z) con la base en z0. Medidas de catálogo usuales (diseño): plato llano
+# Ø 0,27, de postre Ø 0,20, bol Ø 0,15, vaso de 0,075 × 0,12 y taza de 0,084 × 0,095.
+def pila_platos(m, x, y, z0, n, R, mat="Depto_Mat_GresBlanco", paso=0.012, seg=20):
+    """n platos apilados de radio R en un solo torno cerrado: pie, ala hasta el canto de cada plato con la ranura de
+    sombra hacia el de arriba, y el pozo del último. Devuelve el z de la cara de arriba."""
+    pie = 0.62 * R
+    p = [(0.0, z0 + 0.002), (pie - 0.004, z0 + 0.002), (pie, z0), (pie + 0.006, z0)]
+    for k in range(n):
+        zb = z0 + k * paso
+        p += [(R - 0.006, zb + 0.012), (R, zb + 0.016)]           # cara de abajo del ala y canto del plato k
+        if k < n - 1:
+            p.append((R - 0.009, zb + paso + 0.006))              # ranura bajo el ala del plato de arriba
+    zt = z0 + (n - 1) * paso
+    p += [(R - 0.007, zt + 0.019), (0.70 * R, zt + 0.010), (0.0, zt + 0.009)]
+    with m.parte(mat, _M(x, y), suave=True) as bm:
+        B.torno(bm, p, seg=seg)
+    return zt + 0.019
+
+
+def pila_boles(m, x, y, z0, n, R, H, mat="Depto_Mat_GresArena", paso=0.024, seg=20):
+    """n boles apilados (boca R, alto H): exterior del de abajo, el labio de cada uno y el interior del último."""
+    p = [(0.0, z0 + 0.004), (0.45 * R, z0 + 0.004), (0.50 * R, z0), (0.58 * R, z0), (0.62 * R, z0 + 0.006),
+         (0.84 * R, z0 + 0.30 * H), (0.96 * R, z0 + 0.66 * H)]
+    for k in range(n):
+        zk = z0 + k * paso
+        p += [(R, zk + 0.96 * H), (R - 0.0035, zk + H)]           # labio del bol k
+        if k < n - 1:
+            p.append((R - 0.006, zk + H + 0.001))                 # pared del bol de arriba que asoma
+    zt = z0 + (n - 1) * paso
+    p += [(R - 0.006, zt + 0.93 * H), (0.80 * R - 0.006, zt + 0.30 * H), (0.45 * R, zt + 0.12 * H + 0.004),
+          (0.0, zt + 0.11 * H + 0.004)]
+    with m.parte(mat, _M(x, y), suave=True) as bm:
+        B.torno(bm, p, seg=seg)
+
+
+def vaso(m, x, y, z0, r, alto, mat="Depto_Mat_Vidrio", seg=16):
+    """Vaso de vidrio recto, algo más angosto al pie, con pared de 2,5 mm y fondo grueso."""
+    t, fb = 0.0025, 0.008
+    p = [(0.0, z0), (0.90 * r, z0), (0.93 * r, z0 + 0.003), (r, z0 + alto), (r - t, z0 + alto),
+         (0.93 * r - t, z0 + fb + 0.002), (0.0, z0 + fb)]
+    with m.parte(mat, _M(x, y), suave=True) as bm:
+        B.torno(bm, p, seg=seg)
+
+
+def taza(m, x, y, z0, r, alto, mat="Depto_Mat_Ceramica", giro=0.0, seg=16):
+    """Taza de loza: cuerpo de torno con pared de 5 mm y asa de tubo en +u, girada `giro` grados."""
+    t = 0.005
+    p = [(0.0, z0 + 0.003), (r - 0.007, z0 + 0.003), (r - 0.005, z0), (r, z0 + 0.006), (r, z0 + alto),
+         (r - t, z0 + alto), (r - t, z0 + 0.012), (0.0, z0 + 0.012)]
+    M = _M(x, y, 0.0, giro)
+    with m.parte(mat, M, suave=True) as bm:
+        B.torno(bm, p, seg=seg)
+        za, zb = z0 + 0.74 * alto, z0 + 0.26 * alto
+        B.tubo(bm, [(r - 0.003, 0.0, za), (r + 0.022, 0.0, za + 0.002), (r + 0.030, 0.0, (za + zb) / 2),
+                    (r + 0.022, 0.0, zb - 0.002), (r - 0.003, 0.0, zb)], 0.0045, seg=6, radio_curva=0.008)

@@ -33,6 +33,17 @@ def main():
     S.sellar(escena, "02")
     if "depto_fase03" in escena or escena["depto_fase02"] != base["02"]:
         fallos.append(f"sellar('02') no dejó la escena como se espera: {escena}")
+    # 3b) La fase 08 (exterior) va entre la 05 y la 06: cambiarla cambia su sello y el de la 06, no el de la 05; sellar
+    #     la 05 borra el de la 08.
+    otro = {f: S.sello(f, leer_con("depto_08_exterior.py")) for f in S.FASES}
+    if otro["05"] != base["05"] or otro["08"] == base["08"] or otro["06"] == base["06"]:
+        fallos.append("un cambio en la fase 08 no cambia sólo los sellos de la 08 y la 06")
+    if sorted(S.ORDEN) != sorted(S.FASES):
+        fallos.append(f"ORDEN {S.ORDEN} no tiene las mismas fases que FASES")
+    escena = {"depto_fase05": base["05"], "depto_fase08": base["08"]}
+    S.sellar(escena, "05")
+    if "depto_fase08" in escena:
+        fallos.append("sellar('05') no borró el sello de la fase 08")
     # 4) exigir: acepta la cadena vigente, rechaza un sello viejo y una ruta distinta del maestro.
     escena = {"depto_fase02": base["02"]}
     try:

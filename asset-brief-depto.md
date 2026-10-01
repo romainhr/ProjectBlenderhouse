@@ -119,8 +119,8 @@ El plano no tiene cotas. La escala se estimó de forma independiente con cuatro 
 | Tinas | 1,27 × 0,72 dibujadas, en un nicho de 1,46 | **decisión:** tina de 1,45 × 0,70 que llena el nicho, como se construye en obra. El bloque dibujado es genérico (inferido). |
 | WC, vanitorios | 0,68 × 0,37 · 0,72 × 0,47 | según el plano |
 | Anafe | 0,61 × 0,45 | 4 platos (supuesto: no se pueden contar) |
-| Módulo rayado de la cocina | 0,58 × 0,57 | **inferido:** torre de horno y despensa hasta 2,10 (su borde sur tiene trazo de corte, lo que indica un elemento alto) |
-| Módulo con frente discontinuo | nicho de 0,76 (re-medido en la fase 3; se había anotado 0,72) | **inferido:** refrigerador de 0,60 × 0,60 × 1,80 (el trazo discontinuo es la convención de "equipo no incluido"). Fondo de 0,60 para quedar al ras del frente dibujado, que mide ≈0,61; con 0,65 sobresalía 7 cm. |
+| Módulo rayado de la cocina | 0,58 × 0,57 | **inferido:** torre de horno y despensa hasta 2,10 (su borde sur tiene trazo de corte, lo que indica un elemento alto). **Corrección 07c (ronda 1), inferido:** el símbolo «<» de su frente oeste (x ≈ 383-388, y 228-258 px) se lee como dos hojas; se modela como mueble: zócalo retranqueado de 0,10/0,05, puerta bajo el horno (0,10-0,75) con una repisa, horno empotrado de 0,60 (0,75-1,35) con marco de acero, vidrio, franja de mandos y manilla de barra a 4,5 cm, y puerta de despensa (1,35-2,10) con dos repisas. Las dos puertas llevan la bisagra al sur con tope de 80° (diseño). **Corrección 07c (ronda 2), medido en plano:** el trazo del «<» va de (387; 229) a un vértice en (384,3; 241-244) y vuelve a (387; 257), con un trazo horizontal corto en y 243,5 (centroide): dos hojas de ≈0,29 m con las bisagras en los extremos norte (227,8) y sur (258,4) que se encuentran al centro (243,1; hojas iguales, 8 mm del trazo). La torre queda como **despensa de dos hojas por nivel** (junta a 1,50 m, la de los altos; tres repisas abajo y una arriba; tope de 90°, diseño) y el horno sale: con 0,544 m libres no cabe un horno empotrable comercial (nicho usual ≥ 0,56; supuesto). |
+| Módulo con frente discontinuo | nicho de 0,76 (re-medido en la fase 3; se había anotado 0,72) | **Medido (corrección 07c):** contorno del refrigerador de y 261,5 a 296,0 px (0,656 m de ancho, antes 0,60 inferido) y frente en la discontinua x 386,7 (la convención de "equipo no incluido"), al ras de la torre. **Inferido:** fondo de 0,58 (del frente al forro menos 0,02 de holgura; el contorno dibujado mide 0,46 de fondo y termina 0,07 antes del forro, y se lee como el símbolo del equipo) y alto de 1,80. |
 | Lavadora | nicho de 0,71 | lavadora de carga frontal de 0,60 con puerta plegable (inferido) |
 | Líneas finas junto a los WC | continua en B1 (x 408,5, de la tina al shaft); discontinua en B2 (x ≈412,3, de y 369 a 445, cruzando la tina) | **B1:** repisa de instalaciones de 1,10 m que oculta el estanque (inferido). **B2 (cambio de la fase 3, confirmado en la compuerta 3):** la discontinua pasa sobre la tina, así que no puede ser una repisa baja; se lee como un elemento sobre el plano de corte: ducto o cielo falso local de 0,16 m contra el muro este, de 2,10 m al cielo (inferido). El estanque del WC del B2 queda a la vista. |
 
@@ -136,7 +136,7 @@ El plano no tiene cotas. La escala se estimó de forma independiente con cuatro 
 
 - Todas las alturas (tabla anterior), cielos lisos, sin vigas a la vista y sin cielo falso.
 - Terminaciones y materiales: ninguna está en el plano. Propuesta neutra, sin copiar las fotos ajenas: piso laminado claro en áreas secas, cerámica en baños, cocina y balcón, muros blancos, muebles de cocina blancos con cubierta gris.
-- El exterior: la fachada vista desde afuera, el pasillo común de la entrada y la vista desde las ventanas. Para el tour se propone un fondo de cielo (HDRI de Poly Haven, CC0, previa aprobación) y un piso exterior neutro, sin inventar edificios vecinos.
+- El exterior: la fachada vista desde afuera, el pasillo común de la entrada y la vista desde las ventanas. Para el tour se propone un fondo de cielo (HDRI de Poly Haven, CC0, previa aprobación) y un piso exterior neutro, sin inventar edificios vecinos. **Reemplazado en el bloque 08** por el paisaje de la sección «Bloque 08: exterior» (pedido del usuario, ADR 0004, decisión 5).
 - La orientación solar: no hay norte. Se propone luz de día entrando por la fachada del balcón.
 - Iluminación artificial: un punto de luz de cielo por ambiente (supuesto).
 
@@ -206,11 +206,11 @@ Modelo: Claude Opus 5.5. Revisor humano: Romain Ange (compuerta 3, abajo).
 - **Ventanal:** corredera de dos rieles. La hoja móvil es el paño norte (flecha del plano), corrida detrás del paño fijo; deja ≈0,97 m libres hacia el balcón. En la primera versión de la fase 3 estaba cerrado y el balcón no se alcanzaba.
 - **Closets:** puertas correderas en dos rieles con tiradores embutidos. El plano no dibuja arcos de giro y, con puertas abatibles, las hojas tapaban el acceso al Baño 2 (quedaban 0,15 m).
 - **Baño 2:** ducto o cielo falso local contra el muro este, de 2,10 m al cielo (ver la tabla de mobiliario).
-- **Cocina:** lavaplatos, torre y anafe re-medidos por centro de trazo; se habían tomado de los bordes de la extracción, con hasta 3 px (6 cm) de desvío. Supuestos: campana telescópica plana bajo el mueble alto, a ≈0,57 m sobre el anafe (los fabricantes suelen pedir 0,60 a 0,75; valor de memoria, no verificado; con los altos a 1,50 no cabe más sin subirlos). Horno con 0,545 m de frente visible, porque la torre medida mide 0,58 y no admite uno comercial de 0,595. Rellenadores de 5 cm en la esquina de la L, dos puertas de 0,40 bajo el lavaplatos y escurridor sobre la cubierta.
+- **Cocina:** lavaplatos, torre y anafe re-medidos por centro de trazo; se habían tomado de los bordes de la extracción, con hasta 3 px (6 cm) de desvío. Supuestos: campana telescópica plana bajo el mueble alto, a ≈0,57 m sobre el anafe (los fabricantes suelen pedir 0,60 a 0,75; valor de memoria, no verificado; con los altos a 1,50 no cabe más sin subirlos). Horno con 0,545 m de frente visible, porque la torre medida mide 0,58 y no admite uno comercial de 0,595 (desde la corrección 07c, ronda 1: marco de 0,577 m al ras de las puertas de la torre y vidrio de 0,51 m). Desde la ronda 2 de la corrección 07c la torre es sólo despensa y no hay horno en el modelo (duda abierta: el sitio lo promete; podría ir bajo el anafe con un módulo base de 0,60). Rellenadores de 5 cm en la esquina de la L, dos puertas de 0,40 bajo el lavaplatos y escurridor sobre la cubierta.
 - **Vanitorios:** lavamanos de apoyo con grifería alta contra el muro, y espejo de 1,15 a 1,90 (supuestos). En el B2, el plano marca la grifería hacia el frente del mueble; se deja contra el muro porque es lo físicamente coherente.
 - **Nicho de lavadora:** frente plegable cerrado con un dintel de 2,05 al cielo (supuesto).
 - **Palier:** 1,40 m de ancho y 1,00 m a cada lado de la puerta (supuestos; la compuerta 2 sólo pidió un "palier neutro").
-- **No modelado:** las líneas finas junto a los vanitorios (¿toalleros?) y el frente curvo de la torre. Son ambiguos y se dejan para la fase 4 si se confirman.
+- **No modelado:** las líneas finas junto a los vanitorios (¿toalleros?) y el frente curvo de la torre. Son ambiguos y se dejan para la fase 4 si se confirman. (El frente de la torre se modeló en la corrección 07c, ronda 1, como dos puertas y el horno, y en la ronda 2 como dos hojas por nivel, la lectura del símbolo: ver la tabla de mobiliario.)
 
 ## Decisiones de la compuerta de la fase 3 (2026-09-25, Romain Ange)
 
@@ -267,7 +267,7 @@ Pedido de Romain Ange: rediseñar la decoración en estilo industrial moderno mi
 
 - **Pisos:** microcemento continuo en living, cocina, hall y nicho LV; tablas de roble ahumado en dormitorios y pasos; baldosa hexagonal carbón en los baños; losas de hormigón en el balcón. El cambio de piso queda bajo la hoja de cada puerta.
 - **Muros y cielo:** blancos, con una sola pared de ladrillo a la vista (la del televisor, lado living del tabique D1). Azulejo subway blanco con junta oscura en los baños y la cocina, cielo de concreto visto de encofrado.
-- **Cocina:** frentes carbón mate con tiradores de barra negros, cubierta de concreto oscuro y campana de chimenea de acero (canopia a 0,64 m sobre el anafe). El tramo norte queda sin muebles altos, con repisas abiertas y azulejo hasta 2,10; los muebles altos quedan sólo en el tramo este.
+- **Cocina:** frentes carbón mate con tiradores de barra negros, cubierta de concreto oscuro y campana de chimenea de acero (canopia a 0,64 m sobre el anafe). El tramo norte queda sin muebles altos, con repisas abiertas y azulejo hasta 2,10; los muebles altos quedan sólo en el tramo este. **Corrección 07c:** vuelven los muebles altos del tramo norte que marca el plano (discontinua ALTOS_Y), con campana telescópica integrada sobre el anafe y vajilla adentro; el azulejo llega hasta la cara inferior de los altos (1,50).
 - **Carpintería:** marcos de ventanas, puertas y baranda en negro; puertas interiores de roble; puerta de entrada de acero pavonado; closets y nicho LV con frentes de roble.
 - **Baños:** vanitorio de roble con cubierta de concreto, lavabo de apoyo de concreto, grifería mural de tubería vista, espejo redondo, ducha de tubería vista y mampara sobre la tina. Lavamanos, llave y espejo pasan de la fase 3 a la decoración.
 - **Piezas nuevas modeladas desde cero:** ver la lista en `docs/deco-industrial.md`. Luminarias: colgantes de domo y de jaula con ampolletas Edison y conducto eléctrico a la vista; cada ampolleta lleva su luz.
@@ -290,3 +290,82 @@ Pedido de Romain Ange: rediseñar la decoración en estilo industrial moderno mi
   - Archivos: `index.html` más los 53 de `exports/web/`: `depto_web.json`, `depto_gltf.json`, `depto_bin.b64.txt` (4,7 MB), `depto_colisiones.json` y 49 imágenes en `tex/`. Se quitó `depto_glb.b64.txt` de la versión 1.
   - Prueba previa en local con `tools/servidor_csp.py`: carga completa, texturas visibles y sin errores de consola.
   - No se subió nada de `ref/`.
+
+## Bloque 08: exterior (2026-09-26; `build/depto_08_exterior.py`, `build/ext_texturas.py`)
+
+Nada del exterior está en el plano: es una planta del depto. Lo medido es lo que ya usaban las fases 2 y 3: la cara
+exterior de la fachada (x 114,45 px → y = 3,005 m), el balcón y los ejes de su baranda, y los vanos de la fachada y del
+muro norte, con sus antepechos y dinteles, que también son supuestos del brief. Todo lo demás es inferido o de diseño.
+
+| Elemento | Valor | Origen |
+|---|---|---|
+| Piso del depto sobre la calzada | 12,5 m (5.º piso de 8) | supuesto del encargo (ADR 0004, decisión 5) |
+| Entrepiso | 2,55 m | derivado: 2,40 de piso a cielo + losa de 0,15 (dos supuestos del brief) |
+| Planta baja del edificio propio | 4,55 m, vidriada | derivado del entrepiso y de los 12,5 m |
+| Deptos por piso hacia el sur | dos, el primero en espejo | supuesto: el nuestro es el del extremo norte, porque tiene ventana en el muro norte (V_B1, medido) |
+| Balcones de los otros pisos | los mismos ejes del nuestro (losa, vidrio y pasamanos) | medido en el nuestro; apilados, supuesto |
+| Fondo del edificio | 13,6 m | inferido: depto de 6,01 (medido), palier de 1,40 + 0,15 y otra crujía de 6 m |
+| Antejardín, vereda y calzada | 3 + 3 + 8 m; solera de 0,15 m | diseño: calle local usual |
+| Reparto de la calzada de 8 m | estacionamiento de 2,0 m junto a la vereda del edificio + dos pistas de 3,0 m, con la línea central entre ellas | diseño (corrección 08, ronda 1: con autos a los dos lados quedaban pistas de 2,05 m) |
+| Línea central | segmentos de 3 m cada 12 m, de 12 cm, modelados; salta el cruce y los pasos de cebra (x 15-31 en la principal, y 5-21 en la transversal); hasta 150 m del origen | diseño (corrección 08, ronda 2: pintada en la textura caía dentro de las dos cebras) |
+| Franja del depto en la fachada | piel de la pintura exterior a 1 cm de los muros propios, de −0,15 a 2,55 m, con los vanos medidos recortados | diseño (corrección 08, ronda 2: los muros propios se veían como un parche de otro tono) |
+| Luminarias | seis, poste de 7 m, brazo de 1,3 m y refractor encendido de noche; a 4-4,5 m de los árboles de su vereda | diseño |
+| Mancha de luz de una luminaria | foco de 90° (borde suave) a 6,9 m sobre la calzada: radio útil de ≈ 6,9 m | diseño (la misma en Blender, con focos, y en el visor, con una textura) |
+| Balcones corridos del E3 y del E5 | uno por piso tipo (desde el 2.º), vuelo de 1,1 m, vidrio de 1,0 m con pasamanos (#3a3c40 desde la ronda 2) y vidrio en los extremos; puertas-ventana hasta el piso | diseño |
+| Calle transversal y cruce | a 14,5 m del muro norte, con pasos de cebra | diseño |
+| Vecinos modelados | E1 a E7, de 1 a 11 pisos, a 15-46 m, con bahías enteras de su variante | diseño |
+| Fachadas vecinas | 4 atlas propios (ladrillo, hormigón, muro cortina y estuco), 8 × 8 bahías-piso; ≈ 35 % de ventanas encendidas de noche | diseño; texturas generadas por código |
+| Rugosidad del muro cortina | vidrio 0,12, enjuta 0,35, cortinas y persianas detrás del vidrio 0,45, marco 0,70 | diseño (enjuta y cortinas, corrección 08, ronda 2) |
+| Barrio intermedio | manzanas de 60 m con calles de 14 m, a 45-150 m | diseño |
+| Árboles de calle | 21, de 7-9 m, fuste de 2,4-3,2 m, copa de icosaedro subdividido | diseño (estilizados, no orgánicos detallados) |
+| Siluetas lejanas | 16 tarjetas en dos capas, a 170-215 y 280-340 m, de 10-52 m de alto | diseño |
+| Giro del cielo | 149,3° | medido: lleva el sol del HDR de día al sol de la fase 5 |
+
+La vista libre desde las ventanas propias, con un abanico de rayos de ±40° y de −35° a +20°, llega a 16,3 m. Ése es el
+primer choque con el exterior. Presupuesto: 9 756 triángulos de exterior (tope del bloque, 15 000) y 198 234 en la
+escena (tope, 200 000), después de la corrección 08 (ronda 2; en la ronda 1, 9 632 y 198 110): la piel de la franja
+del depto y los 96 triángulos de la línea central.
+
+La luz de los tres momentos sale de los panoramas (medido en los HDR, fase 08): el sol de día a 48,0° de elevación, el
+de la tarde a 12,1° y la luna a 17,1°, con el azimut alineado por el giro. Los renders de revisión y el visor orientan
+el sol del depto con esa elevación en cada momento; la fase 5 sigue con su sol de 35° para los demás renders. Desde
+la corrección 08 (ronda 2), el modelo exporta el sol de cada panorama (`exterior.sol`, azimut de 115,0°, 116,8° y
+113,6°) y el visor no depende de sus copias en `cielo.js`. Los cielos de día y de tarde del visor son el HDR con la
+curva Filmic de los renders (fuerza del cielo de cámara 1,6 y 0,32) y el detalle del JPG de 2048 de Poly Haven.
+
+
+## Bloque 09: alfombras, cortinas y plantas (2026-09-27; `build/deco_textiles.py`, `build/deco_plantas.py`)
+
+El plano dibuja una sola alfombra (la del living, que no cambia). Todo lo de este bloque es diseño; las medidas de
+referencia (vanos, muros, muebles, puertas) son las del plano y de las fases 2 a 4. Constantes en la sección «Bloque 09»
+de `build/depto_04_mobiliario.py`.
+
+| Elemento | Valor | Origen |
+|---|---|---|
+| Alfombra del dormitorio principal | bereber de lana cruda de 2,50 × 2,00 × 0,015 m, centrada en la cama, borde norte a 0,40 m del muro de la cabecera; flecos de 7 cm al este y al oeste | diseño; los veladores llegan a 0,39 m del muro y el espejo de pie apoya a 0,26 m del tabique sur (medidos en el modelo) |
+| Alfombra del segundo dormitorio | kilim de 2,30 × 1,60 × 0,010 m, borde norte a 0,36 m del tabique living/D2 (0,20 m más allá de los pies de la cama); flecos de 5,5 cm | diseño; "más chica y de otro diseño" (encargo) |
+| Camino | 0,60 × 1,50 × 0,010 m, de este a oeste entre el hall y el living, a 0,10 m del frente del nicho de lavadora; extremo este a x = 383 px | diseño; fuera del barrido de la hoja de entrada (radio de 1,03 m medido en el plano desde la bisagra) |
+| Pisos de baño | algodón de 0,65 × 0,45 × 0,012 m, esquinas de 4 cm, a 2 cm del frente de la tina y a 5 cm del tabique de la puerta | diseño; el WC queda a ≥ 5 cm (medido en el modelo) |
+| Holgura bajo las hojas abatibles interiores | 2 cm (antes 1 cm; la entrada sigue con 1 cm) | supuesto: la usual con alfombras, y la rendija de ventilación de los baños |
+| Barra de cortinas | eje a 2,26 m (16 cm sobre el dintel de 2,10, 14 cm bajo el cielo de 2,40) y a 7 cm del muro; 0,18 m más allá de cada jamba en los dormitorios; de muro a muro en el living; anillas apoyadas en la barra y la tela a 2 mm bajo ellas | diseño; al norte del D1 no cabe más: el velador empieza a 0,19 m de la jamba |
+| Paños recogidos | lino natural, 0,30 m por paño en los dormitorios (6 ondas en el D1 y 7 en el D2, cuya ventana es 14 % más ancha) y 0,26 m con 4 ondas en el living; ancho de onda ±15 %, hondura de 9 cm ±10 % (15 % más abajo), abiertos 10 % y corridos 1-2 cm hacia un lado abajo; dobladillo a 1,2 cm del piso | diseño; cada paño de los dormitorios tiene tela para cerrar su mitad de la barra (1,13 m contra 1,09 en el D1 y 1,30 contra 1,22 en el D2, medido en el modelo) |
+| Sofá del living | 1,54 m de ancho (antes 1,80), con el extremo este donde estaba (x ≈ 236 px) | **medido en el plano** (corrección 09): el sofá dibujado va de x 161 a 242,5 px; el brief de la fase 4 decía 1,55 |
+| Alfombra del living | 2,00 × 1,40 m centrada en el sofá, termina 2 cm antes de su frente; el sofá apoya en el piso | diseño (corrección 09): el plano la dibuja de 2,24 × 2,05 m, entrando 0,37 m bajo el sofá; entera ocupaba el lugar de la planta |
+| Plantas | calathea en maceta de piso en el rincón del living junto al balcón, anturio en la esquina noroeste del balcón, haworthia en la cubierta de la cocina, calathea en la repisa del baño principal y otra en el velador oeste del segundo dormitorio (en lugar del jarrón) | modelos CC0 de Poly Haven (escaneos); ubicación, escala y maceta: diseño, salvo la del living |
+| Planta del living | maceta de Ø 0,30 × 0,42 m centrada en (145,5; 300,3) px, ≈ 0,66 m de alto con la planta | **medido en el plano**: el elemento de piso de 0,36 × 0,47 m dibujado junto al extremo oeste del sofá (x 136-155, y 288-312,5 px); maceta y planta, diseño |
+| Macetas | gres blanco, negro o arena, de 0,12 a 0,30 m | diseño |
+
+Inferido o no verificable: la cocina no tiene repisas abiertas desde la corrección 07c (el plano marca muebles altos),
+así que su planta va en la cubierta. Presupuesto: la escena quedó en 199 357 triángulos (tope, 200 000) después de
+bajar la resolución de telas de las camas de 0,7 a 0,5 (−7 912) y dejar los árboles de la calle con una sola copa
+(−1 680).
+
+**Corrección 09 (ronda 1, 2026-09-27).** Lo que la primera versión anotó como «no cabe» era medible: el plano dibuja
+un elemento de piso de 0,36 × 0,47 m junto al extremo oeste del sofá, y el sofá dibujado mide 1,54 m (x 161-242,5 px).
+El del modelo medía 1,80 y llegaba 0,38 m más al oeste; era una desviación del plano. Ahora el sofá tiene el ancho del
+plano (con su extremo este donde estaba, porque ahí van la lámpara de arco y la mesa lateral) y la planta va en una
+maceta de piso en ese elemento; el helecho colgado se quitó. Siguen siendo diseño, y se desvían del plano: el eje del
+televisor y del rack (el del muro de ladrillo, x 188,6 px; el plano centra living, mesa y sofá en x ≈ 201,8) y la
+alfombra del living (2,00 × 1,40 frente al sofá; el plano la dibuja de 2,24 × 2,05 entrando bajo el sofá). La
+plegable del nicho de lavadora pasa a 2 cm del piso, como las hojas abatibles, porque al abrirse barre 0,36 m sobre el
+camino. La escena queda en 199 892 triángulos.

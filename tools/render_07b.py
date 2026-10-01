@@ -12,11 +12,11 @@ emisivo con el color de su grupo, como en el visor) y elige mundo de día (HDRI 
 fase 5) o de noche (cielo HDRI casi apagado y sin sol). Escribe <out>/<vista>.png y <out>/renders.json =
 [{archivo, que_muestra, abiertos (todo lo abierto en el render, también lo que el maestro trae abierto), ...}].
 
-Supuestos de revisión (no van al GLB): luz interior de la nevera (LED frío de 5 W, sólo en la vista de la nevera),
-un volumen de irradiancia y un cubemap por recinto horneados con el mundo y las luces de cada vista (--sin-gi lo
+Supuestos de revisión (no van al GLB): un volumen de irradiancia y un cubemap por recinto horneados con el mundo y las luces de cada vista (--sin-gi lo
 omite), una sonda plana en cada espejo, un suelo neutro oscuro bajo el horizonte del mundo (luz y reflejos), un vidrio
-de revisión (transparente con reflejo de Fresnel, sin sombra) en lugar del vidrio del GLB y, en las vistas con
-lámparas, una adaptación cromática parcial de la cámara en el compositor (el color de las luces no cambia).
+de revisión (transparente con reflejo de Fresnel, sin sombra) en lugar del vidrio del GLB. Corrección 07c (ronda 2):
+sin adaptación cromática por defecto (ver BALANCE) y la luz interior de la nevera es la del modelo (grupo que la puerta
+prende al abrirse, `enciende`), no un LED de revisión.
 """
 import argparse
 import json
@@ -41,10 +41,11 @@ DIA = dict(fuerza=1.6, saturacion=0.35, fuerza_camara=0.45)   # supuesto de revi
 SUELO_MUNDO = (0.12, 0.12, 0.11)   # supuesto de revisión: suelo neutro oscuro bajo el horizonte (lineal, antes de la
 # fuerza) en la luz del mundo, como depto_05.mundo() (SUELO_COLOR): sin él, el roble, la melamina y el acero reflejaban
 # el cielo bajo el horizonte del HDRI (≈ 0,5 lineal con la fuerza de 1,6) y se leían escarchados o con un barrido azul
-# Adaptación cromática parcial de la cámara (ASC-CDL, pendiente por canal, en el compositor; no toca las luces): en las
-# vistas iluminadas por lámparas de 2700-3000 K lo blanco se leía como madera ámbar y el hormigón como entablado.
-# ≈ 50 % de la corrección completa (supuesto de revisión; el color físico de las luces está en el ADR 0004).
-BALANCE = {"lamparas": (0.85, 1.0, 1.45), "dia": None}
+# Adaptación cromática de la cámara (ASC-CDL, pendiente por canal, en el compositor; no toca las luces). Corrección 07c
+# (ronda 2): desactivada por defecto. La pendiente fija (0,85, 1, 1,45) de las vistas con lámparas no existe en el visor
+# y teñía de azul lavanda lo iluminado de día y de malva el acero: lo que se aprobaba no era el color del producto. Una
+# vista puede pedir una pendiente propia con `balance` (la rotula el texto y renders.json).
+BALANCE = {"lamparas": None, "dia": None}
 VIDRIOS_REVISION = ("Depto_Mat_Vidrio", "Depto_Mat_VidrioReloj")
 TODOS = "*"
 # Cajones de cocina que el maestro trae abiertos (estado inicial del recorrido): las vistas de ambiente los cierran.
@@ -107,11 +108,11 @@ VISTAS = {
               "en la primera repisa, ropa doblada y la caja de zapatos arriba."),
     "nevera_abierta": dict(
         cam=((338.0, 240.0), 1.50, (400.0, 280.0), 0.95, 14.0), mundo="dia", luces=(), expo=1.0,
-        abrir=("Depto_Mueble_Nevera_Puerta", "Depto_Mueble_Nevera_Freezer"), led_nevera=True,
+        abrir=("Depto_Mueble_Nevera_Puerta", "Depto_Mueble_Nevera_Freezer"),
         texto="Nevera abierta (puerta a 100° y cajón freezer): forro blanco, dos estantes de vidrio, cajón de "
               "verduras con frente de plástico esmerilado, alimentos (lácteos, huevos, fruta, frascos, cartones), "
               "balcones de la contrapuerta con botellas y salsas, congelados en el freezer y manillas de barra. De día "
-              "con la luz de la cocina apagada; LED interior sólo de revisión."),
+              "con la luz de la cocina apagada y la luz interior de la nevera (la del modelo) encendida."),
     "interruptor_balcon": dict(
         cam=((153.0, 214.0), 1.40, (131.0, 174.0), 1.04, 22.0), mundo="dia", luces=(), expo=1.0,
         texto="Interruptor del balcón, por dentro, en el muro de ladrillo junto al ventanal: canto a 0,10 m de la "
@@ -247,15 +248,18 @@ def bombilla_grupo(grupo):
 GRUPOS = {}
 
 
-def fijar_luces(encendidos):
+def fijar_luces(encendidos, filtro=None):
+    """Prende sólo los grupos `encendidos` (TODOS = todos). `filtro` (texto, opcional): de los grupos encendidos, sólo
+    las luces cuya ampolleta contiene ese texto (par A/B de una misma vista: sólo el riel o sólo la luz lineal)."""
     bomb, off = bpy.data.materials["Depto_Mat_Bombilla"], apagada()
     propias = {bomb, off} | {m for m in bpy.data.materials if m.name.startswith("_Bombilla_")}
     for o in bpy.data.objects:
-        if o.type == "LIGHT" and o.name.startswith("Depto_Luz_") and o.data.type == "POINT":
-            o.hide_render = not (encendidos == TODOS or o.get("grupo") in encendidos)
+        if o.type == "LIGHT" and o.name.startswith("Depto_Luz_") and o.data.type in ("POINT", "SPOT"):
+            o.hide_render = not ((encendidos == TODOS or o.get("grupo") in encendidos)
+                                 and (not filtro or filtro in o.get("ampolleta", "")))
         if o.type == "MESH" and o.get("luz_w"):
             g = o.get("luz_grupo")
-            on = encendidos == TODOS or g in encendidos
+            on = (encendidos == TODOS or g in encendidos) and (not filtro or filtro in o.name)
             for slot in o.material_slots:          # por objeto: las ampolletas iguales comparten la malla
                 if slot.material in propias:
                     slot.link = "OBJECT"
@@ -317,6 +321,7 @@ def mundo_dia(scene):
 
 
 HORNEADO = {"clave": None}
+GI_INFLUENCIA = 0.10                     # m: menor que el muro perimetral más delgado (0,20 m, entrada; plano medido)
 
 
 def cajas_recintos():
@@ -347,8 +352,18 @@ def sondas(scene):
     pd = bpy.data.lightprobes.new("_GI_Depto", "GRID")
     ob = bpy.data.objects.new("_GI_Depto", pd)
     scene.collection.objects.link(ob)
-    ob.location = (0.0, 0.0, P.ALTURA_PISO_CIELO / 2)
-    ob.scale = (4.6, 3.1, P.ALTURA_PISO_CIELO / 2 - 0.02)
+    # Corrección 08, ronda 2: la caja termina en la cara interior de los muros perimetrales (antes, 4,6 × 3,1 m de
+    # semieje, contenía las caras exteriores de la fachada, en Y = 3,005, y de los muros norte y sur, en X = ±4,49, y les
+    # horneaba la luz del interior: la franja del depto salía ≈ 40 % más oscura que el resto del edificio en
+    # afuera_control, con el borde difuso de la caída). Con una distancia de influencia de 0,10 m, menor que el muro más
+    # delgado (0,20 m, el de la entrada), ninguna cara exterior queda al alcance del volumen.
+    (x0, y0), (x1, y1) = P.a_blender(0, P.Y["S_I"]), P.a_blender(0, P.Y["N_I"])
+    (_, ya), (_, yb) = P.a_blender(P.X["E_I"], 0), P.a_blender(P.X["W_I"], 0)
+    xa, xb = sorted((x0, x1))
+    ya, yb = sorted((ya, yb))
+    ob.location = ((xa + xb) / 2, (ya + yb) / 2, P.ALTURA_PISO_CIELO / 2)
+    ob.scale = ((xb - xa) / 2, (yb - ya) / 2, P.ALTURA_PISO_CIELO / 2 - 0.02)
+    pd.influence_distance = GI_INFLUENCIA
     pd.grid_resolution_x, pd.grid_resolution_y, pd.grid_resolution_z = 18, 12, 6
     m = 0.10 / P.M_POR_PX                                # 0,10 m más allá de cada muro: la caja los contiene
     for rid, (x0, x1, y0, y1) in cajas_recintos().items():
@@ -478,20 +493,22 @@ def dist_cajas(a, b):
     return math.sqrt(sum(max(0.0, b0[k] - a1[k], a0[k] - b1[k]) ** 2 for k in range(3)))
 
 
-def led_nevera(on):
-    ob = bpy.data.objects.get("_LED_Nevera")
-    if on and ob is None:
-        ref = bpy.data.objects["Depto_Cocina_NeveraCuerpo"]
-        pts = [ref.matrix_world @ v.co for v in ref.data.vertices]
-        c = sum(pts, Vector()) / len(pts)
-        ld = bpy.data.lights.new("_LED_Nevera", "POINT")
-        ld.energy, ld.color, ld.shadow_soft_size = 5.0, (0.92, 0.96, 1.0), 0.05
-        ob = bpy.data.objects.new("_LED_Nevera", ld)
-        bpy.context.scene.collection.objects.link(ob)
-        frente = max(pts, key=lambda p: p.y).y                  # la nevera abre hacia +Y de Blender (oeste)
-        ob.location = (c.x, frente - 0.12, 1.66)
-    if ob is not None:
-        ob.hide_render = not on
+def _dist_nevera():
+    d = dist_cajas(bpy.data.objects["Depto_Mueble_Nevera_Puerta"], bpy.data.objects["Depto_Interruptor_Cocina"])
+    return f"{d:.2f}".replace(".", ",")
+
+
+# marcas del texto de una vista que se completan con una medida del render, con las piezas ya en su estado (07c: las
+# usa también tools/render_07c.py)
+MARCAS = {"{dist_nevera}": _dist_nevera}
+# Ganchos opcionales de otros scripts de revisión (tools/render_09.py): "antes"(scene, cam, vista, v, a) y
+# "despues"(scene, cam, vista, v, a, ruta) devuelven campos que se suman a la entrada de renders.json.
+GANCHOS = {}
+
+
+def grupos_de_moviles(estado, moviles):
+    """Grupos de luz que prenden los móviles abiertos del render (`enciende`, contrato 2.2: la luz de la nevera)."""
+    return {g for n, ab in estado.items() if ab for g in str(moviles[n].get("enciende", "")).split(",") if g}
 
 
 def config(scene, a):
@@ -505,7 +522,10 @@ def config(scene, a):
     # espesor de objeto más realista; lo más rugoso refleja la sonda de su recinto. 0,45 deja fuera el roble y la
     # melamina (0,55) y deja dentro, entera, la cubierta de concreto (mapa de 0,18 a 0,38, medido): con 0,25 el umbral
     # la partía en manchas de reflejo nítido y difuso
-    ee.ssr_max_roughness = 0.45
+    # corrección 07c (ronda 2): 1,0. Con 0,45 el umbral partía también el microcemento (mapa de 0,25 a 0,91, el 20,6 %
+    # de los texeles bajo 0,45): manchas blancas de borde duro en el piso de la cocina y del hall, con reflejo nítido de
+    # la ventana en unas y el de la sonda en otras. La cubierta (0,18-0,39) sigue dentro entera
+    ee.ssr_max_roughness = 1.0
     ee.use_ssr_halfres = False
     ee.ssr_thickness = 0.1
     ee.use_soft_shadows = True
@@ -542,8 +562,8 @@ def main():
         with open(ruta_json) as fh:
             previos = [r for r in json.load(fh) if r["vista"] not in solo and r["vista"] in VISTAS]
     def clave_luz(v):
-        # el LED de la nevera no cambia la clave: sólo alumbra el interior de la nevera (luz directa, sin horneado)
-        return (v["mundo"], "todas" if v["luces"] == TODOS else ",".join(v["luces"]))
+        # la luz de la nevera (grupo de la puerta) no cambia la clave: sólo alumbra su interior (luz directa)
+        return (v["mundo"], "todas" if v["luces"] == TODOS else ",".join(v["luces"]), v.get("filtro_luz", ""))
     for vista, v in VISTAS.items():
         if solo and vista not in solo:
             continue
@@ -554,8 +574,8 @@ def main():
         estado.update({n: False for n in v.get("cerrar", ())})
         for n, o in moviles.items():
             estado_movil(o, estado[n])
-        fijar_luces(v["luces"])
-        led_nevera(bool(v.get("led_nevera")))
+        luces_v = v["luces"] if v["luces"] == TODOS else tuple(v["luces"]) + tuple(grupos_de_moviles(estado, moviles))
+        fijar_luces(luces_v, v.get("filtro_luz"))
         scene.world = noche if v["mundo"] == "noche" else dia
         if sol:
             sol.hide_render = v["mundo"] == "noche"
@@ -563,16 +583,16 @@ def main():
         scene.eevee.use_ssr = v.get("ssr", True)
         if not a.sin_gi:
             hornear(scene, clave_luz(v))
-        con_lamparas = bool(v["luces"])        # grupos de 2700-3000 K (el LED de la nevera es frío: no cuenta)
+        con_lamparas = bool(v["luces"])        # grupos de 2700-3000 K (la luz de la nevera es de 5000 K: no cuenta)
         pend = v.get("balance", BALANCE["lamparas"] if con_lamparas else BALANCE["dia"])
         balance.slope = pend or (1.0, 1.0, 1.0)
         texto = v["texto"]
-        if "{dist_nevera}" in texto:
-            d = dist_cajas(bpy.data.objects["Depto_Mueble_Nevera_Puerta"],
-                           bpy.data.objects["Depto_Interruptor_Cocina"])
-            texto = texto.replace("{dist_nevera}", f"{d:.2f}".replace(".", ","))
+        for marca, fn in MARCAS.items():
+            if marca in texto:
+                texto = texto.replace(marca, fn())
         if pend:
-            texto += " Con adaptación cromática parcial de la cámara (las luces siguen a su temperatura)."
+            txt_pend = ", ".join(f"{x:.2f}" for x in pend)
+            texto += f" Con adaptación cromática de la cámara (pendiente {txt_pend}; el visor no la aplica)."
         scene.view_settings.exposure = v.get("expo", 0.0)
         scene.view_settings.look = v.get("look", "Medium Contrast" if v["mundo"] == "noche" else "None")
         cam = bpy.data.objects[v["cam"]] if isinstance(v["cam"], str) else camara(f"_cam_{vista}", *v["cam"])
@@ -582,14 +602,20 @@ def main():
         for o in ocultar:
             o.hide_render = True
         scene.camera = cam
+        extra = {}
+        if GANCHOS.get("antes"):                   # p. ej. tools/render_09.py: exposición calibrada por vista
+            extra.update(GANCHOS["antes"](scene, cam, vista, v, a) or {})
         ruta = os.path.join(a.out, f"{vista}.png")
         scene.render.filepath = ruta
         bpy.ops.render.render(write_still=True)
+        if GANCHOS.get("despues"):                 # p. ej. colores medidos en el render
+            extra.update(GANCHOS["despues"](scene, cam, vista, v, a, ruta) or {})
         for o in ocultar:
             o.hide_render = False
-        hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto,
+        hechos.append({"vista": vista, "archivo": os.path.basename(ruta), "que_muestra": texto, **extra,
                        "balance_blancos": list(pend) if pend else None,
-                       "mundo": v["mundo"], "luces": "todas" if v["luces"] == TODOS else list(v["luces"]),
+                       "mundo": v["mundo"], "luces": "todas" if v["luces"] == TODOS else list(luces_v),
+                       "filtro_luz": v.get("filtro_luz"),
                        "abiertos": sorted(n for n, e in estado.items() if e),      # todo lo abierto en el render
                        "ocultos": [o.name for o in ocultar], "camara": cam.name,
                        "lente_mm": round(cam.data.lens, 1), "motor": "EEVEE", "muestras": a.samples,

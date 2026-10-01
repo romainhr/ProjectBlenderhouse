@@ -18,11 +18,14 @@ RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FUENTES = {
     "propias": os.path.join(RAIZ, "assets", "texturas", "propias"),
     "polyhaven": os.path.join(RAIZ, "assets", "texturas", "polyhaven"),
+    "modelos": os.path.join(RAIZ, "assets", "modelos", "polyhaven"),    # bloque 09: plantas (texturas derivadas)
 }
 
 # material -> (id de textura, opciones). color: usar el mapa de color (si no, el color base constante);
 # rugosidad: usar el mapa de rugosidad; normal: fuerza del mapa normal (None = sin); escala_m: fuerza el tamaño
-# real de una repetición; uv01: UV propias 0-1 de la pieza (cuadros), sin repetición.
+# real de una repetición; uv01: UV propias 0-1 de la pieza (cuadros, kilim, atlas de las plantas), sin repetición;
+# alfa (bloque 09): el alfa del mapa de color recorta la silueta (Eevee CLIP con umbral 0,5; glTF alphaMode MASK) y
+# el material queda de dos caras; translucido (corrección 09): fracción de Translucent BSDF mezclada en Blender.
 TEXTURA_MAT = {
     # pisos
     "Depto_Mat_Microcemento": ("microcemento", dict(color=True, rugosidad=True, normal=0.5)),
@@ -53,9 +56,10 @@ TEXTURA_MAT = {
     # Corrección 07b (ronda 2): con el mapa, el reflejo de la hoja era nítido y de noche, con el foco que la baña
     # desde arriba, la hoja se leía negra; un satinado parejo abre el brillo del foco sobre la chapa.
     "Depto_Mat_PuertaEntrada": ("acero_pavonado", dict(color=True, rugosidad=False, normal=0.3)),
-    # 07b: sólo el mapa normal, suave. Con el mapa de color o el de rugosidad, sus vetas de alto contraste se leían
-    # como madera gris en los renders; el cepillado queda como un relieve fino sobre el color base del acero.
-    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=False, rugosidad=False, normal=0.2)),
+    # Corrección 07c: textura rehecha (vetas rectas muy finas, contraste bajo, gris frío) con sus tres mapas; en la 07b
+    # sólo iba el normal, porque las vetas anchas del color y la rugosidad se leían como madera clara veteada.
+    # Normal a 0,25: con 0,5 las vetas se leían como franjas a 1-2 m (review/07c_plano, primera tanda).
+    "Depto_Mat_NeveraAcero": ("acero_cepillado", dict(color=True, rugosidad=True, normal=0.25)),
     "Depto_Mat_CubiertaConcreto": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_CubiertaBano": ("concreto_oscuro", dict(color=True, rugosidad=True, normal=0.4)),
     "Depto_Mat_Concreto": ("microcemento", dict(color=True, rugosidad=True, normal=0.6, escala_m=0.8)),
@@ -67,6 +71,25 @@ TEXTURA_MAT = {
     "Depto_Mat_Textil": ("rough_linen", dict(color=False, rugosidad=True, normal=0.6)),
     "Depto_Mat_Cobertor": ("rough_linen", dict(color=False, rugosidad=True, normal=1.0)),
     "Depto_Mat_Alfombra": ("yute", dict(color=True, rugosidad=True, normal=1.0)),
+    # Bloque 09: alfombras nuevas (texturas propias de build/deco_texturas.py) y cortinas de lino
+    "Depto_Mat_AlfombraBereber": ("bereber", dict(color=True, rugosidad=True, normal=1.0)),
+    "Depto_Mat_AlfombraKilim": ("kilim", dict(color=True, rugosidad=True, normal=0.8, uv01=True)),
+    # corrección 09 (ronda 1): normal de 0,8 a 1,0 con la espiga más grande (columnas de 3,75 cm, sarga de 1 cm)
+    "Depto_Mat_AlfombraCamino": ("camino", dict(color=True, rugosidad=True, normal=1.0)),
+    "Depto_Mat_PisoBanoAlgodon": ("algodon", dict(color=True, rugosidad=True, normal=1.0)),
+    "Depto_Mat_Fleco": ("algodon", dict(color=False, rugosidad=True, normal=0.6, escala_m=0.06)),
+    # corrección 09 (ronda 1): textura propia `lino` (tafetán de 1 mm con tono por hilo y flameado, 0,50 m) con su
+    # color; antes, sólo el relieve de rough_linen con el color base plano: a 1-3 m la tela quedaba lisa. translucido:
+    # sólo en Blender, 30 % de Translucent BSDF (la luz de la ventana pasa el paño; glTF no lo exporta y el visor no lo
+    # usa)
+    "Depto_Mat_Lino": ("lino", dict(color=True, rugosidad=True, normal=0.6, translucido=0.3)),
+    # Bloque 09: plantas de Poly Haven con sus texturas derivadas (build/deco_plantas.py --derivar)
+    "Depto_Mat_PlantaAnturio": ("anthurium_botany_01", dict(color=True, rugosidad=True, normal=1.0, uv01=True,
+                                                            alfa=True)),
+    "Depto_Mat_PlantaCalathea": ("calathea_orbifolia_01", dict(color=True, rugosidad=True, normal=1.0, uv01=True,
+                                                               alfa=True)),
+    "Depto_Mat_PlantaHelecho": ("fern_02", dict(color=True, rugosidad=True, normal=1.0, uv01=True, alfa=True)),
+    "Depto_Mat_PlantaHaworthia": ("potted_plant_04", dict(color=True, rugosidad=True, normal=1.0, uv01=True)),
     # Interiores de clósets (fase 07b): sólo el relieve de las telas del depto; el color va por vértice.
     "Depto_Mat_Tela": ("rough_linen", dict(color=False, rugosidad=True, normal=0.5)),
     # Corrección 07b (ronda 2): el tejido de las prendas gruesas, 2,5 veces más fino que el de los cojines (repetición de
@@ -80,6 +103,9 @@ TEXTURA_MAT = {
     "Depto_Mat_Arte3": ("arte_3", dict(color=True, rugosidad=False, normal=None, uv01=True)),
 }
 NODOS_GLTF = {"OUTPUT_MATERIAL", "BSDF_PRINCIPLED", "TEX_IMAGE", "NORMAL_MAP", "MAPPING", "TEX_COORD", "VERTEX_COLOR"}
+# Nodos sólo para Blender que el exportador de 3.6 salta sin perder nada (busca el Principled BSDF conectado a la salida
+# a través de ellos): la mezcla con Translucent BSDF de los materiales con `translucido`.
+NODOS_SOLO_BLENDER = {"MIX_SHADER", "BSDF_TRANSLUCENT"}
 # Materiales teñidos por vértice (fase 07b): el color base sale del atributo "Col" de la malla (glTF: COLOR_0 por el
 # color base blanco). Ver build/deco_interiores.py (TINTES).
 COLOR_VERTICE = {"Depto_Mat_Tela", "Depto_Mat_TelaGruesa", "Depto_Mat_Calzado", "Depto_Mat_Suela", "Depto_Mat_Alimento"}
@@ -105,6 +131,16 @@ def _manifiestos():
                                 color=os.path.join(FUENTES["polyhaven"], m["Diffuse"]["archivo"]),
                                 normal=os.path.join(FUENTES["polyhaven"], m["nor_gl"]["archivo"]),
                                 rugosidad=os.path.join(FUENTES["polyhaven"], m["Rough"]["archivo"]))
+    mo = os.path.join(FUENTES["modelos"], "manifest.json")
+    if os.path.exists(mo):
+        with open(mo) as fh:
+            derivadas = json.load(fh).get("derivadas", {})
+        for tid, t in derivadas.items():
+            if not isinstance(t, dict) or "color" not in t:
+                continue
+            out[tid] = dict(fuente="modelos", tam_m=(1.0, 1.0), color=os.path.join(FUENTES["modelos"], t["color"]),
+                            normal=os.path.join(FUENTES["modelos"], t["normal"]),
+                            rugosidad=os.path.join(FUENTES["modelos"], t["rugosidad"]))
     pr = os.path.join(FUENTES["propias"], "manifest.json")
     if os.path.exists(pr):
         with open(pr) as fh:
@@ -177,7 +213,15 @@ def aplicar(nombre):
         nt.links.new(mp.outputs["Vector"], n.inputs["Vector"])
         return n
     if op.get("color"):
-        nt.links.new(nodo(t["color"], False).outputs["Color"], bsdf.inputs["Base Color"])
+        n_color = nodo(t["color"], False)
+        nt.links.new(n_color.outputs["Color"], bsdf.inputs["Base Color"])
+        if op.get("alfa"):                            # silueta de las hojas: MASK en glTF (el PNG lleva el alfa)
+            n_color.image.alpha_mode = "STRAIGHT"
+            nt.links.new(n_color.outputs["Alpha"], bsdf.inputs["Alpha"])
+            mat.blend_method = "CLIP"
+            mat.alpha_threshold = 0.5
+            mat.shadow_method = "CLIP"
+            mat.use_backface_culling = False
     if op.get("rugosidad") and t["rugosidad"]:
         nt.links.new(nodo(t["rugosidad"], True).outputs["Color"], bsdf.inputs["Roughness"])
     if op.get("normal") and t["normal"]:
@@ -185,6 +229,19 @@ def aplicar(nombre):
         nm.inputs["Strength"].default_value = op["normal"]
         nt.links.new(nodo(t["normal"], True).outputs["Color"], nm.inputs["Color"])
         nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    if op.get("translucido"):                          # Principled (1 − t) + Translucent (t) con el mismo color
+        mix = nt.nodes.new("ShaderNodeMixShader")
+        tr = nt.nodes.new("ShaderNodeBsdfTranslucent")
+        mix.inputs["Fac"].default_value = op["translucido"]
+        if op.get("color"):
+            nt.links.new(n_color.outputs["Color"], tr.inputs["Color"])
+        else:
+            tr.inputs["Color"].default_value = base["Base Color"]
+        if op.get("normal") and t["normal"]:
+            nt.links.new(nm.outputs["Normal"], tr.inputs["Normal"])
+        nt.links.new(bsdf.outputs["BSDF"], mix.inputs[1])
+        nt.links.new(tr.outputs["BSDF"], mix.inputs[2])
+        nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
     if nombre in COLOR_VERTICE:
         _color_vertice(mat)
     mat["textura"] = tid

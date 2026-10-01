@@ -91,13 +91,26 @@ export function interruptorEncendido(grupos, gruposLuz) {
 // momento prende las luces y el autor lo exportó con `encendido: true` (lo guarda `encendidoInicial`). Así los
 // veladores, apliques y la lámpara de pie nacen apagados también de tarde y de noche, y el día apaga todo.
 // `grupos`: iterable de { id, encendidoInicial (o encendido) }. -> Map id -> boolean.
+// Los grupos con `movil` (contrato 2.2: la luz de la nevera) no cambian con el momento: siguen a su pieza.
 export function estadoGruposParaMomento(grupos, lucesEncendidas) {
   const out = new Map();
   for (const g of grupos) {
+    if (g.movil) continue;
     const deAutor = g.encendidoInicial !== undefined ? g.encendidoInicial : g.encendido;
     out.set(g.id, Boolean(lucesEncendidas) && Boolean(deAutor));
   }
   return out;
+}
+
+// Grupos que prende o apaga un móvil al moverse (contrato 2.2, sección 1: `enciende`): encendidos mientras la pieza
+// va hacia abierta (objetivo 1), apagados cuando vuelve a cerrarse. -> [[id, encendido], ...]
+export function gruposDeMovil(m, objetivo) {
+  return (m.enciende || []).map((id) => [id, objetivo >= 1]);
+}
+
+// Grupos que muestran el panel de luces y el botón de todo: los que no manda un móvil.
+export function gruposDelPanel(gruposLuz) {
+  return Array.from(gruposLuz.values()).filter((g) => !g.movil);
 }
 
 // Texto de la pista de un interruptor con las etiquetas de sus grupos, en el idioma de la página (claves
@@ -146,14 +159,17 @@ export function crearLucesTHREE(THREE, l) {
   }
   const color = colorLinealAHex(l.color || KELVIN_2700);
   const potenciaW = l.potencia_w || 40;
+  // contrato 2.2: `alcance_m` corta la luz antes (el visor no calcula sombras: la de la nevera alumbraba la cocina a
+  // través de su cuerpo)
+  const distancia = l.alcance_m || DISTANCIA_LUZ;
   if (!l.cono_deg) {
-    const puntual = new THREE.PointLight(color, 0, DISTANCIA_LUZ, 2);
+    const puntual = new THREE.PointLight(color, 0, distancia, 2);
     puntual.position.set(l.posicion[0], l.posicion[1], l.posicion[2]);
     puntual.userData.potenciaW = potenciaW;
     return [puntual];
   }
   const d = l.direccion || [0, -1, 0];
-  const foco = new THREE.SpotLight(color, 0, DISTANCIA_LUZ, (l.cono_deg * Math.PI) / 180, PENUMBRA_CONO, 2);
+  const foco = new THREE.SpotLight(color, 0, distancia, (l.cono_deg * Math.PI) / 180, PENUMBRA_CONO, 2);
   foco.position.set(l.posicion[0], l.posicion[1], l.posicion[2]);
   foco.target.position.set(d[0], d[1], d[2]);   // hijo del foco: se mueve con él
   foco.add(foco.target);

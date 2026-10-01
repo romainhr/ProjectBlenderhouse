@@ -98,3 +98,95 @@ test("crearLucesTHREE: un domo con cono_deg da un solo foco hacia abajo con toda
   assert.equal(sola.length, 1);
   assert.equal(intensidadBase(sola[0]), 40 * INTENSIDAD_POR_WATT);
 });
+
+test("crearLucesTHREE: alcance_m corta la luz (contrato 2.2: la de la nevera no alumbra a través de su cuerpo)", async () => {
+  const { crearLucesTHREE, DISTANCIA_LUZ } = await import("../src/tour/js/luces.js");
+  const l = { nombre: "Depto_Luz_Nevera", tipo: "puntual", posicion: [0, 1.7, 0], potencia_w: 4, color: [1, 0.8, 0.63] };
+  assert.equal(crearLucesTHREE(THREE, l)[0].distance, DISTANCIA_LUZ);
+  assert.equal(crearLucesTHREE(THREE, { ...l, alcance_m: 0.9 })[0].distance, 0.9);
+});
+
+test("prepararEscena: un entorno local (contrato 2.2, sección 6) va sólo a sus materiales dentro de su caja", async () => {
+  const { enEntorno } = await import("../src/tour/js/carga.js");
+  const { raiz, D } = escena();
+  const acero = new THREE.MeshStandardMaterial({ name: "Depto_Mat_NeveraAcero", metalness: 1, roughness: 1 });
+  const dentro = malla("Depto_Cocina_NeveraCuerpo", acero, raiz);
+  dentro.position.set(1, 1, 1);
+  const fuera = malla("Depto_Bano_Grifo", acero, raiz);
+  fuera.position.set(9, 1, 9);
+  const muro = malla("Depto_Cocina_Muro", new THREE.MeshStandardMaterial({ name: "Depto_Mat_Muro" }), raiz);
+  muro.position.set(1, 1, 1);
+  D.entornos = [{ id: "cocina", imagen: "tex/entorno_cocina.jpg", caja: [0, 2, 0, 2], materiales: ["Depto_Mat_NeveraAcero"] }];
+  assert.equal(enEntorno(D.entornos[0], acero, 1, 1), true);
+  assert.equal(enEntorno(D.entornos[0], acero, 9, 9), false);
+  const tex = new THREE.Texture();
+  const p = prepararEscena(raiz, D, { entornos: new Map([["cocina", tex]]) });
+  const conEntorno = p.estaticoFusionado.children.filter((m) => m.material.envMap === tex);
+  assert.equal(conEntorno.length, 1);
+  assert.equal(conEntorno[0].material.userData.entornoLocal, "cocina");
+  assert.equal(conEntorno[0].material.name, "Depto_Mat_NeveraAcero");
+  // el grifo del baño (fuera de la caja) y el muro (otro material) siguen con el entorno general
+  assert.equal(p.estaticoFusionado.children.filter((m) => m.material.envMap === null).length >= 2, true);
+  assert.equal(acero.envMap, null);              // el material original no se toca
+});
+
+test("proyeccionCaja: el reflejo del entorno local se corta contra la caja del recinto (paralaje)", async () => {
+  const { proyeccionCaja, MARCA_REFLEJO } = await import("../src/tour/js/carga.js");
+  const sh = { uniforms: {}, vertexShader: THREE.ShaderLib.physical.vertexShader,
+    fragmentShader: THREE.ShaderLib.physical.fragmentShader };
+  const e = { caja: [0, 2, 0, 3], alto: [0, 2.4], centro: [1, 1.3, 1.5] };
+  assert.equal(proyeccionCaja(sh, e), true);
+  assert.ok(sh.vertexShader.includes("vPosMundo = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;"));
+  assert.ok(!sh.fragmentShader.includes("#include <envmap_physical_pars_fragment>"));
+  assert.ok(sh.fragmentShader.includes(MARCA_REFLEJO + "\n reflectVec = proyectarCaja( reflectVec );"));
+  assert.deepEqual(sh.uniforms.uCajaMax.value.toArray(), [2, 2.4, 3]);
+  assert.deepEqual(sh.uniforms.uCentroEntorno.value.toArray(), [1, 1.3, 1.5]);
+});
+
+test("varianteEntorno: de día la variante del día, con luces la de las luces; una textura sola vale para todo", async () => {
+  const { varianteEntorno } = await import("../src/tour/js/carga.js");
+  const dia = new THREE.Texture(), luces = new THREE.Texture();
+  assert.equal(varianteEntorno({ dia, luces }, false), dia);
+  assert.equal(varianteEntorno({ dia, luces }, true), luces);
+  assert.equal(varianteEntorno({ luces }, false), luces);
+  assert.equal(varianteEntorno(dia, true), dia);
+  assert.equal(varianteEntorno(undefined, true), null);
+});
+
+test("actualizarEntornos: la variante y la intensidad del entorno local siguen a la luz de la cocina", async () => {
+  const { actualizarEntornos } = await import("../src/tour/js/carga.js");
+  const dia = new THREE.Texture(), luces = new THREE.Texture();
+  const mat = new THREE.MeshStandardMaterial({ name: "Depto_Mat_NeveraAcero" });
+  mat.userData = { entornoLocal: "cocina", variantesEntorno: { dia, luces }, grupoEntorno: "cocina_techo" };
+  const grupos = new Map([["cocina_techo", { encendido: false }]]);
+  const inten = { luces: 0.75, dia: 2.0 };
+  assert.equal(actualizarEntornos([mat], grupos, inten), true);
+  assert.equal(mat.envMap, dia);
+  assert.equal(mat.envMapIntensity, 2.0);
+  assert.equal(actualizarEntornos([mat], grupos, inten), false);      // sin cambios, no pide redibujar
+  grupos.get("cocina_techo").encendido = true;
+  assert.equal(actualizarEntornos([mat], grupos, inten), true);
+  assert.equal(mat.envMap, luces);
+  assert.equal(mat.envMapIntensity, 0.75);
+});
+
+test("actualizarEntornos: la intensidad se corrige por la escala de normalización del entorno (contrato, sección 6)", async () => {
+  const { actualizarEntornos, factorEscalaEntorno } = await import("../src/tour/js/carga.js");
+  const { ESCALA_ENTORNO_CALIBRADA } = await import("../src/tour/js/cielo.js");
+  const dia = new THREE.Texture(), luces = new THREE.Texture();
+  const mat = new THREE.MeshStandardMaterial({ name: "Depto_Mat_NeveraAcero" });
+  // un render del entorno más oscuro que el de la calibración (escala más alta): la intensidad baja en proporción
+  const esc = { luces: ESCALA_ENTORNO_CALIBRADA.luces * 1.2, dia: ESCALA_ENTORNO_CALIBRADA.dia * 1.5 };
+  mat.userData = { entornoLocal: "cocina", variantesEntorno: { dia, luces }, grupoEntorno: "cocina_techo",
+    escalaEntorno: esc };
+  const grupos = new Map([["cocina_techo", { encendido: false }]]);
+  actualizarEntornos([mat], grupos, { luces: 0.67, dia: 2.0 }, ESCALA_ENTORNO_CALIBRADA);
+  assert.ok(Math.abs(mat.envMapIntensity - 2.0 / 1.5) < 1e-9, `${mat.envMapIntensity}`);
+  grupos.get("cocina_techo").encendido = true;
+  actualizarEntornos([mat], grupos, { luces: 0.67, dia: 2.0 }, ESCALA_ENTORNO_CALIBRADA);
+  assert.ok(Math.abs(mat.envMapIntensity - 0.67 / 1.2) < 1e-9);
+  // con la escala de la calibración, o sin escala en el modelo, la intensidad es la del momento
+  assert.equal(factorEscalaEntorno(ESCALA_ENTORNO_CALIBRADA, ESCALA_ENTORNO_CALIBRADA, "dia"), 1);
+  assert.equal(factorEscalaEntorno(null, ESCALA_ENTORNO_CALIBRADA, "dia"), 1);
+  assert.equal(factorEscalaEntorno({ dia: 20 }, null, "dia"), 1);
+});

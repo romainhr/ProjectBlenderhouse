@@ -30,13 +30,16 @@ ABRIR = [
     "Depto_Mueble_Cocina_Cajon1Sup", "Depto_Mueble_Cocina_Cajon1Inf",
     "Depto_Mueble_Cocina_Cajon2Inf", "Depto_Mueble_Cocina_Cajon3Sup",
     "Depto_Mueble_Cocina_PuertaLavaplatos1", "Depto_Mueble_Cocina_PuertaLavaplatos2",
-    "Depto_Mueble_Cocina_PuertaAlta1", "Depto_Mueble_Cocina_PuertaAlta4",
+    "Depto_Mueble_Cocina_PuertaAltaN1", "Depto_Mueble_Cocina_PuertaAltaN3",
+    "Depto_Mueble_Cocina_PuertaAltaE1", "Depto_Mueble_Cocina_PuertaAltaE3",
     "Depto_Closet_D1_Norte_PuertaA", "Depto_Closet_D1_Norte_PuertaB",
-    "Depto_Closet_D1_Sur_PuertaA", "Depto_Closet_D1_Sur_PuertaB", "Depto_Closet_D1_Sur_Cajon1",
+    "Depto_Closet_D1_Sur_Cajon1",
     "Depto_Closet_D2_Norte_PuertaA", "Depto_Closet_D2_Norte_PuertaB",
-    "Depto_Closet_D2_Sur_PuertaA", "Depto_Closet_D2_Sur_PuertaB",
     "Depto_Closet_D2_Sur_Cajon1", "Depto_Closet_D2_Sur_Cajon2",
 ]
+# Corrección 07c: los cajones de los clósets Sur se abren como en el visor (contrato 2.1, sección 1): con su hoja A
+# corrida (depende_de) y las demás hojas que los nombran en `bloquea` cerradas. Antes esta lista corría también la hoja
+# B, que pasa por delante de la columna de cajones, y el cajón abierto la atravesaba en el render.
 
 
 def parse_args():
@@ -49,13 +52,25 @@ def parse_args():
     return p.parse_args(argv)
 
 
+def coherente(nombres):
+    """ABRIR con las hojas que exige cada cajón (depende_de) y sin las que lo tapan (bloquea)."""
+    out = [n for n in nombres if n in bpy.data.objects]
+    for n in list(out):
+        o = bpy.data.objects[n]
+        dep = [d for d in str(o.get("depende_de", "")).split(",") if d]
+        out += [d for d in dep if d not in out]
+        tapan = [h.name for h in bpy.data.objects if n in str(h.get("bloquea", "")).split(",") and h.name not in dep]
+        out = [x for x in out if x not in tapan]
+    return out
+
+
 def abrir(nombre):
     o = bpy.data.objects.get(nombre)
     if o is None:
         print(f"AVISO: no existe {nombre!r} (¿fase 3 aún no la crea?)")
         return None
     if o.get("abierta"):
-        return o                                  # ya viene abierta de fábrica (p.ej. el cajón de cubiertos)
+        return o                                  # ya viene abierta de fábrica (p.ej. las puertas de los dormitorios)
     if "puerta" in o:
         o.rotation_euler.z = math.radians(o["angulo_abierta_deg"])
     elif "recorrido_m" in o:
@@ -101,7 +116,7 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     scene = bpy.context.scene
     bpy.context.view_layer.update()
-    abiertos = [abrir(n) for n in ABRIR]
+    abiertos = [abrir(n) for n in coherente(ABRIR)]
     abiertos = [o for o in abiertos if o is not None]
     bpy.context.view_layer.update()
     if a.engine == "EEVEE":

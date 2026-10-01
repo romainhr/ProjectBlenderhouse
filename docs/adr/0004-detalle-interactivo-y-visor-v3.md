@@ -125,3 +125,239 @@ Decisiones:
 6. **Diseño:** la mesa bistró del balcón pasa a acero pintado al horno (`Depto_Mat_AceroPintado`, dieléctrico; 75
    materiales), porque con acero pavonado el colgante no dejaba charco en la cubierta. El tercer foco del riel del
    hall ilumina la puerta de entrada en vez del reloj.
+
+## Adenda 07c (2026-09-26): respetar el plano
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), constructor del bloque 07c. **Revisor humano:** Romain Ange,
+  pendiente.
+
+Decisiones:
+
+1. **El plano manda sobre la decoración v2 en la cocina:** vuelven los muebles altos del tramo norte (discontinua
+   `ALTOS_Y`, de T3 a la esquina, sobre el anafe) y se quitan las repisas abiertas y la campana de chimenea de
+   `docs/deco-industrial.md`. La campana pasa a ser telescópica, integrada en el módulo de 0,60 m sobre el anafe
+   (su cara inferior queda a 0,59 m del vidrio; el valor que piden los fabricantes no está verificado).
+2. **Regla de bisagras de mueble** (contrato, sección 1; redacción corregida en la ronda 1): el eje de giro va en la
+   arista de la cara vista y la hoja cuelga de un costado, divisor o montante. La bisagra va del lado libre cuando se
+   puede; si del lado de la bisagra hay muro, torre o esquina, se agrega un rellenador (`ALTOS_RELLENO`,
+   `RELLENO_ESQUINA`) o se limita el ángulo (`ANGULO_MUEBLE_TORRE`, `ANGULO_TORRE`). Excepciones con nombre:
+   `PuertaAltaN1`, `PuertaAltaE3`, `PuertaLavaplatos2` y las dos puertas de la torre. Dos hojas vecinas no comparten
+   la junta de la bisagra. Lo prueba la fase 6
+   (`prueba_aperturas`), que abre cada móvil como lo permite el contrato. Es un cambio del modelo, no del esquema
+   (sigue `"contrato": "2.1"`): cambian el `posicion`/`cajas_locales` de las hojas y los nombres de las hojas altas
+   (`Depto_Mueble_Cocina_PuertaAlta{N1..N3,E1..E3}` en vez de `PuertaAlta1..4`).
+3. **Nevera medida en el plano:** 0,656 m de ancho y el frente en la discontinua; el fondo sigue inferido (0,58 m).
+   La bisagra pasa al norte para que la hoja abierta no ocupe la boca entre el hall y la cocina, y sale de la lista de
+   excepciones de la prueba de recorrido.
+4. **Tope de la puerta de entrada** (corregido en la ronda 1): 87°, no 84°. El reloj del hall sale del barrido de la
+   hoja (va a la cara sur de T_COC_S) y deja de ser la causa; lo que queda es la manilla de palanca, que sale 6,2 cm de
+   la cara de la hoja: a 90° entra 15 mm en T9 y a 88°, 1 mm. El plano dibuja la hoja a 90°: la desviación de −3° está
+   en la tabla de la bitácora.
+
+### Ronda 1 de la corrección 07c (2026-09-26)
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 07c. **Revisor humano:** Romain Ange,
+  pendiente.
+
+5. **Muebles de cocina como muebles:** los altos llevan un costado o divisor de 18 mm en cada canto con bisagra y en
+   cada junta, con el piso, la repisa y el techo partidos por módulo; el mueble del lavaplatos es un cascarón hueco con
+   montante en la junta (un divisor de fondo completo cortaría el sifón), sifón y contenido; la torre de horno y
+   despensa (inferida) es un cascarón con zócalo, horno empotrado y dos puertas interactivas con la bisagra al sur y
+   tope de 80° (al norte chocaban con los tiradores de `PuertaLavaplatos2` o `PuertaAltaE3`; a 90° con la nevera
+   abierta). Pasan de 35 a 37 móviles; el esquema del contrato no cambia.
+6. **Luz de la cocina:** los dos colgantes de jaula de la v2 se reemplazan por un riel de tres focos (como el del
+   hall) y una luz lineal bajo los altos en tres tramos, en el mismo grupo `cocina_techo`. Con los altos de vuelta,
+   los colgantes quedaban a su altura y a 0,56 m de sus hojas. El visor pasa de 18 a 22 luces puntuales: por la
+   medición de la decisión 5 de la ronda 2 de la 07b (~1,3 ms por luz en una GPU integrada) son ~5 ms más por cuadro;
+   no se midió.
+7. **Acero cepillado:** sólo el rayado submilimétrico (paso alto de 0,5 mm) y una nube suave; la visera de la campana
+   y el marco del horno llevan el UV girado 90° para que el cepillado corra a lo largo de la pieza
+   (`depto_geom.uv_mundo(girar=True)`).
+
+### Ronda 2 de la corrección 07c (2026-09-26)
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 07c. **Revisor humano:** Romain Ange,
+  pendiente.
+
+8. **Torre como despensa de dos hojas por nivel:** el símbolo «<» del plano se lee como dos hojas de ≈0,29 m con las
+   bisagras en los extremos norte y sur, que se encuentran al centro (243,1 px). Sale el horno de la ronda 1: la torre
+   de 0,58 m (0,544 m libres) no admite un horno empotrable comercial. Cuatro hojas (`PuertaTorre{Baja,Alta}{N,S}`,
+   junta de niveles a 1,50 m) en vez de dos: pasan de 37 a 39 móviles. Las del norte comparten la junta con
+   `PuertaLavaplatos2` y `PuertaAltaE3`, que quedan con tope a 90° y 80°. Queda para el usuario si el horno va bajo el
+   anafe (el sitio lo promete; habría que reordenar los módulos base para dejar uno de 0,60).
+9. **Prueba del recorrido de cada móvil** (`prueba_giros`, fase 6): cada pieza se mueve cada 2° o 2 cm contra los
+   móviles de su recinto, abiertos y cerrados, en los estados que el visor permite durante ese movimiento
+   (`bloqueos.js`). La prueba de estados finales no veía que `PuertaLavaplatos1` cruzaba 18 mm el cajón 3 abierto a
+   mitad de su giro; ahora esa hoja lo nombra en `bloquea`.
+10. **Contrato 2.2:** `enciende` en los móviles y `movil` en los grupos (la luz interior de la nevera, 4 W a 5000 K,
+    que la puerta prende al abrirse; sin interruptor ni fila en el panel), `alcance_m` en las luces (el visor no
+    calcula sombras: la de la nevera se corta a 0,9 m) y `entornos[]` (sección 6): un equirectangular de la cocina
+    renderizado en Cycles en la fase 6 que el visor usa como `envMap` del acero de la cocina en vez del
+    `RoomEnvironment` genérico, que dibujaba sus cajas en la nevera. Se prefirió a un cubemap en tiempo real (una
+    pasada de render más por cuadro) y a hornear el reflejo en la textura (fijo, no cambia con el punto de vista).
+11. **Revisión sin adaptación cromática:** los renders de revisión dejan de aplicar la pendiente fija de las vistas
+    con lámparas, que el visor no tiene; la luz lineal bajo los altos es un foco hacia abajo también en Blender.
+
+## Adenda 08 (2026-09-26): exterior y paisaje
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), constructor del bloque 08. **Revisor humano:** Romain Ange,
+  pendiente.
+
+12. **Paisaje modelado por script en una fase propia, la 08, entre la 5 y la exportación.** `build/depto_08_exterior.py`
+    arma la colección `Depto_Exterior` (prefijo `Depto_Ext_`) desde constantes con origen. Incluye la fachada del
+    edificio propio (8 pisos, tres deptos por piso, balcones apilados sobre los ejes medidos del nuestro), la calle con
+    su cruce, siete vecinos con fachadas de textura propia, un barrio intermedio de manzanas y 21 árboles de calle de
+    pocos polígonos. En la cadena de sellos, la 08 va después de la 05 y antes de la 06 (`ORDEN` en
+    `build/depto_sellos.py`), así que exportar siempre la reconstruye. El exterior no toca el plano: salvo la fachada,
+    el balcón y los vanos propios, todo es diseño o inferido (brief, sección «Bloque 08»).
+13. **Texturas generadas por código, no descargadas:** cuatro atlas de fachada de 8 × 8 bahías-piso, con emisión de las
+    ventanas encendidas sorteada junto con sus cortinas; más ventanas propias, calle, pasto, pintura, siluetas y una
+    paleta de colores planos (`build/ext_texturas.py`). Se evitó la transparencia en las siluetas lejanas: la
+    exportación pasa todas las imágenes a JPEG. Por eso son tarjetas con el contorno en la geometría.
+14. **Contrato 2.3 (sección 4):** `exterior` con un panorama por momento, `rotacion_deg` (medido: lleva el sol del HDR de
+    día al de la escena), `suelo_y` y `emision` por momento. Los materiales `Depto_Ext_Mat_*` traen `exterior: true`
+    en los extras y el visor los dibuja como fondo barato: `MeshBasicMaterial` sin luces, sombreado por vértice
+    calculado al cargar, emisión y bruma sumadas en el shader. Van en un grupo aparte del raycast del piso. Se
+    descartó dejarles un material con luces: sin sombras, las puntuales del depto alumbrarían las fachadas vecinas, y
+    cada fragmento pagaría las 24 luces. La emisión se exporta con su valor de noche y el visor la escala. El maestro
+    la deja en 0 para que los renders de día no tengan ventanas encendidas.
+15. **Panorama girado en un canvas:** three r160 no tiene `scene.backgroundRotation`. El visor corre la imagen al
+    cargarla (`prepararPanorama`) y mide ahí el color del horizonte para la bruma de las siluetas.
+16. **Consecuencias:** la escena queda en 197 902 triángulos, a 2 098 del tope de 200 000. El próximo contenido del
+    interior tendrá que ahorrar o pedir que se suba el tope. El entorno local de la cocina (sección 6) ahora ve el
+    exterior por las ventanas. Su escala de normalización pasó de 7,8 a 8,7 (luces) y de 19,6 a 30,9 (día), porque los
+    vecinos tapan parte del cielo. La intensidad `entornoLocal` del visor no se recalibró.
+
+## Adenda 08, corrección de la ronda 1 (2026-09-27): contrato 2.4
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 08. **Revisor humano:** Romain Ange,
+  pendiente.
+
+17. **Un sol por momento, el de su panorama.** La luz de la tarde tenía la elevación de 35° de la fase 5 bajo un cielo
+    con el sol a 12°. Ahora cada momento orienta el sol con la elevación medida en su HDR: 48,0° de día, 12,1° de tarde
+    y 17,1° para la luna. El azimut es el que ya alineó el giro. Esto vale en `tools/render_08.py`, en el sol del visor
+    y en el sombreado por vértice del exterior, que se rehace al cambiar de momento. La fase 5 conserva sus 35° para
+    los demás renders. La tarde de Blender baja la luz del cielo a 0,4, medido para que el hormigón en sombra quede a
+    0,4-0,6 del de día.
+18. **Curva de tono Filmic en el exterior del visor.** Los renders de revisión salen con Filmic, y con ACES el mismo
+    valor de escena daba otra imagen: sombras más oscuras y claros más claros. Por eso ningún sombreado podía igualar a
+    la vez el ladrillo y el hormigón. Los materiales de fondo aplican la curva Filmic de Blender, medida en Blender por
+    `tools/curva_filmic.py` y guardada en `web/src/tour/js/filmic.js`. El resto del visor sigue con ACES. Se descartó
+    compensar con un tinte por material, porque no se sostiene al cambiar de momento.
+19. **Vidrio y mancha de luz sin luces nuevas.** El muro cortina y las ventanas propias reflejan el panorama del momento
+    (`envMap` en `MeshBasicMaterial`), con la máscara de un mapa de rugosidad propio. La mancha de luz de las
+    luminarias es una malla con una textura propia que se suma con mezcla aditiva. En Blender, en cambio, alumbran seis
+    focos sin sombra. Se descartó darle al visor seis luces puntuales más: cada fragmento del depto las pagaría, y ya
+    hay 24.
+20. **La escala del entorno local se usa.** El visor multiplica la intensidad del reflejo de la cocina por
+    escala_de_referencia / `entornos[].escala`. Un render nuevo del entorno ya no mueve la calibración (sección 6 del
+    contrato).
+
+## Adenda 08, corrección de la ronda 2 (2026-09-27): contrato 2.5
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 08. **Revisor humano:** Romain Ange,
+  pendiente.
+
+21. **El sol y el cielo de cada momento salen del modelo (contrato 2.5).** La fase 6 exporta `exterior.sol` (azimut ya
+    girado, elevación y el vector hacia el sol en glTF) desde lo que mide la fase 08 en cada HDR; el visor lo usa para el
+    sol del depto y el sombreado del exterior, y `MOMENTOS[].sol.elevacion` queda sólo de respaldo, con una prueba que
+    lo compara con el JSON. Los cielos de día y de tarde dejan de ser el JPG de Poly Haven, que traía su propio tono: la
+    fase 6 los hornea desde el HDR con la vista Filmic de Blender y la fuerza del cielo de cámara de los renders
+    (`cielo_camara` de la fase 08, que `tools/render_08.py` verifica), con el detalle de las nubes del JPG de 2048, y el
+    visor los dibuja con intensidad 1 (`panoramas_intensidad`). La noche sigue con el JPG: su cielo ya coincidía y en
+    pantalla es tan oscuro que en 8 bits quedaría en escalones. Se descartó desaturar el JPG en el visor: arreglaba el
+    promedio, no el tono de cada región del cielo. De paso, la bruma de las siluetas deja el ACES que se le aplicaba:
+    three r160 no aplica tone mapping a un fondo sRGB.
+22. **La franja del depto lleva la piel del edificio.** La fase 08 tiende una piel con la pintura exterior a 1 cm de
+    los muros propios (5.º piso de la columna 0, de −0,15 a 2,55 m, con los vanos medidos recortados), y los renders de
+    revisión acotan el volumen de irradiancia a la cara interior de los muros perimetrales (distancia de influencia
+    0,10 m, menor que el muro más delgado). Se descartó que la fase 08 cambiara el material de las caras exteriores de
+    los muros de la fase 2: una fase modificaría objetos de otra y perdería la idempotencia por fase.
+23. **La línea central de las calles es geometría** (96 triángulos) que salta el cruce y los pasos de cebra, con una
+    prueba en la fase 08. Con un período de 12 m en la textura, ninguna fase libraba a la vez el cruce y las dos cebras.
+24. **Vidrio.** En el exterior, el reflejo del panorama se suma al difuso (`AddOperation`, como el especular del
+    Principled), la enjuta del muro cortina y las cortinas detrás del vidrio tienen su rugosidad propia, el vidrio de
+    las barandas refleja parejo sin sombreado por vértice (`exterior_vidrio.uniforme`) y lo transparente usa
+    α' = 1 − (1 − α)^1,35, porque three.js mezcla sobre el lienzo ya codificado en sRGB y Blender en lineal. En el depto,
+    el vidrio de ventanas y barandas (`Depto_Mat_Vidrio` en nodos `Depto_Ventana_*` y `Depto_Balcon_*`) no suma luz
+    difusa: refleja el panorama y deja pasar el 92 % de lo de atrás, con una sola cara por paño. Las botellas, repisas,
+    vajilla y mamparas del mismo material siguen como antes: reflejar el cielo dentro de la nevera no tiene sentido.
+25. **Un objetivo de tono único para el interior de tarde:** la pared blanca bajo la luz de techo con R/B lineal ≤ 2,5.
+    Blender, que no adapta, la deja mostaza (≈ 5,7 con 2700 K); la vista `dormitorio_ventana_adaptada` muestra el
+    objetivo con una adaptación de cámara (pendiente ASC-CDL antes de Filmic) y el visor se recalibró para cumplirlo con
+    la luminancia de Blender (pared / cielo y piso del living). No se cambió la temperatura de las lámparas del modelo:
+    con 3000 K la pared seguiría en R/B ≈ 4,4 y es una decisión de diseño pendiente desde la 07b. Las vistas
+    interiores de Blender llevan ahora las lámparas a +0,6 EV con la cámara a 0 EV, en vez de la cámara a +0,6 EV con
+    sólo el cielo compensado: así lo que se ve por la ventana tiene la exposición de las vistas del balcón y se puede
+    comparar con el visor, que no cambia la exposición del exterior desde adentro.
+26. **Entorno local de la cocina con el mundo de los renders de revisión** (el HDR de día desaturado), no con el cielo
+    Nishita del maestro, y la variante de día desaturada a 0,2 al cargarla: el frente del freezer salía azulado. La
+    escala de referencia se volvió a medir con este render.
+
+## Adenda 09 (2026-09-27): alfombras, cortinas y plantas
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), constructor del bloque 09. **Revisor humano:** Romain Ange,
+  pendiente.
+
+27. **Textiles por script en la fase 4.** `build/deco_textiles.py` arma las alfombras (losa sin cara inferior con el
+    canto en cuarto de círculo y flecos de tiras planas) y las cortinas (paños con sección senoidal recogidos en una
+    barra negra con anillas, soportes y terminales). La fase 4 las ubica y las prueba: espesor de 1 a 1,5 cm, sin
+    colisión, ninguna dentro de un mueble y, bajo el barrido de una hoja, 3 mm libres hasta su canto. Las texturas son
+    propias (`bereber`, `kilim`, `camino` y `algodon` en `build/deco_texturas.py`, 1024 px y periódicas). El kilim, que
+    tiene guarda, es la alfombra entera con UV 0-1 (como los cuadros); las demás se repiten.
+28. **Holgura de 2 cm bajo las hojas abatibles interiores** (`LUZ_PISO_ABATIBLE` en la fase 3). Con 1 cm, ninguna
+    alfombra de 1-1,5 cm podía quedar bajo el barrido de las puertas de los dormitorios ni de los baños, que abren
+    sobre la zona de los pies de la cama y sobre el frente de la tina. La entrada conserva 1 cm y el camino queda fuera
+    de su barrido. Se descartó dejar las alfombras fuera de los barridos: en el dormitorio principal la del pie de la
+    cama quedaba de 2,0 m de ancho y los pisos de baño no cabían frente a la tina.
+29. **Plantas de Poly Haven importadas, no modeladas** (CLAUDE.md). `build/deco_plantas.py` importa el glTF con
+    `bpy.ops.import_scene.gltf`, toma una variante, la decima con Decimate (colapso) hasta su tope (≤ 8 000 triángulos,
+    entre 900 y 2 200 en la práctica) y la pone en una maceta modelada. Los atlas vinieron en JPEG sin alfa. La silueta
+    se recuperó del canal de rugosidad del ARM (helecho y calathea, cuyo fondo tiene un valor plano) o de la cobertura
+    de las UV (anturio, de hojas modeladas). El color con alfa y la rugosidad se guardan como texturas derivadas
+    versionadas (`--derivar`) y su origen queda en `assets/modelos/polyhaven/manifest.json`. Los materiales van con
+    alfa CLIP (glTF `MASK`, umbral 0,5, dos caras), y `web/tour_modelo.py` conserva el alfa en el `.webp` y en la copia
+    del teléfono. Se descartaron tres alternativas: bajar los PNG con alfa (una descarga nueva no autorizada en esta
+    sesión), recortar por color (el relleno del atlas es el color del borde estirado) y tarjetas opacas.
+30. **Presupuesto de triángulos.** La escena estaba a 1 766 del tope de 200 000. Para las alfombras, las cortinas y las
+    plantas, la resolución de telas de las camas baja de 0,7 a 0,5 (−7 912, con la comparación en
+    `review/09_textiles/cama_r05` y `cama_r07`) y los árboles de la calle quedan con una sola copa (−1 680; lo proponía
+    la bitácora del bloque 08). Se descartó recortar los interiores de clósets o las lámparas: se ven de cerca.
+31. **Colisión:** alfombras, telas, barras, hojas, tierra y cordeles llevan `colision: false`. Las macetas sí chocan.
+    Así el recorrido pasa entre la maceta del balcón y la hoja abierta del ventanal, y la cámara no se traba en los
+    paños del ventanal.
+32. **Consecuencias:** la escena queda en 199 357 triángulos, a 643 del tope. Lo próximo tendrá que ahorrar o subir el
+    tope. El visor pesa 17,01 MB en escritorio (antes 13,64) y 12,15 MB en teléfono (antes 10,78). El entorno local de
+    la cocina ve ahora las cortinas del ventanal y las plantas. Su escala cambia, y el visor la compensa por la
+    referencia (sección 6 del contrato).
+
+## Adenda 09, corrección de la ronda 1 (2026-09-27)
+
+- **Modelo de IA:** Claude Opus 5.5 (`claude-opus-5-5`), corrector del bloque 09. **Revisor humano:** Romain Ange,
+  pendiente.
+
+33. **Sección de los paños recogidos.** La senoide con 6 columnas por onda dejaba mesetas en la cresta y el valle, y
+    con 8 columnas y una hondura mayor que el ancho de la onda (9 cm contra 4-5 cm) la cresta quedaba con un radio de
+    1 mm, un filo. Ahora cada onda tiene 8 puntos: la cresta y el valle son semicírculos de radio w/4 unidos por
+    flancos rectos, como una tela apilada. El ancho de cada onda varía ±15 % y la hondura ±10 %. En la mitad inferior,
+    cada límite entre ondas se corre 1-2 cm, sin que dos vecinos se separen más de 0,35 del ancho menor. El borde fijo
+    del paño no se mueve. Con la hondura acotada por el muro y el espejo, la tela para cerrar media barra se gana con
+    más ondas: 6 en el D1 y 7 en el D2. Se descartó una quinta hilera (+512 triángulos, sin presupuesto).
+34. **Mezcla con Translucent BSDF sólo en Blender.** `Depto_Mat_Lino` mezcla un 30 % de Translucent BSDF
+    (`translucido` en `build/deco_paleta.py`). El exportador glTF de 3.6 encuentra el Principled BSDF a través del
+    Mix Shader y no exporta la mezcla, y el visor no la usa. La prueba de la fase 5 admite esos dos nodos sólo en los
+    materiales con `translucido`. La textura `lino` es propia: tafetán de hilos de 1 mm, tono por hilo y flameado.
+35. **Nada periódico bajo 4 píxeles en las texturas de los textiles.** `periodo` rechaza períodos menores y
+    `control_frecuencia` mide la varianza sobre 1/4 de ciclo por píxel. Las pasadas del kilim a 2,0 px daban columnas
+    que alternaban con batido; ahora el relieve va por celda de pasada (1,25 × 0,9 cm). Las texturas de los textiles se
+    guardan en JPEG 4:4:4 con PIL, la misma dependencia que `web/tour_modelo.py`, porque el JPEG de Blender 3.6
+    submuestrea siempre el croma.
+36. **El sofá vuelve al plano.** Mide 1,54 m y deja libre el elemento de piso dibujado junto a su extremo oeste, donde
+    va la planta de piso. Su extremo este no se mueve (lámpara de arco y mesa lateral). El televisor sigue en el eje del
+    muro de ladrillo: centrarlo con el plano movía el conducto visto y los objetos del rack. La alfombra del living
+    termina frente al sofá, que apoya en el piso: antes entraba 0,6 m bajo él y la parte de atrás quedaba 8 mm en el
+    aire. Estas desviaciones del plano están anotadas en el brief.
+37. **Revisión de día como el visor.** Las vistas de día de `tools/render_09.py` van con las luces apagadas y calibran
+    su exposición con un muro o azulejo blanco en luz indirecta (190 sRGB, el gris del visor). Usan pre-renders de
+    320 px y 8 muestras. La exposición y la referencia quedan en `renders_detalle.json`, igual que el color medido del
+    camino y del algodón contra el promedio de su textura.

@@ -127,6 +127,10 @@ SONDAS += [
     ("cocina altos E (discontinua)", "x", f3.ALTOS_X, (219, 226), F3),
     ("cocina anafe O", "x", f3.ANAFE[0], (159, 174), F3), ("cocina anafe E", "x", f3.ANAFE[1], (159, 174), F3),
     ("cocina anafe N", "y", f3.ANAFE[2], (330, 354), F3), ("cocina anafe S", "y", f3.ANAFE[3], (330, 354), F3),
+    # corrección 07c: contorno y frente discontinuo del refrigerador (ancho y frente de la nevera)
+    ("cocina nevera N (contorno)", "y", f3.NEVERA_Y[0], (393, 412), F3),
+    ("cocina nevera S (contorno)", "y", f3.NEVERA_Y[1], (393, 412), F3),
+    ("cocina nevera frente (discontinua)", "x", f3.NEVERA_FRENTE_X, (263, 295), F3),
     ("baño 1 repisa", "x", f3.BANOS["B1"]["repisa"][0], (100, 120), F3),
     # sobre la tina hay otro trazo gris en x≈409 (borde interior de la tina): umbral 200 para la discontinua
     ("baño 2 ducto (discontinua)", "x", f3.BANOS["B2"]["ducto"][0], (371, 402), 200),

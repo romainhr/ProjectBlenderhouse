@@ -2,10 +2,12 @@
 
 Uso:
     blender -b --python-exit-code 1 --python tools/validar_glb.py -- --glb exports/depto.glb \
-        --manifiesto exports/manifest.json --activo depto --out review/depto_06 [--ocultar Depto_Cielo,Depto_Palier_Cielo]
+        --manifiesto exports/manifest.json --activo depto --out review/depto_06 [--ocultar Depto_Cielo,Depto_Palier_Cielo] \
+        [--excluir-dims Depto_Ext_]
 
 Compara mallas, triángulos, materiales y dimensiones (±1 mm) con la entrada del manifiesto, verifica que haya
-imágenes y renderiza reimport_iso.png y reimport_top.png (Eevee con un sol: Workbench no muestra bien los
+imágenes y renderiza reimport_iso.png y reimport_top.png. Con --excluir-dims, las dimensiones se miden sin esos
+prefijos (el exterior del bloque 08, cuyas mallas y triángulos se comparan con manifiesto[activo]["exterior"]), y (Eevee con un sol: Workbench no muestra bien los
 materiales importados sin imagen). Sale con código 1 si algo no
 coincide. Escribe <out>/reimport.json.
 """
@@ -27,6 +29,7 @@ def parse_args():
     p.add_argument("--activo", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--ocultar", default="", help="prefijos de objetos a ocultar en los renders (p.ej. el cielo)")
+    p.add_argument("--excluir-dims", default="", help="prefijos que no cuentan en las dimensiones (p.ej. el exterior)")
     return p.parse_args(argv)
 
 
@@ -63,7 +66,9 @@ def main():
     for o in objs:
         o.data.calc_loop_triangles()
         tris += len(o.data.loop_triangles)
-    pts = [o.matrix_world @ v.co for o in objs for v in o.data.vertices]
+    fuera = tuple(x.strip() for x in a.excluir_dims.split(",") if x.strip())
+    medidos = [o for o in objs if not (fuera and o.name.startswith(fuera))]
+    pts = [o.matrix_world @ v.co for o in medidos for v in o.data.vertices]
     lo = [min(p[k] for p in pts) for k in range(3)]
     hi = [max(p[k] for p in pts) for k in range(3)]
     dims = {"x": hi[0] - lo[0], "y": hi[1] - lo[1], "z": hi[2] - lo[2]}
@@ -81,9 +86,17 @@ def main():
             fallos.append(f"dimensión {k} {v:.4f} != {esp['dimensiones_m'][k]}")
     if not imgs:
         fallos.append("el GLB no trae imágenes")
+    ext = [o for o in objs if fuera and o.name.startswith(fuera)]
+    tris_ext = 0
+    for o in ext:
+        tris_ext += len(o.data.loop_triangles)
+    if fuera and "exterior" in esp:
+        if len(ext) != esp["exterior"]["mallas"] or tris_ext != esp["exterior"]["triangulos"]:
+            fallos.append(f"exterior: {len(ext)} mallas y {tris_ext} triángulos != {esp['exterior']}")
     extras = sorted(o.name for o in scene.objects if "puerta" in o or "recorrido_m" in o)
     res = {"mallas": len(objs), "triangulos": tris, "materiales": len(mats), "imagenes": len(imgs),
            "dimensiones_m": {k: round(v, 4) for k, v in dims.items()}, "nodos_con_extras_moviles": extras,
+           "exterior": {"mallas": len(ext), "triangulos": tris_ext},
            "fallos": fallos}
     with open(os.path.join(a.out, "reimport.json"), "w") as fh:
         json.dump(res, fh, indent=2, ensure_ascii=False)
